@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(yarn add:*)",
+      "Bash(adb reverse:*)",
+      "Bash(npx react-native start:*)"
+    ]
+  }
+}
