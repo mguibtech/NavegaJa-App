@@ -7,6 +7,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {Box} from '@components';
 import {useAuthStore} from '../store/auth.store';
 import {OnboardingScreen} from '../screens/onboarding/OnboardingScreen';
+import {SplashScreen} from '../screens/splash/SplashScreen';
 
 import {AppStack} from './AppStack';
 import {AuthStack} from './AuthStack';
@@ -16,6 +17,7 @@ const ONBOARDED_KEY = '@navegaja:onboarded';
 export function Router() {
   const {isLoggedIn, isLoading, loadStoredUser} = useAuthStore();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     checkOnboarding();
@@ -29,6 +31,15 @@ export function Router() {
 
   async function handleOnboardingComplete() {
     setHasOnboarded(true);
+  }
+
+  function handleSplashFinish() {
+    setShowSplash(false);
+  }
+
+  // Show Splash Screen
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
   // Loading state

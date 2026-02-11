@@ -1,6 +1,9 @@
 import {api} from '@api';
 
-import {ResetPasswordRequest, ResetPasswordResponse} from './resetPasswordTypes';
+import {
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+} from './resetPasswordTypes';
 
 class ResetPasswordAPI {
   async execute(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {

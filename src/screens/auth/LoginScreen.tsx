@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput} from '@components';
+import {Box, Button, Logo, Text, TextInput} from '@components';
 import {useAuthStore} from '../../store/auth.store';
 import {formatPhone, unformatPhone} from '@utils';
 import {useToast} from '@hooks';
@@ -73,24 +73,10 @@ export function LoginScreen({navigation}: Props) {
           </Pressable>
         </Box>
 
-        {/* Header with Icon */}
+        {/* Header with Logo */}
         <Box alignItems="center" mb="s48">
-          <Box
-            width={96}
-            height={96}
-            backgroundColor="primaryBg"
-            borderRadius="s20"
-            alignItems="center"
-            justifyContent="center"
-            mb="s24"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 4,
-            }}>
-            <Icon name="directions-boat" size={48} color="primary" />
+          <Box mb="s24">
+            <Logo size={120} />
           </Box>
           <Text preset="headingLarge" color="primary" bold>
             NavegaJá
@@ -149,6 +135,7 @@ export function LoginScreen({navigation}: Props) {
               loading={isLoading}
               onPress={handleLogin}
               rightIcon="arrow-forward"
+              disabled={!phone.trim() || !password.trim()}
             />
           </Box>
 

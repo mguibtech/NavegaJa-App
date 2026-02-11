@@ -15,6 +15,7 @@ interface AuthState {
   login: (credentials: {phone: string; password: string}) => Promise<void>;
   register: (data: {
     name: string;
+    email: string;
     phone: string;
     password: string;
     role: 'passenger' | 'captain';

@@ -6,12 +6,12 @@ export function useForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  async function forgotPassword(phone: string): Promise<void> {
+  async function forgotPassword(email: string): Promise<void> {
     setIsLoading(true);
     setError(null);
 
     try {
-      await forgotPasswordAPI.execute({phone});
+      await forgotPasswordAPI.execute({email});
       setIsLoading(false);
     } catch (err) {
       const error = err as Error;

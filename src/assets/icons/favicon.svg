@@ -1,0 +1,21 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <!-- Favicon super simplificado -->
+    
+    <!-- Fundo -->
+    <rect width="16" height="16" rx="3" fill="#0B5D8A"/>
+    
+    <!-- Barco minimalista -->
+    <g transform="translate(8, 9)">
+        <!-- Casco -->
+        <path d="M -4 0 L -3 2 L 3 2 L 4 0 Z" fill="white"/>
+        
+        <!-- Cabine -->
+        <rect x="-2" y="-2" width="4" height="2" fill="white"/>
+        
+        <!-- Mastro -->
+        <line x1="0" y1="-2" x2="0" y2="-5" stroke="white" stroke-width="0.8"/>
+        
+        <!-- Bandeira -->
+        <path d="M 0 -5 L 2 -4 L 0 -3 Z" fill="#E8960C"/>
+    </g>
+</svg>

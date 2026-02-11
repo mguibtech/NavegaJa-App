@@ -1,9 +1,9 @@
 export interface RegisterRequest {
   name: string;
+  email: string;
   phone: string;
   password: string;
   role: 'passenger' | 'captain';
-  email?: string;
   cpf?: string;
 }
 

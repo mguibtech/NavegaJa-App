@@ -3,9 +3,9 @@ import {Keyboard, TouchableWithoutFeedback} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput} from '@components';
+import {Box, Button, Icon, Logo, Text, TextInput} from '@components';
 import {useForgotPassword} from '@domain';
-import {formatPhone, unformatPhone} from '@utils';
+import {formatEmail} from '@utils';
 import {useToast} from '@hooks';
 
 import {AuthStackParamList} from '../../routes/AuthStack';
@@ -16,24 +16,31 @@ export function ForgotPasswordScreen({navigation}: Props) {
   const {forgotPassword, isLoading} = useForgotPassword();
   const toast = useToast();
 
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
 
   async function handleSendCode() {
-    if (!phone.trim()) {
-      toast.showWarning('Por favor, informe seu telefone');
+    if (!email.trim()) {
+      toast.showWarning('Por favor, informe seu email');
+      return;
+    }
+
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.showWarning('Digite um email válido');
       return;
     }
 
     try {
-      await forgotPassword(unformatPhone(phone));
+      await forgotPassword(email.trim().toLowerCase());
 
       toast.showSuccess(
-        'Código enviado! Verifique suas mensagens.',
+        'Código enviado! Verifique seu email.',
         {duration: 5000},
       );
 
-      // Volta para tela anterior após 2s
-      setTimeout(() => navigation.goBack(), 2000);
+      // Navega para tela de reset password
+      navigation.navigate('ResetPassword', {email: email.trim().toLowerCase()});
     } catch (error: any) {
       const msg =
         error?.response?.data?.message ||
@@ -42,9 +49,9 @@ export function ForgotPasswordScreen({navigation}: Props) {
     }
   }
 
-  function handlePhoneChange(text: string) {
-    const formatted = formatPhone(text);
-    setPhone(formatted);
+  function handleEmailChange(text: string) {
+    const formatted = formatEmail(text);
+    setEmail(formatted);
   }
 
   return (
@@ -75,17 +82,10 @@ export function ForgotPasswordScreen({navigation}: Props) {
           </TouchableWithoutFeedback>
         </Box>
 
-        {/* Header with Icon */}
+        {/* Header with Logo */}
         <Box alignItems="center" mb="s48">
-          <Box
-            width={96}
-            height={96}
-            backgroundColor="primaryBg"
-            borderRadius="s20"
-            alignItems="center"
-            justifyContent="center"
-            mb="s24">
-            <Icon name="lock-reset" size={48} color="primary" />
+          <Box mb="s24">
+            <Logo size={96} />
           </Box>
           <Text preset="headingLarge" color="primary" bold>
             Esqueceu a senha?
@@ -95,7 +95,7 @@ export function ForgotPasswordScreen({navigation}: Props) {
             color="textSecondary"
             mt="s8"
             textAlign="center">
-            Sem problemas! Informe seu telefone e enviaremos um código de
+            Sem problemas! Informe seu email e enviaremos um código de
             recuperação.
           </Text>
         </Box>
@@ -103,14 +103,15 @@ export function ForgotPasswordScreen({navigation}: Props) {
         {/* Form */}
         <Box>
           <TextInput
-            label="Celular"
-            placeholder="(92) 99100-1001"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={handlePhoneChange}
+            label="Email"
+            placeholder="seu@email.com"
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
+            value={email}
+            onChangeText={handleEmailChange}
             autoCapitalize="none"
-            leftIcon="phone-iphone"
-            maxLength={15}
+            leftIcon="email"
             onSubmitEditing={handleSendCode}
             returnKeyType="send"
           />
@@ -121,6 +122,7 @@ export function ForgotPasswordScreen({navigation}: Props) {
               loading={isLoading}
               onPress={handleSendCode}
               rightIcon="send"
+              disabled={!email.trim()}
             />
           </Box>
 

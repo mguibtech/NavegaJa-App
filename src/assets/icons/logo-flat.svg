@@ -1,0 +1,33 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fundo com cantos arredondados -->
+    <rect width="200" height="200" rx="40" fill="#0B5D8A"/>
+    
+    <!-- Ondas geométricas flat -->
+    <path d="M 0 120 Q 50 100, 100 120 T 200 120 L 200 200 L 0 200 Z" 
+          fill="#22874A" opacity="0.3"/>
+    <path d="M 0 140 Q 50 120, 100 140 T 200 140 L 200 200 L 0 200 Z" 
+          fill="#075985" opacity="0.3"/>
+    
+    <!-- Barco flat moderno -->
+    <g transform="translate(100, 80)">
+        <!-- Casco simplificado -->
+        <path d="M -40 20 L -35 35 L 35 35 L 40 20 L 40 15 L -40 15 Z" 
+              fill="white"/>
+        
+        <!-- Cabine flat -->
+        <rect x="-25" y="0" width="50" height="15" rx="3" fill="white"/>
+        
+        <!-- Janela única centralizada -->
+        <rect x="-15" y="4" width="30" height="7" rx="2" fill="#0B5D8A" opacity="0.4"/>
+        
+        <!-- Mastro minimalista -->
+        <rect x="-2" y="-25" width="4" height="25" rx="2" fill="white"/>
+        
+        <!-- Bandeira triangular -->
+        <path d="M 0 -25 L 15 -18 L 0 -11 Z" fill="#E8960C"/>
+    </g>
+    
+    <!-- Sol abstrato -->
+    <circle cx="160" cy="40" r="15" fill="#E8960C" opacity="0.8"/>
+    <circle cx="165" cy="45" r="8" fill="#FBBF24" opacity="0.6"/>
+</svg>

@@ -1,5 +1,5 @@
 export interface ResetPasswordRequest {
-  phone: string;
+  email: string;
   code: string;
   newPassword: string;
 }

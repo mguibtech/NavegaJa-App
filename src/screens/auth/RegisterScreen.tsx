@@ -3,9 +3,9 @@ import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking} from 'react-nat
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useAuthStore} from '../../store/auth.store';
-import {formatPhone, unformatPhone} from '@utils';
+import {formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
 
 import {AuthStackParamList} from '../../routes/AuthStack';
@@ -17,14 +17,22 @@ export function RegisterScreen({navigation}: Props) {
   const toast = useToast();
 
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'passenger' | 'captain'>('passenger');
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleRegister() {
-    if (!name.trim() || !phone.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       toast.showWarning('Preencha todos os campos');
+      return;
+    }
+
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.showWarning('Digite um email válido');
       return;
     }
 
@@ -36,6 +44,7 @@ export function RegisterScreen({navigation}: Props) {
     try {
       await register({
         name: name.trim(),
+        email: email.trim().toLowerCase(),
         phone: unformatPhone(phone),
         password,
         role,
@@ -58,6 +67,11 @@ export function RegisterScreen({navigation}: Props) {
   function handlePhoneChange(text: string) {
     const formatted = formatPhone(text);
     setPhone(formatted);
+  }
+
+  function handleEmailChange(text: string) {
+    const formatted = formatEmail(text);
+    setEmail(formatted);
   }
 
   const isPassenger = role === 'passenger';
@@ -93,6 +107,11 @@ export function RegisterScreen({navigation}: Props) {
             }}>
             <Icon name="arrow-back" size={24} color="text" />
           </TouchableOpacityBox>
+
+          {/* Logo */}
+          <Box alignItems="center" mb="s24">
+            <Logo size={80} />
+          </Box>
 
           {/* Header */}
           <Box mb="s32">
@@ -206,6 +225,20 @@ export function RegisterScreen({navigation}: Props) {
 
             <Box mt="s16">
               <TextInput
+                label="Email"
+                placeholder="seu@email.com"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoComplete="email"
+                value={email}
+                onChangeText={handleEmailChange}
+                autoCapitalize="none"
+                leftIcon="email"
+              />
+            </Box>
+
+            <Box mt="s16">
+              <TextInput
                 label="Telefone"
                 placeholder="+55 (92) 99999-9999"
                 keyboardType="phone-pad"
@@ -236,6 +269,7 @@ export function RegisterScreen({navigation}: Props) {
                 loading={isLoading}
                 onPress={handleRegister}
                 rightIcon="arrow-forward"
+                disabled={!name.trim() || !email.trim() || !phone.trim() || !password.trim()}
               />
             </Box>
 

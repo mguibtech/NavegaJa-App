@@ -5,3 +5,5 @@ export {TextInput, TextInputProps} from './TextInput/TextInput';
 export {Icon, IconProps} from './Icon/Icon';
 export {Toast} from './Toast/Toast';
 export {ToastContainer} from './Toast/ToastContainer';
+export {Logo} from './Logo/Logo';
+export {AnimatedSplashLogo} from './AnimatedSplashLogo/AnimatedSplashLogo';

@@ -23,9 +23,13 @@ export const theme = createTheme({
 
     // Status
     success: '#22874A',
+    successBg: '#E3F5E8',
     warning: '#E8960C',
+    warningBg: '#FFF4E5',
     danger: '#D63031',
+    dangerBg: '#FDEAEA',
     info: '#1B8EC2',
+    infoBg: '#EDF6FB',
 
     // Neutros
     text: '#0D1B2A',
@@ -36,7 +40,6 @@ export const theme = createTheme({
     surface: '#FFFFFF',
 
     // Utilitários (para componentes)
-    dangerBg: '#FDEAEA',
     disabled: '#E2E8ED',
     disabledText: '#7A8D9C',
   },
@@ -62,6 +65,8 @@ export const theme = createTheme({
     s12: 12,
     s16: 16,
     s20: 20,
+    s24: 24,
+    s48: 48,
   },
   textVariants: {
     defaults: {},

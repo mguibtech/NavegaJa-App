@@ -1,7 +1,7 @@
 import React from 'react';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 
-import {useAppTheme} from '@hooks/useAppTheme';
+import {useAppTheme} from '@hooks';
 import {ThemeColors} from '@theme';
 
 export interface IconProps {
