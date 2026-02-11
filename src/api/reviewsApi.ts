@@ -8,6 +8,11 @@ export const reviewsApi = {
     return response.data;
   },
 
+  async getByTrip(tripId: string): Promise<Review[]> {
+    const response = await api.get<Review[]>(`/reviews/trip/${tripId}`);
+    return response.data;
+  },
+
   async getByCaptain(captainId: string): Promise<Review[]> {
     const response = await api.get<Review[]>(`/reviews/captain/${captainId}`);
     return response.data;

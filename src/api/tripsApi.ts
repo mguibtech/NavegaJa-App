@@ -1,20 +1,22 @@
-import {CreateTripRequest, Trip, TripStatus, UpdateLocationRequest} from '@types';
+import {CreateTripRequest, Trip, UpdateLocationRequest} from '@types';
 
 import {api} from './apiClient';
 
-interface TripsQuery {
-  route_id?: string;
-  date?: string;
-}
-
 export const tripsApi = {
-  async getAvailable(query?: TripsQuery): Promise<Trip[]> {
-    const response = await api.get<Trip[]>('/trips', {params: query});
+  async search(
+    origin: string,
+    destination: string,
+    date?: string,
+  ): Promise<Trip[]> {
+    const params: any = {origin, destination};
+    if (date) params.date = date;
+
+    const response = await api.get<Trip[]>('/trips', {params});
     return response.data;
   },
 
-  async getById(id: string): Promise<Trip> {
-    const response = await api.get<Trip>(`/trips/${id}`);
+  async getById(tripId: string): Promise<Trip> {
+    const response = await api.get<Trip>(`/trips/${tripId}`);
     return response.data;
   },
 
@@ -23,18 +25,20 @@ export const tripsApi = {
     return response.data;
   },
 
-  async updateStatus(id: string, status: TripStatus): Promise<Trip> {
-    const response = await api.patch<Trip>(`/trips/${id}/status`, {status});
+  async update(tripId: string, data: Partial<CreateTripRequest>): Promise<Trip> {
+    const response = await api.patch<Trip>(`/trips/${tripId}`, data);
     return response.data;
   },
 
-  async updateLocation(id: string, data: UpdateLocationRequest): Promise<Trip> {
-    const response = await api.patch<Trip>(`/trips/${id}/location`, data);
-    return response.data;
+  async delete(tripId: string): Promise<void> {
+    await api.delete(`/trips/${tripId}`);
   },
 
-  async getCaptainTrips(): Promise<Trip[]> {
-    const response = await api.get<Trip[]>('/trips/captain/my-trips');
+  async updateLocation(
+    tripId: string,
+    location: UpdateLocationRequest,
+  ): Promise<Trip> {
+    const response = await api.patch<Trip>(`/trips/${tripId}/location`, location);
     return response.data;
   },
 };

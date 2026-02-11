@@ -1,0 +1,31 @@
+import {useState} from 'react';
+
+import {bookingService} from '../bookingService';
+import {Booking, CreateBookingData} from '../bookingTypes';
+
+export function useCreateBooking() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  async function create(data: CreateBookingData): Promise<Booking> {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const booking = await bookingService.createBooking(data);
+      setIsLoading(false);
+      return booking;
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      setIsLoading(false);
+      throw error;
+    }
+  }
+
+  return {
+    create,
+    isLoading,
+    error,
+  };
+}

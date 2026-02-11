@@ -7,20 +7,32 @@ import {
 } from 'react-native';
 
 import {useAppTheme} from '@hooks/useAppTheme';
+import {ThemeColors} from '@theme';
 
 import {Box} from '../Box/Box';
+import {Icon} from '../Icon/Icon';
 import {Text} from '../Text/Text';
 
 export interface TextInputProps extends RNTextInputProps {
   label?: string;
   errorMessage?: string;
   rightComponent?: React.ReactNode;
+  leftIcon?: string;
+  rightIcon?: string;
+  onRightIconPress?: () => void;
+  leftIconColor?: ThemeColors;
+  rightIconColor?: ThemeColors;
 }
 
 export function TextInput({
   label,
   errorMessage,
   rightComponent,
+  leftIcon,
+  rightIcon,
+  onRightIconPress,
+  leftIconColor = 'textLight',
+  rightIconColor = 'textLight',
   style,
   ...rnTextInputProps
 }: TextInputProps) {
@@ -41,10 +53,15 @@ export function TextInput({
           alignItems="center"
           borderWidth={hasError ? 2 : 1}
           borderColor={hasError ? 'danger' : 'border'}
-          borderRadius="s8"
+          borderRadius="s12"
           backgroundColor="surface"
-          paddingHorizontal="s12"
-          style={{height: 48}}>
+          paddingHorizontal="s16"
+          style={{height: 56}}>
+          {leftIcon && (
+            <Box mr="s12">
+              <Icon name={leftIcon} size={20} color={leftIconColor} />
+            </Box>
+          )}
           <RNTextInput
             ref={inputRef}
             placeholderTextColor={colors.textLight}
@@ -53,12 +70,22 @@ export function TextInput({
               {
                 color: colors.text,
                 fontFamily: 'Poppins-Regular',
-                fontSize: 14,
+                fontSize: 16,
               },
               style,
             ]}
             {...rnTextInputProps}
           />
+          {rightIcon && (
+            <Box ml="s12">
+              <Icon
+                name={rightIcon}
+                size={20}
+                color={rightIconColor}
+                onPress={onRightIconPress}
+              />
+            </Box>
+          )}
           {rightComponent && <Box ml="s8">{rightComponent}</Box>}
         </Box>
       </Pressable>

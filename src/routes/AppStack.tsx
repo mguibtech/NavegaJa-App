@@ -2,11 +2,11 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {Box, Text} from '@components';
-import {useAuth} from '../contexts/AuthContext';
+import {useAuthStore} from '../store/auth.store';
 
 // Tela placeholder até construirmos as telas do app
 function HomeScreen() {
-  const {user, logout} = useAuth();
+  const {user, logout} = useAuthStore();
 
   return (
     <Box

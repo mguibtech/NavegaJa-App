@@ -7,3 +7,4 @@ export {shipmentsApi} from './shipmentsApi';
 export {reviewsApi} from './reviewsApi';
 export {boatsApi} from './boatsApi';
 export {usersApi} from './usersApi';
+export {captainApi} from './captainApi';

@@ -5,7 +5,7 @@ import {createTheme} from '@shopify/restyle';
 export const theme = createTheme({
   colors: {
     // Primárias — Encontro das Águas
-    primary: '#0B5D8A',
+    primary: '#0a6fbd',
     primaryMid: '#1B8EC2',
     primaryLight: '#3DA5D9',
     primaryBg: '#EDF6FB',
@@ -32,7 +32,7 @@ export const theme = createTheme({
     textSecondary: '#3D5468',
     textLight: '#7A8D9C',
     border: '#E2E8ED',
-    background: '#F3F6F8',
+    background: '#f5f7f8',
     surface: '#FFFFFF',
 
     // Utilitários (para componentes)

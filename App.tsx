@@ -4,22 +4,21 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '@shopify/restyle';
 
 import {theme} from '@theme';
-import {AuthProvider} from './src/contexts/AuthContext';
 import {Router} from '@routes';
+import {ToastContainer} from '@components';
 
 function App() {
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <ThemeProvider theme={theme}>
-          <StatusBar
-            barStyle="dark-content"
-            backgroundColor={theme.colors.surface}
-          />
-          <Router />
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <ThemeProvider theme={theme}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={theme.colors.surface}
+        />
+        <Router />
+        <ToastContainer />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

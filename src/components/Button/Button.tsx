@@ -1,6 +1,9 @@
 import React from 'react';
 import {ActivityIndicator} from 'react-native';
 
+import {ThemeColors} from '@theme';
+
+import {Icon} from '../Icon/Icon';
 import {Text} from '../Text/Text';
 import {Box, TouchableOpacityBox, TouchableOpacityBoxProps} from '../Box/Box';
 
@@ -14,6 +17,9 @@ interface ButtonProps extends TouchableOpacityBoxProps {
   preset?: ButtonPreset;
   disabled?: boolean;
   rightComponent?: React.ReactNode;
+  leftIcon?: string;
+  rightIcon?: string;
+  iconColor?: ThemeColors;
 }
 
 export function Button({
@@ -22,28 +28,43 @@ export function Button({
   preset = 'primary',
   disabled,
   rightComponent,
+  leftIcon,
+  rightIcon,
+  iconColor,
   ...touchableOpacityBoxProps
 }: ButtonProps) {
   const buttonPreset =
     buttonPresets[preset][disabled ? 'disabled' : 'default'];
 
+  const finalIconColor = iconColor || buttonPreset.content;
+
   return (
     <TouchableOpacityBox
       disabled={disabled || loading}
       paddingHorizontal="s20"
-      height={50}
+      height={56}
       alignItems="center"
       justifyContent="center"
-      borderRadius="s8"
+      borderRadius="s12"
       {...buttonPreset.container}
       {...touchableOpacityBoxProps}>
       {loading ? (
         <ActivityIndicator color={buttonPreset.content} />
       ) : (
         <Box flexDirection="row" alignItems="center" justifyContent="center">
-          <Text preset="paragraphMedium" color={buttonPreset.content}>
+          {leftIcon && (
+            <Box mr="s10">
+              <Icon name={leftIcon} size={20} color={finalIconColor} />
+            </Box>
+          )}
+          <Text preset="paragraphMedium" color={buttonPreset.content} semibold>
             {title}
           </Text>
+          {rightIcon && (
+            <Box ml="s10">
+              <Icon name={rightIcon} size={20} color={finalIconColor} />
+            </Box>
+          )}
           {rightComponent && <Box ml="s10">{rightComponent}</Box>}
         </Box>
       )}

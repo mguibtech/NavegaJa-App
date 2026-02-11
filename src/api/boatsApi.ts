@@ -17,4 +17,13 @@ export const boatsApi = {
     const response = await api.post<Boat>('/boats', data);
     return response.data;
   },
+
+  async update(id: string, data: Partial<CreateBoatRequest>): Promise<Boat> {
+    const response = await api.patch<Boat>(`/boats/${id}`, data);
+    return response.data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/boats/${id}`);
+  },
 };

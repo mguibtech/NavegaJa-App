@@ -17,4 +17,16 @@ export const usersApi = {
     const response = await api.patch<User>('/users/profile', data);
     return response.data;
   },
+
+  async updateAvatar(avatarUrl: string): Promise<User> {
+    const response = await api.patch<User>('/users/avatar', {avatarUrl});
+    return response.data;
+  },
+
+  async updatePassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    await api.patch('/users/password', {currentPassword, newPassword});
+  },
 };

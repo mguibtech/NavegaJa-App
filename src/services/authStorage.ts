@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = '@navegaja:token';
+const REFRESH_TOKEN_KEY = '@navegaja:refreshToken';
 const USER_KEY = '@navegaja:user';
 
 export const authStorage = {
@@ -14,6 +15,18 @@ export const authStorage = {
 
   async removeToken(): Promise<void> {
     await AsyncStorage.removeItem(TOKEN_KEY);
+  },
+
+  async saveRefreshToken(refreshToken: string): Promise<void> {
+    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  },
+
+  async getRefreshToken(): Promise<string | null> {
+    return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+  },
+
+  async removeRefreshToken(): Promise<void> {
+    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
   },
 
   async saveUser(user: object): Promise<void> {
@@ -30,6 +43,6 @@ export const authStorage = {
   },
 
   async clear(): Promise<void> {
-    await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
   },
 };
