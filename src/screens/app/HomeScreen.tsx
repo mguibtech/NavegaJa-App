@@ -1,12 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, Image, Modal, Pressable, RefreshControl, ScrollView, TextInput as RNTextInput} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import {FlatList, Image, RefreshControl, ScrollView} from 'react-native';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {useAuthStore} from '../../store/auth.store';
 import {useMyBookings} from '../../domain/App/Booking/useCases/useMyBookings';
 
@@ -65,29 +64,9 @@ const MY_TRIPS = [
   },
 ];
 
-// Lista de cidades disponíveis
-const AVAILABLE_CITIES = [
-  'Manaus',
-  'Parintins',
-  'Itacoatiara',
-  'Manacapuru',
-  'Tefé',
-  'Coari',
-  'Tabatinga',
-  'Maués',
-  'Humaitá',
-  'Iranduba',
-];
-
 export function HomeScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showOriginModal, setShowOriginModal] = useState(false);
-  const [showDestinationModal, setShowDestinationModal] = useState(false);
 
   const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
 
@@ -109,44 +88,6 @@ export function HomeScreen({navigation}: Props) {
     await loadData();
     setRefreshing(false);
   };
-
-  function handleSearch() {
-    if (!origin.trim() || !destination.trim()) {
-      return;
-    }
-
-    // @ts-ignore
-    navigation.navigate('SearchResults', {
-      origin: origin.trim(),
-      destination: destination.trim(),
-      date: date.toISOString().split('T')[0],
-    });
-  }
-
-  function handleDateChange(event: any, selectedDate?: Date) {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  }
-
-  function selectOrigin(city: string) {
-    setOrigin(city);
-    setShowOriginModal(false);
-  }
-
-  function selectDestination(city: string) {
-    setDestination(city);
-    setShowDestinationModal(false);
-  }
-
-  function formatDate(date: Date): string {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
 
   const renderPopularRoute = ({item}: {item: any}) => {
     // Fallbacks para rotas da API que não têm price, image, duration
@@ -318,96 +259,101 @@ export function HomeScreen({navigation}: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        {/* Search Card */}
+        {/* Simple Search Bar */}
         <Box paddingHorizontal="s24" mt="s24">
-          <Box
+          <TouchableOpacityBox
             backgroundColor="surface"
-            borderRadius="s20"
-            padding="s20"
-            mb="s24"
+            borderRadius="s16"
+            paddingHorizontal="s20"
+            paddingVertical="s16"
+            flexDirection="row"
+            alignItems="center"
+            onPress={() => navigation.navigate('Search')}
             style={{
               shadowColor: '#000',
-              shadowOffset: {width: 0, height: 4},
-              shadowOpacity: 0.12,
-              shadowRadius: 12,
-              elevation: 6,
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
             }}>
-            <Text preset="paragraphLarge" color="text" bold mb="s20">
-              🚢 Find Your Trip
+            <Icon name="search" size={24} color="textSecondary" />
+            <Text preset="paragraphLarge" color="textSecondary" ml="s12" flex={1}>
+              Where do you want to go?
             </Text>
+          </TouchableOpacityBox>
+        </Box>
 
-            {/* Origin Selector */}
-            <Box mb="s16">
-              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-                Origin
+        {/* Quick Stats */}
+        <Box paddingHorizontal="s24" mt="s24" mb="s24">
+          <Box flexDirection="row" gap="s12">
+            {/* Total Trips */}
+            <Box
+              flex={1}
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s16"
+              alignItems="center"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              }}>
+              <Icon name="confirmation-number" size={28} color="primary" />
+              <Text preset="headingSmall" color="text" bold mt="s8">
+                {user?.totalTrips || 0}
               </Text>
-              <Pressable onPress={() => setShowOriginModal(true)}>
-                <Box
-                  backgroundColor="disabled"
-                  borderRadius="s12"
-                  paddingHorizontal="s16"
-                  paddingVertical="s14"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="space-between">
-                  <Text preset="paragraphMedium" color={origin ? 'text' : 'textSecondary'}>
-                    {origin || 'Select origin city'}
-                  </Text>
-                  <Icon name="expand-more" size={20} color="textSecondary" />
-                </Box>
-              </Pressable>
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4" textAlign="center">
+                Viagens
+              </Text>
             </Box>
 
-            {/* Destination Selector */}
-            <Box mb="s16">
-              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-                Destination
+            {/* Total Points */}
+            <Box
+              flex={1}
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s16"
+              alignItems="center"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              }}>
+              <Icon name="stars" size={28} color="warning" />
+              <Text preset="headingSmall" color="text" bold mt="s8">
+                {user?.totalPoints || 0}
               </Text>
-              <Pressable onPress={() => setShowDestinationModal(true)}>
-                <Box
-                  backgroundColor="disabled"
-                  borderRadius="s12"
-                  paddingHorizontal="s16"
-                  paddingVertical="s14"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="space-between">
-                  <Text preset="paragraphMedium" color={destination ? 'text' : 'textSecondary'}>
-                    {destination || 'Select destination city'}
-                  </Text>
-                  <Icon name="expand-more" size={20} color="textSecondary" />
-                </Box>
-              </Pressable>
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4" textAlign="center">
+                Pontos
+              </Text>
             </Box>
 
-            {/* Date Selector */}
-            <Box mb="s20">
-              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-                Date
+            {/* Level */}
+            <Box
+              flex={1}
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s16"
+              alignItems="center"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              }}>
+              <Icon name="military-tech" size={28} color="secondary" />
+              <Text preset="headingSmall" color="text" bold mt="s8" numberOfLines={1}>
+                {user?.level || 'N/A'}
               </Text>
-              <Pressable onPress={() => setShowDatePicker(true)}>
-                <Box
-                  backgroundColor="disabled"
-                  borderRadius="s12"
-                  paddingHorizontal="s16"
-                  paddingVertical="s14"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="space-between">
-                  <Text preset="paragraphMedium" color="text">
-                    {formatDate(date)}
-                  </Text>
-                  <Icon name="calendar-today" size={20} color="textSecondary" />
-                </Box>
-              </Pressable>
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4" textAlign="center">
+                Nível
+              </Text>
             </Box>
-
-            {/* Search Button */}
-            <Button
-              title="Find Trips"
-              onPress={handleSearch}
-              leftIcon="search"
-            />
           </Box>
         </Box>
         {/* Popular Routes */}
@@ -479,95 +425,6 @@ export function HomeScreen({navigation}: Props) {
           </Box>
         </Box>
       </ScrollView>
-
-      {/* Origin Modal */}
-      <Modal
-        visible={showOriginModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowOriginModal(false)}>
-        <Pressable
-          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}
-          onPress={() => setShowOriginModal(false)}>
-          <Box flex={1} justifyContent="flex-end">
-            <Pressable>
-              <Box backgroundColor="surface" borderTopLeftRadius="s24" borderTopRightRadius="s24" padding="s24">
-                <Text preset="headingSmall" color="text" bold mb="s20">
-                  Select Origin City
-                </Text>
-                <ScrollView style={{maxHeight: 400}}>
-                  {AVAILABLE_CITIES.map(city => (
-                    <TouchableOpacityBox
-                      key={city}
-                      padding="s16"
-                      borderRadius="s12"
-                      backgroundColor={origin === city ? 'primaryBg' : 'surface'}
-                      mb="s8"
-                      onPress={() => selectOrigin(city)}>
-                      <Text
-                        preset="paragraphLarge"
-                        color={origin === city ? 'primary' : 'text'}
-                        bold={origin === city}>
-                        {city}
-                      </Text>
-                    </TouchableOpacityBox>
-                  ))}
-                </ScrollView>
-              </Box>
-            </Pressable>
-          </Box>
-        </Pressable>
-      </Modal>
-
-      {/* Destination Modal */}
-      <Modal
-        visible={showDestinationModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowDestinationModal(false)}>
-        <Pressable
-          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}
-          onPress={() => setShowDestinationModal(false)}>
-          <Box flex={1} justifyContent="flex-end">
-            <Pressable>
-              <Box backgroundColor="surface" borderTopLeftRadius="s24" borderTopRightRadius="s24" padding="s24">
-                <Text preset="headingSmall" color="text" bold mb="s20">
-                  Select Destination City
-                </Text>
-                <ScrollView style={{maxHeight: 400}}>
-                  {AVAILABLE_CITIES.map(city => (
-                    <TouchableOpacityBox
-                      key={city}
-                      padding="s16"
-                      borderRadius="s12"
-                      backgroundColor={destination === city ? 'primaryBg' : 'surface'}
-                      mb="s8"
-                      onPress={() => selectDestination(city)}>
-                      <Text
-                        preset="paragraphLarge"
-                        color={destination === city ? 'primary' : 'text'}
-                        bold={destination === city}>
-                        {city}
-                      </Text>
-                    </TouchableOpacityBox>
-                  ))}
-                </ScrollView>
-              </Box>
-            </Pressable>
-          </Box>
-        </Pressable>
-      </Modal>
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-          minimumDate={new Date()}
-        />
-      )}
     </Box>
   );
 }
