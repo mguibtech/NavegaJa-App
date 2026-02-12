@@ -196,7 +196,7 @@ export function ProfileScreen({navigation}: Props) {
             }}>
             <Icon name="star" size={32} color="warning" />
             <Text preset="headingMedium" color="text" bold mt="s8">
-              {user?.rating?.toFixed(1) || '5.0'}
+              {(user?.rating ?? 5.0).toFixed(1)}
             </Text>
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Avaliação
