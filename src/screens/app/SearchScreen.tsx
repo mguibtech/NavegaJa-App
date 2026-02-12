@@ -1,13 +1,18 @@
 import React, {useState} from 'react';
 import {Keyboard, ScrollView, TouchableWithoutFeedback} from 'react-native';
 
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'HomeTabs'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabsParamList, 'Search'>,
+  NativeStackScreenProps<AppStackParamList>
+>;
 
 const POPULAR_ROUTES = [
   {origin: 'Manaus', destination: 'Parintins', icon: 'directions-boat'},
@@ -27,8 +32,11 @@ export function SearchScreen({navigation}: Props) {
       return;
     }
 
-    // TODO: Navigate to search results screen
-    console.log('Searching:', {origin, destination, date});
+    navigation.navigate('SearchResults', {
+      origin: origin.trim(),
+      destination: destination.trim(),
+      date: date.trim() || undefined,
+    });
   }
 
   function handlePopularRoute(route: typeof POPULAR_ROUTES[0]) {

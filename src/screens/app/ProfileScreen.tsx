@@ -1,15 +1,20 @@
 import React from 'react';
 import {Alert, ScrollView} from 'react-native';
 
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {useAuthStore} from '../../store/auth.store';
 import {formatPhone} from '@utils';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'HomeTabs'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabsParamList, 'Profile'>,
+  NativeStackScreenProps<AppStackParamList>
+>;
 
 const MENU_ITEMS = [
   {
@@ -71,8 +76,14 @@ export function ProfileScreen({navigation}: Props) {
   }
 
   function handleMenuPress(itemId: string) {
-    // TODO: Navigate to respective screens
-    console.log('Menu item pressed:', itemId);
+    switch (itemId) {
+      case 'edit-profile':
+        navigation.navigate('EditProfile');
+        break;
+      default:
+        // TODO: Implementar outras navegações
+        console.log('Menu item pressed:', itemId);
+    }
   }
 
   return (
@@ -163,7 +174,7 @@ export function ProfileScreen({navigation}: Props) {
             }}>
             <Icon name="confirmation-number" size={32} color="primary" />
             <Text preset="headingMedium" color="text" bold mt="s8">
-              8
+              {user?.totalTrips || 0}
             </Text>
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Viagens
@@ -185,10 +196,57 @@ export function ProfileScreen({navigation}: Props) {
             }}>
             <Icon name="star" size={32} color="warning" />
             <Text preset="headingMedium" color="text" bold mt="s8">
-              4.8
+              {user?.rating?.toFixed(1) || '5.0'}
             </Text>
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Avaliação
+            </Text>
+          </Box>
+        </Box>
+
+        {/* Gamification Stats */}
+        <Box flexDirection="row" gap="s12" mb="s24">
+          <Box
+            flex={1}
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            alignItems="center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}>
+            <Icon name="military-tech" size={32} color="secondary" />
+            <Text preset="headingMedium" color="text" bold mt="s8">
+              {user?.level || 'Marinheiro'}
+            </Text>
+            <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+              Nível
+            </Text>
+          </Box>
+
+          <Box
+            flex={1}
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            alignItems="center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}>
+            <Icon name="stars" size={32} color="warning" />
+            <Text preset="headingMedium" color="text" bold mt="s8">
+              {user?.totalPoints || 0}
+            </Text>
+            <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+              Pontos
             </Text>
           </Box>
         </Box>

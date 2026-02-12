@@ -1,70 +1,225 @@
-import React, {useState} from 'react';
-import {FlatList, RefreshControl, ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {FlatList, Image, RefreshControl, ScrollView} from 'react-native';
 
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useAuthStore} from '../../store/auth.store';
+import {usePopularRoutes} from '../../domain/App/Route';
+import {useMyBookings} from '../../domain/App/Booking/useCases/useMyBookings';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'HomeTabs'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabsParamList, 'Home'>,
+  NativeStackScreenProps<AppStackParamList>
+>;
 
-// Mock data - será substituído por dados reais da API
-const MOCK_TRIPS = [
+// Mock data - Popular Routes
+const POPULAR_ROUTES = [
   {
     id: '1',
     origin: 'Manaus',
     destination: 'Parintins',
-    departureTime: '08:00',
-    arrivalTime: '14:00',
-    date: '2026-02-15',
-    price: 85.0,
-    availableSeats: 12,
-    boatName: 'Expresso Amazonas',
-    captainName: 'João Silva',
+    price: 100.0,
+    image: 'https://images.unsplash.com/photo-1598128558393-70ff21433be0?w=400',
+    duration: '6h',
   },
   {
     id: '2',
     origin: 'Manaus',
     destination: 'Itacoatiara',
-    departureTime: '09:30',
-    arrivalTime: '12:00',
-    date: '2026-02-15',
     price: 45.0,
-    availableSeats: 8,
-    boatName: 'Rio Negro Express',
-    captainName: 'Maria Santos',
+    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
+    duration: '2.5h',
   },
   {
     id: '3',
-    origin: 'Parintins',
-    destination: 'Manaus',
-    departureTime: '15:00',
-    arrivalTime: '21:00',
-    date: '2026-02-16',
-    price: 85.0,
-    availableSeats: 15,
-    boatName: 'Boto Cor de Rosa',
-    captainName: 'Carlos Mendes',
+    origin: 'Manaus',
+    destination: 'Tefé',
+    price: 180.0,
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400',
+    duration: '12h',
+  },
+];
+
+// Mock data - My Next Trips
+const MY_TRIPS = [
+  {
+    id: '1',
+    origin: 'Manaus',
+    destination: 'Tefé',
+    date: '2026-02-20',
+    time: '08:00',
+    status: 'completed' as const,
+  },
+  {
+    id: '2',
+    origin: 'Manaus',
+    destination: 'Canete',
+    date: '2026-02-25',
+    time: '14:30',
+    status: 'upcoming' as const,
   },
 ];
 
 export function HomeScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const {routes: popularRoutes, fetch: fetchRoutes, isLoading: loadingRoutes} = usePopularRoutes();
+  const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
+
+  // Buscar dados ao carregar a tela
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    try {
+      await Promise.all([
+        fetchRoutes(),
+        fetchBookings(),
+      ]);
+    } catch (error) {
+      console.error('Error loading home data:', error);
+    }
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // TODO: Buscar viagens da API
-    setTimeout(() => setRefreshing(false), 1500);
+    await loadData();
+    setRefreshing(false);
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
+  const renderPopularRoute = ({item}: {item: typeof POPULAR_ROUTES[0]}) => (
+    <TouchableOpacityBox
+      mr="s16"
+      backgroundColor="surface"
+      borderRadius="s20"
+      overflow="hidden"
+      width={180}
+      onPress={() => {
+        // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
+        navigation.navigate('SearchResults', {
+          origin: item.origin,
+          destination: item.destination,
+        });
+      }}
+      style={{
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        elevation: 5,
+      }}>
+      <Image
+        source={{uri: item.image}}
+        style={{width: '100%', height: 120}}
+        resizeMode="cover"
+      />
+      <Box padding="s16">
+        <Box flexDirection="row" alignItems="center" mb="s8">
+          <Icon name="place" size={16} color="primary" />
+          <Text preset="paragraphSmall" color="text" bold ml="s4">
+            {item.origin}
+          </Text>
+          <Box mx="s4">
+            <Icon name="arrow-forward" size={14} color="textSecondary" />
+          </Box>
+          <Text preset="paragraphSmall" color="text" bold>
+            {item.destination}
+          </Text>
+        </Box>
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between">
+          <Text preset="paragraphMedium" color="primary" bold>
+            From R${item.price.toFixed(0)}
+          </Text>
+          <Box
+            backgroundColor="primaryBg"
+            paddingHorizontal="s8"
+            paddingVertical="s4"
+            borderRadius="s8">
+            <Text preset="paragraphCaptionSmall" color="primary" bold>
+              {item.duration}
+            </Text>
+          </Box>
+        </Box>
+      </Box>
+    </TouchableOpacityBox>
+  );
+
+  const renderMyTrip = ({item}: {item: typeof MY_TRIPS[0]}) => {
+    const statusColor = item.status === 'completed' ? 'success' : 'warning';
+    const statusBg = item.status === 'completed' ? 'successBg' : 'warningBg';
+    const statusText = item.status === 'completed' ? 'COMPLETED' : 'UPCOMING';
+
+    return (
+      <TouchableOpacityBox
+        mb="s16"
+        backgroundColor="surface"
+        borderRadius="s20"
+        padding="s20"
+        flexDirection="row"
+        alignItems="center"
+        onPress={() => {
+          // Se for um booking, navega para Ticket, senão para TripDetails
+          if (item.id && item.status) {
+            navigation.navigate('Ticket', {bookingId: item.id});
+          }
+        }}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 3},
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          elevation: 4,
+        }}>
+        <Box
+          width={50}
+          height={50}
+          borderRadius="s12"
+          backgroundColor="primaryBg"
+          alignItems="center"
+          justifyContent="center"
+          mr="s16">
+          <Icon name="directions-boat" size={26} color="primary" />
+        </Box>
+
+        <Box flex={1}>
+          <Box flexDirection="row" alignItems="center" mb="s8">
+            <Text preset="paragraphMedium" color="text" bold>
+              {item.origin}
+            </Text>
+            <Box mx="s8">
+              <Icon name="arrow-forward" size={16} color="textSecondary" />
+            </Box>
+            <Text preset="paragraphMedium" color="text" bold>
+              {item.destination}
+            </Text>
+          </Box>
+          <Box flexDirection="row" alignItems="center">
+            <Icon name="schedule" size={14} color="textSecondary" />
+            <Text preset="paragraphSmall" color="textSecondary" ml="s4">
+              {new Date(item.date).toLocaleDateString('pt-BR')} • {item.time}
+            </Text>
+          </Box>
+        </Box>
+
+        <Box
+          backgroundColor={statusBg}
+          paddingHorizontal="s12"
+          paddingVertical="s6"
+          borderRadius="s12">
+          <Text preset="paragraphCaptionSmall" color={statusColor} bold>
+            {statusText}
+          </Text>
+        </Box>
+      </TouchableOpacityBox>
+    );
   };
 
   return (
@@ -73,167 +228,125 @@ export function HomeScreen({navigation}: Props) {
       <Box
         paddingHorizontal="s24"
         paddingTop="s56"
-        paddingBottom="s24"
+        paddingBottom="s28"
         backgroundColor="primary">
-        <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Box flex={1}>
-            <Text preset="paragraphMedium" color="surface" mb="s4">
-              {getGreeting()},
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s20">
+          <Box>
+            <Text preset="paragraphMedium" color="surface" opacity={0.9} mb="s4">
+              NavegaJá App
             </Text>
             <Text preset="headingMedium" color="surface" bold>
-              {user?.name?.split(' ')[0]}
+              Olá, {user?.name?.split(' ')[0]}!
             </Text>
           </Box>
           <TouchableOpacityBox
             width={48}
             height={48}
             borderRadius="s24"
-            backgroundColor="primaryBg"
+            backgroundColor="surface"
             alignItems="center"
             justifyContent="center">
-            <Icon name="notifications" size={24} color="primary" />
+            <Icon name="menu" size={24} color="primary" />
           </TouchableOpacityBox>
+        </Box>
+
+        {/* Search Bar */}
+        <Box
+          backgroundColor="surface"
+          borderRadius="s16"
+          paddingHorizontal="s16"
+          paddingVertical="s14"
+          flexDirection="row"
+          alignItems="center"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 2,
+          }}>
+          <Icon name="search" size={22} color="textSecondary" />
+          <Text preset="paragraphMedium" color="textSecondary" ml="s12" flex={1}>
+            Origem or Destination
+          </Text>
         </Box>
       </Box>
 
       {/* Content */}
-      <FlatList
-        data={MOCK_TRIPS}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{padding: 24}}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListHeaderComponent={
-          <Box mb="s24">
-            <Text preset="headingSmall" color="text" bold mb="s8">
-              Viagens Disponíveis
+        }>
+        {/* Popular Routes */}
+        <Box mt="s24" mb="s28">
+          <Box flexDirection="row" justifyContent="space-between" alignItems="center" px="s24" mb="s16">
+            <Text preset="headingSmall" color="text" bold>
+              Popular Routes
             </Text>
-            <Text preset="paragraphMedium" color="textSecondary">
-              Encontre a melhor opção para sua jornada
-            </Text>
+            <TouchableOpacityBox onPress={() => navigation.navigate('Search')}>
+              <Text preset="paragraphMedium" color="primary" bold>
+                View All
+              </Text>
+            </TouchableOpacityBox>
           </Box>
-        }
-        renderItem={({item}) => (
-          <TouchableOpacityBox
-            mb="s16"
-            backgroundColor="surface"
-            borderRadius="s16"
-            padding="s20"
+
+          <FlatList
+            horizontal
+            data={popularRoutes.length > 0 ? popularRoutes : POPULAR_ROUTES}
+            keyExtractor={item => item.id}
+            renderItem={renderPopularRoute}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{paddingHorizontal: 24}}
+          />
+        </Box>
+
+        {/* My Next Trips */}
+        <Box px="s24" mb="s24">
+          <Text preset="headingSmall" color="text" bold mb="s16">
+            My Next Trips
+          </Text>
+
+          {(bookings.length > 0 ? bookings : MY_TRIPS).slice(0, 3).map((trip: any) => (
+            <Box key={trip.id}>
+              {renderMyTrip({item: trip})}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Promo Card */}
+        <Box px="s24" mb="s32">
+          <Box
+            backgroundColor="success"
+            borderRadius="s20"
+            padding="s24"
             style={{
               shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
+              shadowOffset: {width: 0, height: 4},
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 6,
             }}>
-            {/* Route Info */}
-            <Box flexDirection="row" alignItems="center" mb="s16">
-              <Box flex={1}>
-                <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                  Origem
-                </Text>
-                <Text preset="paragraphMedium" color="text" bold>
-                  {item.origin}
-                </Text>
-              </Box>
-
-              <Box
-                width={40}
-                height={40}
-                borderRadius="s20"
-                backgroundColor="primaryBg"
-                alignItems="center"
-                justifyContent="center"
-                mx="s12">
-                <Icon name="arrow-forward" size={20} color="primary" />
-              </Box>
-
-              <Box flex={1}>
-                <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                  Destino
-                </Text>
-                <Text preset="paragraphMedium" color="text" bold>
-                  {item.destination}
-                </Text>
-              </Box>
-            </Box>
-
-            {/* Time Info */}
-            <Box
-              flexDirection="row"
-              alignItems="center"
-              mb="s12"
-              paddingVertical="s12"
-              paddingHorizontal="s16"
-              backgroundColor="background"
-              borderRadius="s12">
-              <Icon name="schedule" size={20} color="primary" />
-              <Text preset="paragraphMedium" color="text" ml="s8">
-                {item.departureTime} - {item.arrivalTime}
-              </Text>
-              <Box flex={1} />
-              <Icon name="event" size={20} color="textSecondary" />
-              <Text preset="paragraphSmall" color="textSecondary" ml="s8">
-                {new Date(item.date).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                })}
-              </Text>
-            </Box>
-
-            {/* Boat & Captain */}
-            <Box flexDirection="row" alignItems="center" mb="s16">
-              <Icon name="directions-boat" size={18} color="secondary" />
-              <Text preset="paragraphSmall" color="text" ml="s8">
-                {item.boatName}
-              </Text>
-              <Text preset="paragraphSmall" color="textSecondary" ml="s4">
-                • {item.captainName}
-              </Text>
-            </Box>
-
-            {/* Price & Seats */}
-            <Box
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between">
-              <Box flexDirection="row" alignItems="baseline">
-                <Text preset="headingSmall" color="primary" bold>
-                  R$ {item.price.toFixed(2)}
-                </Text>
-                <Text preset="paragraphSmall" color="textSecondary" ml="s4">
-                  /pessoa
-                </Text>
-              </Box>
-
-              <Box
-                flexDirection="row"
-                alignItems="center"
-                backgroundColor="successBg"
-                paddingHorizontal="s12"
-                paddingVertical="s8"
-                borderRadius="s8">
-                <Icon name="event-seat" size={16} color="success" />
-                <Text preset="paragraphSmall" color="success" bold ml="s4">
-                  {item.availableSeats} disponíveis
-                </Text>
-              </Box>
-            </Box>
-          </TouchableOpacityBox>
-        )}
-        ListEmptyComponent={
-          <Box alignItems="center" paddingVertical="s48">
-            <Icon name="directions-boat" size={64} color="border" />
-            <Text preset="headingSmall" color="textSecondary" mt="s16">
-              Nenhuma viagem disponível
+            <Text preset="headingSmall" color="surface" bold mb="s8">
+              Ganhe 25% de desconto
             </Text>
-            <Text preset="paragraphMedium" color="textSecondary" mt="s8" textAlign="center">
-              Verifique novamente mais tarde ou ajuste seus filtros
+            <Text preset="paragraphMedium" color="surface" mb="s20" opacity={0.95}>
+              Na sua primeira viagem com parceiros selecionados
             </Text>
+            <Box alignSelf="flex-start">
+              <TouchableOpacityBox
+                backgroundColor="surface"
+                paddingHorizontal="s20"
+                paddingVertical="s12"
+                borderRadius="s12">
+                <Text preset="paragraphMedium" color="success" bold>
+                  Aproveitar
+                </Text>
+              </TouchableOpacityBox>
+            </Box>
           </Box>
-        }
-      />
+        </Box>
+      </ScrollView>
     </Box>
   );
 }

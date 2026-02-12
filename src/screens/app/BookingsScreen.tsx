@@ -1,13 +1,13 @@
 import React, {useState} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {TabsParamList} from '../../routes/AppStack';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'HomeTabs'>;
+type Props = BottomTabScreenProps<TabsParamList, 'Bookings'>;
 
 type BookingStatus = 'active' | 'completed';
 

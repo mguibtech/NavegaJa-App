@@ -2,16 +2,40 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import {Icon} from '@components';
+import {CustomTabBar, Icon} from '@components';
 import {
   HomeScreen,
   SearchScreen,
+  SearchResultsScreen,
+  TripDetailsScreen,
+  BookingScreen,
+  TicketScreen,
+  TrackingScreen,
   BookingsScreen,
   ProfileScreen,
+  EditProfileScreen,
 } from '../screens/app';
 
 export type AppStackParamList = {
   HomeTabs: undefined;
+  SearchResults: {
+    origin: string;
+    destination: string;
+    date?: string;
+  };
+  TripDetails: {
+    tripId: string;
+  };
+  Booking: {
+    tripId: string;
+  };
+  Ticket: {
+    bookingId: string;
+  };
+  Tracking: {
+    bookingId: string;
+  };
+  EditProfile: undefined;
 };
 
 export type TabsParamList = {
@@ -27,23 +51,9 @@ const Tab = createBottomTabNavigator<TabsParamList>();
 function HomeTabs() {
   return (
     <Tab.Navigator
+      tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0a6fbd',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E5EA',
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 64,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-          marginTop: 4,
-        },
       }}>
       <Tab.Screen
         name="Home"
@@ -96,6 +106,12 @@ export function AppStack() {
         headerShown: false,
       }}>
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
+      <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
+      <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+      <Stack.Screen name="Booking" component={BookingScreen} />
+      <Stack.Screen name="Ticket" component={TicketScreen} />
+      <Stack.Screen name="Tracking" component={TrackingScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 }
