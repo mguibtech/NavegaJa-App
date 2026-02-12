@@ -343,7 +343,7 @@ export function HomeScreen({navigation}: Props) {
               </Text>
               <Pressable onPress={() => setShowOriginModal(true)}>
                 <Box
-                  backgroundColor="#F5F5F5"
+                  backgroundColor="disabled"
                   borderRadius="s12"
                   paddingHorizontal="s16"
                   paddingVertical="s14"
@@ -365,7 +365,7 @@ export function HomeScreen({navigation}: Props) {
               </Text>
               <Pressable onPress={() => setShowDestinationModal(true)}>
                 <Box
-                  backgroundColor="#F5F5F5"
+                  backgroundColor="disabled"
                   borderRadius="s12"
                   paddingHorizontal="s16"
                   paddingVertical="s14"
@@ -387,7 +387,7 @@ export function HomeScreen({navigation}: Props) {
               </Text>
               <Pressable onPress={() => setShowDatePicker(true)}>
                 <Box
-                  backgroundColor="#F5F5F5"
+                  backgroundColor="disabled"
                   borderRadius="s12"
                   paddingHorizontal="s16"
                   paddingVertical="s14"
@@ -501,7 +501,7 @@ export function HomeScreen({navigation}: Props) {
                       key={city}
                       padding="s16"
                       borderRadius="s12"
-                      backgroundColor={origin === city ? 'primaryBg' : 'transparent'}
+                      backgroundColor={origin === city ? 'primaryBg' : 'surface'}
                       mb="s8"
                       onPress={() => selectOrigin(city)}>
                       <Text
@@ -540,7 +540,7 @@ export function HomeScreen({navigation}: Props) {
                       key={city}
                       padding="s16"
                       borderRadius="s12"
-                      backgroundColor={destination === city ? 'primaryBg' : 'transparent'}
+                      backgroundColor={destination === city ? 'primaryBg' : 'surface'}
                       mb="s8"
                       onPress={() => selectDestination(city)}>
                       <Text
