@@ -247,19 +247,21 @@ export function HomeScreen({navigation}: Props) {
             borderRadius="s24"
             backgroundColor="surface"
             alignItems="center"
-            justifyContent="center">
+            justifyContent="center"
+            onPress={() => navigation.navigate('Profile')}>
             <Icon name="menu" size={24} color="primary" />
           </TouchableOpacityBox>
         </Box>
 
         {/* Search Bar */}
-        <Box
+        <TouchableOpacityBox
           backgroundColor="surface"
           borderRadius="s16"
           paddingHorizontal="s16"
           paddingVertical="s14"
           flexDirection="row"
           alignItems="center"
+          onPress={() => navigation.navigate('Search')}
           style={{
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 2},
@@ -271,7 +273,7 @@ export function HomeScreen({navigation}: Props) {
           <Text preset="paragraphMedium" color="textSecondary" ml="s12" flex={1}>
             Origem or Destination
           </Text>
-        </Box>
+        </TouchableOpacityBox>
       </Box>
 
       {/* Content */}
