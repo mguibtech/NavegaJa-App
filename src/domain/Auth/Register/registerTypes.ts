@@ -1,24 +1,5 @@
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
-  role: 'passenger' | 'captain';
-  cpf?: string;
-}
+import {RegisterDto, AuthResponse} from '../authTypes';
 
-export interface RegisterResponse {
-  user: {
-    id: string;
-    name: string;
-    phone: string;
-    email?: string;
-    role: string;
-    cpf?: string;
-    isVerified: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
-  accessToken: string;
-  refreshToken: string;
-}
+// Re-exporta os tipos compartilhados para manter compatibilidade
+export type RegisterRequest = RegisterDto;
+export type RegisterResponse = AuthResponse;

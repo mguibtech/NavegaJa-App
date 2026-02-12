@@ -1,8 +1,7 @@
-export interface ResetPasswordRequest {
-  email: string;
-  code: string;
-  newPassword: string;
-}
+import {ResetPasswordDto} from '../authTypes';
+
+// Re-exporta o tipo compartilhado para manter compatibilidade
+export type ResetPasswordRequest = ResetPasswordDto;
 
 export interface ResetPasswordResponse {
   message: string;

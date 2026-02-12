@@ -1,0 +1,1 @@
+export {getTripsUseCase} from './getTripsUseCase';

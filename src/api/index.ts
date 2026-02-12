@@ -1,10 +1,1 @@
-export {api} from './apiClient';
-export {authApi} from './authApi';
-export {routesApi} from './routesApi';
-export {tripsApi} from './tripsApi';
-export {bookingsApi} from './bookingsApi';
-export {shipmentsApi} from './shipmentsApi';
-export {reviewsApi} from './reviewsApi';
-export {boatsApi} from './boatsApi';
-export {usersApi} from './usersApi';
-export {captainApi} from './captainApi';
+export {api, apiClient} from './apiClient';

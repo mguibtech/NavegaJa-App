@@ -1,0 +1,1 @@
+export {getBoatByIdUseCase} from './getBoatByIdUseCase';

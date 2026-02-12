@@ -11,7 +11,7 @@ class ResetPasswordAPI {
       '/auth/reset-password',
       data,
     );
-    return response.data;
+    return response;
   }
 }
 

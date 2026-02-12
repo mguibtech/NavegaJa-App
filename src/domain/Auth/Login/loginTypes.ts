@@ -1,20 +1,5 @@
-export interface LoginRequest {
-  phone: string;
-  password: string;
-}
+import {LoginDto, AuthResponse} from '../authTypes';
 
-export interface LoginResponse {
-  user: {
-    id: string;
-    name: string;
-    phone: string;
-    email?: string;
-    role: string;
-    cpf?: string;
-    isVerified: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
-  accessToken: string;
-  refreshToken: string;
-}
+// Re-exporta os tipos compartilhados para manter compatibilidade
+export type LoginRequest = LoginDto;
+export type LoginResponse = AuthResponse;

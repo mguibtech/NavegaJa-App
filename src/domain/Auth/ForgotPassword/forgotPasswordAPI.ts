@@ -11,7 +11,7 @@ class ForgotPasswordAPI {
       '/auth/forgot-password',
       data,
     );
-    return response.data;
+    return response;
   }
 }
 

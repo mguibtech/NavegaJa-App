@@ -1,0 +1,1 @@
+export {reportIncidentUseCase} from './reportIncidentUseCase';
