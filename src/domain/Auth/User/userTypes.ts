@@ -8,15 +8,17 @@ export interface User {
   id: string;
   name: string;
   phone: string;
-  email?: string;
+  email?: string | null;
   role: UserRole | 'passenger' | 'captain' | 'admin';
-  cpf?: string;
-  avatarUrl?: string;
-  rating: number;
+  cpf?: string | null;
+  avatarUrl?: string | null;
+  rating: string | number; // Backend retorna como string
   totalTrips: number;
   totalPoints: number;
   level: string;
-  referralCode?: string;
+  referralCode?: string | null;
+  resetCode?: string | null;
+  resetCodeExpires?: string | null;
   createdAt: string;
   updatedAt: string;
 }
