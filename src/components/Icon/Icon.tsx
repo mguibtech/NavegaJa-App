@@ -7,7 +7,7 @@ import {ThemeColors} from '@theme';
 export interface IconProps {
   name: string;
   size?: number;
-  color?: ThemeColors;
+  color?: ThemeColors | string;
   onPress?: () => void;
 }
 
@@ -18,7 +18,10 @@ export function Icon({
   onPress,
 }: IconProps) {
   const {colors} = useAppTheme();
-  const iconColor = colors[color];
+  // Se color é uma string hex/rgb, usa diretamente, senão pega do tema
+  const iconColor = color.startsWith('#') || color.startsWith('rgb')
+    ? color
+    : colors[color as ThemeColors];
 
   return (
     <MaterialIcon name={name} size={size} color={iconColor} onPress={onPress} />
