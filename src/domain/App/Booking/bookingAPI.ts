@@ -5,17 +5,17 @@ import {Booking, CancelBookingData, CreateBookingData} from './bookingTypes';
 class BookingAPI {
   async getMyBookings(): Promise<Booking[]> {
     const response = await api.get<Booking[]>('/bookings/my-bookings');
-    return response.data;
+    return response;
   }
 
   async getById(id: string): Promise<Booking> {
     const response = await api.get<Booking>(`/bookings/${id}`);
-    return response.data;
+    return response;
   }
 
   async create(data: CreateBookingData): Promise<Booking> {
     const response = await api.post<Booking>('/bookings', data);
-    return response.data;
+    return response;
   }
 
   async cancel(id: string, data?: CancelBookingData): Promise<void> {
@@ -24,7 +24,7 @@ class BookingAPI {
 
   async checkIn(id: string): Promise<Booking> {
     const response = await api.post<Booking>(`/bookings/${id}/checkin`);
-    return response.data;
+    return response;
   }
 }
 

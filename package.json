@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/geolocation": "^3.4.0",
     "@react-native/new-app-screen": "0.83.1",
     "@react-navigation/bottom-tabs": "^7.13.0",
     "@react-navigation/native": "^7.1.28",
@@ -19,7 +20,10 @@
     "axios": "^1.13.5",
     "react": "19.2.0",
     "react-native": "0.83.1",
+    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "^2.30.0",
+    "react-native-maps": "^1.27.1",
+    "react-native-qrcode-svg": "^6.3.21",
     "react-native-reanimated": "^4.2.1",
     "react-native-reanimated-carousel": "^4.0.3",
     "react-native-safe-area-context": "^5.5.2",
