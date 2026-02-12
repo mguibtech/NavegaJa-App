@@ -244,15 +244,15 @@ export function HomeScreen({navigation}: Props) {
       <Box
         paddingHorizontal="s24"
         paddingTop="s56"
-        paddingBottom="s28"
+        paddingBottom="s24"
         backgroundColor="primary">
-        <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s20">
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Box>
             <Text preset="paragraphMedium" color="surface" opacity={0.9} mb="s4">
-              NavegaJá App
+              Welcome back
             </Text>
             <Text preset="headingMedium" color="surface" bold>
-              Olá, {user?.name?.split(' ')[0]}!
+              Hello, {user?.name?.split(' ')[0]}!
             </Text>
           </Box>
           <TouchableOpacityBox
@@ -266,69 +266,6 @@ export function HomeScreen({navigation}: Props) {
             <Icon name="menu" size={24} color="primary" />
           </TouchableOpacityBox>
         </Box>
-
-        {/* Search Card */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s20"
-          padding="s20"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.12,
-            shadowRadius: 12,
-            elevation: 6,
-          }}>
-          <Text preset="paragraphMedium" color="text" bold mb="s16">
-            WELCOME BACK
-          </Text>
-          <Text preset="headingMedium" color="text" bold mb="s20">
-            Hello, {user?.name?.split(' ')[0]}!
-          </Text>
-
-          {/* Origin Input */}
-          <Box mb="s16">
-            <RNTextInput
-              placeholder="Origin (e.g. Manaus)"
-              value={origin}
-              onChangeText={setOrigin}
-              placeholderTextColor="#999"
-              style={{
-                backgroundColor: '#F5F5F5',
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 15,
-                color: '#333',
-              }}
-            />
-          </Box>
-
-          {/* Destination Input */}
-          <Box mb="s20">
-            <RNTextInput
-              placeholder="Destination (e.g. Parintins)"
-              value={destination}
-              onChangeText={setDestination}
-              placeholderTextColor="#999"
-              style={{
-                backgroundColor: '#F5F5F5',
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 15,
-                color: '#333',
-              }}
-            />
-          </Box>
-
-          {/* Search Button */}
-          <Button
-            title="Find Trips"
-            onPress={handleSearch}
-            leftIcon="search"
-          />
-        </Box>
       </Box>
 
       {/* Content */}
@@ -337,6 +274,74 @@ export function HomeScreen({navigation}: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
+        {/* Search Card */}
+        <Box paddingHorizontal="s24" mt="s24">
+          <Box
+            backgroundColor="surface"
+            borderRadius="s20"
+            padding="s20"
+            mb="s24"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 4},
+              shadowOpacity: 0.12,
+              shadowRadius: 12,
+              elevation: 6,
+            }}>
+            <Text preset="paragraphLarge" color="text" bold mb="s20">
+              🚢 Find Your Trip
+            </Text>
+
+            {/* Origin Input */}
+            <Box mb="s16">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+                Origin
+              </Text>
+              <RNTextInput
+                placeholder="e.g. Manaus"
+                value={origin}
+                onChangeText={setOrigin}
+                placeholderTextColor="#999"
+                style={{
+                  backgroundColor: '#F5F5F5',
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 15,
+                  color: '#333',
+                }}
+              />
+            </Box>
+
+            {/* Destination Input */}
+            <Box mb="s20">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+                Destination
+              </Text>
+              <RNTextInput
+                placeholder="e.g. Parintins"
+                value={destination}
+                onChangeText={setDestination}
+                placeholderTextColor="#999"
+                style={{
+                  backgroundColor: '#F5F5F5',
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 15,
+                  color: '#333',
+                }}
+              />
+            </Box>
+
+            {/* Search Button */}
+            <Button
+              title="Find Trips"
+              onPress={handleSearch}
+              leftIcon="search"
+            />
+          </Box>
+        </Box>
         {/* Popular Routes */}
         <Box mt="s24" mb="s28">
           <Box flexDirection="row" justifyContent="space-between" alignItems="center" px="s24" mb="s16">
