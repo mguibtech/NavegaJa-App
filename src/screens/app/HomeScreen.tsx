@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, Image, RefreshControl, ScrollView, TextInput as RNTextInput} from 'react-native';
+import {FlatList, Image, Modal, Pressable, RefreshControl, ScrollView, TextInput as RNTextInput} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
@@ -64,11 +65,29 @@ const MY_TRIPS = [
   },
 ];
 
+// Lista de cidades disponíveis
+const AVAILABLE_CITIES = [
+  'Manaus',
+  'Parintins',
+  'Itacoatiara',
+  'Manacapuru',
+  'Tefé',
+  'Coari',
+  'Tabatinga',
+  'Maués',
+  'Humaitá',
+  'Iranduba',
+];
+
 export function HomeScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showOriginModal, setShowOriginModal] = useState(false);
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
 
   const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
 
@@ -100,7 +119,32 @@ export function HomeScreen({navigation}: Props) {
     navigation.navigate('SearchResults', {
       origin: origin.trim(),
       destination: destination.trim(),
-      date: new Date().toISOString().split('T')[0],
+      date: date.toISOString().split('T')[0],
+    });
+  }
+
+  function handleDateChange(event: any, selectedDate?: Date) {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  }
+
+  function selectOrigin(city: string) {
+    setOrigin(city);
+    setShowOriginModal(false);
+  }
+
+  function selectDestination(city: string) {
+    setDestination(city);
+    setShowDestinationModal(false);
+  }
+
+  function formatDate(date: Date): string {
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     });
   }
 
@@ -292,46 +336,70 @@ export function HomeScreen({navigation}: Props) {
               🚢 Find Your Trip
             </Text>
 
-            {/* Origin Input */}
+            {/* Origin Selector */}
             <Box mb="s16">
               <Text preset="paragraphSmall" color="textSecondary" mb="s8">
                 Origin
               </Text>
-              <RNTextInput
-                placeholder="e.g. Manaus"
-                value={origin}
-                onChangeText={setOrigin}
-                placeholderTextColor="#999"
-                style={{
-                  backgroundColor: '#F5F5F5',
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  fontSize: 15,
-                  color: '#333',
-                }}
-              />
+              <Pressable onPress={() => setShowOriginModal(true)}>
+                <Box
+                  backgroundColor="#F5F5F5"
+                  borderRadius="s12"
+                  paddingHorizontal="s16"
+                  paddingVertical="s14"
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between">
+                  <Text preset="paragraphMedium" color={origin ? 'text' : 'textSecondary'}>
+                    {origin || 'Select origin city'}
+                  </Text>
+                  <Icon name="expand-more" size={20} color="textSecondary" />
+                </Box>
+              </Pressable>
             </Box>
 
-            {/* Destination Input */}
-            <Box mb="s20">
+            {/* Destination Selector */}
+            <Box mb="s16">
               <Text preset="paragraphSmall" color="textSecondary" mb="s8">
                 Destination
               </Text>
-              <RNTextInput
-                placeholder="e.g. Parintins"
-                value={destination}
-                onChangeText={setDestination}
-                placeholderTextColor="#999"
-                style={{
-                  backgroundColor: '#F5F5F5',
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  fontSize: 15,
-                  color: '#333',
-                }}
-              />
+              <Pressable onPress={() => setShowDestinationModal(true)}>
+                <Box
+                  backgroundColor="#F5F5F5"
+                  borderRadius="s12"
+                  paddingHorizontal="s16"
+                  paddingVertical="s14"
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between">
+                  <Text preset="paragraphMedium" color={destination ? 'text' : 'textSecondary'}>
+                    {destination || 'Select destination city'}
+                  </Text>
+                  <Icon name="expand-more" size={20} color="textSecondary" />
+                </Box>
+              </Pressable>
+            </Box>
+
+            {/* Date Selector */}
+            <Box mb="s20">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+                Date
+              </Text>
+              <Pressable onPress={() => setShowDatePicker(true)}>
+                <Box
+                  backgroundColor="#F5F5F5"
+                  borderRadius="s12"
+                  paddingHorizontal="s16"
+                  paddingVertical="s14"
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between">
+                  <Text preset="paragraphMedium" color="text">
+                    {formatDate(date)}
+                  </Text>
+                  <Icon name="calendar-today" size={20} color="textSecondary" />
+                </Box>
+              </Pressable>
             </Box>
 
             {/* Search Button */}
@@ -411,6 +479,95 @@ export function HomeScreen({navigation}: Props) {
           </Box>
         </Box>
       </ScrollView>
+
+      {/* Origin Modal */}
+      <Modal
+        visible={showOriginModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowOriginModal(false)}>
+        <Pressable
+          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}
+          onPress={() => setShowOriginModal(false)}>
+          <Box flex={1} justifyContent="flex-end">
+            <Pressable>
+              <Box backgroundColor="surface" borderTopLeftRadius="s24" borderTopRightRadius="s24" padding="s24">
+                <Text preset="headingSmall" color="text" bold mb="s20">
+                  Select Origin City
+                </Text>
+                <ScrollView style={{maxHeight: 400}}>
+                  {AVAILABLE_CITIES.map(city => (
+                    <TouchableOpacityBox
+                      key={city}
+                      padding="s16"
+                      borderRadius="s12"
+                      backgroundColor={origin === city ? 'primaryBg' : 'transparent'}
+                      mb="s8"
+                      onPress={() => selectOrigin(city)}>
+                      <Text
+                        preset="paragraphLarge"
+                        color={origin === city ? 'primary' : 'text'}
+                        bold={origin === city}>
+                        {city}
+                      </Text>
+                    </TouchableOpacityBox>
+                  ))}
+                </ScrollView>
+              </Box>
+            </Pressable>
+          </Box>
+        </Pressable>
+      </Modal>
+
+      {/* Destination Modal */}
+      <Modal
+        visible={showDestinationModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDestinationModal(false)}>
+        <Pressable
+          style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}}
+          onPress={() => setShowDestinationModal(false)}>
+          <Box flex={1} justifyContent="flex-end">
+            <Pressable>
+              <Box backgroundColor="surface" borderTopLeftRadius="s24" borderTopRightRadius="s24" padding="s24">
+                <Text preset="headingSmall" color="text" bold mb="s20">
+                  Select Destination City
+                </Text>
+                <ScrollView style={{maxHeight: 400}}>
+                  {AVAILABLE_CITIES.map(city => (
+                    <TouchableOpacityBox
+                      key={city}
+                      padding="s16"
+                      borderRadius="s12"
+                      backgroundColor={destination === city ? 'primaryBg' : 'transparent'}
+                      mb="s8"
+                      onPress={() => selectDestination(city)}>
+                      <Text
+                        preset="paragraphLarge"
+                        color={destination === city ? 'primary' : 'text'}
+                        bold={destination === city}>
+                        {city}
+                      </Text>
+                    </TouchableOpacityBox>
+                  ))}
+                </ScrollView>
+              </Box>
+            </Pressable>
+          </Box>
+        </Pressable>
+      </Modal>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          minimumDate={new Date()}
+        />
+      )}
     </Box>
   );
 }
