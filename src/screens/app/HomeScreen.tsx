@@ -7,7 +7,6 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useAuthStore} from '../../store/auth.store';
-import {usePopularRoutes} from '../../domain/App/Route';
 import {useMyBookings} from '../../domain/App/Booking/useCases/useMyBookings';
 
 import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
@@ -70,7 +69,6 @@ export function HomeScreen({navigation}: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const {routes: popularRoutes, fetch: fetchRoutes, isLoading: loadingRoutes} = usePopularRoutes();
   const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
 
   // Buscar dados ao carregar a tela
@@ -80,10 +78,7 @@ export function HomeScreen({navigation}: Props) {
 
   async function loadData() {
     try {
-      await Promise.all([
-        fetchRoutes(),
-        fetchBookings(),
-      ]);
+      await fetchBookings();
     } catch (error) {
       console.error('Error loading home data:', error);
     }
@@ -95,62 +90,69 @@ export function HomeScreen({navigation}: Props) {
     setRefreshing(false);
   };
 
-  const renderPopularRoute = ({item}: {item: typeof POPULAR_ROUTES[0]}) => (
-    <TouchableOpacityBox
-      mr="s16"
-      backgroundColor="surface"
-      borderRadius="s20"
-      overflow="hidden"
-      width={180}
-      onPress={() => {
-        // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
-        navigation.navigate('SearchResults', {
-          origin: item.origin,
-          destination: item.destination,
-        });
-      }}
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-        elevation: 5,
-      }}>
-      <Image
-        source={{uri: item.image}}
-        style={{width: '100%', height: 120}}
-        resizeMode="cover"
-      />
-      <Box padding="s16">
-        <Box flexDirection="row" alignItems="center" mb="s8">
-          <Icon name="place" size={16} color="primary" />
-          <Text preset="paragraphSmall" color="text" bold ml="s4">
-            {item.origin}
-          </Text>
-          <Box mx="s4">
-            <Icon name="arrow-forward" size={14} color="textSecondary" />
-          </Box>
-          <Text preset="paragraphSmall" color="text" bold>
-            {item.destination}
-          </Text>
-        </Box>
-        <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-          <Text preset="paragraphMedium" color="primary" bold>
-            From R${item.price.toFixed(0)}
-          </Text>
-          <Box
-            backgroundColor="primaryBg"
-            paddingHorizontal="s8"
-            paddingVertical="s4"
-            borderRadius="s8">
-            <Text preset="paragraphCaptionSmall" color="primary" bold>
-              {item.duration}
+  const renderPopularRoute = ({item}: {item: any}) => {
+    // Fallbacks para rotas da API que não têm price, image, duration
+    const price = (item as any).price ?? 0;
+    const image = (item as any).image ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400';
+    const duration = (item as any).duration ?? (item as any).estimatedDuration ? `${Math.floor((item as any).estimatedDuration / 60)}h` : '--';
+
+    return (
+      <TouchableOpacityBox
+        mr="s16"
+        backgroundColor="surface"
+        borderRadius="s20"
+        overflow="hidden"
+        width={180}
+        onPress={() => {
+          // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
+          navigation.navigate('SearchResults', {
+            origin: item.origin,
+            destination: item.destination,
+          });
+        }}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
+          elevation: 5,
+        }}>
+        <Image
+          source={{uri: image}}
+          style={{width: '100%', height: 120}}
+          resizeMode="cover"
+        />
+        <Box padding="s16">
+          <Box flexDirection="row" alignItems="center" mb="s8">
+            <Icon name="place" size={16} color="primary" />
+            <Text preset="paragraphSmall" color="text" bold ml="s4">
+              {item.origin}
+            </Text>
+            <Box mx="s4">
+              <Icon name="arrow-forward" size={14} color="textSecondary" />
+            </Box>
+            <Text preset="paragraphSmall" color="text" bold>
+              {item.destination}
             </Text>
           </Box>
+          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
+            <Text preset="paragraphMedium" color="primary" bold>
+              From R${price.toFixed(0)}
+            </Text>
+            <Box
+              backgroundColor="primaryBg"
+              paddingHorizontal="s8"
+              paddingVertical="s4"
+              borderRadius="s8">
+              <Text preset="paragraphCaptionSmall" color="primary" bold>
+                {duration}
+              </Text>
+            </Box>
+          </Box>
         </Box>
-      </Box>
-    </TouchableOpacityBox>
-  );
+      </TouchableOpacityBox>
+    );
+  };
 
   const renderMyTrip = ({item}: {item: typeof MY_TRIPS[0]}) => {
     const statusColor = item.status === 'completed' ? 'success' : 'warning';
@@ -293,7 +295,7 @@ export function HomeScreen({navigation}: Props) {
 
           <FlatList
             horizontal
-            data={popularRoutes.length > 0 ? popularRoutes : POPULAR_ROUTES}
+            data={POPULAR_ROUTES}
             keyExtractor={item => item.id}
             renderItem={renderPopularRoute}
             showsHorizontalScrollIndicator={false}
