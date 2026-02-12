@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, Image, RefreshControl, ScrollView} from 'react-native';
+import {FlatList, Image, RefreshControl, ScrollView, TextInput as RNTextInput} from 'react-native';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
@@ -67,7 +67,8 @@ const MY_TRIPS = [
 export function HomeScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
 
   const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
 
@@ -89,6 +90,19 @@ export function HomeScreen({navigation}: Props) {
     await loadData();
     setRefreshing(false);
   };
+
+  function handleSearch() {
+    if (!origin.trim() || !destination.trim()) {
+      return;
+    }
+
+    // @ts-ignore
+    navigation.navigate('SearchResults', {
+      origin: origin.trim(),
+      destination: destination.trim(),
+      date: new Date().toISOString().split('T')[0],
+    });
+  }
 
   const renderPopularRoute = ({item}: {item: any}) => {
     // Fallbacks para rotas da API que não têm price, image, duration
@@ -253,27 +267,68 @@ export function HomeScreen({navigation}: Props) {
           </TouchableOpacityBox>
         </Box>
 
-        {/* Search Bar */}
-        <TouchableOpacityBox
+        {/* Search Card */}
+        <Box
           backgroundColor="surface"
-          borderRadius="s16"
-          paddingHorizontal="s16"
-          paddingVertical="s14"
-          flexDirection="row"
-          alignItems="center"
-          onPress={() => navigation.navigate('Search')}
+          borderRadius="s20"
+          padding="s20"
           style={{
             shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            elevation: 2,
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.12,
+            shadowRadius: 12,
+            elevation: 6,
           }}>
-          <Icon name="search" size={22} color="textSecondary" />
-          <Text preset="paragraphMedium" color="textSecondary" ml="s12" flex={1}>
-            Origem or Destination
+          <Text preset="paragraphMedium" color="text" bold mb="s16">
+            WELCOME BACK
           </Text>
-        </TouchableOpacityBox>
+          <Text preset="headingMedium" color="text" bold mb="s20">
+            Hello, {user?.name?.split(' ')[0]}!
+          </Text>
+
+          {/* Origin Input */}
+          <Box mb="s16">
+            <RNTextInput
+              placeholder="Origin (e.g. Manaus)"
+              value={origin}
+              onChangeText={setOrigin}
+              placeholderTextColor="#999"
+              style={{
+                backgroundColor: '#F5F5F5',
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 15,
+                color: '#333',
+              }}
+            />
+          </Box>
+
+          {/* Destination Input */}
+          <Box mb="s20">
+            <RNTextInput
+              placeholder="Destination (e.g. Parintins)"
+              value={destination}
+              onChangeText={setDestination}
+              placeholderTextColor="#999"
+              style={{
+                backgroundColor: '#F5F5F5',
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 15,
+                color: '#333',
+              }}
+            />
+          </Box>
+
+          {/* Search Button */}
+          <Button
+            title="Find Trips"
+            onPress={handleSearch}
+            leftIcon="search"
+          />
+        </Box>
       </Box>
 
       {/* Content */}
