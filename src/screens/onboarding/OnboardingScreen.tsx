@@ -1,7 +1,7 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {Dimensions, Pressable} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 
 import {Box, Button, Icon, Text} from '@components';
 
@@ -31,7 +31,6 @@ const slides = [
 ];
 
 export function OnboardingScreen({onComplete}: OnboardingScreenProps) {
-  const carouselRef = useRef<ICarouselInstance>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const isLastSlide = currentIndex === slides.length - 1;
@@ -39,16 +38,6 @@ export function OnboardingScreen({onComplete}: OnboardingScreenProps) {
   async function handleComplete() {
     await AsyncStorage.setItem(ONBOARDED_KEY, 'true');
     onComplete();
-  }
-
-  function handleNext() {
-    if (isLastSlide) {
-      handleComplete();
-    } else {
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      carouselRef.current?.scrollTo({index: nextIndex, animated: true});
-    }
   }
 
   return (
@@ -65,12 +54,11 @@ export function OnboardingScreen({onComplete}: OnboardingScreenProps) {
       {/* Carousel */}
       <Box flex={1} justifyContent="center" alignItems="center">
         <Carousel
-          ref={carouselRef}
           width={SCREEN_WIDTH}
           height={500}
           data={slides}
           loop={false}
-          onSnapToItem={index => setCurrentIndex(index)}
+          onSnapToItem={setCurrentIndex}
           renderItem={({item}) => (
             <Box flex={1} justifyContent="center" alignItems="center" px="s32">
               <Box
@@ -125,14 +113,16 @@ export function OnboardingScreen({onComplete}: OnboardingScreenProps) {
         ))}
       </Box>
 
-      {/* Bottom Button */}
-      <Box paddingHorizontal="s24" mb="s32">
-        <Button
-          title={isLastSlide ? 'Começar' : 'Próximo'}
-          onPress={handleNext}
-          rightIcon="arrow-forward"
-        />
-      </Box>
+      {/* Start Button - Only on last slide */}
+      {isLastSlide && (
+        <Box paddingHorizontal="s24" mb="s32">
+          <Button
+            title="Começar"
+            onPress={handleComplete}
+            rightIcon="arrow-forward"
+          />
+        </Box>
+      )}
     </Box>
   );
 }
