@@ -24,6 +24,7 @@ interface AuthState {
   loadStoredUser: () => Promise<void>;
   setUser: (user: User | null) => void;
   setLoading: (isLoading: boolean) => void;
+  updateUser: (user: User) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -105,5 +106,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setLoading: (isLoading: boolean) => {
     set({isLoading});
+  },
+
+  updateUser: async (user: User) => {
+    // Salva no storage
+    await authStorage.saveUser(user);
+    // Atualiza estado global
+    set({user});
   },
 }));
