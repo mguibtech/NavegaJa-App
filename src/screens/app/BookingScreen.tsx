@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacityBox,
-  CouponInput,
+  CouponInputV2,
   PriceBreakdown,
 } from '@components';
 import {
@@ -20,7 +20,7 @@ import {
   useCreateBooking,
   useCalculatePrice,
   PriceBreakdown as PriceBreakdownType,
-  Coupon,
+  useCouponValidation,
 } from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -37,11 +37,10 @@ export function BookingScreen({navigation, route}: Props) {
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
 
-  const {calculate, isLoading: isCalculatingPrice, error: priceError} = useCalculatePrice();
+  const {calculate, isLoading: isCalculatingPrice} = useCalculatePrice();
+  const couponValidation = useCouponValidation();
 
   // Load trip data
   useEffect(() => {
@@ -53,7 +52,7 @@ export function BookingScreen({navigation, route}: Props) {
     if (trip) {
       calculatePrice();
     }
-  }, [trip, passengers, appliedCoupon]);
+  }, [trip, passengers, couponValidation.state]);
 
   async function loadTrip() {
     setIsLoadingTrip(true);
@@ -73,10 +72,15 @@ export function BookingScreen({navigation, route}: Props) {
     if (!trip) return;
 
     try {
+      // Pega código do cupom se estiver validado
+      const couponCode = couponValidation.state.status === 'VALID'
+        ? couponValidation.state.data.code
+        : undefined;
+
       const breakdown = await calculate({
         tripId: trip.id,
         quantity: passengers,
-        couponCode: appliedCoupon?.code,
+        couponCode,
       });
       setPriceBreakdown(breakdown);
     } catch (_error) {
@@ -94,29 +98,21 @@ export function BookingScreen({navigation, route}: Props) {
   }
 
   async function handleApplyCoupon(code: string) {
-    try {
-      const breakdown = await calculate({
-        tripId: trip!.id,
-        quantity: passengers,
-        couponCode: code,
-      });
+    if (!trip) return;
 
-      // Se chegou aqui, o cupom é válido
-      setPriceBreakdown(breakdown);
-      setAppliedCoupon({code} as Coupon); // Simplificado - o backend valida
-      Alert.alert('Sucesso', 'Cupom aplicado com sucesso! 🎉');
-    } catch (_error: any) {
-      Alert.alert(
-        'Cupom Inválido',
-        _error.message || 'O cupom informado não é válido ou expirou.'
-      );
-      throw _error; // Re-throw para o CouponInput saber que falhou
-    }
+    // Valida cupom usando hook
+    await couponValidation.validate({
+      code,
+      tripId: trip.id,
+      quantity: passengers,
+    });
+
+    // Recalcula preço (será chamado pelo useEffect quando state mudar)
   }
 
   function handleRemoveCoupon() {
-    setAppliedCoupon(null);
-    Alert.alert('Cupom Removido', 'O cupom foi removido da sua reserva.');
+    couponValidation.remove();
+    // Recalcula preço (será chamado pelo useEffect quando state mudar)
   }
 
   // Show loading state while fetching trip
@@ -188,11 +184,16 @@ export function BookingScreen({navigation, route}: Props) {
     }
 
     try {
+      // Pega código do cupom se estiver validado
+      const couponCode = couponValidation.state.status === 'VALID'
+        ? couponValidation.state.data.code
+        : undefined;
+
       const booking = await createBooking({
         tripId: trip.id,
         quantity: passengers,
         paymentMethod,
-        couponCode: appliedCoupon?.code,
+        couponCode,
       });
 
       // Navegar para tela de ticket com o ID real
@@ -456,15 +457,13 @@ export function BookingScreen({navigation, route}: Props) {
           )}
         </Box>
 
-        {/* Coupon Input */}
-        <Box mb="s16">
-          <CouponInput
-            onApply={handleApplyCoupon}
-            onRemove={handleRemoveCoupon}
-            isLoading={isCalculatingPrice}
-            appliedCode={appliedCoupon?.code}
-          />
-        </Box>
+        {/* Coupon Input V2 - Com máquina de estados */}
+        <CouponInputV2
+          state={couponValidation.state}
+          onApply={handleApplyCoupon}
+          onRemove={handleRemoveCoupon}
+          onRetry={couponValidation.retry}
+        />
 
         {/* Payment Method */}
         <Box
