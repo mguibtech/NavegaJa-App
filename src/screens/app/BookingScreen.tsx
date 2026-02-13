@@ -25,6 +25,50 @@ import {
 
 import {AppStackParamList} from '@routes';
 
+// Funções de validação de CPF
+function isValidCPF(cpf: string): boolean {
+  const cleanCPF = cpf.replace(/\D/g, '');
+  if (cleanCPF.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+  }
+  let digit1 = 11 - (sum % 11);
+  if (digit1 >= 10) digit1 = 0;
+  if (parseInt(cleanCPF.charAt(9)) !== digit1) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+  }
+  let digit2 = 11 - (sum % 11);
+  if (digit2 >= 10) digit2 = 0;
+  if (parseInt(cleanCPF.charAt(10)) !== digit2) return false;
+
+  return true;
+}
+
+function formatCPFUtil(value: string): string {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  let formatted = numbers;
+  if (numbers.length > 3) {
+    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  }
+  if (numbers.length > 6) {
+    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  }
+  if (numbers.length > 9) {
+    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
+  }
+  return formatted;
+}
+
+function isCPFComplete(cpf: string): boolean {
+  return cpf.replace(/\D/g, '').length === 11;
+}
+
 type Props = NativeStackScreenProps<AppStackParamList, 'Booking'>;
 
 export function BookingScreen({navigation, route}: Props) {
@@ -36,6 +80,7 @@ export function BookingScreen({navigation, route}: Props) {
   const [passengers, setPassengers] = useState(1);
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
+  const [cpfError, setCpfError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
 
@@ -137,31 +182,41 @@ export function BookingScreen({navigation, route}: Props) {
     if (passengers > 1) setPassengers(passengers - 1);
   };
 
-  const formatCPF = (value: string) => {
-    // Remove tudo que não é dígito
-    const numbers = value.replace(/\D/g, '');
+  const handleCPFChange = (value: string) => {
+    const formatted = formatCPFUtil(value);
+    setPassengerCPF(formatted);
 
-    // Limita a 11 dígitos
-    const limitedNumbers = numbers.slice(0, 11);
-
-    // Aplica a máscara XXX.XXX.XXX-XX
-    let formatted = limitedNumbers;
-    if (limitedNumbers.length > 3) {
-      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3)}`;
-    }
-    if (limitedNumbers.length > 6) {
-      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6)}`;
-    }
-    if (limitedNumbers.length > 9) {
-      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6, 9)}-${limitedNumbers.slice(9)}`;
+    // Limpa erro quando usuário começa a digitar
+    if (cpfError) {
+      setCpfError(null);
     }
 
-    return formatted;
+    // Valida CPF quando completo (11 dígitos)
+    if (isCPFComplete(formatted)) {
+      if (!isValidCPF(formatted)) {
+        setCpfError('CPF inválido');
+      }
+    }
   };
 
-  const handleCPFChange = (value: string) => {
-    const formatted = formatCPF(value);
-    setPassengerCPF(formatted);
+  const validateCPF = (): boolean => {
+    if (!passengerCPF.trim()) {
+      setCpfError('CPF é obrigatório');
+      return false;
+    }
+
+    if (!isCPFComplete(passengerCPF)) {
+      setCpfError('CPF incompleto');
+      return false;
+    }
+
+    if (!isValidCPF(passengerCPF)) {
+      setCpfError('CPF inválido');
+      return false;
+    }
+
+    setCpfError(null);
+    return true;
   };
 
   const handleConfirmBooking = async () => {
@@ -171,15 +226,9 @@ export function BookingScreen({navigation, route}: Props) {
       return;
     }
 
-    if (!passengerCPF.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe o CPF do passageiro');
-      return;
-    }
-
-    // Valida se o CPF tem 11 dígitos
-    const cpfNumbers = passengerCPF.replace(/\D/g, '');
-    if (cpfNumbers.length !== 11) {
-      Alert.alert('Atenção', 'Por favor, informe um CPF válido com 11 dígitos');
+    // Valida CPF completo (com dígitos verificadores)
+    if (!validateCPF()) {
+      Alert.alert('CPF Inválido', cpfError || 'Por favor, informe um CPF válido');
       return;
     }
 
@@ -440,6 +489,7 @@ export function BookingScreen({navigation, route}: Props) {
             keyboardType="numeric"
             leftIcon="badge"
             maxLength={14}
+            errorMessage={cpfError || undefined}
           />
 
           {passengers > 1 && (
