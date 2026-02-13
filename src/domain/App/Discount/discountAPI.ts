@@ -3,6 +3,8 @@ import {
   Coupon,
   CalculatePriceRequest,
   CalculatePriceResponse,
+  ValidateCouponRequest,
+  ValidateCouponResponse,
 } from './discountTypes';
 
 class DiscountAPI {
@@ -11,6 +13,20 @@ class DiscountAPI {
    */
   async getCouponByCode(code: string): Promise<Coupon> {
     const response = await api.get<Coupon>(`/coupons/${code}`);
+    return response;
+  }
+
+  /**
+   * Validar cupom (endpoint separado da spec backend)
+   * POST /coupons/validate
+   */
+  async validateCoupon(
+    data: ValidateCouponRequest,
+  ): Promise<ValidateCouponResponse> {
+    const response = await api.post<ValidateCouponResponse>(
+      '/coupons/validate',
+      data,
+    );
     return response;
   }
 

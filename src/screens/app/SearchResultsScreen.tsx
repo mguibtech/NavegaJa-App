@@ -3,7 +3,7 @@ import {FlatList, RefreshControl, Modal, ScrollView, ImageBackground} from 'reac
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge} from '@components';
+import {Box, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton} from '@components';
 import {Trip, useSearchTrips} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -359,21 +359,31 @@ export function SearchResultsScreen({navigation, route}: Props) {
       )}
 
       {/* Results List */}
-      <FlatList
-        data={sortedTrips}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{padding: 24}}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
-        }
-        ListHeaderComponent={
+      {isLoading && sortedTrips.length === 0 ? (
+        <Box padding="s24">
           <Box mb="s20">
             <Text preset="paragraphMedium" color="text" bold>
-              {sortedTrips.length}{' viagens encontradas'}
+              Buscando viagens...
             </Text>
           </Box>
-        }
-        renderItem={({item}) => {
+          <TripListSkeleton count={5} />
+        </Box>
+      ) : (
+        <FlatList
+          data={sortedTrips}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{padding: 24}}
+          refreshControl={
+            <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
+          }
+          ListHeaderComponent={
+            <Box mb="s20">
+              <Text preset="paragraphMedium" color="text" bold>
+                {sortedTrips.length}{' viagens encontradas'}
+              </Text>
+            </Box>
+          }
+          renderItem={({item}) => {
           const departureTime = formatTime(item.departureAt);
           const arrivalTime = formatTime(item.estimatedArrivalAt);
           const duration = calculateDuration(item.departureAt, item.estimatedArrivalAt);
@@ -591,6 +601,7 @@ export function SearchResultsScreen({navigation, route}: Props) {
           </Box>
         }
       />
+      )}
 
       {/* Filter Modal */}
       <Modal

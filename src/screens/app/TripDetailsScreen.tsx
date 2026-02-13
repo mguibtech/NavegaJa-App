@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Dimensions, Alert, ActivityIndicator} from 'react-native';
+import {ScrollView, Dimensions, Alert} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, PromoBadge} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton} from '@components';
 import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
 
 
@@ -282,11 +282,33 @@ export function TripDetailsScreen({navigation, route}: Props) {
   // Loading state
   if (isLoading) {
     return (
-      <Box flex={1} backgroundColor="background" justifyContent="center" alignItems="center">
-        <ActivityIndicator size="large" color="#0369A1" />
-        <Text preset="paragraphMedium" color="textSecondary" mt="s16">
-          {'Carregando detalhes da viagem...'}
-        </Text>
+      <Box flex={1} backgroundColor="background">
+        {/* Header */}
+        <Box
+          paddingHorizontal="s24"
+          paddingTop="s40"
+          paddingBottom="s12"
+          backgroundColor="surface"
+          borderBottomWidth={1}
+          borderBottomColor="border">
+          <Box flexDirection="row" alignItems="center" justifyContent="center">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => navigation.goBack()}
+              style={{position: 'absolute', left: 0}}>
+              <Icon name="arrow-back" size={22} color="text" />
+            </TouchableOpacityBox>
+
+            <Text preset="headingSmall" color="text" bold>
+              {'Detalhes da Viagem'}
+            </Text>
+          </Box>
+        </Box>
+
+        <TripDetailsSkeleton />
       </Box>
     );
   }
