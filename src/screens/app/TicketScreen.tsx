@@ -7,7 +7,7 @@ import QRCode from 'react-native-qrcode-svg';
 import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
 import {Booking, bookingAPI, BookingStatus, Trip, tripAPI, PaymentMethod} from '@domain';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Ticket'>;
 
@@ -33,9 +33,9 @@ export function TicketScreen({navigation, route}: Props) {
       // Load trip data
       const tripData = await tripAPI.getById(bookingData.tripId);
       setTrip(tripData);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Erro', 'Não foi possível carregar os dados do bilhete');
-      console.error('Failed to load booking:', error);
+      console.error('Failed to load booking:', _error);
       navigation.navigate('HomeTabs');
     } finally {
       setIsLoading(false);
@@ -102,10 +102,10 @@ export function TicketScreen({navigation, route}: Props) {
       };
 
       await Share.share({
-        message: `Meu bilhete NavegaJá\n\nCódigo: ${booking.id}\n${trip.origin} → ${trip.destination}\nData: ${formatDate(trip.departureTime)}\nHorário: ${formatTime(trip.departureTime)}`,
+        message: `Meu bilhete NavegaJá\n\nCódigo: ${booking.id}\n${trip.origin} → ${trip.destination}\nData: ${formatDate(trip.departureAt)}\nHorário: ${formatTime(trip.departureAt)}`,
       });
-    } catch (error) {
-      console.error('Error sharing:', error);
+    } catch (_error) {
+      console.error('Error sharing:', _error);
     }
   };
 
@@ -127,7 +127,7 @@ export function TicketScreen({navigation, route}: Props) {
               await bookingAPI.cancel(booking.id);
               Alert.alert('Sucesso', 'Reserva cancelada com sucesso');
               navigation.navigate('HomeTabs');
-            } catch (error) {
+            } catch (_error) {
               Alert.alert('Erro', 'Não foi possível cancelar a reserva');
             }
           },
@@ -203,24 +203,24 @@ export function TicketScreen({navigation, route}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s20"
-        backgroundColor="primary">
+        paddingTop="s40"
+        paddingBottom="s12"
+        backgroundColor="surface"
+        borderBottomWidth={1}
+        borderBottomColor="border">
         <Box flexDirection="row" alignItems="center" mb="s12">
           <TouchableOpacityBox
             width={40}
             height={40}
-            borderRadius="s20"
-            backgroundColor="primaryBg"
             alignItems="center"
             justifyContent="center"
             marginRight="s16"
             onPress={() => navigation.navigate('HomeTabs')}>
-            <Icon name="arrow-back" size={24} color="primary" />
+            <Icon name="arrow-back" size={22} color="text" />
           </TouchableOpacityBox>
 
           <Box flex={1}>
-            <Text preset="headingMedium" color="surface" bold>
+            <Text preset="headingSmall" color="text" bold>
               Bilhete Digital
             </Text>
           </Box>
@@ -228,12 +228,10 @@ export function TicketScreen({navigation, route}: Props) {
           <TouchableOpacityBox
             width={40}
             height={40}
-            borderRadius="s20"
-            backgroundColor="primaryBg"
             alignItems="center"
             justifyContent="center"
             onPress={handleShare}>
-            <Icon name="share" size={24} color="primary" />
+            <Icon name="share" size={22} color="text" />
           </TouchableOpacityBox>
         </Box>
 
@@ -283,14 +281,14 @@ export function TicketScreen({navigation, route}: Props) {
           </Text>
 
           {/* Real QR Code */}
-          {booking.qrCode ? (
+          {(booking.qrCode && booking.qrCode.length <= 1000) || booking.id ? (
             <Box
               padding="s16"
-              backgroundColor="white"
               borderRadius="s16"
-              mb="s20">
+              mb="s20"
+              style={{backgroundColor: 'white'}}>
               <QRCode
-                value={booking.qrCode}
+                value={booking.qrCode && booking.qrCode.length <= 1000 ? booking.qrCode : booking.id}
                 size={200}
                 backgroundColor="white"
                 color="black"
@@ -325,7 +323,7 @@ export function TicketScreen({navigation, route}: Props) {
               Código da Reserva
             </Text>
             <Text preset="headingSmall" color="primary" bold textAlign="center">
-              {booking.id.slice(0, 8).toUpperCase()}
+              {booking.id?.slice(0, 8).toUpperCase() || 'N/A'}
             </Text>
           </Box>
 
@@ -378,7 +376,7 @@ export function TicketScreen({navigation, route}: Props) {
               width={2}
               height={20}
               backgroundColor="border"
-              marginLeft={15}
+              marginLeft="s16"
               mb="s12"
             />
 
@@ -414,15 +412,14 @@ export function TicketScreen({navigation, route}: Props) {
             <Box flexDirection="row" alignItems="center" mb="s8">
               <Icon name="event" size={18} color="primary" />
               <Text preset="paragraphSmall" color="text" ml="s8" bold>
-                {formatDate(trip.departureTime)}
+                {formatDate(trip.departureAt)}
               </Text>
             </Box>
 
             <Box flexDirection="row" alignItems="center">
               <Icon name="schedule" size={18} color="primary" />
               <Text preset="paragraphSmall" color="text" ml="s8">
-                Embarque: {formatTime(trip.departureTime)} • Chegada prevista:{' '}
-                {formatTime(trip.arrivalTime)}
+                {`Embarque: ${formatTime(trip.departureAt)} • Chegada prevista: ${formatTime(trip.estimatedArrivalAt)}`}
               </Text>
             </Box>
           </Box>
@@ -431,14 +428,14 @@ export function TicketScreen({navigation, route}: Props) {
           <Box flexDirection="row" alignItems="center" mb="s8">
             <Icon name="directions-boat" size={20} color="secondary" />
             <Text preset="paragraphMedium" color="text" bold ml="s8">
-              Barco {trip.boatId.slice(0, 8)}
+              {`Barco ${trip.boatId?.slice(0, 8) || 'N/A'}`}
             </Text>
           </Box>
 
           <Box flexDirection="row" alignItems="center">
             <Icon name="person" size={20} color="primary" />
             <Text preset="paragraphSmall" color="text" ml="s8">
-              Cap. {trip.captainId.slice(0, 8)}
+              Cap. {trip.captainId?.slice(0, 8) || 'N/A'}
             </Text>
           </Box>
         </Box>
@@ -474,10 +471,10 @@ export function TicketScreen({navigation, route}: Props) {
 
             <Box flex={1}>
               <Text preset="paragraphMedium" color="text" bold mb="s4">
-                Reserva #{booking.id.slice(0, 8).toUpperCase()}
+                Reserva #{booking.id?.slice(0, 8).toUpperCase() || 'N/A'}
               </Text>
               <Text preset="paragraphSmall" color="textSecondary">
-                User ID: {booking.userId.slice(0, 8)}
+                User ID: {booking.userId?.slice(0, 8) || 'N/A'}
               </Text>
             </Box>
 
@@ -545,7 +542,7 @@ export function TicketScreen({navigation, route}: Props) {
               Total pago
             </Text>
             <Text preset="headingSmall" color="primary" bold>
-              R$ {booking.totalPrice.toFixed(2)}
+              R$ {(typeof booking.totalPrice === 'number' ? booking.totalPrice : parseFloat(String(booking.totalPrice)) || 0).toFixed(2)}
             </Text>
           </Box>
         </Box>
@@ -593,7 +590,6 @@ export function TicketScreen({navigation, route}: Props) {
             name="help"
             size={20}
             color="primary"
-            style={{marginRight: 12}}
           />
           <Box flex={1}>
             <Text preset="paragraphSmall" color="text" bold mb="s4">

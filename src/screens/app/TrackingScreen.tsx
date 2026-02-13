@@ -6,7 +6,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, BoatMarker} from '@components';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Tracking'>;
 
@@ -183,8 +183,8 @@ export function TrackingScreen({navigation, route}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s20"
+        paddingTop="s48"
+        paddingBottom="s16"
         backgroundColor="primary">
         <Box flexDirection="row" alignItems="center" mb="s12">
           <TouchableOpacityBox
@@ -366,7 +366,6 @@ export function TrackingScreen({navigation, route}: Props) {
                 name="schedule"
                 size={20}
                 color="primary"
-                style={{marginBottom: 8}}
               />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
                 Chegada Prevista
@@ -386,7 +385,6 @@ export function TrackingScreen({navigation, route}: Props) {
                 name="speed"
                 size={20}
                 color="secondary"
-                style={{marginBottom: 8}}
               />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
                 Velocidade Atual
@@ -406,7 +404,6 @@ export function TrackingScreen({navigation, route}: Props) {
                 name={tracking.weather.icon as any}
                 size={20}
                 color="accent"
-                style={{marginBottom: 8}}
               />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
                 Clima
@@ -550,7 +547,6 @@ export function TrackingScreen({navigation, route}: Props) {
             name="warning"
             size={24}
             color="danger"
-            style={{marginRight: 12}}
           />
           <Text preset="paragraphLarge" color="danger" bold>
             Emergência
@@ -569,7 +565,6 @@ export function TrackingScreen({navigation, route}: Props) {
             name="info"
             size={20}
             color="primary"
-            style={{marginRight: 12}}
           />
           <Text preset="paragraphSmall" color="textSecondary" flex={1}>
             A localização é atualizada automaticamente a cada 30 segundos

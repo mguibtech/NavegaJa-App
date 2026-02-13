@@ -9,8 +9,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import {Box, Icon, Text} from '@components';
-import {useAppTheme} from '@hooks/useAppTheme';
-import {ToastConfig, ToastType} from '../../store/toast.store';
+import {useAppTheme} from '@hooks';
+import {ToastConfig, ToastType} from '@store';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const TOAST_WIDTH = SCREEN_WIDTH - 48;

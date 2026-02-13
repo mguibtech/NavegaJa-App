@@ -1,13 +1,19 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {CompositeScreenProps} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {useMyBookings} from '@domain';
 
-import {TabsParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '@routes';
 
-type Props = BottomTabScreenProps<TabsParamList, 'Bookings'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabsParamList, 'Bookings'>,
+  NativeStackScreenProps<AppStackParamList>
+>;
 
 type BookingStatus = 'active' | 'completed';
 
@@ -54,30 +60,54 @@ const MOCK_BOOKINGS = [
 export function BookingsScreen({navigation}: Props) {
   const [selectedTab, setSelectedTab] = useState<BookingStatus>('active');
   const [refreshing, setRefreshing] = useState(false);
+  const {bookings, fetch: fetchBookings} = useMyBookings();
+
+  // Buscar bookings ao montar a tela
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // TODO: Buscar reservas da API
-    setTimeout(() => setRefreshing(false), 1500);
+    try {
+      await fetchBookings();
+    } catch (_error) {
+      console.error('Error refreshing bookings:', _error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
-  const filteredBookings = MOCK_BOOKINGS.filter(
-    booking => booking.status === selectedTab,
-  );
+  // Filtrar bookings reais por status
+  const filteredBookings = (() => {
+    // Se não houver bookings reais, usar mock data como fallback
+    const dataSource = bookings.length > 0 ? bookings : MOCK_BOOKINGS;
+
+    return dataSource.filter((booking: any) => {
+      if (selectedTab === 'active') {
+        // Active: pending, confirmed, checked_in
+        if (booking.status === 'active') return true; // Mock data
+        return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in'; // Real data
+      } else {
+        // Completed: completed, cancelled
+        if (booking.status === 'completed') return true; // Mock data
+        return booking.status === 'completed' || booking.status === 'cancelled'; // Real data
+      }
+    });
+  })();
 
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s24"
-        backgroundColor="primary">
-        <Text preset="headingLarge" color="surface" bold>
+        paddingTop="s40"
+        paddingBottom="s12"
+        backgroundColor="surface"
+        borderBottomWidth={1}
+        borderBottomColor="border">
+        <Text preset="headingSmall" color="text" bold textAlign="center">
           Minhas Reservas
-        </Text>
-        <Text preset="paragraphMedium" color="surface" mt="s8">
-          Acompanhe suas viagens
         </Text>
       </Box>
 
@@ -126,159 +156,191 @@ export function BookingsScreen({navigation}: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        renderItem={({item}) => (
-          <TouchableOpacityBox
-            mb="s16"
-            backgroundColor="surface"
-            borderRadius="s16"
-            padding="s20"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
-            {/* Status Badge */}
-            <Box
-              position="absolute"
-              top={16}
-              right={16}
-              backgroundColor={item.status === 'active' ? 'successBg' : 'border'}
-              paddingHorizontal="s12"
-              paddingVertical="s8"
-              borderRadius="s8">
-              <Text
-                preset="paragraphSmall"
-                color={item.status === 'active' ? 'success' : 'textSecondary'}
-                bold>
-                {item.status === 'active' ? 'Ativa' : 'Concluída'}
-              </Text>
-            </Box>
+        renderItem={({item}) => {
+          // Handle both mock data and real booking data
+          const isMockData = 'date' in item;
+          const origin = isMockData ? item.origin : item.trip?.origin || 'Origem desconhecida';
+          const destination = isMockData ? item.destination : item.trip?.destination || 'Destino desconhecido';
+          const dateStr = isMockData ? item.date : item.trip?.departureAt;
+          const timeStr = isMockData ? item.departureTime : (item.trip?.departureAt ? new Date(item.trip.departureAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : '--:--');
+          const boatName = isMockData ? item.boatName : (item.trip?.boat?.name || `Barco ${item.trip?.boatId?.slice(0, 8) || 'N/A'}`);
+          const price = isMockData ? item.price : item.totalPrice;
+          const seats = isMockData ? item.seats : item.quantity;
 
-            {/* Route Info */}
-            <Box flexDirection="row" alignItems="center" mb="s16" mt="s8">
-              <Box flex={1}>
-                <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                  Origem
-                </Text>
-                <Text preset="paragraphMedium" color="text" bold>
-                  {item.origin}
-                </Text>
-              </Box>
-
-              <Box
-                width={40}
-                height={40}
-                borderRadius="s20"
-                backgroundColor="primaryBg"
-                alignItems="center"
-                justifyContent="center"
-                mx="s12">
-                <Icon name="arrow-forward" size={20} color="primary" />
-              </Box>
-
-              <Box flex={1}>
-                <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                  Destino
-                </Text>
-                <Text preset="paragraphMedium" color="text" bold>
-                  {item.destination}
-                </Text>
-              </Box>
-            </Box>
-
-            {/* Date & Time */}
-            <Box
-              flexDirection="row"
-              alignItems="center"
-              mb="s12"
-              paddingVertical="s12"
-              paddingHorizontal="s16"
-              backgroundColor="background"
-              borderRadius="s12">
-              <Icon name="event" size={20} color="primary" />
-              <Text preset="paragraphMedium" color="text" ml="s8">
-                {new Date(item.date).toLocaleDateString('pt-BR', {
+          // Format date
+          let formattedDate = 'Data não disponível';
+          if (dateStr) {
+            try {
+              const date = new Date(dateStr);
+              if (!isNaN(date.getTime())) {
+                formattedDate = date.toLocaleDateString('pt-BR', {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric',
-                })}
-              </Text>
-              <Text preset="paragraphMedium" color="textSecondary" ml="s4">
-                às {item.departureTime}
-              </Text>
-            </Box>
+                });
+              }
+            } catch (e) {
+              console.error('Error formatting date:', e);
+            }
+          }
 
-            {/* Boat */}
-            <Box flexDirection="row" alignItems="center" mb="s16">
-              <Icon name="directions-boat" size={18} color="secondary" />
-              <Text preset="paragraphSmall" color="text" ml="s8">
-                {item.boatName}
-              </Text>
-            </Box>
+          // Determine if active based on status
+          const isActive = isMockData
+            ? item.status === 'active'
+            : (item.status === 'pending' || item.status === 'confirmed' || item.status === 'checked_in');
 
-            {/* Footer */}
-            <Box
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              paddingTop="s16"
-              borderTopWidth={1}
-              borderTopColor="border">
-              <Box>
-                <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                  Total pago
-                </Text>
-                <Text preset="headingSmall" color="primary" bold>
-                  R$ {(item.price * item.seats).toFixed(2)}
+          return (
+            <TouchableOpacityBox
+              mb="s16"
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s20"
+              onPress={() => navigation.navigate('Ticket', {bookingId: item.id})}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3,
+              }}>
+              {/* Status Badge */}
+              <Box
+                position="absolute"
+                top={16}
+                right={16}
+                backgroundColor={isActive ? 'successBg' : 'border'}
+                paddingHorizontal="s12"
+                paddingVertical="s8"
+                borderRadius="s8">
+                <Text
+                  preset="paragraphSmall"
+                  color={isActive ? 'success' : 'textSecondary'}
+                  bold>
+                  {isActive ? 'Ativa' : 'Concluída'}
                 </Text>
               </Box>
 
+              {/* Route Info */}
+              <Box flexDirection="row" alignItems="center" mb="s16" mt="s8">
+                <Box flex={1}>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
+                    Origem
+                  </Text>
+                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
+                    {origin}
+                  </Text>
+                </Box>
+
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="primaryBg"
+                  alignItems="center"
+                  justifyContent="center"
+                  mx="s12">
+                  <Icon name="arrow-forward" size={20} color="primary" />
+                </Box>
+
+                <Box flex={1}>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
+                    Destino
+                  </Text>
+                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
+                    {destination}
+                  </Text>
+                </Box>
+              </Box>
+
+              {/* Date & Time */}
               <Box
                 flexDirection="row"
                 alignItems="center"
-                backgroundColor="primaryBg"
+                mb="s12"
+                paddingVertical="s12"
                 paddingHorizontal="s16"
-                paddingVertical="s10"
-                borderRadius="s8">
-                <Icon name="confirmation-number" size={18} color="primary" />
-                <Text preset="paragraphSmall" color="primary" bold ml="s8">
-                  {item.seats} {item.seats === 1 ? 'passagem' : 'passagens'}
+                backgroundColor="background"
+                borderRadius="s12">
+                <Icon name="event" size={20} color="primary" />
+                <Text preset="paragraphMedium" color="text" ml="s8" numberOfLines={1} flexShrink={1}>
+                  {formattedDate}
+                </Text>
+                <Text preset="paragraphMedium" color="textSecondary" ml="s4">
+                  às {timeStr}
                 </Text>
               </Box>
-            </Box>
 
-            {/* Actions */}
-            {item.status === 'active' && (
-              <Box mt="s16" flexDirection="row" gap="s12">
-                <TouchableOpacityBox
-                  flex={1}
-                  paddingVertical="s12"
-                  borderRadius="s12"
-                  backgroundColor="primary"
-                  alignItems="center"
-                  flexDirection="row"
-                  justifyContent="center">
-                  <Icon name="qr-code" size={20} color="surface" />
-                  <Text preset="paragraphMedium" color="surface" bold ml="s8">
-                    Ver QR Code
-                  </Text>
-                </TouchableOpacityBox>
-
-                <TouchableOpacityBox
-                  width={48}
-                  height={48}
-                  borderRadius="s12"
-                  backgroundColor="dangerBg"
-                  alignItems="center"
-                  justifyContent="center">
-                  <Icon name="close" size={20} color="danger" />
-                </TouchableOpacityBox>
+              {/* Boat */}
+              <Box flexDirection="row" alignItems="center" mb="s16">
+                <Icon name="directions-boat" size={18} color="secondary" />
+                <Text preset="paragraphSmall" color="text" ml="s8" numberOfLines={1}>
+                  {boatName}
+                </Text>
               </Box>
-            )}
-          </TouchableOpacityBox>
-        )}
+
+              {/* Footer */}
+              <Box
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                paddingTop="s16"
+                borderTopWidth={1}
+                borderTopColor="border">
+                <Box>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
+                    Total pago
+                  </Text>
+                  <Text preset="headingSmall" color="primary" bold>
+                    R$ {(typeof price === 'number' ? price * seats : parseFloat(String(price)) * seats || 0).toFixed(2)}
+                  </Text>
+                </Box>
+
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  backgroundColor="primaryBg"
+                  paddingHorizontal="s16"
+                  paddingVertical="s10"
+                  borderRadius="s8">
+                  <Icon name="confirmation-number" size={18} color="primary" />
+                  <Text preset="paragraphSmall" color="primary" bold ml="s8">
+                    {seats} {seats === 1 ? 'passagem' : 'passagens'}
+                  </Text>
+                </Box>
+              </Box>
+
+              {/* Actions */}
+              {isActive && (
+                <Box mt="s16" flexDirection="row" gap="s12">
+                  <TouchableOpacityBox
+                    flex={1}
+                    paddingVertical="s12"
+                    borderRadius="s12"
+                    backgroundColor="primary"
+                    alignItems="center"
+                    flexDirection="row"
+                    justifyContent="center"
+                    onPress={() => navigation.navigate('Ticket', {bookingId: item.id})}>
+                    <Icon name="qr-code" size={20} color="surface" />
+                    <Text preset="paragraphMedium" color="surface" bold ml="s8">
+                      Ver QR Code
+                    </Text>
+                  </TouchableOpacityBox>
+
+                  <TouchableOpacityBox
+                    width={48}
+                    height={48}
+                    borderRadius="s12"
+                    backgroundColor="dangerBg"
+                    alignItems="center"
+                    justifyContent="center">
+                    <Icon name="close" size={20} color="danger" />
+                  </TouchableOpacityBox>
+                </Box>
+              )}
+            </TouchableOpacityBox>
+          );
+        }}
         ListEmptyComponent={
           <Box alignItems="center" paddingVertical="s48">
             <Icon
@@ -299,7 +361,7 @@ export function BookingsScreen({navigation}: Props) {
                 : 'Seu histórico de viagens aparecerá aqui'}
             </Text>
           </Box>
-        }        
+        }
       />
       
     </Box>

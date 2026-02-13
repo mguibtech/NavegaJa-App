@@ -162,7 +162,7 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
               <Text
                 style={{fontSize: 10, fontWeight: '700'}}
                 color="surface">
-                {badgeCount > 99 ? '99+' : badgeCount}
+                {badgeCount > 99 ? '99+' : `${badgeCount}`}
               </Text>
             </Box>
           )}

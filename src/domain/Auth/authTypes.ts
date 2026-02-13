@@ -63,5 +63,7 @@ export interface AuthResponse {
     totalPoints: number;
     level: string;
     referralCode?: string;
+    createdAt: string;
+    updatedAt: string;
   };
 }

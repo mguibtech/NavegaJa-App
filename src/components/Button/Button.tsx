@@ -3,9 +3,9 @@ import {ActivityIndicator} from 'react-native';
 
 import {ThemeColors} from '@theme';
 
-import {Icon} from '../Icon/Icon';
-import {Text} from '../Text/Text';
-import {Box, TouchableOpacityBox, TouchableOpacityBoxProps} from '../Box/Box';
+import {Icon} from '@components';
+import {Text} from '@components';
+import {Box, TouchableOpacityBox, TouchableOpacityBoxProps} from '@components';
 
 import {buttonPresets} from './buttonPresets';
 

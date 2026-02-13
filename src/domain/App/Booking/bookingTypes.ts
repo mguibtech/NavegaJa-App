@@ -1,3 +1,6 @@
+import {Trip} from '../Trip/tripTypes';
+import {PriceBreakdown} from '../Discount/discountTypes';
+
 export interface Booking {
   id: string;
   tripId: string;
@@ -11,6 +14,10 @@ export interface Booking {
   checkedInAt?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Populated by backend (optional)
+  trip?: Trip;
+  priceBreakdown?: PriceBreakdown;  // Discount details
 }
 
 export enum BookingStatus {
@@ -33,6 +40,7 @@ export interface CreateBookingData {
   seatNumber?: number;
   quantity: number;
   paymentMethod: PaymentMethod;
+  couponCode?: string;  // Optional coupon code
 }
 
 export interface CancelBookingData {

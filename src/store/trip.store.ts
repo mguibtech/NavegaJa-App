@@ -47,9 +47,9 @@ export const useTripStore = create<TripState>((set, get) => ({
       // set({trips, isLoading: false});
       console.log('Search trips:', origin, destination, date);
       set({trips: [], isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -61,9 +61,9 @@ export const useTripStore = create<TripState>((set, get) => ({
       // set({currentTrip: trip, isLoading: false});
       console.log('Get trip by ID:', tripId);
       set({currentTrip: null, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -75,9 +75,9 @@ export const useTripStore = create<TripState>((set, get) => ({
       // set({popularRoutes: routes, isLoading: false});
       console.log('Get popular routes');
       set({popularRoutes: [], isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 

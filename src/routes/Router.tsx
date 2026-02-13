@@ -5,9 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 
 import {Box} from '@components';
-import {useAuthStore} from '../store/auth.store';
+import {useAuthStore} from '@store';
 import {OnboardingScreen} from '../screens/onboarding/OnboardingScreen';
 import {SplashScreen} from '../screens/splash/SplashScreen';
+import {apiClient} from '../api/apiClient';
 
 import {AppStack} from './AppStack';
 import {AuthStack} from './AuthStack';
@@ -15,13 +16,18 @@ import {AuthStack} from './AuthStack';
 const ONBOARDED_KEY = '@navegaja:onboarded';
 
 export function Router() {
-  const {isLoggedIn, isLoading, loadStoredUser} = useAuthStore();
+  const {isLoggedIn, isLoading, loadStoredUser, logout} = useAuthStore();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     checkOnboarding();
     loadStoredUser();
+
+    // Registra callback para fazer logout quando token expirar
+    apiClient.setUnauthorizedHandler(() => {
+      logout();
+    });
   }, []);
 
   async function checkOnboarding() {

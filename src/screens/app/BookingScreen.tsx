@@ -3,10 +3,27 @@ import {ScrollView, Alert, ActivityIndicator} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
-import {Trip, tripAPI, PaymentMethod, useCreateBooking} from '@domain';
+import {
+  Box,
+  Button,
+  Icon,
+  Text,
+  TextInput,
+  TouchableOpacityBox,
+  CouponInput,
+  PriceBreakdown,
+} from '@components';
+import {
+  Trip,
+  tripAPI,
+  PaymentMethod,
+  useCreateBooking,
+  useCalculatePrice,
+  PriceBreakdown as PriceBreakdownType,
+  Coupon,
+} from '@domain';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Booking'>;
 
@@ -20,24 +37,86 @@ export function BookingScreen({navigation, route}: Props) {
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
+
+  const {calculate, isLoading: isCalculatingPrice, error: priceError} = useCalculatePrice();
 
   // Load trip data
   useEffect(() => {
     loadTrip();
   }, [tripId]);
 
+  // Calculate price whenever trip, passengers, or coupon changes
+  useEffect(() => {
+    if (trip) {
+      calculatePrice();
+    }
+  }, [trip, passengers, appliedCoupon]);
+
   async function loadTrip() {
     setIsLoadingTrip(true);
     try {
       const tripData = await tripAPI.getById(tripId);
       setTrip(tripData);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Erro', 'Não foi possível carregar os dados da viagem');
-      console.error('Failed to load trip:', error);
+      console.error('Failed to load trip:', _error);
       navigation.goBack();
     } finally {
       setIsLoadingTrip(false);
     }
+  }
+
+  async function calculatePrice() {
+    if (!trip) return;
+
+    try {
+      const breakdown = await calculate({
+        tripId: trip.id,
+        quantity: passengers,
+        couponCode: appliedCoupon?.code,
+      });
+      setPriceBreakdown(breakdown);
+    } catch (_error) {
+      console.error('Failed to calculate price:', _error);
+      // Se falhar, cria um breakdown simples sem descontos
+      const basePrice = Number(trip.price) * passengers;
+      setPriceBreakdown({
+        basePrice,
+        totalDiscount: 0,
+        finalPrice: basePrice,
+        discountsApplied: [],
+        quantity: passengers,
+      });
+    }
+  }
+
+  async function handleApplyCoupon(code: string) {
+    try {
+      const breakdown = await calculate({
+        tripId: trip!.id,
+        quantity: passengers,
+        couponCode: code,
+      });
+
+      // Se chegou aqui, o cupom é válido
+      setPriceBreakdown(breakdown);
+      setAppliedCoupon({code} as Coupon); // Simplificado - o backend valida
+      Alert.alert('Sucesso', 'Cupom aplicado com sucesso! 🎉');
+    } catch (_error: any) {
+      Alert.alert(
+        'Cupom Inválido',
+        _error.message || 'O cupom informado não é válido ou expirou.'
+      );
+      throw _error; // Re-throw para o CouponInput saber que falhou
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    Alert.alert('Cupom Removido', 'O cupom foi removido da sua reserva.');
   }
 
   // Show loading state while fetching trip
@@ -52,10 +131,6 @@ export function BookingScreen({navigation, route}: Props) {
     );
   }
 
-  const subtotal = trip.price * passengers;
-  const serviceFee = subtotal * 0.05; // 5% taxa de serviço
-  const total = subtotal + serviceFee;
-
   const handleIncrement = () => {
     if (passengers < trip.availableSeats) {
       setPassengers(passengers + 1);
@@ -64,6 +139,33 @@ export function BookingScreen({navigation, route}: Props) {
 
   const handleDecrement = () => {
     if (passengers > 1) setPassengers(passengers - 1);
+  };
+
+  const formatCPF = (value: string) => {
+    // Remove tudo que não é dígito
+    const numbers = value.replace(/\D/g, '');
+
+    // Limita a 11 dígitos
+    const limitedNumbers = numbers.slice(0, 11);
+
+    // Aplica a máscara XXX.XXX.XXX-XX
+    let formatted = limitedNumbers;
+    if (limitedNumbers.length > 3) {
+      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3)}`;
+    }
+    if (limitedNumbers.length > 6) {
+      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6)}`;
+    }
+    if (limitedNumbers.length > 9) {
+      formatted = `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6, 9)}-${limitedNumbers.slice(9)}`;
+    }
+
+    return formatted;
+  };
+
+  const handleCPFChange = (value: string) => {
+    const formatted = formatCPF(value);
+    setPassengerCPF(formatted);
   };
 
   const handleConfirmBooking = async () => {
@@ -78,21 +180,29 @@ export function BookingScreen({navigation, route}: Props) {
       return;
     }
 
+    // Valida se o CPF tem 11 dígitos
+    const cpfNumbers = passengerCPF.replace(/\D/g, '');
+    if (cpfNumbers.length !== 11) {
+      Alert.alert('Atenção', 'Por favor, informe um CPF válido com 11 dígitos');
+      return;
+    }
+
     try {
       const booking = await createBooking({
         tripId: trip.id,
         quantity: passengers,
         paymentMethod,
+        couponCode: appliedCoupon?.code,
       });
 
       // Navegar para tela de ticket com o ID real
       navigation.replace('Ticket', {
         bookingId: booking.id,
       });
-    } catch (error: any) {
+    } catch (_error: any) {
       Alert.alert(
         'Erro',
-        error.message || 'Não foi possível processar sua reserva. Tente novamente.'
+        _error.message || 'Não foi possível processar sua reserva. Tente novamente.'
       );
     }
   };
@@ -134,24 +244,24 @@ export function BookingScreen({navigation, route}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s20"
-        backgroundColor="primary">
+        paddingTop="s40"
+        paddingBottom="s12"
+        backgroundColor="surface"
+        borderBottomWidth={1}
+        borderBottomColor="border">
         <Box flexDirection="row" alignItems="center">
           <TouchableOpacityBox
             width={40}
             height={40}
-            borderRadius="s20"
-            backgroundColor="primaryBg"
             alignItems="center"
             justifyContent="center"
             marginRight="s16"
             onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="primary" />
+            <Icon name="arrow-back" size={22} color="text" />
           </TouchableOpacityBox>
 
           <Box flex={1}>
-            <Text preset="headingMedium" color="surface" bold>
+            <Text preset="headingSmall" color="text" bold>
               Confirmar Reserva
             </Text>
           </Box>
@@ -209,14 +319,14 @@ export function BookingScreen({navigation, route}: Props) {
             <Box flexDirection="row" alignItems="center" mb="s8">
               <Icon name="event" size={18} color="primary" />
               <Text preset="paragraphSmall" color="text" ml="s8">
-                {formatDate(trip.departureTime)}
+                {formatDate(trip.departureAt)}
               </Text>
             </Box>
 
             <Box flexDirection="row" alignItems="center">
               <Icon name="schedule" size={18} color="primary" />
               <Text preset="paragraphSmall" color="text" ml="s8">
-                Saída às {formatTime(trip.departureTime)} • Chegada às {formatTime(trip.arrivalTime)}
+                {`Saída às ${formatTime(trip.departureAt)} • Chegada às ${formatTime(trip.estimatedArrivalAt)}`}
               </Text>
             </Box>
           </Box>
@@ -224,7 +334,7 @@ export function BookingScreen({navigation, route}: Props) {
           <Box flexDirection="row" alignItems="center">
             <Icon name="directions-boat" size={18} color="secondary" />
             <Text preset="paragraphSmall" color="text" ml="s8">
-              Barco {trip.boatId.slice(0, 8)} • Cap. {trip.captainId.slice(0, 8)}
+              {`Barco ${trip.boatId.slice(0, 8)} • Cap. ${trip.captainId.slice(0, 8)}`}
             </Text>
           </Box>
         </Box>
@@ -325,9 +435,10 @@ export function BookingScreen({navigation, route}: Props) {
             label="CPF"
             placeholder="000.000.000-00"
             value={passengerCPF}
-            onChangeText={setPassengerCPF}
+            onChangeText={handleCPFChange}
             keyboardType="numeric"
             leftIcon="badge"
+            maxLength={14}
           />
 
           {passengers > 1 && (
@@ -343,6 +454,16 @@ export function BookingScreen({navigation, route}: Props) {
               </Text>
             </Box>
           )}
+        </Box>
+
+        {/* Coupon Input */}
+        <Box mb="s16">
+          <CouponInput
+            onApply={handleApplyCoupon}
+            onRemove={handleRemoveCoupon}
+            isLoading={isCalculatingPrice}
+            appliedCode={appliedCoupon?.code}
+          />
         </Box>
 
         {/* Payment Method */}
@@ -415,58 +536,29 @@ export function BookingScreen({navigation, route}: Props) {
         </Box>
 
         {/* Price Breakdown */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s16"
-          padding="s20"
-          mb="s16"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}>
-          <Text preset="paragraphMedium" color="text" bold mb="s16">
-            Detalhes do Pagamento
-          </Text>
-
-          <Box
-            flexDirection="row"
-            justifyContent="space-between"
-            mb="s12">
-            <Text preset="paragraphMedium" color="text">
-              Subtotal ({passengers} {passengers === 1 ? 'passagem' : 'passagens'})
-            </Text>
-            <Text preset="paragraphMedium" color="text">
-              R$ {subtotal.toFixed(2)}
-            </Text>
+        {priceBreakdown ? (
+          <Box mb="s16">
+            <PriceBreakdown data={priceBreakdown} />
           </Box>
-
+        ) : (
           <Box
-            flexDirection="row"
-            justifyContent="space-between"
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
             mb="s16"
-            paddingBottom="s16"
-            borderBottomWidth={1}
-            borderBottomColor="border">
-            <Text preset="paragraphMedium" color="textSecondary">
-              Taxa de serviço (5%)
-            </Text>
-            <Text preset="paragraphMedium" color="textSecondary">
-              R$ {serviceFee.toFixed(2)}
-            </Text>
-          </Box>
-
-          <Box flexDirection="row" justifyContent="space-between">
-            <Text preset="headingSmall" color="text" bold>
-              Total
-            </Text>
-            <Text preset="headingSmall" color="primary" bold>
-              R$ {total.toFixed(2)}
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <ActivityIndicator size="small" color="#007BFF" />
+            <Text preset="paragraphSmall" color="textSecondary" mt="s8" textAlign="center">
+              Calculando preço...
             </Text>
           </Box>
-        </Box>
+        )}
 
         {/* Terms */}
         <Box
@@ -480,7 +572,6 @@ export function BookingScreen({navigation, route}: Props) {
             name="info"
             size={20}
             color="primary"
-            style={{marginRight: 12}}
           />
           <Text preset="paragraphSmall" color="text" flex={1}>
             Ao confirmar, você concorda com nossos{' '}
@@ -518,10 +609,14 @@ export function BookingScreen({navigation, route}: Props) {
         }}>
         <Button
           title={
-            isCreatingBooking ? 'Processando...' : `Pagar R$ ${total.toFixed(2)}`
+            isCreatingBooking
+              ? 'Processando...'
+              : priceBreakdown
+              ? `Pagar R$ ${priceBreakdown.finalPrice.toFixed(2)}`
+              : 'Calculando...'
           }
           onPress={handleConfirmBooking}
-          disabled={isCreatingBooking}
+          disabled={isCreatingBooking || !priceBreakdown}
           rightIcon={isCreatingBooking ? undefined : 'check'}
         />
       </Box>

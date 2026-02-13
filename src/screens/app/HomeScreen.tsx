@@ -1,15 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, Image, RefreshControl, ScrollView} from 'react-native';
+import {FlatList, Image, RefreshControl, ScrollView, ImageBackground, Linking, Dimensions} from 'react-native';
+
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useAuthStore} from '../../store/auth.store';
-import {useMyBookings} from '../../domain/App/Booking/useCases/useMyBookings';
+import {useAuthStore} from '@store';
+import {useMyBookings} from '@domain';
+import {usePopularRoutes} from '@domain';
+import {useMyFavorites, FavoriteType} from '@domain';
+import {usePromotions, Promotion} from '@domain';
 
-import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '@routes';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabsParamList, 'Home'>,
@@ -17,6 +22,7 @@ type Props = CompositeScreenProps<
 >;
 
 // Mock data - Popular Routes
+// IMPORTANT: These names must match exactly with backend trips (origin/destination)
 const POPULAR_ROUTES = [
   {
     id: '1',
@@ -29,18 +35,10 @@ const POPULAR_ROUTES = [
   {
     id: '2',
     origin: 'Manaus',
-    destination: 'Itacoatiara',
+    destination: 'Beruri',  // Changed from Itacoatiara to match backend
     price: 45.0,
     image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
     duration: '2.5h',
-  },
-  {
-    id: '3',
-    origin: 'Manaus',
-    destination: 'Tefé',
-    price: 180.0,
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400',
-    duration: '12h',
   },
 ];
 
@@ -67,8 +65,12 @@ const MY_TRIPS = [
 export function HomeScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
 
-  const {bookings, fetch: fetchBookings, isLoading: loadingBookings} = useMyBookings();
+  const {bookings, fetch: fetchBookings} = useMyBookings();
+  const {data: popularData, fetch: fetchPopular} = usePopularRoutes();
+  const {favorites, fetch: fetchFavorites} = useMyFavorites();
+  const {promotions, fetch: fetchPromotions} = usePromotions();
 
   // Buscar dados ao carregar a tela
   useEffect(() => {
@@ -77,9 +79,21 @@ export function HomeScreen({navigation}: Props) {
 
   async function loadData() {
     try {
-      await fetchBookings();
-    } catch (error) {
-      console.error('Error loading home data:', error);
+      await Promise.all([
+        fetchBookings(),
+        fetchPopular().catch(() => {
+          // Silently fail and use fallback mock data
+          console.log('Using fallback popular routes');
+        }),
+        fetchFavorites().catch(() => {
+          console.log('Error loading favorites');
+        }),
+        fetchPromotions().catch(() => {
+          console.log('Error loading promotions');
+        }),
+      ]);
+    } catch (_error) {
+      console.error('Error loading home data:', _error);
     }
   }
 
@@ -89,11 +103,18 @@ export function HomeScreen({navigation}: Props) {
     setRefreshing(false);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   const renderPopularRoute = ({item}: {item: any}) => {
-    // Fallbacks para rotas da API que não têm price, image, duration
-    const price = (item as any).price ?? 0;
+    // Use minPrice from API (PopularRoute) or price from mock data
+    const price = (item as any).minPrice ?? (item as any).price ?? 0;
     const image = (item as any).image ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400';
-    const duration = (item as any).duration ?? (item as any).estimatedDuration ? `${Math.floor((item as any).estimatedDuration / 60)}h` : '--';
+    const tripsCount = (item as any).tripsCount;
 
     return (
       <TouchableOpacityBox
@@ -101,7 +122,7 @@ export function HomeScreen({navigation}: Props) {
         backgroundColor="surface"
         borderRadius="s20"
         overflow="hidden"
-        width={180}
+        width={190}
         onPress={() => {
           // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
           navigation.navigate('SearchResults', {
@@ -118,45 +139,183 @@ export function HomeScreen({navigation}: Props) {
         }}>
         <Image
           source={{uri: image}}
-          style={{width: '100%', height: 120}}
+          style={{width: '100%', height: 110}}
           resizeMode="cover"
         />
+
         <Box padding="s16">
-          <Box flexDirection="row" alignItems="center" mb="s8">
-            <Icon name="place" size={16} color="primary" />
-            <Text preset="paragraphSmall" color="text" bold ml="s4">
-              {item.origin}
-            </Text>
-            <Box mx="s4">
-              <Icon name="arrow-forward" size={14} color="textSecondary" />
-            </Box>
-            <Text preset="paragraphSmall" color="text" bold>
-              {item.destination}
-            </Text>
-          </Box>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Text preset="paragraphMedium" color="primary" bold>
-              From R${price.toFixed(0)}
-            </Text>
-            <Box
-              backgroundColor="primaryBg"
-              paddingHorizontal="s8"
-              paddingVertical="s4"
-              borderRadius="s8">
-              <Text preset="paragraphCaptionSmall" color="primary" bold>
-                {duration}
+          {/* Route Title */}
+          <Box mb="s12">
+            <Box flexDirection="row" alignItems="center" mb="s6">
+              <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
+                {item.origin}
               </Text>
             </Box>
+            <Box flexDirection="row" alignItems="center">
+              <Box flexShrink={0}>
+                <Icon name="arrow-forward" size={14} color="primary" />
+              </Box>
+              <Text preset="paragraphMedium" color="text" bold ml="s6" numberOfLines={1} flexShrink={1}>
+                {item.destination}
+              </Text>
+            </Box>
+          </Box>
+
+          {/* Price and Badge */}
+          <Box flexDirection="row" alignItems="flex-end" justifyContent="space-between" gap="s8">
+            <Box flex={1} minWidth={0}>
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
+                A partir de
+              </Text>
+              <Text preset="headingSmall" color="primary" bold numberOfLines={1}>
+                R$ {price.toFixed(0)}
+              </Text>
+            </Box>
+
+            {tripsCount && (
+              <Box
+                backgroundColor="successBg"
+                paddingHorizontal="s8"
+                paddingVertical="s4"
+                borderRadius="s8"
+                flexShrink={0}>
+                <Text preset="paragraphCaptionSmall" color="success" bold>
+                  {tripsCount}
+                </Text>
+              </Box>
+            )}
           </Box>
         </Box>
       </TouchableOpacityBox>
     );
   };
 
-  const renderMyTrip = ({item}: {item: typeof MY_TRIPS[0]}) => {
-    const statusColor = item.status === 'completed' ? 'success' : 'warning';
-    const statusBg = item.status === 'completed' ? 'successBg' : 'warningBg';
-    const statusText = item.status === 'completed' ? 'COMPLETED' : 'UPCOMING';
+  const renderFavorite = ({item}: {item: any}) => {
+    const getIconName = () => {
+      if (item.type === FavoriteType.DESTINATION) return 'place';
+      if (item.type === FavoriteType.BOAT) return 'directions-boat';
+      if (item.type === FavoriteType.CAPTAIN) return 'person';
+      return 'favorite';
+    };
+
+    const getIconColor = () => {
+      if (item.type === FavoriteType.DESTINATION) return 'primary';
+      if (item.type === FavoriteType.BOAT) return 'secondary';
+      if (item.type === FavoriteType.CAPTAIN) return 'warning';
+      return 'primary';
+    };
+
+    const getBgColor = () => {
+      if (item.type === FavoriteType.DESTINATION) return 'primaryBg';
+      if (item.type === FavoriteType.BOAT) return 'secondaryBg';
+      if (item.type === FavoriteType.CAPTAIN) return 'warningBg';
+      return 'primaryBg';
+    };
+
+    const getTitle = () => {
+      if (item.type === FavoriteType.DESTINATION) {
+        return `${item.origin || 'Qualquer'} → ${item.destination}`;
+      }
+      if (item.type === FavoriteType.BOAT) {
+        return item.boat?.name || `Barco ${item.boatId?.slice(0, 8)}`;
+      }
+      if (item.type === FavoriteType.CAPTAIN) {
+        return item.captain?.name || `Capitão ${item.captainId?.slice(0, 8)}`;
+      }
+      return 'Favorito';
+    };
+
+    const getSubtitle = () => {
+      if (item.type === FavoriteType.BOAT && item.boat?.capacity) {
+        return `${item.boat.capacity} lugares`;
+      }
+      if (item.type === FavoriteType.CAPTAIN && item.captain) {
+        return `⭐ ${parseFloat(item.captain.rating).toFixed(1)} • ${item.captain.totalTrips} viagens`;
+      }
+      return item.type === FavoriteType.DESTINATION ? 'Destino' : item.type === FavoriteType.BOAT ? 'Barco' : 'Capitão';
+    };
+
+    return (
+      <TouchableOpacityBox
+        mr="s16"
+        backgroundColor="surface"
+        borderRadius="s16"
+        padding="s16"
+        width={180}
+        onPress={() => {
+          if (item.type === FavoriteType.DESTINATION) {
+            navigation.navigate('SearchResults', {
+              origin: item.origin || '',
+              destination: item.destination || '',
+            });
+          } else {
+            navigation.navigate('Favorites');
+          }
+        }}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Box
+          width={48}
+          height={48}
+          borderRadius="s12"
+          backgroundColor={getBgColor()}
+          alignItems="center"
+          justifyContent="center"
+          mb="s12">
+          <Icon name={getIconName()} size={24} color={getIconColor()} />
+        </Box>
+
+        <Text preset="paragraphMedium" color="text" bold numberOfLines={1} mb="s6">
+          {getTitle()}
+        </Text>
+
+        <Text preset="paragraphSmall" color="textSecondary" numberOfLines={1}>
+          {getSubtitle()}
+        </Text>
+      </TouchableOpacityBox>
+    );
+  };
+
+  const renderMyTrip = ({item}: {item: any}) => {
+    // Handle both mock data structure and real booking data structure
+    const isMockData = 'date' in item; // Mock data has 'date', real booking has 'trip'
+
+    // Extract data from appropriate structure
+    const origin = isMockData ? item.origin : item.trip?.origin || 'Origem desconhecida';
+    const destination = isMockData ? item.destination : item.trip?.destination || 'Destino desconhecido';
+    const dateStr = isMockData ? item.date : item.trip?.departureAt;
+    const timeStr = isMockData ? item.time : (item.trip?.departureAt ? new Date(item.trip.departureAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : null);
+
+    // Map booking status to display status
+    let displayStatus: 'completed' | 'upcoming' = 'upcoming';
+    if (isMockData) {
+      displayStatus = item.status;
+    } else {
+      // Real booking: map BookingStatus to display status
+      displayStatus = (item.status === 'completed' || item.trip?.status === 'completed') ? 'completed' : 'upcoming';
+    }
+
+    const statusColor = displayStatus === 'completed' ? 'success' : 'warning';
+    const statusBg = displayStatus === 'completed' ? 'successBg' : 'warningBg';
+    const statusText = displayStatus === 'completed' ? 'CONCLUÍDA' : 'PRÓXIMA';
+
+    // Format date safely
+    let formattedDate = 'Data não disponível';
+    if (dateStr) {
+      try {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toLocaleDateString('pt-BR');
+        }
+      } catch (e) {
+        console.error('Error formatting date:', e);
+      }
+    }
 
     return (
       <TouchableOpacityBox
@@ -190,22 +349,22 @@ export function HomeScreen({navigation}: Props) {
           <Icon name="directions-boat" size={26} color="primary" />
         </Box>
 
-        <Box flex={1}>
-          <Box flexDirection="row" alignItems="center" mb="s8">
-            <Text preset="paragraphMedium" color="text" bold>
-              {item.origin}
+        <Box flex={1} minWidth={0}>
+          <Box flexDirection="row" alignItems="center" mb="s8" flexWrap="nowrap">
+            <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
+              {origin}
             </Text>
-            <Box mx="s8">
+            <Box mx="s8" flexShrink={0}>
               <Icon name="arrow-forward" size={16} color="textSecondary" />
             </Box>
-            <Text preset="paragraphMedium" color="text" bold>
-              {item.destination}
+            <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
+              {destination}
             </Text>
           </Box>
           <Box flexDirection="row" alignItems="center">
             <Icon name="schedule" size={14} color="textSecondary" />
-            <Text preset="paragraphSmall" color="textSecondary" ml="s4">
-              {new Date(item.date).toLocaleDateString('pt-BR')} • {item.time}
+            <Text preset="paragraphSmall" color="textSecondary" ml="s4" numberOfLines={1}>
+              {formattedDate} • {timeStr || '--:--'}
             </Text>
           </Box>
         </Box>
@@ -228,28 +387,109 @@ export function HomeScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s24"
-        backgroundColor="primary">
+        paddingTop="s40"
+        paddingBottom="s16"
+        backgroundColor="surface"
+        borderBottomWidth={1}
+        borderBottomColor="border">
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Text preset="paragraphMedium" color="surface" opacity={0.9} mb="s4">
-              Welcome back
-            </Text>
-            <Text preset="headingMedium" color="surface" bold>
-              Hello, {user?.name?.split(' ')[0]}!
-            </Text>
+          {/* User Info with Avatar */}
+          <Box flexDirection="row" alignItems="center" flex={1}>
+            <TouchableOpacityBox
+              width={52}
+              height={52}
+              borderRadius="s48"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              marginRight="s12"
+              onPress={() => navigation.navigate('Profile')}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}>
+              <Icon name="person" size={26} color="primary" />
+            </TouchableOpacityBox>
+
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Olá, {user?.name?.split(' ')[0]} 👋
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                {getGreeting()}
+              </Text>
+            </Box>
           </Box>
-          <TouchableOpacityBox
-            width={48}
-            height={48}
-            borderRadius="s24"
-            backgroundColor="surface"
-            alignItems="center"
-            justifyContent="center"
-            onPress={() => navigation.navigate('Profile')}>
-            <Icon name="menu" size={24} color="primary" />
-          </TouchableOpacityBox>
+
+          {/* Action Icons */}
+          <Box flexDirection="row" gap="s8">
+            {/* Notifications Icon */}
+            <TouchableOpacityBox
+              width={44}
+              height={44}
+              borderRadius="s24"
+              backgroundColor="background"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => {
+                // TODO: Navigate to notifications
+                console.log('Notifications pressed');
+              }}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.08,
+                shadowRadius: 3,
+                elevation: 2,
+              }}>
+              <Icon name="notifications-none" size={22} color="text" />
+              {/* Badge for unread notifications */}
+              <Box
+                width={8}
+                height={8}
+                borderRadius="s8"
+                backgroundColor="danger"
+                style={{position: 'absolute', top: 8, right: 8}}
+              />
+            </TouchableOpacityBox>
+
+            {/* Favorites Icon */}
+            <TouchableOpacityBox
+              width={44}
+              height={44}
+              borderRadius="s24"
+              backgroundColor="background"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => navigation.navigate('Favorites')}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.08,
+                shadowRadius: 3,
+                elevation: 2,
+              }}>
+              <Icon name="favorite-border" size={22} color="text" />
+              {favorites && favorites.length > 0 && (
+                <Box
+                  backgroundColor="danger"
+                  borderRadius="s12"
+                  minWidth={18}
+                  height={18}
+                  alignItems="center"
+                  justifyContent="center"
+                  paddingHorizontal="s4"
+                  style={{position: 'absolute', top: -4, right: -4}}>
+                  <Text preset="paragraphCaptionSmall" color="surface" bold>
+                    {favorites.length > 9 ? '9+' : favorites.length}
+                  </Text>
+                </Box>
+              )}
+            </TouchableOpacityBox>
+          </Box>
         </Box>
       </Box>
 
@@ -278,7 +518,7 @@ export function HomeScreen({navigation}: Props) {
             }}>
             <Icon name="search" size={24} color="textSecondary" />
             <Text preset="paragraphLarge" color="textSecondary" ml="s12" flex={1}>
-              Where do you want to go?
+              Para onde você quer ir?
             </Text>
           </TouchableOpacityBox>
         </Box>
@@ -360,70 +600,303 @@ export function HomeScreen({navigation}: Props) {
         <Box mt="s24" mb="s28">
           <Box flexDirection="row" justifyContent="space-between" alignItems="center" px="s24" mb="s16">
             <Text preset="headingSmall" color="text" bold>
-              Popular Routes
+              Rotas Populares
             </Text>
-            <TouchableOpacityBox onPress={() => navigation.navigate('Search')}>
+            <TouchableOpacityBox onPress={() => navigation.navigate('PopularRoutes')}>
               <Text preset="paragraphMedium" color="primary" bold>
-                View All
+                Ver todas
               </Text>
             </TouchableOpacityBox>
           </Box>
 
           <FlatList
             horizontal
-            data={POPULAR_ROUTES}
-            keyExtractor={item => item.id}
+            data={popularData?.routes || POPULAR_ROUTES}
+            keyExtractor={(item, index) => (item as any).id || `${item.origin}-${item.destination}-${index}`}
             renderItem={renderPopularRoute}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{paddingHorizontal: 24}}
           />
         </Box>
 
-        {/* My Next Trips */}
-        <Box px="s24" mb="s24">
-          <Text preset="headingSmall" color="text" bold mb="s16">
-            My Next Trips
-          </Text>
-
-          {(bookings.length > 0 ? bookings : MY_TRIPS).slice(0, 3).map((trip: any) => (
-            <Box key={trip.id}>
-              {renderMyTrip({item: trip})}
-            </Box>
-          ))}
-        </Box>
-
-        {/* Promo Card */}
-        <Box px="s24" mb="s32">
-          <Box
-            backgroundColor="success"
-            borderRadius="s20"
-            padding="s24"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 4},
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 6,
-            }}>
-            <Text preset="headingSmall" color="surface" bold mb="s8">
-              Ganhe 25% de desconto
-            </Text>
-            <Text preset="paragraphMedium" color="surface" mb="s20" opacity={0.95}>
-              Na sua primeira viagem com parceiros selecionados
-            </Text>
-            <Box alignSelf="flex-start">
-              <TouchableOpacityBox
-                backgroundColor="surface"
-                paddingHorizontal="s20"
-                paddingVertical="s12"
-                borderRadius="s12">
-                <Text preset="paragraphMedium" color="success" bold>
-                  Aproveitar
+        {/* Favorites Section */}
+        {favorites && favorites.length > 0 && (
+          <Box mt="s24" mb="s28">
+            <Box flexDirection="row" justifyContent="space-between" alignItems="center" px="s24" mb="s16">
+              <Text preset="headingSmall" color="text" bold>
+                Meus Favoritos
+              </Text>
+              <TouchableOpacityBox onPress={() => navigation.navigate('Favorites')}>
+                <Text preset="paragraphMedium" color="primary" bold>
+                  Ver todos
                 </Text>
               </TouchableOpacityBox>
             </Box>
+
+            <FlatList
+              horizontal
+              data={favorites.slice(0, 5)}
+              keyExtractor={item => item.id}
+              renderItem={renderFavorite}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{paddingHorizontal: 24}}
+            />
           </Box>
+        )}
+
+        {/* My Next Trips */}
+        <Box px="s24" mb="s24">
+          <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s16">
+            <Text preset="headingSmall" color="text" bold>
+              Minhas Próximas Viagens
+            </Text>
+            <TouchableOpacityBox onPress={() => navigation.navigate('Bookings')}>
+              <Text preset="paragraphMedium" color="primary" bold>
+                Ver todas
+              </Text>
+            </TouchableOpacityBox>
+          </Box>
+
+          {(() => {
+            // Filtrar apenas viagens ativas/futuras (não concluídas ou canceladas)
+            const activeBookings = bookings.filter((booking: any) => {
+              const status = booking.status;
+              return status === 'pending' || status === 'confirmed' || status === 'checked_in';
+            });
+
+            // Se não houver bookings ativos, usar mock data filtrado
+            const tripsToShow = activeBookings.length > 0
+              ? activeBookings
+              : MY_TRIPS.filter(trip => trip.status === 'upcoming');
+
+            // Se não houver nenhuma viagem futura
+            if (tripsToShow.length === 0) {
+              return (
+                <Box
+                  backgroundColor="surface"
+                  borderRadius="s16"
+                  padding="s32"
+                  alignItems="center"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}>
+                  <Icon name="luggage" size={48} color="border" />
+                  <Text preset="paragraphMedium" color="textSecondary" mt="s16" textAlign="center">
+                    Você ainda não tem viagens agendadas
+                  </Text>
+                  <TouchableOpacityBox
+                    mt="s16"
+                    backgroundColor="primary"
+                    paddingHorizontal="s20"
+                    paddingVertical="s12"
+                    borderRadius="s12"
+                    onPress={() => navigation.navigate('Search')}>
+                    <Text preset="paragraphMedium" color="surface" bold>
+                      Buscar Viagens
+                    </Text>
+                  </TouchableOpacityBox>
+                </Box>
+              );
+            }
+
+            // Pegar apenas as 3 próximas
+            return tripsToShow.slice(0, 3).map((trip: any) => (
+              <Box key={trip.id}>
+                {renderMyTrip({item: trip})}
+              </Box>
+            ));
+          })()}
         </Box>
+
+        {/* Dynamic Promo Cards - Carousel */}
+        {promotions.length > 0 && (
+          <Box mb="s32">
+            <FlatList
+              horizontal
+              data={promotions}
+              keyExtractor={item => item.id}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={SCREEN_WIDTH - 32}
+              decelerationRate="fast"
+              contentContainerStyle={{paddingHorizontal: 24, gap: 16}}
+              onScroll={event => {
+                const slideSize = SCREEN_WIDTH - 32;
+                const index = Math.round(event.nativeEvent.contentOffset.x / slideSize);
+                setCurrentPromoIndex(index);
+              }}
+              scrollEventThrottle={16}
+              renderItem={({item: promo}) => {
+                // Normalizar textColor: aceita "light", "dark", ou cores hex
+                const isLightText =
+                  promo.textColor === 'light' ||
+                  promo.textColor?.toLowerCase().includes('fff') ||
+                  promo.textColor?.toLowerCase().includes('white');
+
+                const textColor = isLightText ? 'surface' : 'text';
+                const buttonBg = isLightText ? 'surface' : 'primary';
+                const buttonTextColor = isLightText ? 'primary' : 'surface';
+
+                // Normalizar backgroundColor: se não tiver alpha, adiciona
+                const bgColor = promo.backgroundColor?.startsWith('#')
+                  ? `${promo.backgroundColor}CC` // Adiciona alpha 80%
+                  : promo.backgroundColor || 'rgba(0, 0, 0, 0.3)';
+
+                // Formatar datas de validade
+                const formatPromoDate = (dateStr: string) => {
+                  try {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                    });
+                  } catch {
+                    return '';
+                  }
+                };
+
+                const startDate = formatPromoDate(promo.startDate);
+                const endDate = formatPromoDate(promo.endDate);
+                const validityText = startDate && endDate ? `Válido de ${startDate} até ${endDate}` : '';
+
+                const handlePromoAction = () => {
+                  if (promo.ctaAction === 'search' && promo.ctaValue) {
+                    // Parse "Manaus-Parintins" → {origin: "Manaus", destination: "Parintins"}
+                    const [origin, destination] = promo.ctaValue.split('-').map(s => s.trim());
+
+                    if (origin && destination) {
+                      // Navega direto para resultados com origem/destino preenchidos
+                      // E passa a promoção para ser exibida na tela de resultados
+                      navigation.navigate('SearchResults', {
+                        origin,
+                        destination,
+                        promotion: promo,
+                      });
+                    } else {
+                      // Se não tiver origem/destino, vai para busca vazia
+                      navigation.navigate('Search');
+                    }
+                  } else if (promo.ctaAction === 'url' && promo.ctaValue) {
+                    // Abre URL externa no navegador
+                    Linking.openURL(promo.ctaValue);
+                  } else if (promo.ctaAction === 'deeplink' && promo.ctaValue) {
+                    // Parse "TripDetails-abc123" ou "Booking-xyz789"
+                    const [screen, id] = promo.ctaValue.split('-').map(s => s.trim());
+
+                    if (screen === 'TripDetails' && id) {
+                      navigation.navigate('TripDetails', {tripId: id});
+                    } else if (screen === 'Booking' && id) {
+                      navigation.navigate('Booking', {tripId: id});
+                    } else if (screen === 'Ticket' && id) {
+                      navigation.navigate('Ticket', {bookingId: id});
+                    } else {
+                      // Fallback: navega para a tela especificada sem parâmetros
+                      navigation.navigate(screen as any);
+                    }
+                  } else {
+                    // Fallback: navega para busca
+                    navigation.navigate('Search');
+                  }
+                };
+
+                return (
+                  <Box
+                    width={SCREEN_WIDTH - 48}
+                    marginRight="s16"
+                    borderRadius="s20"
+                    overflow="hidden"
+                    style={{
+                      shadowColor: '#000',
+                      shadowOffset: {width: 0, height: 4},
+                      shadowOpacity: 0.15,
+                      shadowRadius: 12,
+                      elevation: 6,
+                    }}>
+                    <ImageBackground
+                      source={{uri: promo.imageUrl}}
+                      style={{width: '100%', minHeight: 200}}
+                      imageStyle={{borderRadius: 20}}
+                      resizeMode="cover">
+                      {/* Gradient overlay for better text readability */}
+                      <Box
+                        flex={1}
+                        padding="s24"
+                        style={{
+                          backgroundColor: bgColor,
+                        }}>
+                        <Text preset="headingSmall" color={textColor} bold mb="s8">
+                          {promo.title}
+                        </Text>
+                        <Text
+                          preset="paragraphMedium"
+                          color={textColor}
+                          mb="s12"
+                          opacity={0.95}>
+                          {promo.description}
+                        </Text>
+
+                        {/* Validity Dates */}
+                        {validityText && (
+                          <Box flexDirection="row" alignItems="center" mb="s16">
+                            <Icon name="schedule" size={16} color={textColor} />
+                            <Text
+                              preset="paragraphSmall"
+                              color={textColor}
+                              ml="s6"
+                              opacity={0.9}>
+                              {validityText}
+                            </Text>
+                          </Box>
+                        )}
+
+                        <Box alignSelf="flex-start">
+                          <TouchableOpacityBox
+                            backgroundColor={buttonBg}
+                            paddingHorizontal="s20"
+                            paddingVertical="s12"
+                            borderRadius="s12"
+                            onPress={handlePromoAction}>
+                            <Text
+                              preset="paragraphMedium"
+                              color={buttonTextColor}
+                              bold>
+                              {promo.ctaText}
+                            </Text>
+                          </TouchableOpacityBox>
+                        </Box>
+                      </Box>
+                    </ImageBackground>
+                  </Box>
+                );
+              }}
+            />
+
+            {/* Indicadores de Página */}
+            {promotions.length > 1 && (
+              <Box
+                flexDirection="row"
+                justifyContent="center"
+                alignItems="center"
+                gap="s8"
+                mt="s16">
+                {promotions.map((_, index) => (
+                  <Box
+                    key={index}
+                    width={currentPromoIndex === index ? 24 : 8}
+                    height={8}
+                    borderRadius="s8"
+                    backgroundColor={
+                      currentPromoIndex === index ? 'primary' : 'border'
+                    }
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
       </ScrollView>
     </Box>
   );

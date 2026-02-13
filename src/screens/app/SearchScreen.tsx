@@ -1,5 +1,7 @@
 import React, {useState} from 'react';
-import {Keyboard, ScrollView, TouchableWithoutFeedback} from 'react-native';
+import {Keyboard, ScrollView, TouchableWithoutFeedback, Platform} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import {format} from 'date-fns';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
@@ -7,7 +9,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '@routes';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabsParamList, 'Search'>,
@@ -25,6 +27,8 @@ export function SearchScreen({navigation}: Props) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   function handleSearch() {
     if (!origin.trim() || !destination.trim()) {
@@ -32,10 +36,13 @@ export function SearchScreen({navigation}: Props) {
       return;
     }
 
+    // Formata a data para API (yyyy-MM-dd) se selecionada
+    const dateForApi = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined;
+
     navigation.navigate('SearchResults', {
       origin: origin.trim(),
       destination: destination.trim(),
-      date: date.trim() || undefined,
+      date: dateForApi,
     });
   }
 
@@ -44,20 +51,50 @@ export function SearchScreen({navigation}: Props) {
     setDestination(route.destination);
   }
 
+  function handleDateChange(event: any, selected?: Date) {
+    // Android: fecha o picker automaticamente
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (selected) {
+      setSelectedDate(selected);
+      // Formata a data para exibição (ex: "15 de Fevereiro")
+      const formatted = selected.toLocaleDateString('pt-BR', {
+        day: 'numeric',
+        month: 'long',
+      });
+      setDate(formatted);
+    }
+  }
+
+  function handleOpenDatePicker() {
+    setShowDatePicker(true);
+  }
+
+  function formatDateForDisplay() {
+    if (selectedDate) {
+      return selectedDate.toLocaleDateString('pt-BR', {
+        day: 'numeric',
+        month: 'long',
+      });
+    }
+    return '';
+  }
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <Box flex={1} backgroundColor="background">
         {/* Header */}
         <Box
           paddingHorizontal="s24"
-          paddingTop="s56"
-          paddingBottom="s24"
-          backgroundColor="primary">
-          <Text preset="headingLarge" color="surface" bold>
+          paddingTop="s40"
+          paddingBottom="s12"
+          backgroundColor="surface"
+          borderBottomWidth={1}
+          borderBottomColor="border">
+          <Text preset="headingSmall" color="text" bold textAlign="center">
             Buscar Viagem
-          </Text>
-          <Text preset="paragraphMedium" color="surface" mt="s8">
-            Encontre a melhor rota para você
           </Text>
         </Box>
 
@@ -125,13 +162,26 @@ export function SearchScreen({navigation}: Props) {
 
             {/* Date */}
             <Box mb="s24">
-              <TextInput
-                label="Data (opcional)"
-                placeholder="Quando você quer viajar?"
-                value={date}
-                onChangeText={setDate}
-                leftIcon="event"
-              />
+              <Text preset="paragraphSmall" color="text" bold mb="s8">
+                Data (opcional)
+              </Text>
+              <TouchableOpacityBox
+                backgroundColor="background"
+                borderRadius="s12"
+                padding="s16"
+                borderWidth={1}
+                borderColor="border"
+                flexDirection="row"
+                alignItems="center"
+                onPress={handleOpenDatePicker}>
+                <Icon name="event" size={20} color="textSecondary" />
+                <Text
+                  preset="paragraphMedium"
+                  color={date ? 'text' : 'textSecondary'}
+                  ml="s12">
+                  {date || 'Quando você quer viajar?'}
+                </Text>
+              </TouchableOpacityBox>
             </Box>
 
             {/* Search Button */}
@@ -213,6 +263,67 @@ export function SearchScreen({navigation}: Props) {
             </Box>
           </Box>
         </ScrollView>
+
+        {/* Date Picker */}
+        {showDatePicker && Platform.OS === 'ios' && (
+          <Box
+            backgroundColor="surface"
+            paddingBottom="s24"
+            borderTopLeftRadius="s20"
+            borderTopRightRadius="s20"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: -2},
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 5,
+            }}>
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
+              paddingHorizontal="s24"
+              paddingTop="s16"
+              paddingBottom="s12">
+              <TouchableOpacityBox onPress={() => setShowDatePicker(false)}>
+                <Text preset="paragraphMedium" color="textSecondary">
+                  Cancelar
+                </Text>
+              </TouchableOpacityBox>
+              <Text preset="paragraphMedium" color="text" bold>
+                Selecione a Data
+              </Text>
+              <TouchableOpacityBox onPress={() => setShowDatePicker(false)}>
+                <Text preset="paragraphMedium" color="primary" bold>
+                  Concluído
+                </Text>
+              </TouchableOpacityBox>
+            </Box>
+            <DateTimePicker
+              value={selectedDate || new Date()}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+              locale="pt-BR"
+              style={{backgroundColor: 'transparent'}}
+            />
+          </Box>
+        )}
+
+        {showDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={selectedDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+          />
+        )}
       </Box>
     </TouchableWithoutFeedback>
   );

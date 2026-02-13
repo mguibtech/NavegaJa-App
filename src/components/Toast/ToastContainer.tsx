@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-import {useToastStore} from '../../store/toast.store';
+import {useToastStore} from '@store';
 import {Toast} from './Toast';
 
 export function ToastContainer() {

@@ -65,9 +65,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       set({currentBooking: booking, isLoading: false});
       return booking;
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -82,9 +82,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       await get().loadOfflineBookings();
       const offlineBookings = get().offlineBookings;
       set({bookings: offlineBookings, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -100,7 +100,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const offlineBookings = get().offlineBookings;
       const booking = offlineBookings.find(b => b.id === bookingId);
       set({currentBooking: booking || null, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       // Se falhar, buscar offline
       const offlineBookings = get().offlineBookings;
       const booking = offlineBookings.find(b => b.id === bookingId);
@@ -108,18 +108,18 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     }
   },
 
-  cancelBooking: async (bookingId: string) => {
+  cancelBooking: async (_bookingId: string) => {
     set({isLoading: true});
     try {
       // TODO: Implementar quando bookingsApi estiver pronto
-      // await bookingsApi.cancel(bookingId);
+      // await bookingsApi.cancel(_bookingId);
 
       // Atualizar lista
       await get().getMyBookings();
       set({isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -141,8 +141,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const json = await AsyncStorage.getItem(OFFLINE_BOOKINGS_KEY);
       const bookings: Booking[] = json ? JSON.parse(json) : [];
       set({offlineBookings: bookings});
-    } catch (error) {
-      console.error('Error loading offline bookings:', error);
+    } catch (_error) {
+      console.error('Error loading offline bookings:', _error);
       set({offlineBookings: []});
     }
   },

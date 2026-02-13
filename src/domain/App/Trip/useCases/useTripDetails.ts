@@ -17,8 +17,13 @@ export function useTripDetails() {
       setTrip(result);
       setIsLoading(false);
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      const error = err as any;
+
+      // Ignora erros 401 (são tratados automaticamente pelo refresh token)
+      if (error?.statusCode !== 401) {
+        setError(error);
+      }
+
       setTrip(null);
       setIsLoading(false);
       throw error;

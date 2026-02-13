@@ -13,7 +13,12 @@ export const loginAdapter = {
       email: response.user.email,
       role: response.user.role as User['role'],
       cpf: response.user.cpf,
-      isVerified: response.user.isVerified,
+      avatarUrl: response.user.avatarUrl,
+      rating: response.user.rating,
+      totalTrips: response.user.totalTrips,
+      totalPoints: response.user.totalPoints,
+      level: response.user.level,
+      referralCode: response.user.referralCode,
       createdAt: response.user.createdAt,
       updatedAt: response.user.updatedAt,
     };

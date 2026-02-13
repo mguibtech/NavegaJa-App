@@ -44,7 +44,27 @@
       "Bash(python -m json.tool:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRjNWEzNS03MDg1LTRhMTEtODU4OC0yZjc2NWRiNzUyMmEiLCJwaG9uZSI6IjkyOTk5ODg3NzY2Iiwicm9sZSI6InBhc3NlbmdlciIsImlhdCI6MTc3MDkyMjk3NiwiZXhwIjoxNzcwOTIzODc2fQ.VpIR5AaxxoVvkoxcSdFCpU6sAMBma7f8DRhC63A0X3c\")",
       "Bash(CAPTAIN_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjOWRmZWRjNy03ZDQwLTRhOGQtYTBmMi1mYzAwMWI3MjliMWMiLCJwaG9uZSI6IjkyOTg4Nzc2NjU1Iiwicm9sZSI6ImNhcHRhaW4iLCJpYXQiOjE3NzA5MjMwMjksImV4cCI6MTc3MDkyMzkyOX0.qeeCgHNZyWH8XG8XfULBVGtAqNeMYMHZCpGdhyPcZ7o\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cd:*)",
+      "Bash(adb logcat:*)",
+      "Bash(./android/gradlew:*)",
+      "Bash(gradlew clean:*)",
+      "Bash(/tmp/update_components.sh << 'SCRIPT'\n#!/bin/bash\n\n# Atualizar importações nos componentes\n\nfind \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\components\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | while read -r file; do\n  echo \"Processando: $file\"\n  \n  # Substituir importações relativas entre componentes\n  # Ex: from '../Box/Box' -> from '@components'\n  # Precisamos ser mais específicos aqui para não quebrar exports\n  \n  # Para arquivos de componentes individuais, atualizar apenas os imports\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/Box\\\\/Box['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/Text\\\\/Text['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/Icon\\\\/Icon['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/Button\\\\/Button['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/TextInput\\\\/TextInput['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/TouchableOpacityBox\\\\/TouchableOpacityBox['\\\\\"]|from '@components'|g\" \"$file\"\n  \n  # Substituir importações de domain\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/domain|from '@domain|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/\\\\.\\\\.\\\\/domain|from '@domain|g\" \"$file\"\ndone\n\necho \"Concluído!\"\nSCRIPT)",
+      "Bash(__NEW_LINE_7dea7661249f49f0__ chmod +x /tmp/update_components.sh)",
+      "Bash(bash:*)",
+      "Bash(/tmp/update_domain.sh:*)",
+      "Bash(__NEW_LINE_be72c93fbdb65746__ chmod +x /tmp/update_domain.sh)",
+      "Bash(/tmp/update_routes.sh << 'SCRIPT'\n#!/bin/bash\n\n# Atualizar importações nos arquivos de routes e outros\n\nfind \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\routes\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | while read -r file; do\n  echo \"Processando: $file\"\n  \n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/components['\\\\\"]|from '@components'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/screens['\\\\\"]|from '@screens'|g\" \"$file\"\n  sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/domain|from '@domain|g\" \"$file\"\ndone\n\n# Atualizar hooks se existir\nif [ -d \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\hooks\" ]; then\n  find \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\hooks\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | while read -r file; do\n    echo \"Processando: $file\"\n    \n    sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/api['\\\\\"]|from '@api'|g\" \"$file\"\n    sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/domain|from '@domain|g\" \"$file\"\n  done\nfi\n\n# Atualizar utils se existir\nif [ -d \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\utils\" ]; then\n  find \"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\utils\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | while read -r file; do\n    echo \"Processando: $file\"\n    \n    sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/api['\\\\\"]|from '@api'|g\" \"$file\"\n    sed -i \"s|from ['\\\\\"]\\\\.\\\\.\\\\/domain|from '@domain|g\" \"$file\"\n  done\nfi\n\necho \"Concluído!\"\nSCRIPT)",
+      "Bash(__NEW_LINE_cc33dcbe62767806__ chmod +x /tmp/update_routes.sh)",
+      "Bash(/tmp/update_store.sh:*)",
+      "Bash(__NEW_LINE_00adce4c2629caf7__ chmod +x /tmp/update_store.sh)",
+      "Bash(grep:*)",
+      "Bash(\"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\screens\\\\index.ts\" << 'EOF'\nexport * from './app';\nexport * from './auth';\nEOF)",
+      "Bash(ls:*)",
+      "Bash(\"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\store\\\\index.ts\" << 'EOF'\nexport * from './auth.store';\nexport * from './booking.store';\nexport * from './shipment.store';\nexport * from './toast.store';\nexport * from './trip.store';\nEOF)",
+      "Bash(/tmp/fix_final_imports.sh:*)",
+      "Bash(__NEW_LINE_3106511d27909252__ chmod +x /tmp/fix_final_imports.sh)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

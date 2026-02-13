@@ -8,7 +8,7 @@ import {useForgotPassword} from '@domain';
 import {formatEmail} from '@utils';
 import {useToast} from '@hooks';
 
-import {AuthStackParamList} from '../../routes/AuthStack';
+import {AuthStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -41,9 +41,9 @@ export function ForgotPasswordScreen({navigation}: Props) {
 
       // Navega para tela de reset password
       navigation.navigate('ResetPassword', {email: email.trim().toLowerCase()});
-    } catch (error: any) {
+    } catch (_error: any) {
       const msg =
-        error?.response?.data?.message ||
+        _error?.response?.data?.message ||
         'Erro ao enviar código. Tente novamente.';
       toast.showError(msg);
     }

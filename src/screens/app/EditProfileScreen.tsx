@@ -4,10 +4,10 @@ import {Alert, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
-import {useAuthStore} from '../../store/auth.store';
-import {useUpdateProfile} from '../../domain/Auth/User';
+import {useAuthStore} from '@store';
+import {useUpdateProfile} from '@domain';
 
-import {AppStackParamList} from '../../routes/AppStack';
+import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'EditProfile'>;
 
@@ -36,7 +36,7 @@ export function EditProfileScreen({navigation}: Props) {
           onPress: () => navigation.goBack(),
         },
       ]);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Erro', 'Não foi possível atualizar o perfil. Tente novamente.');
     }
   }
@@ -46,8 +46,8 @@ export function EditProfileScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s24"
+        paddingTop="s48"
+        paddingBottom="s16"
         backgroundColor="primary"
         flexDirection="row"
         alignItems="center">

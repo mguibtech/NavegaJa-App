@@ -12,7 +12,7 @@ export function useLogout() {
 
     try {
       await logoutAPI.execute();
-    } catch (error) {
+    } catch (_error) {
       // Ignore API error
     } finally {
       // Always clear local storage

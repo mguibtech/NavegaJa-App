@@ -3,18 +3,9 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {CustomTabBar, Icon} from '@components';
-import {
-  HomeScreen,
-  SearchScreen,
-  SearchResultsScreen,
-  TripDetailsScreen,
-  BookingScreen,
-  TicketScreen,
-  TrackingScreen,
-  BookingsScreen,
-  ProfileScreen,
-  EditProfileScreen,
-} from '../screens/app';
+
+import { Promotion } from '@domain';
+import { BookingScreen, BookingsScreen, EditProfileScreen, FavoritesScreen, HomeScreen, PopularRoutesScreen, ProfileScreen, SearchResultsScreen, SearchScreen, TicketScreen, TrackingScreen, TripDetailsScreen } from '@screens';
 
 export type AppStackParamList = {
   HomeTabs: undefined;
@@ -22,10 +13,14 @@ export type AppStackParamList = {
     origin: string;
     destination: string;
     date?: string;
+    promotion?: Promotion;
   };
+  PopularRoutes: undefined;
   TripDetails: {
     tripId: string;
+    promotion?: Promotion;
   };
+  Favorites: undefined;
   Booking: {
     tripId: string;
   };
@@ -107,7 +102,9 @@ export function AppStack() {
       }}>
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
       <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
+      <Stack.Screen name="PopularRoutes" component={PopularRoutesScreen} />
       <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+      <Stack.Screen name="Favorites" component={FavoritesScreen} />
       <Stack.Screen name="Booking" component={BookingScreen} />
       <Stack.Screen name="Ticket" component={TicketScreen} />
       <Stack.Screen name="Tracking" component={TrackingScreen} />

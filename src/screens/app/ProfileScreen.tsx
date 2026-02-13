@@ -6,10 +6,10 @@ import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useAuthStore} from '../../store/auth.store';
+import {useAuthStore} from '@store';
 import {formatPhone} from '@utils';
 
-import {AppStackParamList, TabsParamList} from '../../routes/AppStack';
+import {AppStackParamList, TabsParamList} from '@routes';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabsParamList, 'Profile'>,
@@ -91,10 +91,12 @@ export function ProfileScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s56"
-        paddingBottom="s24"
-        backgroundColor="primary">
-        <Text preset="headingLarge" color="surface" bold>
+        paddingTop="s40"
+        paddingBottom="s12"
+        backgroundColor="surface"
+        borderBottomWidth={1}
+        borderBottomColor="border">
+        <Text preset="headingSmall" color="text" bold textAlign="center">
           Meu Perfil
         </Text>
       </Box>

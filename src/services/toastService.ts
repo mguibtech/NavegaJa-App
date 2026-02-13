@@ -1,4 +1,4 @@
-import {useToastStore, ToastConfig} from '../store/toast.store';
+import {useToastStore, ToastConfig} from '@store';
 
 type ShowToastParams = Omit<ToastConfig, 'id' | 'type'>;
 

@@ -1,3 +1,6 @@
+// Shared types
+export * from './authTypes';
+
 // Login
 export * from './Login';
 

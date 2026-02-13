@@ -7,7 +7,7 @@ import {Box, Button, Icon, Logo, Text, TextInput} from '@components';
 import {useResetPassword} from '@domain';
 import {useToast} from '@hooks';
 
-import {AuthStackParamList} from '../../routes/AuthStack';
+import {AuthStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -55,9 +55,9 @@ export function ResetPasswordScreen({navigation, route}: Props) {
       setTimeout(() => {
         navigation.navigate('Login');
       }, 1500);
-    } catch (error: any) {
+    } catch (_error: any) {
       const msg =
-        error?.response?.data?.message ||
+        _error?.response?.data?.message ||
         'Erro ao resetar senha. Verifique o código e tente novamente.';
       toast.showError(msg);
     }

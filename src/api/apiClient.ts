@@ -10,6 +10,7 @@ class ApiClient {
     resolve: (value?: any) => void;
     reject: (reason?: any) => void;
   }> = [];
+  private onUnauthorized: (() => void) | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -61,7 +62,8 @@ class ApiClient {
         return response;
       },
       async (error: AxiosError<ApiError>) => {
-        if (__DEV__) {
+        // Não loga erros 401 no console (são tratados automaticamente pelo refresh token)
+        if (__DEV__ && error.response?.status !== 401) {
           console.error('[API] Error:', error.response?.data || error.message);
         }
 
@@ -125,6 +127,12 @@ class ApiClient {
             // Se o refresh falhar, limpa tudo e faz logout
             this.processQueue(refreshError, null);
             await authStorage.clear();
+
+            // Chama callback de logout se estiver registrado
+            if (this.onUnauthorized) {
+              this.onUnauthorized();
+            }
+
             return Promise.reject(refreshError);
           } finally {
             this.isRefreshing = false;
@@ -182,6 +190,10 @@ class ApiClient {
 
   clearAuthToken() {
     delete this.client.defaults.headers.common.Authorization;
+  }
+
+  setUnauthorizedHandler(callback: () => void) {
+    this.onUnauthorized = callback;
   }
 }
 

@@ -1,6 +1,7 @@
 import {api} from '@api';
 
 import {CreateTripData, SearchTripsParams, Trip} from './tripTypes';
+import {PopularDestinationsResponse} from './popularRoutesTypes';
 
 class TripAPI {
   async search(params: SearchTripsParams): Promise<Trip[]> {
@@ -25,6 +26,11 @@ class TripAPI {
 
   async delete(id: string): Promise<void> {
     await api.delete(`/trips/${id}`);
+  }
+
+  async getPopular(): Promise<PopularDestinationsResponse> {
+    const response = await api.get<PopularDestinationsResponse>('/trips/popular');
+    return response;
   }
 }
 

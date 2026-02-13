@@ -1,10 +1,10 @@
 import {create} from 'zustand';
 
 import {authStorage} from '@services';
-import {loginAPI, loginAdapter} from '@domain/Auth/Login';
-import {registerAPI, registerAdapter} from '@domain/Auth/Register';
-import {userAPI} from '@domain/Auth/User';
-import type {User} from '@domain/Auth/User';
+import {loginAPI, loginAdapter, RegisterDto} from '@domain';
+import {registerAPI, registerAdapter} from '@domain';
+import {userAPI} from '@domain';
+import type {User} from '@domain';
 
 interface AuthState {
   user: User | null;
@@ -13,13 +13,7 @@ interface AuthState {
 
   // Actions
   login: (credentials: {phone: string; password: string}) => Promise<void>;
-  register: (data: {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    role: 'passenger' | 'captain';
-  }) => Promise<void>;
+  register: (data: RegisterDto) => Promise<void>;
   logout: () => Promise<void>;
   loadStoredUser: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -43,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } else {
         set({user: null, isLoggedIn: false, isLoading: false});
       }
-    } catch (error) {
+    } catch (_error) {
       await authStorage.clear();
       set({user: null, isLoggedIn: false, isLoading: false});
     }
@@ -66,9 +60,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -89,9 +83,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 

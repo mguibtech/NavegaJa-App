@@ -21,7 +21,7 @@ interface ShipmentState {
   setLoading: (isLoading: boolean) => void;
 }
 
-export const useShipmentStore = create<ShipmentState>((set, get) => ({
+export const useShipmentStore = create<ShipmentState>((set, _get) => ({
   // Initial State
   shipments: [],
   currentShipment: null,
@@ -36,9 +36,9 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
       // set({currentShipment: shipment, isLoading: false});
       console.log('Create shipment:', formData);
       set({isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -50,9 +50,9 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
       // set({shipments, isLoading: false});
       console.log('Get my shipments');
       set({shipments: [], isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -64,9 +64,9 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
       // set({currentShipment: shipment, isLoading: false});
       console.log('Track shipment:', trackingCode);
       set({currentShipment: null, isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 
@@ -82,9 +82,9 @@ export const useShipmentStore = create<ShipmentState>((set, get) => ({
       // await shipmentsApi.reportIncident(shipmentId, {type, description, photo});
       console.log('Report incident:', shipmentId, type, description, photo);
       set({isLoading: false});
-    } catch (error) {
+    } catch (_error) {
       set({isLoading: false});
-      throw error;
+      throw _error;
     }
   },
 

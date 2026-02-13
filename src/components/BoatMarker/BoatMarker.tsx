@@ -2,7 +2,7 @@ import React from 'react';
 import {View, StyleSheet} from 'react-native';
 import {Marker} from 'react-native-maps';
 
-import {Icon} from '../Icon/Icon';
+import {Icon} from '@components';
 import {theme} from '@theme';
 
 interface BoatMarkerProps {

@@ -18,6 +18,7 @@ module.exports = {
           '@services': './src/services',
           '@infra': './src/infra',
           '@config': './src/config',
+          '@store': './src/store',
         },
       },
     ],

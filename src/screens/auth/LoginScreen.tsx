@@ -5,11 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Logo, Text, TextInput} from '@components';
-import {useAuthStore} from '../../store/auth.store';
+import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone} from '@utils';
 import {useToast} from '@hooks';
 
-import {AuthStackParamList} from '../../routes/AuthStack';
+import {AuthStackParamList} from '@routes';
 
 const ONBOARDED_KEY = '@navegaja:onboarded';
 
@@ -41,9 +41,9 @@ export function LoginScreen({navigation}: Props) {
       if (currentUser) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
-    } catch (error: any) {
+    } catch (_error: any) {
       const msg =
-        error?.response?.data?.message ||
+        _error?.response?.data?.message ||
         'Erro ao fazer login. Tente novamente.';
 
       toast.showWarning(msg);

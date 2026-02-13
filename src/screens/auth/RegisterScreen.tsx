@@ -4,11 +4,12 @@ import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking} from 'react-nat
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@components';
-import {useAuthStore} from '../../store/auth.store';
+import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
+import {UserRole} from '@domain';
 
-import {AuthStackParamList} from '../../routes/AuthStack';
+import {AuthStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -20,7 +21,7 @@ export function RegisterScreen({navigation}: Props) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'passenger' | 'captain'>('passenger');
+  const [role, setRole] = useState<UserRole>(UserRole.PASSENGER);
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleRegister() {
@@ -56,9 +57,9 @@ export function RegisterScreen({navigation}: Props) {
       if (currentUser) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
-    } catch (error: any) {
+    } catch (_error: any) {
       const msg =
-        error?.response?.data?.message ||
+        _error?.response?.data?.message ||
         'Erro ao criar conta. Tente novamente.';
       toast.showError(msg);
     }
@@ -74,7 +75,7 @@ export function RegisterScreen({navigation}: Props) {
     setEmail(formatted);
   }
 
-  const isPassenger = role === 'passenger';
+  const isPassenger = role === UserRole.PASSENGER;
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -133,7 +134,7 @@ export function RegisterScreen({navigation}: Props) {
               {/* Passageiro Card */}
               <TouchableOpacityBox
                 flex={1}
-                onPress={() => setRole('passenger')}
+                onPress={() => setRole(UserRole.PASSENGER)}
                 backgroundColor={isPassenger ? 'primaryBg' : 'surface'}
                 borderRadius="s16"
                 padding="s20"
@@ -173,7 +174,7 @@ export function RegisterScreen({navigation}: Props) {
               {/* Barqueiro Card */}
               <TouchableOpacityBox
                 flex={1}
-                onPress={() => setRole('captain')}
+                onPress={() => setRole(UserRole.CAPTAIN)}
                 backgroundColor={!isPassenger ? 'secondaryBg' : 'surface'}
                 borderRadius="s16"
                 padding="s20"

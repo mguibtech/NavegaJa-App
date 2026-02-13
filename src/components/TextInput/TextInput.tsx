@@ -6,12 +6,12 @@ import {
   StyleSheet,
 } from 'react-native';
 
-import {useAppTheme} from '@hooks/useAppTheme';
+import {useAppTheme} from '@hooks';
 import {ThemeColors} from '@theme';
 
-import {Box} from '../Box/Box';
-import {Icon} from '../Icon/Icon';
-import {Text} from '../Text/Text';
+import {Box} from '@components';
+import {Icon} from '@components';
+import {Text} from '@components';
 
 export interface TextInputProps extends RNTextInputProps {
   label?: string;

@@ -49,7 +49,7 @@ class BookingService {
     try {
       const stored = await AsyncStorage.getItem(BOOKINGS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -60,8 +60,8 @@ class BookingService {
         BOOKINGS_STORAGE_KEY,
         JSON.stringify(bookings),
       );
-    } catch (error) {
-      console.error('Error saving bookings offline:', error);
+    } catch (_error) {
+      console.error('Error saving bookings offline:', _error);
     }
   }
 }

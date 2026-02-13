@@ -15,7 +15,8 @@
       "@utils": ["src/utils"],
       "@infra": ["src/infra"],
       "@services": ["src/services"],
-      "@config": ["src/config"]
+      "@config": ["src/config"],
+      "@store": ["src/store"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
