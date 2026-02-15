@@ -144,6 +144,29 @@ jest.mock('react-native-gesture-handler', () => {
   };
 });
 
+// Mock @react-native-community/geolocation
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn((success) => {
+    success({
+      coords: {
+        latitude: -3.119,
+        longitude: -60.0217,
+        accuracy: 10,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    });
+  }),
+  watchPosition: jest.fn(() => 1),
+  clearWatch: jest.fn(),
+  stopObserving: jest.fn(),
+  setRNConfiguration: jest.fn(),
+  requestAuthorization: jest.fn(() => Promise.resolve('granted')),
+}));
+
 // Silence console warnings in tests
 global.console = {
   ...console,
