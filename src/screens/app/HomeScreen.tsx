@@ -7,7 +7,7 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget} from '@components';
 import {useAuthStore} from '@store';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';
@@ -606,6 +606,12 @@ export function HomeScreen({navigation}: Props) {
             </Box>
           </Box>
         </Box>
+
+        {/* Weather Widget */}
+        <Box paddingHorizontal="s24" mt="s24">
+          <WeatherWidget region="manaus" />
+        </Box>
+
         {/* Popular Routes */}
         <Box mt="s24" mb="s28">
           <Box flexDirection="row" justifyContent="space-between" alignItems="center" px="s24" mb="s16">

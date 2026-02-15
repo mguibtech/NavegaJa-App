@@ -19,6 +19,9 @@ export * from './Shipment';
 // Safety
 export * from './Safety';
 
+// Weather
+export * from './Weather';
+
 // TODO: Add more domains
 // export * from './Route';
 // export * from './User';

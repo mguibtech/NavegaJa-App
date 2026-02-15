@@ -3,7 +3,7 @@ import {ScrollView, Dimensions, Alert} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, NavigationSafetyAlert} from '@components';
 import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
 
 
@@ -537,6 +537,14 @@ export function TripDetailsScreen({navigation, route}: Props) {
                  trip.status === 'completed' ? '✓ Concluída' : '✗ Cancelada'}
               </Text>
             </Box>
+          </Box>
+
+          {/* Navigation Safety Alert */}
+          <Box mb="s16">
+            <NavigationSafetyAlert
+              latitude={trip.boat?.currentLocation?.lat}
+              longitude={trip.boat?.currentLocation?.lng}
+            />
           </Box>
 
           {/* Captain Info */}
