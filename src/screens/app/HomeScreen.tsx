@@ -390,8 +390,13 @@ export function HomeScreen({navigation}: Props) {
         paddingTop="s40"
         paddingBottom="s16"
         backgroundColor="surface"
-        borderBottomWidth={1}
-        borderBottomColor="border">
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           {/* User Info with Avatar */}
           <Box flexDirection="row" alignItems="center" flex={1}>
@@ -508,7 +513,7 @@ export function HomeScreen({navigation}: Props) {
             paddingVertical="s16"
             flexDirection="row"
             alignItems="center"
-            onPress={() => navigation.navigate('Search')}
+            onPress={() => navigation.navigate('Search', {})}
             style={{
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 2},
@@ -694,7 +699,7 @@ export function HomeScreen({navigation}: Props) {
                     paddingHorizontal="s20"
                     paddingVertical="s12"
                     borderRadius="s12"
-                    onPress={() => navigation.navigate('Search')}>
+                    onPress={() => navigation.navigate('Search', {})}>
                     <Text preset="paragraphMedium" color="surface" bold>
                       Buscar Viagens
                     </Text>
@@ -777,7 +782,7 @@ export function HomeScreen({navigation}: Props) {
                       });
                     } else {
                       // Se não tiver origem/destino, vai para busca vazia
-                      navigation.navigate('Search');
+                      navigation.navigate('Search', {});
                     }
                   } else if (promo.ctaAction === 'url' && promo.ctaValue) {
                     // Abre URL externa no navegador
@@ -798,7 +803,7 @@ export function HomeScreen({navigation}: Props) {
                     }
                   } else {
                     // Fallback: navega para busca
-                    navigation.navigate('Search');
+                    navigation.navigate('Search', {});
                   }
                 };
 

@@ -245,9 +245,11 @@ export function BookingScreen({navigation, route}: Props) {
         couponCode,
       });
 
-      // Navegar para tela de ticket com o ID real
-      navigation.replace('Ticket', {
+      // Navegar para tela de pagamento
+      navigation.replace('Payment', {
         bookingId: booking.id,
+        amount: priceBreakdown?.finalPrice || 0,
+        paymentMethod,
       });
     } catch (_error: any) {
       Alert.alert(

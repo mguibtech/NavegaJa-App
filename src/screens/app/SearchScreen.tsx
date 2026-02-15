@@ -23,12 +23,15 @@ const POPULAR_ROUTES = [
   {origin: 'Parintins', destination: 'Manaus', icon: 'directions-boat'},
 ];
 
-export function SearchScreen({navigation}: Props) {
+export function SearchScreen({navigation, route}: Props) {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Pegar contexto (se veio de Shipments, context='shipment')
+  const context = route.params?.context;
 
   function handleSearch() {
     if (!origin.trim() || !destination.trim()) {
@@ -43,6 +46,7 @@ export function SearchScreen({navigation}: Props) {
       origin: origin.trim(),
       destination: destination.trim(),
       date: dateForApi,
+      context, // Repassa o contexto
     });
   }
 

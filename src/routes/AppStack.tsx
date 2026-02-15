@@ -4,8 +4,8 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {CustomTabBar, Icon} from '@components';
 
-import { Promotion } from '@domain';
-import { BookingScreen, BookingsScreen, EditProfileScreen, FavoritesScreen, HomeScreen, PopularRoutesScreen, ProfileScreen, SearchResultsScreen, SearchScreen, TicketScreen, TrackingScreen, TripDetailsScreen } from '@screens';
+import { Promotion, PaymentMethod } from '@domain';
+import { BookingScreen, BookingsScreen, CreateShipmentScreen, EditProfileScreen, FavoritesScreen, HelpScreen, HomeScreen, NotificationsScreen, PaymentMethodsScreen, PaymentScreen, PopularRoutesScreen, PrivacyScreen, ProfileScreen, ScanShipmentQRScreen, SearchResultsScreen, SearchScreen, ShipmentDetailsScreen, ShipmentReviewScreen, ShipmentsScreen, TermsScreen, TicketScreen, TrackingScreen, TripDetailsScreen, ValidateDeliveryScreen } from '@screens';
 
 export type AppStackParamList = {
   HomeTabs: undefined;
@@ -14,15 +14,22 @@ export type AppStackParamList = {
     destination: string;
     date?: string;
     promotion?: Promotion;
+    context?: 'booking' | 'shipment';
   };
   PopularRoutes: undefined;
   TripDetails: {
     tripId: string;
     promotion?: Promotion;
+    context?: 'booking' | 'shipment';
   };
   Favorites: undefined;
   Booking: {
     tripId: string;
+  };
+  Payment: {
+    bookingId: string;
+    amount: number;
+    paymentMethod: PaymentMethod;
   };
   Ticket: {
     bookingId: string;
@@ -31,12 +38,35 @@ export type AppStackParamList = {
     bookingId: string;
   };
   EditProfile: undefined;
+  CreateShipment: {
+    tripId: string;
+  };
+  Shipments: undefined;
+  ShipmentDetails: {
+    shipmentId: string;
+  };
+  ShipmentReview: {
+    shipmentId: string;
+  };
+  ValidateDelivery: {
+    trackingCode?: string;
+    pin?: string;
+  };
+  ScanShipmentQR: undefined;
+  PaymentMethods: undefined;
+  Notifications: undefined;
+  Help: undefined;
+  Terms: undefined;
+  Privacy: undefined;
 };
 
 export type TabsParamList = {
   Home: undefined;
-  Search: undefined;
+  Search: {
+    context?: 'booking' | 'shipment';
+  };
   Bookings: undefined;
+  Shipments: undefined;
   Profile: undefined;
 };
 
@@ -81,6 +111,16 @@ function HomeTabs() {
         }}
       />
       <Tab.Screen
+        name="Shipments"
+        component={ShipmentsScreen}
+        options={{
+          tabBarLabel: 'Encomendas',
+          tabBarIcon: ({color, size}) => (
+            <Icon name="inventory" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
@@ -106,9 +146,21 @@ export function AppStack() {
       <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
       <Stack.Screen name="Booking" component={BookingScreen} />
+      <Stack.Screen name="Payment" component={PaymentScreen} />
       <Stack.Screen name="Ticket" component={TicketScreen} />
       <Stack.Screen name="Tracking" component={TrackingScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="CreateShipment" component={CreateShipmentScreen} />
+      <Stack.Screen name="Shipments" component={ShipmentsScreen} />
+      <Stack.Screen name="ShipmentDetails" component={ShipmentDetailsScreen} />
+      <Stack.Screen name="ShipmentReview" component={ShipmentReviewScreen} />
+      <Stack.Screen name="ValidateDelivery" component={ValidateDeliveryScreen} />
+      <Stack.Screen name="ScanShipmentQR" component={ScanShipmentQRScreen} />
+      <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Help" component={HelpScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
+      <Stack.Screen name="Privacy" component={PrivacyScreen} />
     </Stack.Navigator>
   );
 }

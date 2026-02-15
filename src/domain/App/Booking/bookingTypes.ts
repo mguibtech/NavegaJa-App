@@ -10,7 +10,19 @@ export interface Booking {
   totalPrice: number;
   status: BookingStatus;
   paymentMethod: PaymentMethod;
-  qrCode?: string;
+  paymentStatus?: PaymentStatus;
+
+  // PIX Payment (apenas se paymentMethod = PIX)
+  pixQrCode?: string;           // Código copia e cola
+  pixQrCodeImage?: string;      // Base64 PNG do QR Code
+  pixTxid?: string;             // ID único da transação
+  pixExpiresAt?: string;        // ISO 8601 - Expiração (15 min)
+  pixKey?: string;              // Chave PIX usada
+  pixPaidAt?: string;           // ISO 8601 - Data confirmação
+
+  // Check-in
+  qrCode?: string;              // Legacy - mantido para compatibilidade
+  qrCodeCheckin?: string;       // QR Code para embarque
   checkedInAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +38,12 @@ export enum BookingStatus {
   CHECKED_IN = 'checked_in',
   CANCELLED = 'cancelled',
   COMPLETED = 'completed',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  REFUNDED = 'refunded',
 }
 
 export enum PaymentMethod {
@@ -45,4 +63,15 @@ export interface CreateBookingData {
 
 export interface CancelBookingData {
   reason?: string;
+}
+
+export interface PaymentStatusResponse {
+  bookingId: string;
+  paymentStatus: PaymentStatus;
+  status: BookingStatus;
+  paymentMethod: PaymentMethod;
+  totalPrice: number;
+  pixPaidAt?: string | null;
+  pixExpiresAt?: string | null;
+  isExpired: boolean;
 }

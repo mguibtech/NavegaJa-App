@@ -5,7 +5,7 @@ import {ThemeProvider} from '@shopify/restyle';
 
 import {theme} from '@theme';
 import {Router} from '@routes';
-import {ToastContainer} from '@components';
+import {ToastContainer, PermissionsRequest} from '@components';
 
 function App() {
   return (
@@ -17,6 +17,7 @@ function App() {
         />
         <Router />
         <ToastContainer />
+        <PermissionsRequest />
       </ThemeProvider>
     </SafeAreaProvider>
   );

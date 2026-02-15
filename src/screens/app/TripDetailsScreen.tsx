@@ -82,7 +82,7 @@ const MOCK_TRIP_DETAILS = {
 };
 
 export function TripDetailsScreen({navigation, route}: Props) {
-  const {tripId, promotion} = route.params;
+  const {tripId, promotion, context} = route.params;
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const {trip, getTripById, isLoading, error} = useTripDetails();
 
@@ -148,6 +148,12 @@ export function TripDetailsScreen({navigation, route}: Props) {
   const handleBooking = () => {
     if (trip) {
       navigation.navigate('Booking', {tripId: trip.id});
+    }
+  };
+
+  const handleCreateShipment = () => {
+    if (trip) {
+      navigation.navigate('CreateShipment', {tripId: trip.id});
     }
   };
 
@@ -632,9 +638,9 @@ export function TripDetailsScreen({navigation, route}: Props) {
         <Box flexDirection="row" alignItems="center" mb="s12">
           <Box flex={1}>
             <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-              {'Preço por pessoa'}
+              {context === 'shipment' ? 'Preço por quilo de carga' : 'Preço por pessoa'}
             </Text>
-            {finalHasDiscount && (
+            {finalHasDiscount && context !== 'shipment' && (
               <Box flexDirection="row" alignItems="center" mb="s8">
                 <PromoBadge discount={discountPercent} size="medium" />
                 <Text
@@ -646,22 +652,42 @@ export function TripDetailsScreen({navigation, route}: Props) {
                 </Text>
               </Box>
             )}
-            <Box flexDirection="row" alignItems="baseline">
+            <Box flexDirection="row" alignItems="baseline" gap="s8">
               <Text preset="headingLarge" color="primary" bold>
-                R$ {displayPrice.toFixed(2)}
+                R$ {context === 'shipment'
+                  ? (typeof trip.cargoPriceKg === 'number' ? trip.cargoPriceKg : parseFloat(String(trip.cargoPriceKg)) || 0).toFixed(2)
+                  : displayPrice.toFixed(2)
+                }
               </Text>
-              <Text preset="paragraphSmall" color="textSecondary" ml="s8">
-                {trip.availableSeats}{' assentos disponíveis'}
-              </Text>
+              {context === 'shipment' ? (
+                <Box flexDirection="row" alignItems="center" backgroundColor="successBg" paddingHorizontal="s12" paddingVertical="s6" borderRadius="s8">
+                  <Icon name="inventory" size={16} color="success" />
+                  <Text preset="paragraphSmall" color="success" bold ml="s4">
+                    Aceita cargas
+                  </Text>
+                </Box>
+              ) : (
+                <Text preset="paragraphSmall" color="textSecondary" ml="s8">
+                  {trip.availableSeats}{' assentos disponíveis'}
+                </Text>
+              )}
             </Box>
           </Box>
         </Box>
 
-        <Button
-          title="Reservar Agora"
-          onPress={handleBooking}
-          rightIcon="arrow-forward"
-        />
+        {context === 'shipment' ? (
+          <Button
+            title="Enviar Encomenda"
+            onPress={handleCreateShipment}
+            rightIcon="local-shipping"
+          />
+        ) : (
+          <Button
+            title="Reservar Agora"
+            onPress={handleBooking}
+            rightIcon="arrow-forward"
+          />
+        )}
       </Box>
     </Box>
   );

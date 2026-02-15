@@ -1,6 +1,6 @@
 import {api} from '@api';
 
-import {Booking, CancelBookingData, CreateBookingData} from './bookingTypes';
+import {Booking, CancelBookingData, CreateBookingData, PaymentStatusResponse} from './bookingTypes';
 
 class BookingAPI {
   async getMyBookings(): Promise<Booking[]> {
@@ -24,6 +24,11 @@ class BookingAPI {
 
   async checkIn(id: string): Promise<Booking> {
     const response = await api.post<Booking>(`/bookings/${id}/checkin`);
+    return response;
+  }
+
+  async getPaymentStatus(id: string): Promise<PaymentStatusResponse> {
+    const response = await api.get<PaymentStatusResponse>(`/bookings/${id}/payment-status`);
     return response;
   }
 }

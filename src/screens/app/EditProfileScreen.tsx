@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal} from '@components';
 import {useAuthStore} from '@store';
 import {useUpdateProfile} from '@domain';
 
@@ -18,6 +18,8 @@ export function EditProfileScreen({navigation}: Props) {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [cpf, setCpf] = useState(user?.cpf || '');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   async function handleSave() {
     try {
@@ -29,32 +31,40 @@ export function EditProfileScreen({navigation}: Props) {
 
       // Atualiza o store com os novos dados
       updateUser(updatedUser);
-
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      setShowSuccessModal(true);
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o perfil. Tente novamente.');
+      setShowErrorModal(true);
     }
+  }
+
+  function handleSuccessClose() {
+    setShowSuccessModal(false);
+    navigation.goBack();
   }
 
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
-        paddingHorizontal="s24"
-        paddingTop="s48"
-        paddingBottom="s16"
-        backgroundColor="primary"
+        backgroundColor="surface"
+        paddingHorizontal="s20"
+        paddingVertical="s16"
         flexDirection="row"
-        alignItems="center">
-        <TouchableOpacityBox mr="s16" onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="surface" />
-        </TouchableOpacityBox>
-        <Text preset="headingLarge" color="surface" bold>
+        alignItems="center"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Button
+          title=""
+          preset="outline"
+          leftIcon="arrow-back"
+          onPress={() => navigation.goBack()}
+        />
+        <Text preset="headingSmall" color="text" bold ml="s12">
           Editar Perfil
         </Text>
       </Box>
@@ -145,6 +155,28 @@ export function EditProfileScreen({navigation}: Props) {
           />
         </Box>
       </ScrollView>
+
+      {/* Success Modal */}
+      <InfoModal
+        visible={showSuccessModal}
+        title="Sucesso"
+        message="Perfil atualizado com sucesso!"
+        icon="check-circle"
+        iconColor="success"
+        buttonText="OK"
+        onClose={handleSuccessClose}
+      />
+
+      {/* Error Modal */}
+      <InfoModal
+        visible={showErrorModal}
+        title="Erro"
+        message="Não foi possível atualizar o perfil. Tente novamente."
+        icon="error-outline"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => setShowErrorModal(false)}
+      />
     </Box>
   );
 }

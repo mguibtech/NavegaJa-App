@@ -182,28 +182,29 @@ export function TrackingScreen({navigation, route}: Props) {
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
-        paddingHorizontal="s24"
-        paddingTop="s48"
-        paddingBottom="s16"
-        backgroundColor="primary">
+        backgroundColor="surface"
+        paddingHorizontal="s20"
+        paddingVertical="s16"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
         <Box flexDirection="row" alignItems="center" mb="s12">
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            borderRadius="s20"
-            backgroundColor="primaryBg"
-            alignItems="center"
-            justifyContent="center"
-            marginRight="s16"
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="primary" />
-          </TouchableOpacityBox>
+          <Button
+            title=""
+            preset="outline"
+            leftIcon="arrow-back"
+            onPress={() => navigation.goBack()}
+          />
 
-          <Box flex={1}>
-            <Text preset="headingMedium" color="surface" bold>
+          <Box flex={1} ml="s12">
+            <Text preset="headingSmall" color="text" bold>
               Rastreamento
             </Text>
-            <Text preset="paragraphSmall" color="surface" mt="s4">
+            <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               {tracking.trip.origin} → {tracking.trip.destination}
             </Text>
           </Box>
@@ -212,11 +213,18 @@ export function TrackingScreen({navigation, route}: Props) {
             width={40}
             height={40}
             borderRadius="s20"
-            backgroundColor="primaryBg"
+            backgroundColor="background"
             alignItems="center"
             justifyContent="center"
-            onPress={handleRefresh}>
-            <Icon name="refresh" size={24} color="primary" />
+            onPress={handleRefresh}
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.08,
+              shadowRadius: 3,
+              elevation: 2,
+            }}>
+            <Icon name="refresh" size={24} color="text" />
           </TouchableOpacityBox>
         </Box>
 

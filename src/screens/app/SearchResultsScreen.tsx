@@ -3,7 +3,7 @@ import {FlatList, RefreshControl, Modal, ScrollView, ImageBackground} from 'reac
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton} from '@components';
 import {Trip, useSearchTrips} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -58,7 +58,7 @@ function formatTime(dateString: string): string {
 }
 
 export function SearchResultsScreen({navigation, route}: Props) {
-  const {origin, destination, date, promotion} = route.params;
+  const {origin, destination, date, promotion, context} = route.params;
   const {trips, search, isLoading, error} = useSearchTrips();
   const [sortBy, setSortBy] = useState<SortOption>('price');
   const [sortedTrips, setSortedTrips] = useState<Trip[]>([]);
@@ -148,6 +148,7 @@ export function SearchResultsScreen({navigation, route}: Props) {
     navigation.navigate('TripDetails', {
       tripId,
       promotion, // Passa a promoção se existir
+      context, // Repassa o contexto (booking ou shipment)
     });
   };
 
@@ -161,24 +162,25 @@ export function SearchResultsScreen({navigation, route}: Props) {
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
-        paddingHorizontal="s24"
-        paddingTop="s40"
-        paddingBottom="s12"
         backgroundColor="surface"
-        borderBottomWidth={1}
-        borderBottomColor="border">
+        paddingHorizontal="s20"
+        paddingVertical="s16"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
         <Box flexDirection="row" alignItems="center" mb="s16">
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            alignItems="center"
-            justifyContent="center"
-            marginRight="s16"
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={22} color="text" />
-          </TouchableOpacityBox>
+          <Button
+            title=""
+            preset="outline"
+            leftIcon="arrow-back"
+            onPress={() => navigation.goBack()}
+          />
 
-          <Box flex={1}>
+          <Box flex={1} ml="s12">
             <Text preset="headingSmall" color="text" bold>
               {origin} → {destination}
             </Text>
@@ -525,13 +527,13 @@ export function SearchResultsScreen({navigation, route}: Props) {
                 </Box>
               </Box>
 
-              {/* Price & Seats */}
+              {/* Price & Availability - Adapta baseado no contexto */}
               <Box
                 flexDirection="row"
                 alignItems="center"
                 justifyContent="space-between">
                 <Box flex={1}>
-                  {hasDiscount && (
+                  {hasDiscount && context !== 'shipment' && (
                     <Box flexDirection="row" alignItems="center" mb="s4">
                       <PromoBadge discount={item.discount!} size="small" />
                       <Text
@@ -545,10 +547,13 @@ export function SearchResultsScreen({navigation, route}: Props) {
                   )}
                   <Box flexDirection="row" alignItems="baseline">
                     <Text preset="headingMedium" color="primary" bold>
-                      R$ {displayPrice.toFixed(2)}
+                      R$ {context === 'shipment'
+                        ? (typeof item.cargoPriceKg === 'number' ? item.cargoPriceKg : parseFloat(String(item.cargoPriceKg)) || 0).toFixed(2)
+                        : displayPrice.toFixed(2)
+                      }
                     </Text>
                     <Text preset="paragraphSmall" color="textSecondary" ml="s4">
-                      {'/pessoa'}
+                      {context === 'shipment' ? '/kg' : '/pessoa'}
                     </Text>
                   </Box>
                 </Box>
@@ -563,7 +568,7 @@ export function SearchResultsScreen({navigation, route}: Props) {
                   paddingVertical="s8"
                   borderRadius="s8">
                   <Icon
-                    name="event-seat"
+                    name={context === 'shipment' ? 'inventory' : 'event-seat'}
                     size={16}
                     color={item.availableSeats > 5 ? 'success' : 'warning'}
                   />
@@ -572,7 +577,10 @@ export function SearchResultsScreen({navigation, route}: Props) {
                     color={item.availableSeats > 5 ? 'success' : 'warning'}
                     bold
                     ml="s4">
-                    {`${item.availableSeats} disponíveis`}
+                    {context === 'shipment'
+                      ? 'Aceita cargas'
+                      : `${item.availableSeats} disponíveis`
+                    }
                   </Text>
                 </Box>
               </Box>

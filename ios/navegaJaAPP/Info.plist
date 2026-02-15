@@ -89,5 +89,24 @@
 		<string>SimpleLineIcons.ttf</string>
 		<string>Zocial.ttf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>O NavegaJá precisa acessar sua câmera para escanear QR Codes e tirar fotos das encomendas</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O NavegaJá precisa acessar sua galeria para selecionar fotos das encomendas</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>O NavegaJá precisa salvar fotos das encomendas na sua galeria</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O NavegaJá não usa o microfone, mas a biblioteca de câmera requer essa permissão</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>navegaja</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.navegaja.app</string>
+		</dict>
+	</array>
 </dict>
 </plist>

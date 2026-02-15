@@ -3,7 +3,7 @@ import {FlatList, RefreshControl} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
 import {usePopularRoutes, PopularRoute} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -135,27 +135,27 @@ export function PopularRoutesScreen({navigation}: Props) {
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
-        paddingHorizontal="s24"
-        paddingTop="s48"
-        paddingBottom="s16"
-        backgroundColor="primary">
-        <Box flexDirection="row" alignItems="center">
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            borderRadius="s20"
-            backgroundColor="primaryBg"
-            alignItems="center"
-            justifyContent="center"
-            marginRight="s16"
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="primary" />
-          </TouchableOpacityBox>
-
-          <Text preset="headingMedium" color="surface" bold>
-            Rotas Populares
-          </Text>
-        </Box>
+        backgroundColor="surface"
+        paddingHorizontal="s20"
+        paddingVertical="s16"
+        flexDirection="row"
+        alignItems="center"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Button
+          title=""
+          preset="outline"
+          leftIcon="arrow-back"
+          onPress={() => navigation.goBack()}
+        />
+        <Text preset="headingSmall" color="text" bold ml="s12">
+          Rotas Populares
+        </Text>
       </Box>
 
       {/* Routes List */}

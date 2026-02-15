@@ -104,8 +104,13 @@ export function BookingsScreen({navigation}: Props) {
         paddingTop="s40"
         paddingBottom="s12"
         backgroundColor="surface"
-        borderBottomWidth={1}
-        borderBottomColor="border">
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
         <Text preset="headingSmall" color="text" bold textAlign="center">
           Minhas Reservas
         </Text>

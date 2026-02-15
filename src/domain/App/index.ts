@@ -13,7 +13,9 @@ export * from './Discount';
 // Promotion
 export * from './Promotion';
 
+// Shipment
+export * from './Shipment';
+
 // TODO: Add more domains
-// export * from './Shipment';
 // export * from './Route';
 // export * from './User';

@@ -1,11 +1,11 @@
-import React from 'react';
-import {Alert, ScrollView} from 'react-native';
+import React, {useState} from 'react';
+import {ScrollView} from 'react-native';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
 import {useAuthStore} from '@store';
 import {formatPhone} from '@utils';
 
@@ -63,16 +63,15 @@ const MENU_ITEMS = [
 
 export function ProfileScreen({navigation}: Props) {
   const {user, logout} = useAuthStore();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   function handleLogout() {
-    Alert.alert('Sair', 'Tem certeza que deseja sair da sua conta?', [
-      {text: 'Cancelar', style: 'cancel'},
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: logout,
-      },
-    ]);
+    setShowLogoutModal(true);
+  }
+
+  function confirmLogout() {
+    setShowLogoutModal(false);
+    logout();
   }
 
   function handleMenuPress(itemId: string) {
@@ -80,8 +79,22 @@ export function ProfileScreen({navigation}: Props) {
       case 'edit-profile':
         navigation.navigate('EditProfile');
         break;
+      case 'payment':
+        navigation.navigate('PaymentMethods');
+        break;
+      case 'notifications':
+        navigation.navigate('Notifications');
+        break;
+      case 'help':
+        navigation.navigate('Help');
+        break;
+      case 'terms':
+        navigation.navigate('Terms');
+        break;
+      case 'privacy':
+        navigation.navigate('Privacy');
+        break;
       default:
-        // TODO: Implementar outras navegações
         console.log('Menu item pressed:', itemId);
     }
   }
@@ -318,6 +331,20 @@ export function ProfileScreen({navigation}: Props) {
           NavegaJá v1.0.0
         </Text>
       </ScrollView>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Sair da Conta"
+        message="Tem certeza que deseja sair da sua conta?"
+        icon="logout"
+        iconColor="danger"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        confirmPreset="outline"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </Box>
   );
 }

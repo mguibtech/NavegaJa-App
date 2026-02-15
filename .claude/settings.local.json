@@ -64,7 +64,14 @@
       "Bash(\"c:\\\\www\\\\softLive\\\\projects\\\\navegaja\\\\navegaJaAPP\\\\src\\\\store\\\\index.ts\" << 'EOF'\nexport * from './auth.store';\nexport * from './booking.store';\nexport * from './shipment.store';\nexport * from './toast.store';\nexport * from './trip.store';\nEOF)",
       "Bash(/tmp/fix_final_imports.sh:*)",
       "Bash(__NEW_LINE_3106511d27909252__ chmod +x /tmp/fix_final_imports.sh)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(git push:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git checkout:*)",
+      "Bash(git diff:*)",
+      "Bash(npm show:*)",
+      "Bash(yarn remove:*)",
+      "Bash(npx kill-port:*)"
     ]
   }
 }
