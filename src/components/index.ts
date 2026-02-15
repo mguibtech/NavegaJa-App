@@ -33,3 +33,4 @@ export {ConfirmationModal} from './ConfirmationModal/ConfirmationModal';
 export type {ConfirmationModalProps} from './ConfirmationModal/ConfirmationModal';
 export {InfoModal} from './InfoModal/InfoModal';
 export type {InfoModalProps} from './InfoModal/InfoModal';
+export {EmergencyButton} from './EmergencyButton/EmergencyButton';

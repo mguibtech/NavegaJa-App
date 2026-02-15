@@ -7,12 +7,13 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton} from '@components';
 import {useAuthStore} from '@store';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
 import {usePromotions, Promotion} from '@domain';
+import {useSosAlert} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 
@@ -71,6 +72,7 @@ export function HomeScreen({navigation}: Props) {
   const {data: popularData, fetch: fetchPopular} = usePopularRoutes();
   const {favorites, fetch: fetchFavorites} = useMyFavorites();
   const {promotions, fetch: fetchPromotions} = usePromotions();
+  const {activeAlert, checkActiveAlert} = useSosAlert();
 
   // Buscar dados ao carregar a tela
   useEffect(() => {
@@ -90,6 +92,9 @@ export function HomeScreen({navigation}: Props) {
         }),
         fetchPromotions().catch(() => {
           console.log('Error loading promotions');
+        }),
+        checkActiveAlert().catch(() => {
+          console.log('Error checking SOS alert');
         }),
       ]);
     } catch (_error) {
@@ -903,6 +908,12 @@ export function HomeScreen({navigation}: Props) {
           </Box>
         )}
       </ScrollView>
+
+      {/* Emergency SOS Button */}
+      <EmergencyButton
+        onPress={() => navigation.navigate('SosAlert')}
+        hasActiveAlert={!!activeAlert}
+      />
     </Box>
   );
 }

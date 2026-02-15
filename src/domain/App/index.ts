@@ -16,6 +16,9 @@ export * from './Promotion';
 // Shipment
 export * from './Shipment';
 
+// Safety
+export * from './Safety';
+
 // TODO: Add more domains
 // export * from './Route';
 // export * from './User';

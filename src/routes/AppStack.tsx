@@ -5,7 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {CustomTabBar, Icon} from '@components';
 
 import { Promotion, PaymentMethod } from '@domain';
-import { BookingScreen, BookingsScreen, CreateShipmentScreen, EditProfileScreen, FavoritesScreen, HelpScreen, HomeScreen, NotificationsScreen, PaymentMethodsScreen, PaymentScreen, PopularRoutesScreen, PrivacyScreen, ProfileScreen, ScanShipmentQRScreen, SearchResultsScreen, SearchScreen, ShipmentDetailsScreen, ShipmentReviewScreen, ShipmentsScreen, TermsScreen, TicketScreen, TrackingScreen, TripDetailsScreen, ValidateDeliveryScreen } from '@screens';
+import { BookingScreen, BookingsScreen, CreateShipmentScreen, EditProfileScreen, EmergencyContactsScreen, FavoritesScreen, HelpScreen, HomeScreen, NotificationsScreen, PaymentMethodsScreen, PaymentScreen, PopularRoutesScreen, PrivacyScreen, ProfileScreen, ScanShipmentQRScreen, SearchResultsScreen, SearchScreen, ShipmentDetailsScreen, ShipmentReviewScreen, ShipmentsScreen, SosAlertScreen, TermsScreen, TicketScreen, TrackingScreen, TripDetailsScreen, ValidateDeliveryScreen } from '@screens';
 
 export type AppStackParamList = {
   HomeTabs: undefined;
@@ -58,6 +58,10 @@ export type AppStackParamList = {
   Help: undefined;
   Terms: undefined;
   Privacy: undefined;
+  EmergencyContacts: undefined;
+  SosAlert: {
+    tripId?: string;
+  };
 };
 
 export type TabsParamList = {
@@ -161,6 +165,8 @@ export function AppStack() {
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
+      <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
+      <Stack.Screen name="SosAlert" component={SosAlertScreen} />
     </Stack.Navigator>
   );
 }

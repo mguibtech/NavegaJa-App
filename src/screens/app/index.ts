@@ -22,3 +22,5 @@ export * from './HelpScreen';
 export * from './TermsScreen';
 export * from './PrivacyScreen';
 export * from './PaymentScreen';
+export * from './EmergencyContactsScreen';
+export * from './SosAlertScreen';
