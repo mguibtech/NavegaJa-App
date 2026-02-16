@@ -12,7 +12,7 @@ import {useAuthStore} from '@store';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
-import {usePromotions, Promotion} from '@domain';
+import {usePromotions} from '@domain';
 import {useSosAlert} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';

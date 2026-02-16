@@ -10,22 +10,22 @@
  */
 export function isValidCPF(cpf: string): boolean {
   // Remove caracteres não numéricos
-  const cleanCPF = cpf.replace(/\D/g, '');
+  const cleanedCPF = cpf.replace(/\D/g, '');
 
   // Verifica se tem 11 dígitos
-  if (cleanCPF.length !== 11) {
+  if (cleanedCPF.length !== 11) {
     return false;
   }
 
   // Verifica se todos os dígitos são iguais (CPF inválido)
-  if (/^(\d)\1{10}$/.test(cleanCPF)) {
+  if (/^(\d)\1{10}$/.test(cleanedCPF)) {
     return false;
   }
 
   // Validação do primeiro dígito verificador
   let sum = 0;
   for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+    sum += parseInt(cleanedCPF.charAt(i), 10) * (10 - i);
   }
 
   let digit1 = 11 - (sum % 11);
@@ -33,14 +33,14 @@ export function isValidCPF(cpf: string): boolean {
     digit1 = 0;
   }
 
-  if (parseInt(cleanCPF.charAt(9)) !== digit1) {
+  if (parseInt(cleanedCPF.charAt(9), 10) !== digit1) {
     return false;
   }
 
   // Validação do segundo dígito verificador
   sum = 0;
   for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+    sum += parseInt(cleanedCPF.charAt(i), 10) * (11 - i);
   }
 
   let digit2 = 11 - (sum % 11);
@@ -48,7 +48,7 @@ export function isValidCPF(cpf: string): boolean {
     digit2 = 0;
   }
 
-  if (parseInt(cleanCPF.charAt(10)) !== digit2) {
+  if (parseInt(cleanedCPF.charAt(10), 10) !== digit2) {
     return false;
   }
 

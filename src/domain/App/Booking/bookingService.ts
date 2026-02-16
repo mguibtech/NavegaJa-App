@@ -49,7 +49,7 @@ class BookingService {
     try {
       const stored = await AsyncStorage.getItem(BOOKINGS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
-    } catch (_error) {
+    } catch {
       return [];
     }
   }

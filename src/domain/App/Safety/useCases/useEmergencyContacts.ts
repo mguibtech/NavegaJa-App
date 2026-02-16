@@ -27,7 +27,7 @@ export function useEmergencyContacts() {
   // Auto-fetch on mount
   useEffect(() => {
     fetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   return {

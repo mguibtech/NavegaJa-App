@@ -36,7 +36,7 @@ class SafetyService {
       await this.saveEmergencyContactsOffline(contacts);
 
       return contacts;
-    } catch (error) {
+    } catch {
       // Se falhar, tenta carregar do cache
       console.warn(
         'Failed to fetch emergency contacts from API, loading from cache',
@@ -175,7 +175,7 @@ class SafetyService {
       await this.saveSosAlertsOffline(alerts);
 
       return alerts;
-    } catch (error) {
+    } catch {
       console.warn('Failed to fetch SOS alerts from API, loading from cache');
       return await this.loadSosAlertsOffline();
     }

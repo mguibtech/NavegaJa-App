@@ -15,8 +15,6 @@ interface LogoProps {
 }
 
 export function Logo({size = 96}: LogoProps) {
-  const scale = size / 200;
-
   return (
     <Svg width={size} height={size} viewBox="0 0 200 200">
       {/* Gradientes */}

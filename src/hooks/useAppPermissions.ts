@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Platform, Alert, Linking} from 'react-native';
+import {Alert, Linking} from 'react-native';
 import {Camera, CameraPermissionStatus} from 'react-native-vision-camera';
 
 export function useAppPermissions() {

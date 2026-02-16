@@ -100,7 +100,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const offlineBookings = get().offlineBookings;
       const booking = offlineBookings.find(b => b.id === bookingId);
       set({currentBooking: booking || null, isLoading: false});
-    } catch (_error) {
+    } catch {
       // Se falhar, buscar offline
       const offlineBookings = get().offlineBookings;
       const booking = offlineBookings.find(b => b.id === bookingId);

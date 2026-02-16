@@ -55,7 +55,7 @@ class FavoriteService {
       }
 
       return result;
-    } catch (_error) {
+    } catch {
       console.log('Backend not available, using offline toggle');
 
       // Toggle offline
@@ -80,7 +80,7 @@ class FavoriteService {
     try {
       const result = await favoriteAPI.checkFavorite(data);
       return result.isFavorited;
-    } catch (_error) {
+    } catch {
       // Verifica offline
       const stored = await this.loadOffline();
       return stored.some(f => this.isSameFavorite(f, data));

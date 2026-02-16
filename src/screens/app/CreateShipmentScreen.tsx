@@ -13,7 +13,6 @@ import {
   CouponInputV2,
   PhotoPicker,
   ShipmentPriceBreakdown,
-  ConfirmationModal,
   InfoModal,
 } from '@components';
 import {

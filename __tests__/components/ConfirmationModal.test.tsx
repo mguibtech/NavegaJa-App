@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {render, fireEvent, waitFor} from '@testing-library/react-native';
+import {render, fireEvent} from '@testing-library/react-native';
 import {ThemeProvider} from '@shopify/restyle';
 
 import {ConfirmationModal} from '../../src/components/ConfirmationModal/ConfirmationModal';
@@ -104,7 +104,7 @@ describe('ConfirmationModal', () => {
   });
 
   it('should show loading state on confirm button', () => {
-    const {queryByText, getByTestId, UNSAFE_getAllByType} = renderWithTheme(
+    const {queryByText, UNSAFE_getAllByType} = renderWithTheme(
       <ConfirmationModal
         visible={true}
         title="Processando"

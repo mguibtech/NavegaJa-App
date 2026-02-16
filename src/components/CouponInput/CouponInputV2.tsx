@@ -46,7 +46,7 @@ export function CouponInputV2({
 
   // Estado: VALID - Cupom aplicado com sucesso
   if (state.status === 'VALID') {
-    const {code: appliedCode, savedAmount, discount} = state.data;
+    const {code: appliedCode, savedAmount} = state.data;
 
     return (
       <Box mb="s16">

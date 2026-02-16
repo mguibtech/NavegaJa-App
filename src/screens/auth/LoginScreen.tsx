@@ -16,7 +16,7 @@ const ONBOARDED_KEY = '@navegaja:onboarded';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({navigation}: Props) {
-  const {login, isLoading, user} = useAuthStore();
+  const {login, isLoading} = useAuthStore();
   const toast = useToast();
 
   const [phone, setPhone] = useState('');

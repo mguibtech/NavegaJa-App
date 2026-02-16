@@ -21,7 +21,7 @@ interface AuthState {
   updateUser: (user: User) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set, _get) => ({
   // Initial State
   user: null,
   isLoading: true,
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } else {
         set({user: null, isLoggedIn: false, isLoading: false});
       }
-    } catch (_error) {
+    } catch {
       await authStorage.clear();
       set({user: null, isLoggedIn: false, isLoading: false});
     }

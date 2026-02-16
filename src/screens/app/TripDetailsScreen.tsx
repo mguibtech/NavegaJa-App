@@ -133,7 +133,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
   async function loadTripDetails() {
     try {
       await getTripById(tripId);
-    } catch (err) {
+    } catch {
       Alert.alert(
         'Erro',
         'Não foi possível carregar os dados da viagem',
@@ -173,7 +173,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
 
       // Recarrega a lista de favoritos para manter sincronizado
       await fetchFavorites();
-    } catch (err) {
+    } catch {
       // Silenciosamente ignora erro (já funciona offline)
       console.log('Favorito salvo localmente');
     }
@@ -192,7 +192,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
 
       // Recarrega a lista de favoritos para manter sincronizado
       await fetchFavorites();
-    } catch (err) {
+    } catch {
       console.log('Favorito de barco salvo localmente');
     }
   };
@@ -210,7 +210,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
 
       // Recarrega a lista de favoritos para manter sincronizado
       await fetchFavorites();
-    } catch (err) {
+    } catch {
       console.log('Favorito de capitão salvo localmente');
     }
   };

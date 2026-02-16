@@ -33,7 +33,7 @@ export function useAuthUser() {
       const currentUser = await userAPI.getMe();
       setUser(currentUser);
       setIsLoggedIn(true);
-    } catch (_error) {
+    } catch {
       // If API fails, clear storage
       await authStorage.clear();
       setUser(null);

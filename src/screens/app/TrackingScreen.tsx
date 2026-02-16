@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {ScrollView, Linking, Alert, Platform, StyleSheet} from 'react-native';
+import {ScrollView, Linking, Alert, StyleSheet} from 'react-native';
 import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';

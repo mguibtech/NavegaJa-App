@@ -76,7 +76,7 @@ describe('PaymentScreen', () => {
 
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 
-      const {getByText, queryByText} = renderWithTheme(
+      const {getByText} = renderWithTheme(
         <PaymentScreen navigation={mockNavigation} route={mockRoute} />,
       );
 

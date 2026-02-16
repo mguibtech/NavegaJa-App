@@ -11,19 +11,19 @@ function isValidCPF(cpf: string): boolean {
 
   let sum = 0;
   for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+    sum += parseInt(cleanCPF.charAt(i), 10) * (10 - i);
   }
   let digit1 = 11 - (sum % 11);
   if (digit1 >= 10) digit1 = 0;
-  if (parseInt(cleanCPF.charAt(9)) !== digit1) return false;
+  if (parseInt(cleanCPF.charAt(9), 10) !== digit1) return false;
 
   sum = 0;
   for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+    sum += parseInt(cleanCPF.charAt(i), 10) * (11 - i);
   }
   let digit2 = 11 - (sum % 11);
   if (digit2 >= 10) digit2 = 0;
-  if (parseInt(cleanCPF.charAt(10)) !== digit2) return false;
+  if (parseInt(cleanCPF.charAt(10), 10) !== digit2) return false;
 
   return true;
 }
