@@ -68,7 +68,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
 
       setScannedData(data);
       setShowConfirmModal(true);
-    } catch (error) {
+    } catch {
       setShowInvalidQRModal(true);
       setIsScanning(true);
     }

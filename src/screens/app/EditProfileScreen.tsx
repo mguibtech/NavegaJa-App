@@ -32,7 +32,7 @@ export function EditProfileScreen({navigation}: Props) {
       // Atualiza o store com os novos dados
       updateUser(updatedUser);
       setShowSuccessModal(true);
-    } catch (_error) {
+    } catch {
       setShowErrorModal(true);
     }
   }

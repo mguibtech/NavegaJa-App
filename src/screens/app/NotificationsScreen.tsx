@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 
 export function NotificationsScreen({navigation}: Props) {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [showSavedModal, setShowSavedModal] = useState(false);
   const toast = useToast();
 
@@ -78,8 +78,6 @@ export function NotificationsScreen({navigation}: Props) {
 
     saveSettings(newSettings);
   }
-
-  const switchColor = Platform.OS === 'ios' ? undefined : '#0E7AFE';
 
   return (
     <Box flex={1} backgroundColor="background">

@@ -89,8 +89,8 @@ const MOCK_TRACKING = {
 };
 
 export function TrackingScreen({navigation, route}: Props) {
-  const {bookingId} = route.params;
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {bookingId: _bookingId} = route.params;
+  const [_isRefreshing, setIsRefreshing] = useState(false);
   const mapRef = useRef<MapView>(null);
 
   // TODO: Buscar dados de rastreamento da API em tempo real

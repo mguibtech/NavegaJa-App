@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Dimensions, Alert} from 'react-native';
+import {ScrollView, Alert} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -11,79 +11,8 @@ import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TripDetails'>;
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
-
-// Mock data - será substituído por dados reais da API
-const MOCK_TRIP_DETAILS = {
-  id: '1',
-  origin: 'Manaus',
-  destination: 'Parintins',
-  departureTime: '08:00',
-  arrivalTime: '14:00',
-  duration: '6h',
-  date: '2026-02-15',
-  price: 85.0,
-  availableSeats: 12,
-  totalSeats: 20,
-  boatName: 'Expresso Amazonas',
-  boatModel: 'Lancha Regional',
-  boatYear: 2022,
-  captain: {
-    id: 'c1',
-    name: 'João Silva',
-    photo: null,
-    rating: 4.8,
-    totalTrips: 156,
-    yearsExperience: 12,
-    bio: 'Navegador experiente da Amazônia com mais de 12 anos de experiência. Conheço todos os rios da região como a palma da minha mão.',
-  },
-  amenities: [
-    {icon: 'air', label: 'Ar Condicionado'},
-    {icon: 'wifi', label: 'Wi-Fi'},
-    {icon: 'restaurant', label: 'Lanche'},
-    {icon: 'wc', label: 'Banheiro'},
-    {icon: 'luggage', label: 'Bagagem'},
-    {icon: 'accessible', label: 'Acessível'},
-  ],
-  photos: [
-    'https://placeholder.com/boat1.jpg',
-    'https://placeholder.com/boat2.jpg',
-    'https://placeholder.com/boat3.jpg',
-  ],
-  reviews: [
-    {
-      id: 'r1',
-      passengerName: 'Maria Costa',
-      rating: 5,
-      date: '2026-01-20',
-      comment: 'Viagem excelente! Barco limpo e confortável, capitão muito atencioso.',
-    },
-    {
-      id: 'r2',
-      passengerName: 'Pedro Santos',
-      rating: 4,
-      date: '2026-01-15',
-      comment: 'Boa viagem, chegamos no horário. Recomendo!',
-    },
-    {
-      id: 'r3',
-      passengerName: 'Ana Lima',
-      rating: 5,
-      date: '2026-01-10',
-      comment: 'Melhor experiência que tive em viagens de barco. Muito seguro e pontual.',
-    },
-  ],
-  policies: [
-    'Cancelamento gratuito até 24h antes da viagem',
-    'Crianças até 5 anos não pagam',
-    'Bagagem máxima: 20kg por pessoa',
-    'É obrigatório o uso de colete salva-vidas',
-  ],
-};
-
 export function TripDetailsScreen({navigation, route}: Props) {
   const {tripId, promotion, context} = route.params;
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const {trip, getTripById, isLoading, error} = useTripDetails();
 
   // Favorites hooks
@@ -215,21 +144,6 @@ export function TripDetailsScreen({navigation, route}: Props) {
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <Box flexDirection="row" gap="s4">
-        {[1, 2, 3, 4, 5].map(star => (
-          <Icon
-            key={star}
-            name={star <= rating ? 'star' : 'star-border'}
-            size={16}
-            color={star <= rating ? 'warning' : 'border'}
-          />
-        ))}
-      </Box>
-    );
-  };
-
   // Calculate data only when trip is available (to avoid breaking Rules of Hooks)
   const price = trip && typeof trip.price === 'number'
     ? trip.price
@@ -261,25 +175,6 @@ export function TripDetailsScreen({navigation, route}: Props) {
       discountPercent = promoDiscount;
     }
   }
-
-  const duration = trip ? (() => {
-    const dep = new Date(trip.departureAt);
-    const arr = new Date(trip.estimatedArrivalAt);
-    const diffMs = arr.getTime() - dep.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}min`;
-  })() : '0h';
-
-  const departureTime = trip ? new Date(trip.departureAt).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }) : '--:--';
-
-  const tripDate = trip ? new Date(trip.departureAt).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  }) : '--';
 
   // Get boat and captain names
   const boatName = trip?.boat?.name || (trip ? `Barco ${trip.boatId.slice(0, 8)}` : 'Barco');

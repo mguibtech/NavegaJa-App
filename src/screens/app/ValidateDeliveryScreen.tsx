@@ -5,7 +5,6 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Text, TextInput} from '@components';
 import {useValidateDelivery} from '@domain';
-import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
 
@@ -19,7 +18,6 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
   const [pin, setPin] = useState(pinParam);
 
   const {validate, isLoading} = useValidateDelivery();
-  const toast = useToast();
 
   async function handleValidate() {
     // Validações
