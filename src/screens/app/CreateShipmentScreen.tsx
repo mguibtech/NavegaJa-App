@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -52,6 +53,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'CreateShipment'>;
 
 export function CreateShipmentScreen({navigation, route}: Props) {
   const {tripId} = route.params;
+  const {top} = useSafeAreaInsets();
   const {create: createShipment, isLoading: isCreatingShipment} = useCreateShipment();
   const {calculate, priceData, isLoading: isCalculatingPrice} = useCalculateShipmentPrice();
   const couponValidation = useCouponValidation();
@@ -258,9 +260,11 @@ export function CreateShipmentScreen({navigation, route}: Props) {
 
   if (isLoadingTrip) {
     return (
-      <Box flex={1} justifyContent="center" alignItems="center" backgroundColor="background">
-        <Text preset="paragraphMedium" color="text">
-          Carregando...
+      <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center"
+        style={{paddingTop: top}}>
+        <ActivityIndicator size="large" color="#0B5D8A" />
+        <Text preset="paragraphMedium" color="textSecondary" mt="s12">
+          Carregando viagem...
         </Text>
       </Box>
     );
@@ -268,15 +272,21 @@ export function CreateShipmentScreen({navigation, route}: Props) {
 
   if (!trip) {
     return (
-      <Box flex={1} justifyContent="center" alignItems="center" backgroundColor="background">
-        <Text preset="paragraphMedium" color="danger">
+      <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center"
+        padding="s24" style={{paddingTop: top}}>
+        <Icon name="error-outline" size={48} color="danger" />
+        <Text preset="paragraphMedium" color="danger" mt="s12" textAlign="center">
           Viagem não encontrada
         </Text>
+        <Box mt="s16" width="100%">
+          <Button title="Voltar" preset="outline" onPress={() => navigation.goBack()} />
+        </Box>
       </Box>
     );
   }
 
   const totalPrice = priceData?.finalPrice || 0;
+  const hasWeight = !!(weight && parseFloat(weight) > 0);
 
   // Pure check sem side effects (para não causar re-render loop)
   function isFormValid(): boolean {
@@ -298,98 +308,207 @@ export function CreateShipmentScreen({navigation, route}: Props) {
 
   const canSubmit = isFormValid() && totalPrice > 0 && !isCreatingShipment;
 
+  function getButtonTitle(): string {
+    if (isCreatingShipment) return 'Criando encomenda...';
+    if (isCalculatingPrice) return 'Calculando preço...';
+    if (!hasWeight) return 'Informe o peso para calcular';
+    if (totalPrice > 0) return `Pagar R$ ${totalPrice.toFixed(2)}`;
+    return 'Preencha todos os campos';
+  }
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       <Box flex={1} backgroundColor="background">
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Box padding="s20">
-            {/* Header */}
-            <Text preset="headingMedium" color="text" bold mb="s8">
-              Nova Encomenda
-            </Text>
-            <Text preset="paragraphMedium" color="textSecondary" mb="s24">
-              Envie sua encomenda de {trip.origin} para {trip.destination}
-            </Text>
 
-            {/* Dados do Destinatário */}
-            <Box mb="s24">
-              <Text preset="paragraphMedium" color="text" bold mb="s16">
+        {/* Header */}
+        <Box
+          backgroundColor="surface"
+          paddingHorizontal="s20"
+          style={{
+            paddingTop: top + 12,
+            paddingBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }}>
+          <Box flexDirection="row" alignItems="center">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s20"
+              backgroundColor="background"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => navigation.goBack()}
+              mr="s12">
+              <Icon name="arrow-back" size={22} color="text" />
+            </TouchableOpacityBox>
+
+            <Box flex={1}>
+              <Text preset="headingSmall" color="text" bold>
+                Nova Encomenda
+              </Text>
+              <Box flexDirection="row" alignItems="center" mt="s4">
+                <Icon name="place" size={14} color="primary" />
+                <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s4">
+                  {trip.origin} → {trip.destination}
+                </Text>
+              </Box>
+            </Box>
+
+            {/* Cargo price chip */}
+            {trip.cargoPriceKg && Number(trip.cargoPriceKg) > 0 ? (
+              <Box
+                backgroundColor="successBg"
+                paddingHorizontal="s12"
+                paddingVertical="s6"
+                borderRadius="s8">
+                <Text preset="paragraphCaptionSmall" color="success" bold>
+                  {'R$ '}{Number(trip.cargoPriceKg).toFixed(2)}{'/kg'}
+                </Text>
+              </Box>
+            ) : null}
+          </Box>
+        </Box>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{padding: 20, paddingBottom: 32}}>
+
+          {/* Card: Destinatário */}
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Box flexDirection="row" alignItems="center" mb="s16">
+              <Box
+                width={36}
+                height={36}
+                borderRadius="s8"
+                backgroundColor="primaryBg"
+                alignItems="center"
+                justifyContent="center"
+                mr="s12">
+                <Icon name="person" size={20} color="primary" />
+              </Box>
+              <Text preset="paragraphMedium" color="text" bold>
                 Dados do Destinatário
               </Text>
+            </Box>
 
-              <Box mb="s16">
-                <TextInput
-                  label="Nome completo"
-                  placeholder="Ex: João da Silva"
-                  value={recipientName}
-                  onChangeText={setRecipientName}
-                  leftIcon="person"
-                />
-              </Box>
-
-              <Box mb="s16">
-                <TextInput
-                  label="Telefone (WhatsApp)"
-                  placeholder="(XX) XXXXX-XXXX"
-                  value={recipientPhone}
-                  onChangeText={text => setRecipientPhone(formatPhoneNumber(text))}
-                  leftIcon="phone"
-                  keyboardType="phone-pad"
-                />
-              </Box>
-
+            <Box mb="s12">
               <TextInput
-                label="Endereço completo no destino"
-                placeholder="Rua, número, bairro"
-                value={recipientAddress}
-                onChangeText={setRecipientAddress}
-                leftIcon="location-on"
-                multiline
-                numberOfLines={3}
+                label="Nome completo"
+                placeholder="Ex: João da Silva"
+                value={recipientName}
+                onChangeText={setRecipientName}
+                leftIcon="person"
               />
             </Box>
 
-            {/* Dados da Encomenda */}
-            <Box mb="s24">
-              <Text preset="paragraphMedium" color="text" bold mb="s16">
+            <Box mb="s12">
+              <TextInput
+                label="Telefone (WhatsApp)"
+                placeholder="(XX) XXXXX-XXXX"
+                value={recipientPhone}
+                onChangeText={text => setRecipientPhone(formatPhoneNumber(text))}
+                leftIcon="phone"
+                keyboardType="phone-pad"
+              />
+            </Box>
+
+            <TextInput
+              label="Endereço no destino"
+              placeholder="Rua, número, bairro"
+              value={recipientAddress}
+              onChangeText={setRecipientAddress}
+              leftIcon="location-on"
+              multiline
+              numberOfLines={3}
+            />
+          </Box>
+
+          {/* Card: Encomenda */}
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Box flexDirection="row" alignItems="center" mb="s16">
+              <Box
+                width={36}
+                height={36}
+                borderRadius="s8"
+                backgroundColor="secondaryBg"
+                alignItems="center"
+                justifyContent="center"
+                mr="s12">
+                <Icon name="inventory" size={20} color="secondary" />
+              </Box>
+              <Text preset="paragraphMedium" color="text" bold>
                 Dados da Encomenda
               </Text>
+            </Box>
 
-              <Box mb="s16">
-                <TextInput
-                  label="Descrição do conteúdo"
-                  placeholder="Ex: Documentos, roupas, eletrônicos..."
-                  value={description}
-                  onChangeText={setDescription}
-                  leftIcon="inventory"
-                  multiline
-                  numberOfLines={2}
-                />
+            <Box mb="s12">
+              <TextInput
+                label="Descrição do conteúdo"
+                placeholder="Ex: Documentos, roupas, eletrônicos..."
+                value={description}
+                onChangeText={setDescription}
+                leftIcon="inventory"
+                multiline
+                numberOfLines={2}
+              />
+            </Box>
+
+            <Box mb="s16">
+              <TextInput
+                label="Peso (kg) *"
+                placeholder="Ex: 2.5"
+                value={weight}
+                onChangeText={setWeight}
+                leftIcon="scale"
+                keyboardType="decimal-pad"
+              />
+            </Box>
+
+            {/* Dimensões */}
+            <Box
+              backgroundColor="background"
+              borderRadius="s12"
+              padding="s12">
+              <Box flexDirection="row" alignItems="center" mb="s12">
+                <Icon name="straighten" size={16} color="textSecondary" />
+                <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s8">
+                  Dimensões (opcional — em cm)
+                </Text>
               </Box>
-
-              <Box mb="s16">
-                <TextInput
-                  label="Peso (kg) *"
-                  placeholder="Ex: 2.5"
-                  value={weight}
-                  onChangeText={setWeight}
-                  leftIcon="scale"
-                  keyboardType="decimal-pad"
-                />
-              </Box>
-
-              {/* Dimensões (opcional) */}
-              <Text preset="paragraphSmall" color="textSecondary" mb="s12">
-                Dimensões (opcional - em cm)
-              </Text>
-
-              <Box flexDirection="row" gap="s12" mb="s16">
+              <Box flexDirection="row" gap="s8">
                 <Box flex={1}>
                   <TextInput
-                    label="Comprimento"
+                    label="Comp."
                     placeholder="cm"
                     value={length}
                     onChangeText={setLength}
@@ -398,7 +517,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 </Box>
                 <Box flex={1}>
                   <TextInput
-                    label="Largura"
+                    label="Larg."
                     placeholder="cm"
                     value={width}
                     onChangeText={setWidth}
@@ -407,7 +526,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 </Box>
                 <Box flex={1}>
                   <TextInput
-                    label="Altura"
+                    label="Alt."
                     placeholder="cm"
                     value={heightDim}
                     onChangeText={setHeightDim}
@@ -416,126 +535,215 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 </Box>
               </Box>
             </Box>
+          </Box>
 
-            {/* Fotos */}
-            <Box mb="s24">
-              <PhotoPicker photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
+          {/* Card: Fotos */}
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Box flexDirection="row" alignItems="center" mb="s16">
+              <Box
+                width={36}
+                height={36}
+                borderRadius="s8"
+                backgroundColor="accentBg"
+                alignItems="center"
+                justifyContent="center"
+                mr="s12">
+                <Icon name="photo-camera" size={20} color="accent" />
+              </Box>
+              <Box flex={1}>
+                <Text preset="paragraphMedium" color="text" bold>
+                  Fotos
+                </Text>
+                <Text preset="paragraphCaptionSmall" color="textSecondary">
+                  Opcional — até 5 fotos
+                </Text>
+              </Box>
             </Box>
+            <PhotoPicker photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
+          </Box>
 
-            {/* Cupom */}
-            <Box mb="s24">
-              <CouponInputV2
-                state={couponValidation.state}
-                onApply={handleApplyCoupon}
-                onRemove={handleRemoveCoupon}
-                onRetry={couponValidation.retry}
-              />
-            </Box>
+          {/* Card: Cupom */}
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <CouponInputV2
+              state={couponValidation.state}
+              onApply={handleApplyCoupon}
+              onRemove={handleRemoveCoupon}
+              onRetry={couponValidation.retry}
+            />
+          </Box>
 
-            {/* Método de Pagamento */}
-            <Box mb="s24">
-              <Text preset="paragraphMedium" color="text" bold mb="s16">
+          {/* Card: Pagamento */}
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Box flexDirection="row" alignItems="center" mb="s16">
+              <Box
+                width={36}
+                height={36}
+                borderRadius="s8"
+                backgroundColor="warningBg"
+                alignItems="center"
+                justifyContent="center"
+                mr="s12">
+                <Icon name="payments" size={20} color="warning" />
+              </Box>
+              <Text preset="paragraphMedium" color="text" bold>
                 Forma de Pagamento
               </Text>
-
-              <TouchableOpacityBox
-                flexDirection="row"
-                alignItems="center"
-                padding="s16"
-                backgroundColor={paymentMethod === PaymentMethod.PIX ? 'primaryBg' : 'surface'}
-                borderRadius="s12"
-                borderWidth={paymentMethod === PaymentMethod.PIX ? 2 : 1}
-                borderColor={paymentMethod === PaymentMethod.PIX ? 'primary' : 'border'}
-                onPress={() => setPaymentMethod(PaymentMethod.PIX)}
-                mb="s12">
-                <Icon
-                  name="qr-code"
-                  size={24}
-                  color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'text'}
-                />
-                <Box flex={1} ml="s12">
-                  <Text
-                    preset="paragraphMedium"
-                    color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'text'}
-                    bold>
-                    PIX
-                  </Text>
-                  <Text
-                    preset="paragraphSmall"
-                    color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'textSecondary'}>
-                    Pagamento instantâneo
-                  </Text>
-                </Box>
-                {paymentMethod === PaymentMethod.PIX && (
-                  <Icon name="check-circle" size={24} color="primary" />
-                )}
-              </TouchableOpacityBox>
-
-              <TouchableOpacityBox
-                flexDirection="row"
-                alignItems="center"
-                padding="s16"
-                backgroundColor={paymentMethod === PaymentMethod.CASH ? 'primaryBg' : 'surface'}
-                borderRadius="s12"
-                borderWidth={paymentMethod === PaymentMethod.CASH ? 2 : 1}
-                borderColor={paymentMethod === PaymentMethod.CASH ? 'primary' : 'border'}
-                onPress={() => setPaymentMethod(PaymentMethod.CASH)}>
-                <Icon
-                  name="payments"
-                  size={24}
-                  color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'text'}
-                />
-                <Box flex={1} ml="s12">
-                  <Text
-                    preset="paragraphMedium"
-                    color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'text'}
-                    bold>
-                    Dinheiro
-                  </Text>
-                  <Text
-                    preset="paragraphSmall"
-                    color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'textSecondary'}>
-                    Pagar ao entregar
-                  </Text>
-                </Box>
-                {paymentMethod === PaymentMethod.CASH && (
-                  <Icon name="check-circle" size={24} color="primary" />
-                )}
-              </TouchableOpacityBox>
             </Box>
 
-            {/* Price Breakdown */}
-            {priceData && (
-              <Box mb="s24">
-                <ShipmentPriceBreakdown data={priceData} />
+            <TouchableOpacityBox
+              flexDirection="row"
+              alignItems="center"
+              padding="s16"
+              backgroundColor={paymentMethod === PaymentMethod.PIX ? 'primaryBg' : 'background'}
+              borderRadius="s12"
+              borderWidth={paymentMethod === PaymentMethod.PIX ? 2 : 1}
+              borderColor={paymentMethod === PaymentMethod.PIX ? 'primary' : 'border'}
+              onPress={() => setPaymentMethod(PaymentMethod.PIX)}
+              mb="s8">
+              <Icon
+                name="qr-code"
+                size={24}
+                color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'textSecondary'}
+              />
+              <Box flex={1} ml="s12">
+                <Text
+                  preset="paragraphMedium"
+                  color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'text'}
+                  bold>
+                  PIX
+                </Text>
+                <Text
+                  preset="paragraphSmall"
+                  color={paymentMethod === PaymentMethod.PIX ? 'primary' : 'textSecondary'}>
+                  Pagamento instantâneo
+                </Text>
               </Box>
-            )}
+              {paymentMethod === PaymentMethod.PIX && (
+                <Icon name="check-circle" size={24} color="primary" />
+              )}
+            </TouchableOpacityBox>
+
+            <TouchableOpacityBox
+              flexDirection="row"
+              alignItems="center"
+              padding="s16"
+              backgroundColor={paymentMethod === PaymentMethod.CASH ? 'primaryBg' : 'background'}
+              borderRadius="s12"
+              borderWidth={paymentMethod === PaymentMethod.CASH ? 2 : 1}
+              borderColor={paymentMethod === PaymentMethod.CASH ? 'primary' : 'border'}
+              onPress={() => setPaymentMethod(PaymentMethod.CASH)}>
+              <Icon
+                name="payments"
+                size={24}
+                color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'textSecondary'}
+              />
+              <Box flex={1} ml="s12">
+                <Text
+                  preset="paragraphMedium"
+                  color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'text'}
+                  bold>
+                  Dinheiro
+                </Text>
+                <Text
+                  preset="paragraphSmall"
+                  color={paymentMethod === PaymentMethod.CASH ? 'primary' : 'textSecondary'}>
+                  Pagar ao entregar
+                </Text>
+              </Box>
+              {paymentMethod === PaymentMethod.CASH && (
+                <Icon name="check-circle" size={24} color="primary" />
+              )}
+            </TouchableOpacityBox>
           </Box>
+
+          {/* Price Breakdown */}
+          {priceData && (
+            <Box mb="s8">
+              <ShipmentPriceBreakdown data={priceData} />
+            </Box>
+          )}
         </ScrollView>
 
-        {/* Footer fixo com botão */}
+        {/* Footer fixo */}
         <Box
-          padding="s20"
           backgroundColor="surface"
           borderTopWidth={1}
           borderTopColor="border"
           style={{
             shadowColor: '#000',
             shadowOffset: {width: 0, height: -2},
-            shadowOpacity: 0.1,
+            shadowOpacity: 0.08,
             shadowRadius: 8,
             elevation: 8,
           }}>
-          <Button
-            title={
-              isCreatingShipment
-                ? 'Criando encomenda...'
-                : `Pagar R$ ${totalPrice.toFixed(2)}`
-            }
-            onPress={handleCreateShipment}
-            disabled={!canSubmit || isCreatingShipment || isCalculatingPrice}
-            loading={isCreatingShipment}
-          />
+          {/* Price summary row */}
+          {hasWeight && (
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              paddingHorizontal="s20"
+              paddingTop="s12"
+              paddingBottom="s4">
+              <Text preset="paragraphSmall" color="textSecondary">
+                Total a pagar
+              </Text>
+              {isCalculatingPrice ? (
+                <Box flexDirection="row" alignItems="center">
+                  <ActivityIndicator size="small" color="#0B5D8A" />
+                  <Text preset="paragraphSmall" color="textSecondary" ml="s8">
+                    Calculando...
+                  </Text>
+                </Box>
+              ) : (
+                <Text preset="headingSmall" color="primary" bold>
+                  {totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : '—'}
+                </Text>
+              )}
+            </Box>
+          )}
+          <Box padding="s20" paddingTop={hasWeight ? 's8' : 's20'}>
+            <Button
+              title={getButtonTitle()}
+              onPress={handleCreateShipment}
+              disabled={!canSubmit || isCreatingShipment || isCalculatingPrice}
+              loading={isCreatingShipment}
+              rightIcon={canSubmit ? 'local-shipping' : undefined}
+            />
+          </Box>
         </Box>
       </Box>
 
