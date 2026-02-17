@@ -26,6 +26,7 @@ const mockShipment: Shipment = {
   trackingCode: 'NJ2024000001',
   status: ShipmentStatus.PENDING,
   qrCode: 'QR-CODE',
+  validationCode: '123456',
   price: 25.0,
   paymentMethod: PaymentMethod.PIX,
   createdAt: '2024-01-15T10:30:00Z',

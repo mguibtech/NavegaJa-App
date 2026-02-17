@@ -417,7 +417,7 @@ describe('ShipmentAPI', () => {
   describe('confirmPayment', () => {
     it('should confirm payment with receipt', async () => {
       const paymentData = {
-        pixReceiptUrl: 'https://cdn.example.com/receipt.jpg',
+        paymentProof: 'https://cdn.example.com/receipt.jpg',
       };
 
       const mockResponse = {
@@ -440,8 +440,8 @@ describe('ShipmentAPI', () => {
   describe('collectShipment', () => {
     it('should collect shipment with QR code and photo', async () => {
       const collectData = {
-        qrCode: 'SHIPMENT-QR-CODE',
-        collectionPhotoUrl: 'https://cdn.example.com/collection.jpg',
+        validationCode: '123456',
+        collectionPhoto: 'https://cdn.example.com/collection.jpg',
       };
 
       const mockResponse = {
@@ -464,8 +464,8 @@ describe('ShipmentAPI', () => {
   describe('validateDelivery', () => {
     it('should validate delivery with PIN and photo', async () => {
       const deliveryData = {
-        pin: '123456',
-        deliveryPhotoUrl: 'https://cdn.example.com/delivery.jpg',
+        validationCode: '123456',
+        deliveryPhoto: 'https://cdn.example.com/delivery.jpg',
       };
 
       const mockResponse = {
@@ -499,7 +499,7 @@ describe('ShipmentAPI', () => {
           status: ShipmentStatus.OUT_FOR_DELIVERY,
           outForDeliveryAt: '2024-01-01T14:00:00Z',
         },
-        deliveryPin: '123456',
+        message: 'Saiu para entrega com sucesso',
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -508,7 +508,7 @@ describe('ShipmentAPI', () => {
 
       expect(api.post).toHaveBeenCalledWith('/shipments/shipment-1/out-for-delivery');
       expect(result.shipment.status).toBe(ShipmentStatus.OUT_FOR_DELIVERY);
-      expect(result.deliveryPin).toBe('123456');
+      expect(result.message).toBeDefined();
     });
   });
 

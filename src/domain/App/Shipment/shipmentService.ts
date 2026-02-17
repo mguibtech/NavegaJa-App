@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import {api} from '@api';
+import {API_BASE_URL} from '../../../api/config';
 import {shipmentAPI} from './shipmentAPI';
 import {
   Shipment,
@@ -52,52 +54,36 @@ class ShipmentService {
     }
 
     try {
-      // 1. Solicitar presigned URLs
-      const {urls} = await shipmentAPI.getPresignedUrls({count: photos.length});
+      const uploadPromises = photos.map(async photo => {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: photo.uri,
+          type: photo.type || 'image/jpeg',
+          name: photo.name || 'photo.jpg',
+        } as any);
 
-      // 2. Upload paralelo direto no S3
-      const uploadPromises = photos.map(async (photo, index) => {
-        const presignedUrl = urls[index];
+        const response = await api.upload<{url: string}>('/upload/image', formData);
 
-        // Buscar a imagem como blob
-        const response = await fetch(photo.uri);
-        const blob = await response.blob();
-
-        // Upload direto no S3 (PUT request)
-        await fetch(presignedUrl.uploadUrl, {
-          method: 'PUT',
-          body: blob,
-          headers: {
-            'Content-Type': photo.type || 'image/jpeg',
-          },
-        });
-
-        return presignedUrl.publicUrl;
+        // Backend retorna URL relativa (/uploads/xxx.jpg) → converter para URL absoluta
+        return response.url.startsWith('http')
+          ? response.url
+          : `${API_BASE_URL}${response.url}`;
       });
 
-      const publicUrls = await Promise.all(uploadPromises);
-      return publicUrls;
+      return await Promise.all(uploadPromises);
     } catch (error) {
-      console.error('Error uploading photos to S3:', error);
+      console.error('Error uploading photos:', error);
       throw new Error('Falha ao fazer upload das fotos. Tente novamente.');
     }
   }
 
   /**
-   * Criar encomenda
-   * Faz upload das fotos para S3 e envia URLs públicas
+   * Criar encomenda com fotos direto no FormData (multipart/form-data)
    */
   async createShipment(
     data: CreateShipmentData,
     photos: Array<{uri: string; type: string; name: string}>,
   ): Promise<Shipment> {
-    // 1. Upload das fotos para S3 (se houver)
-    let photoUrls: string[] = [];
-    if (photos.length > 0) {
-      photoUrls = await this.uploadPhotosToS3(photos);
-    }
-
-    // 2. Criar FormData com as URLs públicas
     const formData = new FormData();
 
     formData.append('recipientName', data.recipientName);
@@ -116,9 +102,13 @@ class ShipmentService {
       formData.append('dimensions', JSON.stringify(data.dimensions));
     }
 
-    // Enviar URLs públicas das fotos (não os arquivos)
-    photoUrls.forEach(url => {
-      formData.append('photos', url);
+    // Fotos enviadas como arquivos diretamente no FormData
+    photos.forEach(photo => {
+      formData.append('photos', {
+        uri: photo.uri,
+        type: photo.type || 'image/jpeg',
+        name: photo.name || 'photo.jpg',
+      } as any);
     });
 
     const shipment = await shipmentAPI.create(formData);
