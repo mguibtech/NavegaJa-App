@@ -4,6 +4,7 @@ import {ptBR} from 'date-fns/locale';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {Shipment, ShipmentStatus} from '@domain';
+import {formatBRL} from '@utils';
 
 interface ShipmentCardProps {
   shipment: Shipment;
@@ -120,21 +121,34 @@ export function ShipmentCard({shipment, onPress}: ShipmentCardProps) {
       </Box>
 
       {/* Viagem (se populada) */}
-      {shipment.trip && (
-        <Box
-          flexDirection="row"
-          alignItems="center"
-          mb="s12"
-          paddingVertical="s12"
-          paddingHorizontal="s16"
-          backgroundColor="background"
-          borderRadius="s12">
-          <Icon name="directions-boat" size={20} color="primary" />
-          <Text preset="paragraphSmall" color="text" ml="s8" flex={1}>
-            {shipment.trip.origin} → {shipment.trip.destination}
-          </Text>
-        </Box>
-      )}
+      {shipment.trip && (() => {
+        const origin =
+          shipment.trip.origin ||
+          shipment.trip.route?.origin ||
+          shipment.trip.route?.originCity ||
+          '';
+        const destination =
+          shipment.trip.destination ||
+          shipment.trip.route?.destination ||
+          shipment.trip.route?.destinationCity ||
+          '';
+        if (!origin && !destination) return null;
+        return (
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            mb="s12"
+            paddingVertical="s12"
+            paddingHorizontal="s16"
+            backgroundColor="background"
+            borderRadius="s12">
+            <Icon name="directions-boat" size={20} color="primary" />
+            <Text preset="paragraphSmall" color="text" ml="s8" flex={1}>
+              {origin} → {destination}
+            </Text>
+          </Box>
+        );
+      })()}
 
       {/* Peso e Preço */}
       <Box
@@ -153,7 +167,7 @@ export function ShipmentCard({shipment, onPress}: ShipmentCardProps) {
         </Box>
 
         <Text preset="headingSmall" color="primary" bold>
-          R$ {Number(shipment.price).toFixed(2)}
+          {formatBRL(shipment.price)}
         </Text>
       </Box>
 

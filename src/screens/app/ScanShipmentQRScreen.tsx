@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {StyleSheet, Linking} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Camera, useCameraDevice, useCodeScanner} from 'react-native-vision-camera';
@@ -13,6 +14,7 @@ import {AppStackParamList} from '@routes';
 type Props = NativeStackScreenProps<AppStackParamList, 'ScanShipmentQR'>;
 
 export function ScanShipmentQRScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [hasPermission, setHasPermission] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedData, setScannedData] = useState<{shipmentId: string; trackingCode?: string; validationCode?: string} | null>(null);
@@ -102,10 +104,11 @@ export function ScanShipmentQRScreen({navigation}: Props) {
           <Box
             backgroundColor="surface"
             paddingHorizontal="s20"
-            paddingVertical="s16"
             flexDirection="row"
             alignItems="center"
             style={{
+              paddingTop: top + 12,
+              paddingBottom: 16,
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 2},
               shadowOpacity: 0.1,
@@ -160,10 +163,11 @@ export function ScanShipmentQRScreen({navigation}: Props) {
         <Box
           backgroundColor="surface"
           paddingHorizontal="s20"
-          paddingVertical="s16"
           flexDirection="row"
           alignItems="center"
           style={{
+            paddingTop: top + 12,
+            paddingBottom: 16,
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 2},
             shadowOpacity: 0.1,

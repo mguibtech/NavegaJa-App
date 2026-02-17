@@ -11,6 +11,7 @@ import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {useMyBookings, Booking} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabsParamList, 'Bookings'>,
@@ -270,7 +271,7 @@ export function BookingsScreen({navigation}: Props) {
                     Total pago
                   </Text>
                   <Text preset="headingSmall" color="primary" bold>
-                    R$ {price.toFixed(2)}
+                    {formatBRL(price)}
                   </Text>
                 </Box>
 

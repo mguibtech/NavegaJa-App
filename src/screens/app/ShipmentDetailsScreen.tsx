@@ -20,14 +20,18 @@ import {
   useOutForDelivery,
 } from '@domain';
 import {useToast} from '@hooks';
+import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'ShipmentDetails'>;
 
 export function ShipmentDetailsScreen({navigation, route}: Props) {
   const {shipmentId} = route.params;
   const toast = useToast();
+  const user = useAuthStore(state => state.user);
+  const isCaptain = user?.role === 'captain';
 
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [timeline, setTimeline] = useState<ShipmentTimelineEvent[]>([]);
@@ -162,7 +166,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
 
     try {
       await Share.share({
-        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: R$ ${Number(shipment.price).toFixed(2)}`,
+        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: ${formatBRL(shipment.price)}`,
         title: 'Compartilhar Encomenda',
       });
     } catch (error) {
@@ -282,8 +286,8 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
 
   // v2.0 - Permissões baseadas em status
   const canConfirmPayment = shipment.status === ShipmentStatus.PENDING;
-  const canCollect = shipment.status === ShipmentStatus.PAID; // Capitão
-  const canOutForDelivery = shipment.status === ShipmentStatus.ARRIVED; // Capitão
+  const canCollect = isCaptain && shipment.status === ShipmentStatus.PAID;
+  const canOutForDelivery = isCaptain && shipment.status === ShipmentStatus.ARRIVED;
   // Mostrar PIN nos status ativos para que remetente possa compartilhar com capitão/destinatário
   const showValidationPIN =
     shipment.validationCode != null &&
@@ -336,7 +340,6 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                   size={200}
                   backgroundColor="white"
                   color="black"
-                  errorCorrectionLevel="L"
                 />
                 <Text preset="paragraphSmall" color="textSecondary" mt="s16">
                   Código de Rastreamento
@@ -486,8 +489,8 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
               Detalhes
             </Text>
 
-            <Box flexDirection="row" justifyContent="space-between" mb="s12">
-              <Text preset="paragraphSmall" color="textSecondary">
+            <Box mb="s12">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s4">
                 Descrição
               </Text>
               <Text preset="paragraphSmall" color="text" bold>
@@ -536,7 +539,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 Total
               </Text>
               <Text preset="headingSmall" color="primary" bold>
-                R$ {Number(shipment.price).toFixed(2)}
+                {formatBRL(shipment.price)}
               </Text>
             </Box>
           </Box>
@@ -559,21 +562,34 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 Viagem
               </Text>
 
-              <Box flexDirection="row" alignItems="center" mb="s12">
-                <Icon name="directions-boat" size={20} color="primary" />
-                <Text preset="paragraphMedium" color="text" ml="s12">
-                  {shipment.trip.origin} → {shipment.trip.destination}
-                </Text>
-              </Box>
+              {(shipment.trip.origin || shipment.trip.destination) ? (
+                <Box flexDirection="row" alignItems="center" mb="s12">
+                  <Icon name="directions-boat" size={20} color="primary" />
+                  <Text preset="paragraphMedium" color="text" ml="s12" flex={1}>
+                    {shipment.trip.origin || '—'} → {shipment.trip.destination || '—'}
+                  </Text>
+                </Box>
+              ) : shipment.trip.route ? (
+                <Box flexDirection="row" alignItems="center" mb="s12">
+                  <Icon name="directions-boat" size={20} color="primary" />
+                  <Text preset="paragraphMedium" color="text" ml="s12" flex={1}>
+                    {shipment.trip.route.origin || shipment.trip.route.originCity || '—'}
+                    {' → '}
+                    {shipment.trip.route.destination || shipment.trip.route.destinationCity || '—'}
+                  </Text>
+                </Box>
+              ) : null}
 
-              <Box flexDirection="row" alignItems="center">
-                <Icon name="schedule" size={20} color="primary" />
-                <Text preset="paragraphMedium" color="text" ml="s12">
-                  {format(new Date(shipment.trip.departureAt), "dd 'de' MMM, HH:mm", {
-                    locale: ptBR,
-                  })}
-                </Text>
-              </Box>
+              {shipment.trip.departureAt && (
+                <Box flexDirection="row" alignItems="center">
+                  <Icon name="schedule" size={20} color="primary" />
+                  <Text preset="paragraphMedium" color="text" ml="s12">
+                    {format(new Date(shipment.trip.departureAt), "dd 'de' MMM, HH:mm", {
+                      locale: ptBR,
+                    })}
+                  </Text>
+                </Box>
+              )}
             </Box>
           )}
 
@@ -642,6 +658,8 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 {shipment.photos.map((photoUrl, index) => {
                   const uri = photoUrl.startsWith('http')
                     ? photoUrl
+                        .replace(/http:\/\/localhost(:\d+)?/, API_BASE_URL)
+                        .replace(/http:\/\/127\.0\.0\.1(:\d+)?/, API_BASE_URL)
                     : `${API_BASE_URL}${photoUrl}`;
                   return (
                     <Box

@@ -26,6 +26,7 @@ import {
 } from '@domain';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 // Funções de validação de CPF
 function isValidCPF(cpf: string): boolean {
@@ -676,7 +677,7 @@ export function BookingScreen({navigation, route}: Props) {
             isCreatingBooking
               ? 'Processando...'
               : priceBreakdown
-              ? `Pagar R$ ${priceBreakdown.finalPrice.toFixed(2)}`
+              ? `Pagar ${formatBRL(priceBreakdown.finalPrice)}`
               : 'Calculando...'
           }
           onPress={handleConfirmBooking}

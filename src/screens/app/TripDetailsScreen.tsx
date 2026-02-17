@@ -9,6 +9,7 @@ import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@
 
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TripDetails'>;
 
@@ -557,7 +558,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
                   color="textSecondary"
                   ml="s12"
                   style={{textDecorationLine: 'line-through'}}>
-                  R$ {basePrice.toFixed(2)}
+                  {formatBRL(basePrice)}
                 </Text>
               </Box>
             )}
@@ -565,7 +566,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
               {context === 'shipment' ? (
                 hasCargoPrice ? (
                   <Text preset="headingLarge" color="primary" bold>
-                    {'R$ '}{cargoPrice.toFixed(2)}{'/kg'}
+                    {formatBRL(cargoPrice)}{'/kg'}
                   </Text>
                 ) : (
                   <Text preset="headingLarge" color="textSecondary" bold>
@@ -574,7 +575,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
                 )
               ) : (
                 <Text preset="headingLarge" color="primary" bold>
-                  {'R$ '}{displayPrice.toFixed(2)}
+                  {formatBRL(displayPrice)}
                 </Text>
               )}
               {context === 'shipment' ? (

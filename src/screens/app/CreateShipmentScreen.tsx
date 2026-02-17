@@ -28,6 +28,7 @@ import {
 import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 // Validação de telefone (formato WhatsApp)
 function formatPhoneNumber(value: string): string {
@@ -337,7 +338,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
     if (isCreatingShipment) return 'Criando encomenda...';
     if (isCalculatingPrice) return 'Calculando preço...';
     if (!hasWeight) return 'Informe o peso para calcular';
-    if (totalPrice > 0) return `Pagar R$ ${totalPrice.toFixed(2)}`;
+    if (totalPrice > 0) return `Pagar ${formatBRL(totalPrice)}`;
     if (!isPIX) return 'Enviar Encomenda';
     return 'Aguardando cálculo do preço...';
   }
@@ -460,7 +461,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                       alignItems="center">
                       <Icon name="payments" size={14} color="success" />
                       <Text preset="paragraphCaptionSmall" color="success" bold ml="s4">
-                        {'R$ '}{cargoPrice.toFixed(2)}{' / kg'}
+                        {formatBRL(cargoPrice)}{' / kg'}
                       </Text>
                     </Box>
                     <Box
@@ -864,7 +865,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 </Box>
               ) : (
                 <Text preset="headingSmall" color="primary" bold>
-                  {totalPrice > 0 ? `R$ ${totalPrice.toFixed(2)}` : '—'}
+                  {totalPrice > 0 ? formatBRL(totalPrice) : '—'}
                 </Text>
               )}
             </Box>

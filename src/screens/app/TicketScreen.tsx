@@ -9,6 +9,7 @@ import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationMod
 import {Booking, bookingAPI, BookingStatus, Trip, tripAPI, PaymentMethod} from '@domain';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Ticket'>;
 
@@ -552,7 +553,7 @@ export function TicketScreen({navigation, route}: Props) {
               Total pago
             </Text>
             <Text preset="headingSmall" color="primary" bold>
-              R$ {(typeof booking.totalPrice === 'number' ? booking.totalPrice : parseFloat(String(booking.totalPrice)) || 0).toFixed(2)}
+              {formatBRL(typeof booking.totalPrice === 'number' ? booking.totalPrice : parseFloat(String(booking.totalPrice)) || 0)}
             </Text>
           </Box>
         </Box>

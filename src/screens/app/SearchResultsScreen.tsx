@@ -8,6 +8,7 @@ import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, Tri
 import {Trip, useSearchTrips} from '@domain';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'SearchResults'>;
 
@@ -501,7 +502,7 @@ export function SearchResultsScreen({navigation, route}: Props) {
                             preset="paragraphSmall"
                             color="textSecondary"
                             style={{textDecorationLine: 'line-through'}}>
-                            {`R$ ${basePrice.toFixed(2)}`}
+                            {formatBRL(basePrice)}
                           </Text>
                         </Box>
                       )}
@@ -514,8 +515,8 @@ export function SearchResultsScreen({navigation, route}: Props) {
                           <>
                             <Text preset="headingMedium" color="primary" bold>
                               {context === 'shipment'
-                                ? `R$ ${Number(item.cargoPriceKg).toFixed(2)}`
-                                : `R$ ${displayPrice.toFixed(2)}`}
+                                ? formatBRL(Number(item.cargoPriceKg))
+                                : formatBRL(displayPrice)}
                             </Text>
                             <Text preset="paragraphSmall" color="textSecondary">
                               {context === 'shipment' ? '/kg' : '/pessoa'}

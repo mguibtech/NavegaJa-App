@@ -1,6 +1,7 @@
 import {Box, Icon, Text} from '@components';
 import React from 'react';
 import {PriceBreakdown as PriceBreakdownType} from '@domain';
+import {formatBRL} from '@utils';
 
 export interface PriceBreakdownProps {
   data: PriceBreakdownType;
@@ -33,7 +34,7 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
           {`Subtotal${data.quantity ? ` (${data.quantity}x)` : ''}`}
         </Text>
         <Text preset="paragraphMedium" color="text">
-          {`R$ ${data.basePrice.toFixed(2)}`}
+          {formatBRL(data.basePrice)}
         </Text>
       </Box>
 
@@ -69,7 +70,7 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
                 </Box>
               </Box>
               <Text preset="paragraphMedium" color="success" bold>
-                {`-R$ ${discount.amount.toFixed(2)}`}
+                {`-${formatBRL(discount.amount)}`}
               </Text>
             </Box>
           ))}
@@ -88,7 +89,7 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
                 {'Economia total'}
               </Text>
               <Text preset="paragraphMedium" color="success" bold>
-                {`-R$ ${data.totalDiscount.toFixed(2)}`}
+                {`-${formatBRL(data.totalDiscount)}`}
               </Text>
             </Box>
           )}
@@ -107,7 +108,7 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
           {'Total'}
         </Text>
         <Text preset="headingSmall" color="primary" bold>
-          {`R$ ${data.finalPrice.toFixed(2)}`}
+          {formatBRL(data.finalPrice)}
         </Text>
       </Box>
 
@@ -122,7 +123,7 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
           alignItems="center">
           <Icon name="celebration" size={20} color="success" />
           <Text preset="paragraphSmall" color="success" bold ml="s8" flex={1}>
-            {`Você economizou R$ ${data.totalDiscount.toFixed(2)}! 🎉`}
+            {`Você economizou ${formatBRL(data.totalDiscount)}! 🎉`}
           </Text>
         </Box>
       )}

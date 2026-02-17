@@ -2,6 +2,7 @@ import React from 'react';
 
 import {Box, Icon, Text} from '@components';
 import {CalculateShipmentPriceResponse} from '@domain';
+import {formatBRL} from '@utils';
 
 interface ShipmentPriceBreakdownProps {
   data: CalculateShipmentPriceResponse;
@@ -37,11 +38,11 @@ export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
             Peso cobrado
           </Text>
           <Text preset="paragraphSmall" color="text">
-            {data.chargedWeight}kg × R$ {data.pricePerKg.toFixed(2)}/kg
+            {data.chargedWeight}kg × {formatBRL(data.pricePerKg)}/kg
           </Text>
         </Box>
         <Text preset="paragraphMedium" color="text" bold>
-          R$ {data.weightCharge.toFixed(2)}
+          {formatBRL(data.weightCharge)}
         </Text>
       </Box>
 
@@ -78,7 +79,7 @@ export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
               </Text>
             </Box>
             <Text preset="paragraphMedium" color="success" bold>
-              -R$ {data.couponDiscount.toFixed(2)}
+              -{formatBRL(data.couponDiscount)}
             </Text>
           </Box>
           <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s24">
@@ -105,7 +106,7 @@ export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
           Total
         </Text>
         <Text preset="headingSmall" color="primary" bold>
-          R$ {data.finalPrice.toFixed(2)}
+          {formatBRL(data.finalPrice)}
         </Text>
       </Box>
 
@@ -119,7 +120,7 @@ export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
           alignItems="center">
           <Icon name="celebration" size={20} color="success" />
           <Text preset="paragraphSmall" color="success" bold ml="s8">
-            Você economizou R$ {data.totalDiscount.toFixed(2)}!
+            Você economizou {formatBRL(data.totalDiscount)}!
           </Text>
         </Box>
       )}

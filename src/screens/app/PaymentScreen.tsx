@@ -9,6 +9,7 @@ import {useToast} from '@hooks';
 import {PaymentMethod, PaymentStatus, bookingAPI, Booking} from '@domain';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Payment'>;
 
@@ -130,7 +131,7 @@ export function PaymentScreen({navigation, route}: Props) {
         title: 'Pagamento NavegaJá',
         message:
           `🛥️ NavegaJá — Pagamento PIX\n\n` +
-          `Valor: R$ ${amount.toFixed(2)}\n` +
+          `Valor: ${formatBRL(amount)}\n` +
           `Reserva: #${bookingId.slice(0, 8).toUpperCase()}\n\n` +
           `Código PIX (Copia e Cola):\n${booking.pixQrCode}\n\n` +
           `Abra seu banco e use o código acima para pagar.`,
@@ -261,7 +262,7 @@ export function PaymentScreen({navigation, route}: Props) {
                 Valor a pagar
               </Text>
               <Text preset="headingLarge" color="primary" bold>
-                R$ {amount.toFixed(2)}
+                {formatBRL(amount)}
               </Text>
             </Box>
 

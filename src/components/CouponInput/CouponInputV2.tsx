@@ -3,6 +3,7 @@ import {ActivityIndicator} from 'react-native';
 
 import {Box, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 import {CouponState} from '@domain';
+import {formatBRL} from '@utils';
 
 export interface CouponInputV2Props {
   /**
@@ -81,7 +82,7 @@ export function CouponInputV2({
             borderRadius="s8"
             alignSelf="flex-start">
             <Text preset="paragraphSmall" color="surface" bold>
-              {'💰 Você economizou R$ '}{savedAmount.toFixed(2)}
+              {`💰 Você economizou ${formatBRL(savedAmount)}`}
             </Text>
           </Box>
         </Box>

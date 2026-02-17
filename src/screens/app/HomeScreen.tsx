@@ -17,6 +17,7 @@ import {usePromotions} from '@domain';
 import {useSosAlert} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabsParamList, 'Home'>,
@@ -156,7 +157,7 @@ export function HomeScreen({navigation}: Props) {
                 A partir de
               </Text>
               <Text preset="headingSmall" color="primary" bold numberOfLines={1}>
-                R$ {price.toFixed(0)}
+                {formatBRL(price)}
               </Text>
             </Box>
 

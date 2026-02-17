@@ -7,6 +7,7 @@ import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
 import {usePopularRoutes, PopularRoute} from '@domain';
 
 import {AppStackParamList} from '@routes';
+import {formatBRL} from '@utils';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PopularRoutes'>;
 
@@ -108,7 +109,7 @@ export function PopularRoutesScreen({navigation}: Props) {
               A partir de
             </Text>
             <Text preset="headingMedium" color="primary" bold>
-              R$ {item.minPrice.toFixed(2)}
+              {formatBRL(item.minPrice)}
             </Text>
           </Box>
 
@@ -123,7 +124,7 @@ export function PopularRoutesScreen({navigation}: Props) {
               Preço médio
             </Text>
             <Text preset="paragraphMedium" color="text" bold>
-              R$ {item.avgPrice.toFixed(2)}
+              {formatBRL(item.avgPrice)}
             </Text>
           </Box>
         </Box>
