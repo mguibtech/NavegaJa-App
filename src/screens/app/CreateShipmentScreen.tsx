@@ -225,6 +225,16 @@ export function CreateShipmentScreen({navigation, route}: Props) {
     if (!validateForm()) return;
     if (!trip) return;
 
+    // PIX requer preço calculado para processar pagamento
+    if (isPIX && totalPrice <= 0) {
+      setCreateErrorMessage(
+        priceErrorMessage ||
+          'Não foi possível calcular o preço para PIX. Selecione Dinheiro ou tente novamente.',
+      );
+      setShowCreateErrorModal(true);
+      return;
+    }
+
     const weightNum = parseFloat(weight);
 
     // Dimensões opcionais
@@ -863,7 +873,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
             <Button
               title={getButtonTitle()}
               onPress={handleCreateShipment}
-              disabled={!canSubmit || isCreatingShipment || isCalculatingPrice}
+              disabled={isCreatingShipment || isCalculatingPrice}
               loading={isCreatingShipment}
               rightIcon={canSubmit ? 'local-shipping' : undefined}
             />
