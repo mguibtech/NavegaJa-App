@@ -73,6 +73,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
   const [showDimensionsMaxModal, setShowDimensionsMaxModal] = useState(false);
   const [showCreateErrorModal, setShowCreateErrorModal] = useState(false);
   const [createErrorMessage, setCreateErrorMessage] = useState('');
+  const [priceErrorMessage, setPriceErrorMessage] = useState('');
 
   // Dados do destinatário
   const [recipientName, setRecipientName] = useState('');
@@ -101,7 +102,10 @@ export function CreateShipmentScreen({navigation, route}: Props) {
   // Calculate price whenever weight/dimensions/coupon changes
   useEffect(() => {
     if (trip && weight && parseFloat(weight) > 0) {
+      setPriceErrorMessage('');
       calculatePrice();
+    } else {
+      setPriceErrorMessage('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip, weight, length, width, heightDim, couponValidation.state]);
@@ -145,10 +149,12 @@ export function CreateShipmentScreen({navigation, route}: Props) {
         ? couponValidation.state.data.code
         : undefined;
 
+    setPriceErrorMessage('');
     try {
       await calculate(trip.id, weightNum, dimensions, couponCode);
-    } catch {
-      // Silently ignore price calculation errors — user can still proceed with CASH
+    } catch (err: any) {
+      const msg = err?.message || 'Não foi possível calcular o preço';
+      setPriceErrorMessage(msg);
     }
   }
 
@@ -719,8 +725,23 @@ export function CreateShipmentScreen({navigation, route}: Props) {
             shadowRadius: 8,
             elevation: 8,
           }}>
+          {/* Price error banner */}
+          {hasWeight && priceErrorMessage ? (
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              paddingHorizontal="s20"
+              paddingTop="s12"
+              paddingBottom="s4">
+              <Icon name="info-outline" size={16} color="warning" />
+              <Text preset="paragraphCaptionSmall" color="warning" ml="s8" flex={1}>
+                {priceErrorMessage}
+              </Text>
+            </Box>
+          ) : null}
+
           {/* Price summary row */}
-          {hasWeight && (
+          {hasWeight && !priceErrorMessage && (
             <Box
               flexDirection="row"
               alignItems="center"
