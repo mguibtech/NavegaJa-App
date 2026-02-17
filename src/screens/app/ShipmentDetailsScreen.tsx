@@ -160,7 +160,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
 
     try {
       await Share.share({
-        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: R$ ${shipment.price.toFixed(2)}`,
+        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: R$ ${Number(shipment.price).toFixed(2)}`,
         title: 'Compartilhar Encomenda',
       });
     } catch (error) {
@@ -533,7 +533,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 Total
               </Text>
               <Text preset="headingSmall" color="primary" bold>
-                R$ {shipment.price.toFixed(2)}
+                R$ {Number(shipment.price).toFixed(2)}
               </Text>
             </Box>
           </Box>
