@@ -143,8 +143,8 @@ export function CreateShipmentScreen({navigation, route}: Props) {
 
     try {
       await calculate(trip.id, weightNum, dimensions, couponCode);
-    } catch (error) {
-      console.error('Failed to calculate price:', error);
+    } catch {
+      // Silently ignore price calculation errors — user can still proceed with CASH
     }
   }
 
@@ -306,14 +306,20 @@ export function CreateShipmentScreen({navigation, route}: Props) {
     return true;
   }
 
-  const canSubmit = isFormValid() && totalPrice > 0 && !isCreatingShipment;
+  // PIX needs a calculated price; CASH is paid on delivery so no price required
+  const isPIX = paymentMethod === PaymentMethod.PIX;
+  const canSubmit =
+    isFormValid() &&
+    !isCreatingShipment &&
+    (!isPIX || totalPrice > 0);
 
   function getButtonTitle(): string {
     if (isCreatingShipment) return 'Criando encomenda...';
     if (isCalculatingPrice) return 'Calculando preço...';
     if (!hasWeight) return 'Informe o peso para calcular';
     if (totalPrice > 0) return `Pagar R$ ${totalPrice.toFixed(2)}`;
-    return 'Preencha todos os campos';
+    if (!isPIX) return 'Enviar Encomenda';
+    return 'Aguardando cálculo do preço...';
   }
 
   return (
@@ -345,7 +351,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
               alignItems="center"
               justifyContent="center"
               onPress={() => navigation.goBack()}
-              mr="s12">
+              marginRight="s12">
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
 
@@ -402,7 +408,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 backgroundColor="primaryBg"
                 alignItems="center"
                 justifyContent="center"
-                mr="s12">
+                marginRight="s12">
                 <Icon name="person" size={20} color="primary" />
               </Box>
               <Text preset="paragraphMedium" color="text" bold>
@@ -463,7 +469,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 backgroundColor="secondaryBg"
                 alignItems="center"
                 justifyContent="center"
-                mr="s12">
+                marginRight="s12">
                 <Icon name="inventory" size={20} color="secondary" />
               </Box>
               <Text preset="paragraphMedium" color="text" bold>
@@ -558,7 +564,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 backgroundColor="accentBg"
                 alignItems="center"
                 justifyContent="center"
-                mr="s12">
+                marginRight="s12">
                 <Icon name="photo-camera" size={20} color="accent" />
               </Box>
               <Box flex={1}>
@@ -615,7 +621,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                 backgroundColor="warningBg"
                 alignItems="center"
                 justifyContent="center"
-                mr="s12">
+                marginRight="s12">
                 <Icon name="payments" size={20} color="warning" />
               </Box>
               <Text preset="paragraphMedium" color="text" bold>
