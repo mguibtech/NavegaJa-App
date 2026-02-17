@@ -592,7 +592,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
 
             <Box mb="s12">
               <TextInput
-                label="Descrição do conteúdo"
+                label="O que vai na encomenda? *"
                 placeholder="Ex: Documentos, roupas, eletrônicos..."
                 value={description}
                 onChangeText={setDescription}
