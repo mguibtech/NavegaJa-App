@@ -153,7 +153,7 @@ export function ShipmentCard({shipment, onPress}: ShipmentCardProps) {
         </Box>
 
         <Text preset="headingSmall" color="primary" bold>
-          R$ {shipment.price.toFixed(2)}
+          R$ {Number(shipment.price).toFixed(2)}
         </Text>
       </Box>
 
