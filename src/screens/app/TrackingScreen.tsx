@@ -4,7 +4,20 @@ import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, BoatMarker} from '@components';
+import {
+  Box,
+  Button,
+  Icon,
+  Text,
+  TouchableOpacityBox,
+  BoatMarker,
+  SosMarker,
+  DangerZone,
+  DangerZoneData,
+  SafetyOverlay,
+  EmergencyButton,
+} from '@components';
+import {SosAlert, SosType, SosStatus, SafetyLevel} from '@domain';
 
 import {AppStackParamList} from '@routes';
 
@@ -88,9 +101,121 @@ const MOCK_TRACKING = {
   },
 };
 
+// Mock SOS Alerts (simulando alertas ativos próximos)
+const MOCK_SOS_ALERTS: SosAlert[] = [
+  {
+    id: 'sos-001',
+    userId: 'user-123',
+    type: SosType.MEDICAL,
+    status: SosStatus.ACTIVE,
+    location: {
+      latitude: -3.05,
+      longitude: -59.95,
+      accuracy: 15,
+      timestamp: new Date().toISOString(),
+    },
+    description: 'Passageiro com dores no peito, precisa de atendimento urgente',
+    contactNumber: '(92) 99888-7766',
+    createdAt: new Date(Date.now() - 15 * 60000).toISOString(), // 15 min atrás
+    updatedAt: new Date(Date.now() - 15 * 60000).toISOString(),
+    user: {
+      id: 'user-123',
+      name: 'Maria Santos',
+      phone: '(92) 99888-7766',
+    },
+    trip: {
+      id: 'trip-001',
+      origin: 'Manaus',
+      destination: 'Itacoatiara',
+      boatName: 'Lancha Rápida',
+    },
+  },
+  {
+    id: 'sos-002',
+    userId: 'user-456',
+    type: SosType.MECHANICAL,
+    status: SosStatus.ACTIVE,
+    location: {
+      latitude: -2.9,
+      longitude: -59.5,
+      accuracy: 20,
+      timestamp: new Date().toISOString(),
+    },
+    description: 'Motor apresentando falhas, velocidade reduzida',
+    createdAt: new Date(Date.now() - 45 * 60000).toISOString(), // 45 min atrás
+    updatedAt: new Date(Date.now() - 45 * 60000).toISOString(),
+    user: {
+      id: 'user-456',
+      name: 'Pedro Costa',
+    },
+    trip: {
+      id: 'trip-002',
+      origin: 'Parintins',
+      destination: 'Manaus',
+      boatName: 'Barco Regional',
+    },
+  },
+  {
+    id: 'sos-003',
+    userId: 'user-789',
+    type: SosType.WEATHER,
+    status: SosStatus.ACTIVE,
+    location: {
+      latitude: -2.75,
+      longitude: -58.8,
+      accuracy: 25,
+      timestamp: new Date().toISOString(),
+    },
+    description: 'Tempestade forte se aproximando, ventos acima de 50km/h',
+    createdAt: new Date(Date.now() - 5 * 60000).toISOString(), // 5 min atrás
+    updatedAt: new Date(Date.now() - 5 * 60000).toISOString(),
+    user: {
+      id: 'user-789',
+      name: 'Carlos Lima',
+    },
+  },
+];
+
+// Mock Danger Zones (áreas perigosas conhecidas)
+const MOCK_DANGER_ZONES: DangerZoneData[] = [
+  {
+    id: 'zone-001',
+    type: 'circle',
+    name: 'Corredeiras do Ariaú',
+    description: 'Área com correnteza forte e pedras submersas',
+    level: 'high',
+    center: {latitude: -3.05, longitude: -60.1},
+    radius: 2000, // 2km
+  },
+  {
+    id: 'zone-002',
+    type: 'polygon',
+    name: 'Zona de Pirataria',
+    description: 'Relatos de assaltos a embarcações',
+    level: 'critical',
+    coordinates: [
+      {latitude: -2.85, longitude: -59.4},
+      {latitude: -2.82, longitude: -59.35},
+      {latitude: -2.88, longitude: -59.32},
+      {latitude: -2.91, longitude: -59.38},
+    ],
+  },
+  {
+    id: 'zone-003',
+    type: 'circle',
+    name: 'Banco de Areia Móvel',
+    description: 'Profundidade variável, risco de encalhe',
+    level: 'medium',
+    center: {latitude: -2.65, longitude: -57.5},
+    radius: 1500,
+  },
+];
+
 export function TrackingScreen({navigation, route}: Props) {
   const {bookingId: _bookingId} = route.params;
   const [_isRefreshing, setIsRefreshing] = useState(false);
+  const [showSosAlerts, setShowSosAlerts] = useState(true);
+  const [showDangerZones, setShowDangerZones] = useState(true);
   const mapRef = useRef<MapView>(null);
 
   // TODO: Buscar dados de rastreamento da API em tempo real
@@ -161,6 +286,77 @@ export function TrackingScreen({navigation, route}: Props) {
         },
       ],
     );
+  };
+
+  const handleSosPress = () => {
+    navigation.navigate('SosAlert', {tripId: route.params.bookingId});
+  };
+
+  const handleSosMarkerPress = (alert: SosAlert) => {
+    Alert.alert(
+      `SOS: ${alert.user?.name || 'Usuário'}`,
+      `${alert.description || 'Sem descrição'}\n\n${
+        alert.contactNumber
+          ? `Contato: ${alert.contactNumber}`
+          : 'Sem contato informado'
+      }`,
+      [
+        {text: 'Fechar', style: 'cancel'},
+        ...(alert.contactNumber
+          ? [
+              {
+                text: 'Ligar',
+                onPress: () => Linking.openURL(`tel:${alert.contactNumber}`),
+              },
+            ]
+          : []),
+      ],
+    );
+  };
+
+  const handleSafetyOverlayPress = () => {
+    Alert.alert(
+      'Segurança da Navegação',
+      'Condições atuais da rota:\n\n• Clima: Favorável\n• Tráfego: Normal\n• Alertas próximos: ' +
+        MOCK_SOS_ALERTS.length +
+        '\n• Zonas de perigo: ' +
+        MOCK_DANGER_ZONES.length,
+      [{text: 'OK'}],
+    );
+  };
+
+  // Calcula número de alertas próximos à posição atual (raio de 50km)
+  const calculateNearbyAlerts = () => {
+    const RADIUS_KM = 50;
+    return MOCK_SOS_ALERTS.filter(alert => {
+      const distance = calculateDistance(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        alert.location.latitude,
+        alert.location.longitude,
+      );
+      return distance <= RADIUS_KM;
+    }).length;
+  };
+
+  // Função auxiliar para calcular distância (fórmula de Haversine simplificada)
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ) => {
+    const R = 6371; // Raio da Terra em km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
   };
 
   const getStatusLabel = (status: TripStatus) => {
@@ -304,7 +500,31 @@ export function TrackingScreen({navigation, route}: Props) {
               description="Porto de Destino"
               pinColor="red"
             />
+
+            {/* SOS Alerts */}
+            {showSosAlerts &&
+              MOCK_SOS_ALERTS.map(alert => (
+                <SosMarker
+                  key={alert.id}
+                  alert={alert}
+                  onCalloutPress={() => handleSosMarkerPress(alert)}
+                />
+              ))}
+
+            {/* Danger Zones */}
+            {showDangerZones &&
+              MOCK_DANGER_ZONES.map(zone => (
+                <DangerZone key={zone.id} zone={zone} />
+              ))}
           </MapView>
+
+          {/* Safety Overlay */}
+          <SafetyOverlay
+            level={SafetyLevel.CAUTION}
+            score={72}
+            nearbyAlerts={calculateNearbyAlerts()}
+            onPress={handleSafetyOverlayPress}
+          />
 
           {/* Info Overlay sobre o mapa */}
           <Box
@@ -579,6 +799,58 @@ export function TrackingScreen({navigation, route}: Props) {
           </Text>
         </Box>
       </ScrollView>
+
+      {/* Emergency SOS Button */}
+      <EmergencyButton onPress={handleSosPress} />
+
+      {/* Filter Buttons */}
+      <Box position="absolute" top={100} right={16} gap="s8">
+        {/* Toggle SOS Alerts */}
+        <TouchableOpacityBox
+          width={48}
+          height={48}
+          borderRadius="s24"
+          backgroundColor={showSosAlerts ? 'danger' : 'surface'}
+          alignItems="center"
+          justifyContent="center"
+          onPress={() => setShowSosAlerts(!showSosAlerts)}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 4,
+          }}>
+          <Icon
+            name="sos"
+            size={24}
+            color={showSosAlerts ? 'surface' : 'danger'}
+          />
+        </TouchableOpacityBox>
+
+        {/* Toggle Danger Zones */}
+        <TouchableOpacityBox
+          width={48}
+          height={48}
+          borderRadius="s24"
+          backgroundColor={showDangerZones ? 'warning' : 'surface'}
+          alignItems="center"
+          justifyContent="center"
+          onPress={() => setShowDangerZones(!showDangerZones)}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 4,
+          }}>
+          <Icon
+            name="warning"
+            size={24}
+            color={showDangerZones ? 'surface' : 'warning'}
+          />
+        </TouchableOpacityBox>
+      </Box>
     </Box>
   );
 }

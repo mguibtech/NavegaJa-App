@@ -37,3 +37,7 @@ export {EmergencyButton} from './EmergencyButton/EmergencyButton';
 export {WeatherIcon} from './WeatherIcon/WeatherIcon';
 export {WeatherWidget} from './WeatherWidget/WeatherWidget';
 export {NavigationSafetyAlert} from './NavigationSafetyAlert/NavigationSafetyAlert';
+export {SosMarker} from './SosMarker/SosMarker';
+export {DangerZone} from './DangerZone/DangerZone';
+export type {DangerZoneData} from './DangerZone/DangerZone';
+export {SafetyOverlay} from './SafetyOverlay/SafetyOverlay';
