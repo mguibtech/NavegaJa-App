@@ -512,7 +512,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
               <Box flexDirection="row" alignItems="center" mb="s12">
                 <Icon name="straighten" size={16} color="textSecondary" />
                 <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s8">
-                  Dimensões (opcional — em cm)
+                  Dimensões (opcional — máx. 200cm por lado)
                 </Text>
               </Box>
               <Box flexDirection="row" gap="s8">
