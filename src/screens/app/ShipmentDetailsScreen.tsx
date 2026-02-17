@@ -3,6 +3,8 @@ import {ScrollView, Share, ActivityIndicator, Image, Modal, KeyboardAvoidingView
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
+
+import {API_BASE_URL} from '../../api/config';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
@@ -637,20 +639,25 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 Fotos da Encomenda
               </Text>
               <Box flexDirection="row" flexWrap="wrap" gap="s12">
-                {shipment.photos.map((photoUrl, index) => (
-                  <Box
-                    key={index}
-                    width={100}
-                    height={100}
-                    borderRadius="s12"
-                    backgroundColor="background">
-                    <Image
-                      source={{uri: photoUrl}}
-                      style={{width: '100%', height: '100%', borderRadius: 12}}
-                      resizeMode="cover"
-                    />
-                  </Box>
-                ))}
+                {shipment.photos.map((photoUrl, index) => {
+                  const uri = photoUrl.startsWith('http')
+                    ? photoUrl
+                    : `${API_BASE_URL}${photoUrl}`;
+                  return (
+                    <Box
+                      key={index}
+                      width={100}
+                      height={100}
+                      borderRadius="s12"
+                      backgroundColor="background">
+                      <Image
+                        source={{uri}}
+                        style={{width: '100%', height: '100%', borderRadius: 12}}
+                        resizeMode="cover"
+                      />
+                    </Box>
+                  );
+                })}
               </Box>
             </Box>
           )}
