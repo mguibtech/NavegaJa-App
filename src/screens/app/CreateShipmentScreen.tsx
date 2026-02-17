@@ -377,18 +377,27 @@ export function CreateShipmentScreen({navigation, route}: Props) {
               </Box>
             </Box>
 
-            {/* Cargo price chip */}
-            {trip.cargoPriceKg && Number(trip.cargoPriceKg) > 0 ? (
-              <Box
-                backgroundColor="successBg"
-                paddingHorizontal="s12"
-                paddingVertical="s6"
-                borderRadius="s8">
-                <Text preset="paragraphCaptionSmall" color="success" bold>
-                  {'R$ '}{Number(trip.cargoPriceKg).toFixed(2)}{'/kg'}
-                </Text>
-              </Box>
-            ) : null}
+            {/* Cargo status chip no header */}
+            <Box
+              backgroundColor={Number(trip.cargoPriceKg) > 0 ? 'successBg' : 'dangerBg'}
+              paddingHorizontal="s10"
+              paddingVertical="s6"
+              borderRadius="s8"
+              flexDirection="row"
+              alignItems="center">
+              <Icon
+                name={Number(trip.cargoPriceKg) > 0 ? 'inventory' : 'block'}
+                size={14}
+                color={Number(trip.cargoPriceKg) > 0 ? 'success' : 'danger'}
+              />
+              <Text
+                preset="paragraphCaptionSmall"
+                color={Number(trip.cargoPriceKg) > 0 ? 'success' : 'danger'}
+                bold
+                ml="s4">
+                {Number(trip.cargoPriceKg) > 0 ? 'Aceita carga' : 'Sem carga'}
+              </Text>
+            </Box>
           </Box>
         </Box>
 
@@ -396,6 +405,90 @@ export function CreateShipmentScreen({navigation, route}: Props) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{padding: 20, paddingBottom: 32}}>
+
+          {/* Card: Info de carga da viagem */}
+          {(() => {
+            const cargoPrice = Number(trip.cargoPriceKg);
+            const acceptsCargo = cargoPrice > 0;
+            return (
+              <Box
+                backgroundColor={acceptsCargo ? 'successBg' : 'dangerBg'}
+                borderRadius="s16"
+                padding="s16"
+                mb="s16"
+                style={{
+                  borderWidth: 1,
+                  borderColor: acceptsCargo ? '#16A34A33' : '#DC262633',
+                }}>
+                {/* Status */}
+                <Box flexDirection="row" alignItems="center" mb={acceptsCargo ? 's12' : 's0'}>
+                  <Icon
+                    name={acceptsCargo ? 'check-circle' : 'cancel'}
+                    size={20}
+                    color={acceptsCargo ? 'success' : 'danger'}
+                  />
+                  <Text
+                    preset="paragraphMedium"
+                    color={acceptsCargo ? 'success' : 'danger'}
+                    bold
+                    ml="s8">
+                    {acceptsCargo
+                      ? 'Esta viagem aceita encomendas'
+                      : 'Esta viagem não aceita encomendas'}
+                  </Text>
+                </Box>
+
+                {/* Limites — só mostra se aceita */}
+                {acceptsCargo && (
+                  <Box flexDirection="row" flexWrap="wrap" gap="s8">
+                    <Box
+                      backgroundColor="surface"
+                      borderRadius="s8"
+                      paddingHorizontal="s10"
+                      paddingVertical="s6"
+                      flexDirection="row"
+                      alignItems="center">
+                      <Icon name="payments" size={14} color="success" />
+                      <Text preset="paragraphCaptionSmall" color="success" bold ml="s4">
+                        {'R$ '}{cargoPrice.toFixed(2)}{' / kg'}
+                      </Text>
+                    </Box>
+                    <Box
+                      backgroundColor="surface"
+                      borderRadius="s8"
+                      paddingHorizontal="s10"
+                      paddingVertical="s6"
+                      flexDirection="row"
+                      alignItems="center">
+                      <Icon name="scale" size={14} color="textSecondary" />
+                      <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s4">
+                        {'Peso máx: '}
+                        <Text preset="paragraphCaptionSmall" color="text" bold>
+                          50 kg
+                        </Text>
+                      </Text>
+                    </Box>
+                    <Box
+                      backgroundColor="surface"
+                      borderRadius="s8"
+                      paddingHorizontal="s10"
+                      paddingVertical="s6"
+                      flexDirection="row"
+                      alignItems="center">
+                      <Icon name="straighten" size={14} color="textSecondary" />
+                      <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s4">
+                        {'Dims. máx: '}
+                        <Text preset="paragraphCaptionSmall" color="text" bold>
+                          200 cm
+                        </Text>
+                        {' por lado'}
+                      </Text>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
 
           {/* Card: Destinatário */}
           <Box
