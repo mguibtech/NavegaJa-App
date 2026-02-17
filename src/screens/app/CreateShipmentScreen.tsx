@@ -125,15 +125,19 @@ export function CreateShipmentScreen({navigation, route}: Props) {
     const weightNum = parseFloat(weight);
     if (isNaN(weightNum) || weightNum <= 0) return;
 
-    // Dimensões opcionais
-    const dimensions =
-      length && width && heightDim
-        ? {
-            length: parseFloat(length),
-            width: parseFloat(width),
-            height: parseFloat(heightDim),
-          }
-        : undefined;
+    // Dimensões opcionais — só inclui se todas fornecidas e válidas (≤ 200cm)
+    let dimensions: {length: number; width: number; height: number} | undefined;
+    if (length && width && heightDim) {
+      const l = parseFloat(length);
+      const w = parseFloat(width);
+      const h = parseFloat(heightDim);
+      if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l <= 200 && w <= 200 && h <= 200) {
+        dimensions = {length: l, width: w, height: h};
+      } else {
+        // Dimensões inválidas — não chama API (evita 400 do backend)
+        return;
+      }
+    }
 
     // Cupom se válido
     const couponCode =
