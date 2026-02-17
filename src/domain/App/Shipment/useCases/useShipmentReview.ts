@@ -18,10 +18,9 @@ export function useShipmentReview() {
       setIsLoading(false);
       return review;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 
@@ -36,10 +35,9 @@ export function useShipmentReview() {
       setIsLoading(false);
       return review;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

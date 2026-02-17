@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Share, Alert, ActivityIndicator} from 'react-native';
+import {ScrollView, Share, ActivityIndicator} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
 import {Booking, bookingAPI, BookingStatus, Trip, tripAPI, PaymentMethod} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -14,11 +15,18 @@ type Props = NativeStackScreenProps<AppStackParamList, 'Ticket'>;
 type TicketStatus = 'confirmed' | 'active' | 'completed' | 'cancelled' | 'pending';
 
 export function TicketScreen({navigation, route}: Props) {
+  const {top} = useSafeAreaInsets();
   const {bookingId} = route.params;
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Modal state
+  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
+  const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
+  const [showCancelErrorModal, setShowCancelErrorModal] = useState(false);
 
   useEffect(() => {
     loadBookingData();
@@ -34,9 +42,8 @@ export function TicketScreen({navigation, route}: Props) {
       const tripData = await tripAPI.getById(bookingData.tripId);
       setTrip(tripData);
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível carregar os dados do bilhete');
       console.error('Failed to load booking:', _error);
-      navigation.navigate('HomeTabs');
+      setShowLoadErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +57,18 @@ export function TicketScreen({navigation, route}: Props) {
         <Text preset="paragraphMedium" color="text" mt="s16">
           Carregando bilhete...
         </Text>
+        <InfoModal
+          visible={showLoadErrorModal}
+          title="Erro"
+          message="Não foi possível carregar os dados do bilhete"
+          icon="error"
+          iconColor="danger"
+          buttonText="Entendi"
+          onClose={() => {
+            setShowLoadErrorModal(false);
+            navigation.navigate('HomeTabs');
+          }}
+        />
       </Box>
     );
   }
@@ -114,26 +133,17 @@ export function TicketScreen({navigation, route}: Props) {
   };
 
   const handleCancelBooking = () => {
-    Alert.alert(
-      'Cancelar Reserva',
-      'Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.',
-      [
-        {text: 'Não', style: 'cancel'},
-        {
-          text: 'Sim, Cancelar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await bookingAPI.cancel(booking.id);
-              Alert.alert('Sucesso', 'Reserva cancelada com sucesso');
-              navigation.navigate('HomeTabs');
-            } catch (_error) {
-              Alert.alert('Erro', 'Não foi possível cancelar a reserva');
-            }
-          },
-        },
-      ],
-    );
+    setShowCancelConfirmModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    setShowCancelConfirmModal(false);
+    try {
+      await bookingAPI.cancel(booking.id);
+      setShowCancelSuccessModal(true);
+    } catch {
+      setShowCancelErrorModal(true);
+    }
   };
 
   const getStatusConfig = (status: TicketStatus) => {
@@ -203,11 +213,11 @@ export function TicketScreen({navigation, route}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s40"
         paddingBottom="s12"
         backgroundColor="surface"
         borderBottomWidth={1}
-        borderBottomColor="border">
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
         <Box flexDirection="row" alignItems="center" mb="s12">
           <TouchableOpacityBox
             width={40}
@@ -601,6 +611,45 @@ export function TicketScreen({navigation, route}: Props) {
           </Box>
         </Box>
       </ScrollView>
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmationModal
+        visible={showCancelConfirmModal}
+        title="Cancelar Reserva"
+        message="Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita."
+        icon="delete"
+        iconColor="danger"
+        confirmText="Sim, Cancelar"
+        cancelText="Não"
+        confirmPreset="primary"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowCancelConfirmModal(false)}
+      />
+
+      {/* Cancel Success Modal */}
+      <InfoModal
+        visible={showCancelSuccessModal}
+        title="Sucesso"
+        message="Reserva cancelada com sucesso"
+        icon="check-circle"
+        iconColor="success"
+        buttonText="Entendi"
+        onClose={() => {
+          setShowCancelSuccessModal(false);
+          navigation.navigate('HomeTabs');
+        }}
+      />
+
+      {/* Cancel Error Modal */}
+      <InfoModal
+        visible={showCancelErrorModal}
+        title="Erro"
+        message="Não foi possível cancelar a reserva"
+        icon="error"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => setShowCancelErrorModal(false)}
+      />
     </Box>
   );
 }

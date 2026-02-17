@@ -30,10 +30,9 @@ export function useCalculateShipmentPrice() {
       setIsLoading(false);
       return result;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

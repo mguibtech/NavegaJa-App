@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
@@ -16,6 +17,7 @@ type Props = CompositeScreenProps<
 >;
 
 export function ShipmentsScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [refreshing, setRefreshing] = useState(false);
   const {shipments, fetch: fetchShipments} = useMyShipments();
@@ -40,10 +42,14 @@ export function ShipmentsScreen({navigation}: Props) {
   // Filtrar shipments por status
   const filteredShipments = shipments.filter((shipment: Shipment) => {
     if (selectedTab === 'active') {
-      // Ativas: pending, in_transit
+      // Ativas: todos os estados antes de entregue/cancelado
       return (
         shipment.status === ShipmentStatus.PENDING ||
-        shipment.status === ShipmentStatus.IN_TRANSIT
+        shipment.status === ShipmentStatus.PAID ||
+        shipment.status === ShipmentStatus.COLLECTED ||
+        shipment.status === ShipmentStatus.IN_TRANSIT ||
+        shipment.status === ShipmentStatus.ARRIVED ||
+        shipment.status === ShipmentStatus.OUT_FOR_DELIVERY
       );
     } else {
       // Concluídas: delivered, cancelled
@@ -67,10 +73,10 @@ export function ShipmentsScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s20"
-        paddingTop="s20"
         paddingBottom="s16"
         backgroundColor="surface"
         style={{
+          paddingTop: top + 16,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,

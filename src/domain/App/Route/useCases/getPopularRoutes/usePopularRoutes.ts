@@ -17,10 +17,9 @@ export function usePopularRoutes() {
       setRoutes(result);
       setIsLoading(false);
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

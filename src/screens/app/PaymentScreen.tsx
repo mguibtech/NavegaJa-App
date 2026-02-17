@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import {ScrollView, Clipboard, ActivityIndicator, Image} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {ScrollView, Clipboard, ActivityIndicator, Image, Share} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Text, Icon, InfoModal} from '@components';
+import {Box, Button, Text, Icon, TouchableOpacityBox, InfoModal} from '@components';
 import {useToast} from '@hooks';
 import {PaymentMethod, PaymentStatus, bookingAPI, Booking} from '@domain';
 
@@ -13,7 +14,15 @@ type Props = NativeStackScreenProps<AppStackParamList, 'Payment'>;
 
 export function PaymentScreen({navigation, route}: Props) {
   const {bookingId, amount, paymentMethod} = route.params;
+  const {top} = useSafeAreaInsets();
   const toast = useToast();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const [isLoading, setIsLoading] = useState(true);
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -34,7 +43,7 @@ export function PaymentScreen({navigation, route}: Props) {
       const now = new Date().getTime();
       const expiry = new Date(booking.pixExpiresAt!).getTime();
       const diff = expiry - now;
-      return Math.max(0, Math.floor(diff / 1000)); // segundos
+      return Math.max(0, Math.floor(diff / 1000));
     };
 
     setTimeLeft(calculateTimeLeft());
@@ -69,10 +78,8 @@ export function PaymentScreen({navigation, route}: Props) {
       const bookingData = await bookingAPI.getById(bookingId);
       setBooking(bookingData);
 
-      // Se não for PIX, verifica se já está confirmado
       if (paymentMethod !== PaymentMethod.PIX) {
         if (bookingData.status === 'confirmed') {
-          // Já confirmado (CASH ou CARD)
           navigation.replace('Ticket', {bookingId});
         }
       }
@@ -86,21 +93,25 @@ export function PaymentScreen({navigation, route}: Props) {
   }
 
   async function checkPaymentStatus() {
-    if (isCheckingPayment) return;
+    if (isCheckingPayment || !isMounted.current) return;
 
     try {
       setIsCheckingPayment(true);
       const status = await bookingAPI.getPaymentStatus(bookingId);
+
+      if (!isMounted.current) return;
 
       if (status.paymentStatus === PaymentStatus.PAID) {
         setShowSuccessModal(true);
       } else if (status.isExpired) {
         setShowExpiredModal(true);
       }
-    } catch (error) {
-      console.error('Error checking payment status:', error);
+    } catch {
+      // Silent failure — polling errors are expected when transitioning screens
     } finally {
-      setIsCheckingPayment(false);
+      if (isMounted.current) {
+        setIsCheckingPayment(false);
+      }
     }
   }
 
@@ -108,6 +119,24 @@ export function PaymentScreen({navigation, route}: Props) {
     if (booking?.pixQrCode) {
       Clipboard.setString(booking.pixQrCode);
       toast.showSuccess('Código PIX copiado!');
+    }
+  }
+
+  async function handleSharePixCode() {
+    if (!booking?.pixQrCode) return;
+
+    try {
+      await Share.share({
+        title: 'Pagamento NavegaJá',
+        message:
+          `🛥️ NavegaJá — Pagamento PIX\n\n` +
+          `Valor: R$ ${amount.toFixed(2)}\n` +
+          `Reserva: #${bookingId.slice(0, 8).toUpperCase()}\n\n` +
+          `Código PIX (Copia e Cola):\n${booking.pixQrCode}\n\n` +
+          `Abra seu banco e use o código acima para pagar.`,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   }
 
@@ -140,29 +169,51 @@ export function PaymentScreen({navigation, route}: Props) {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
+      {/* Header — padronizado */}
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
-        paddingVertical="s16"
-        flexDirection="row"
-        alignItems="center"
+        paddingBottom="s16"
         style={{
+          paddingTop: top + 12,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
-          onPress={() => navigation.goBack()}
-        />
-        <Text preset="headingSmall" color="text" bold ml="s12">
-          Pagamento
-        </Text>
+        <Box flexDirection="row" alignItems="center">
+          <TouchableOpacityBox
+            width={40}
+            height={40}
+            borderRadius="s12"
+            backgroundColor="background"
+            borderWidth={1}
+            borderColor="border"
+            alignItems="center"
+            justifyContent="center"
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={22} color="text" />
+          </TouchableOpacityBox>
+
+          <Text preset="headingSmall" color="text" bold ml="s12" flex={1}>
+            Pagamento
+          </Text>
+
+          {/* Botão compartilhar no header (apenas PIX) */}
+          {paymentMethod === PaymentMethod.PIX && booking?.pixQrCode && (
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s12"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              onPress={handleSharePixCode}>
+              <Icon name="share" size={20} color="primary" />
+            </TouchableOpacityBox>
+          )}
+        </Box>
       </Box>
 
       <ScrollView contentContainerStyle={{padding: 24}} showsVerticalScrollIndicator={false}>
@@ -232,27 +283,23 @@ export function PaymentScreen({navigation, route}: Props) {
                 Escaneie o QR Code
               </Text>
 
-              {/* QR Code Image */}
               {booking.pixQrCodeImage ? (
                 <Box
                   backgroundColor="background"
                   borderRadius="s16"
                   padding="s16"
                   mb="s16"
-                  style={{
-                    borderWidth: 2,
-                    borderColor: '#E0E0E0',
-                  }}>
+                  style={{borderWidth: 2, borderColor: '#E0E0E0'}}>
                   <Image
                     source={{uri: booking.pixQrCodeImage}}
-                    style={{width: 250, height: 250}}
+                    style={{width: 220, height: 220}}
                     resizeMode="contain"
                   />
                 </Box>
               ) : (
                 <Box
-                  width={250}
-                  height={250}
+                  width={220}
+                  height={220}
                   backgroundColor="border"
                   borderRadius="s12"
                   alignItems="center"
@@ -270,7 +317,7 @@ export function PaymentScreen({navigation, route}: Props) {
               </Text>
             </Box>
 
-            {/* PIX Copy Paste */}
+            {/* PIX Copy Paste + Compartilhar */}
             {booking.pixQrCode && (
               <Box
                 backgroundColor="surface"
@@ -293,21 +340,31 @@ export function PaymentScreen({navigation, route}: Props) {
                   borderRadius="s12"
                   padding="s12"
                   mb="s16"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: '#E0E0E0',
-                  }}>
+                  style={{borderWidth: 1, borderColor: '#E0E0E0'}}>
                   <Text preset="paragraphSmall" color="textSecondary" numberOfLines={3}>
                     {booking.pixQrCode}
                   </Text>
                 </Box>
 
-                <Button
-                  title="Copiar Código"
-                  preset="primary"
-                  leftIcon="content-copy"
-                  onPress={handleCopyPixCode}
-                />
+                {/* Botões Copiar + Compartilhar */}
+                <Box flexDirection="row" gap="s12">
+                  <Box flex={1}>
+                    <Button
+                      title="Copiar"
+                      preset="outline"
+                      leftIcon="content-copy"
+                      onPress={handleCopyPixCode}
+                    />
+                  </Box>
+                  <Box flex={1}>
+                    <Button
+                      title="Compartilhar"
+                      preset="primary"
+                      leftIcon="share"
+                      onPress={handleSharePixCode}
+                    />
+                  </Box>
+                </Box>
               </Box>
             )}
 
@@ -317,10 +374,7 @@ export function PaymentScreen({navigation, route}: Props) {
               borderRadius="s12"
               padding="s16"
               mb="s24"
-              style={{
-                borderLeftWidth: 4,
-                borderLeftColor: '#10B981',
-              }}>
+              style={{borderLeftWidth: 4, borderLeftColor: '#10B981'}}>
               <Text preset="paragraphMedium" color="success" bold mb="s8">
                 Como pagar com PIX:
               </Text>

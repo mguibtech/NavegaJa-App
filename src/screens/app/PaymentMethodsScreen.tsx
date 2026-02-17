@@ -2,8 +2,9 @@ import React, {useState} from 'react';
 import {ScrollView} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Text, Icon, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
 import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
@@ -43,6 +44,7 @@ const MOCK_CARDS: PaymentCard[] = [
 ];
 
 export function PaymentMethodsScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [cards, setCards] = useState<PaymentCard[]>(MOCK_CARDS);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
@@ -118,23 +120,28 @@ export function PaymentMethodsScreen({navigation}: Props) {
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
-        paddingVertical="s16"
+        paddingBottom="s16"
         flexDirection="row"
         alignItems="center"
         style={{
+          paddingTop: top + 12,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
+        <TouchableOpacityBox
+          width={40}
+          height={40}
+          borderRadius="s20"
+          alignItems="center"
+          justifyContent="center"
           onPress={() => navigation.goBack()}
-        />
-        <Text preset="headingSmall" color="text" bold ml="s12">
+          mr="s12">
+          <Icon name="arrow-back" size={24} color="text" />
+        </TouchableOpacityBox>
+        <Text preset="headingSmall" color="text" bold>
           Formas de Pagamento
         </Text>
       </Box>

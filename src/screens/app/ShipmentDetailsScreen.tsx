@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Share, ActivityIndicator, Image} from 'react-native';
+import {ScrollView, Share, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {Box, Button, Icon, Text, ConfirmationModal, InfoModal} from '@components';
+import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox} from '@components';
 import {
   Shipment,
   shipmentAPI,
@@ -37,6 +37,8 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
   const [showCancelErrorModal, setShowCancelErrorModal] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
+  const [showCollectPinModal, setShowCollectPinModal] = useState(false);
+  const [collectPin, setCollectPin] = useState('');
   const [showCollectModal, setShowCollectModal] = useState(false);
   const [showCollectErrorModal, setShowCollectErrorModal] = useState(false);
   const [showOutForDeliveryModal, setShowOutForDeliveryModal] = useState(false);
@@ -213,23 +215,31 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
   }
 
   // v2.0 - Coletar encomenda (PAID → COLLECTED)
-  async function handleCollect() {
+  function handleCollect() {
     if (!shipment) return;
-    setShowCollectModal(true);
+    setCollectPin('');
+    setShowCollectPinModal(true);
   }
 
   async function confirmCollect() {
     if (!shipment) return;
 
+    setShowCollectPinModal(false);
+    setShowCollectModal(true);
+  }
+
+  async function executeCollect() {
+    if (!shipment) return;
+
     setShowCollectModal(false);
 
     try {
-      // TODO: Implementar captura de foto (PhotoPicker)
-      const result = await collectShipment(shipment.id);
+      const result = await collectShipment(shipment.id, collectPin.trim() || undefined);
       toast.showSuccess(result.message);
-      loadShipmentData(); // Recarregar dados
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível coletar a encomenda');
+      setCollectPin('');
+      loadShipmentData();
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Não foi possível coletar a encomenda');
       setShowCollectErrorModal(true);
     }
   }
@@ -272,7 +282,12 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
   const canConfirmPayment = shipment.status === ShipmentStatus.PENDING;
   const canCollect = shipment.status === ShipmentStatus.PAID; // Capitão
   const canOutForDelivery = shipment.status === ShipmentStatus.ARRIVED; // Capitão
-  const showValidationPIN = shipment.status === ShipmentStatus.OUT_FOR_DELIVERY;
+  // Mostrar PIN nos status ativos para que remetente possa compartilhar com capitão/destinatário
+  const showValidationPIN =
+    shipment.validationCode != null &&
+    shipment.status !== ShipmentStatus.DELIVERED &&
+    shipment.status !== ShipmentStatus.CANCELLED;
+  const pinIsForDelivery = shipment.status === ShipmentStatus.OUT_FOR_DELIVERY;
   const canCancel =
     shipment.status === ShipmentStatus.PENDING ||
     shipment.status === ShipmentStatus.PAID;
@@ -337,8 +352,8 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
             )}
           </Box>
 
-          {/* v2.0 - PIN de Validação (OUT_FOR_DELIVERY) */}
-          {showValidationPIN && shipment.validationCode && (
+          {/* v2.0 - PIN de Validação */}
+          {showValidationPIN && (
             <Box
               backgroundColor="primaryBg"
               borderRadius="s16"
@@ -358,17 +373,19 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                   <Icon name="lock" size={40} color="primary" />
                 </Box>
                 <Text preset="paragraphMedium" color="primary" bold mb="s8">
-                  PIN de Validação
+                  {pinIsForDelivery ? 'PIN de Entrega' : 'PIN de Coleta'}
                 </Text>
                 <Text preset="paragraphSmall" color="textSecondary" textAlign="center" mb="s16">
-                  Forneça este código ao destinatário para confirmar a entrega
+                  {pinIsForDelivery
+                    ? 'Forneça este código ao destinatário para confirmar a entrega'
+                    : 'Compartilhe este PIN com o capitão para coleta manual'}
                 </Text>
                 <Box
                   backgroundColor="surface"
                   paddingHorizontal="s24"
                   paddingVertical="s16"
                   borderRadius="s12">
-                  <Text preset="headingLarge" color="primary" bold letterSpacing={8}>
+                  <Text preset="headingLarge" color="primary" bold style={{letterSpacing: 8}}>
                     {shipment.validationCode}
                   </Text>
                 </Box>
@@ -779,18 +796,97 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
         }}
       />
 
+      {/* Collect PIN Input Modal */}
+      <Modal
+        visible={showCollectPinModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCollectPinModal(false)}>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Box
+            flex={1}
+            justifyContent="center"
+            alignItems="center"
+            style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+            <Box
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s24"
+              width="85%"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 8},
+                shadowOpacity: 0.2,
+                shadowRadius: 24,
+                elevation: 10,
+              }}>
+              <Box flexDirection="row" alignItems="center" mb="s16">
+                <Icon name="inventory-2" size={24} color="primary" />
+                <Text preset="headingSmall" color="text" bold ml="s12">
+                  Coletar Encomenda
+                </Text>
+              </Box>
+
+              <Text preset="paragraphMedium" color="textSecondary" mb="s20">
+                Digite o PIN de 6 dígitos do destinatário para confirmar a coleta. Deixe em branco se não disponível.
+              </Text>
+
+              <TextInput
+                placeholder="PIN de validação (6 dígitos)"
+                value={collectPin}
+                onChangeText={setCollectPin}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+              />
+
+              <Box flexDirection="row" gap="s12" mt="s20">
+                <TouchableOpacityBox
+                  flex={1}
+                  paddingVertical="s16"
+                  borderRadius="s12"
+                  borderWidth={1}
+                  borderColor="border"
+                  alignItems="center"
+                  onPress={() => setShowCollectPinModal(false)}>
+                  <Text preset="paragraphMedium" color="text">
+                    Cancelar
+                  </Text>
+                </TouchableOpacityBox>
+                <TouchableOpacityBox
+                  flex={1}
+                  paddingVertical="s16"
+                  borderRadius="s12"
+                  backgroundColor="primary"
+                  alignItems="center"
+                  onPress={confirmCollect}>
+                  <Text preset="paragraphMedium" color="surface" bold>
+                    Continuar
+                  </Text>
+                </TouchableOpacityBox>
+              </Box>
+            </Box>
+          </Box>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Collect Confirmation Modal */}
       <ConfirmationModal
         visible={showCollectModal}
-        title="Coletar Encomenda"
-        message="Confirma a coleta desta encomenda? Tire uma foto opcional."
+        title="Confirmar Coleta"
+        message={`PIN: ${collectPin || '(não informado)'}\n\nDeseja confirmar a coleta desta encomenda?`}
         icon="inventory"
         iconColor="success"
         confirmText="Coletar"
-        cancelText="Cancelar"
+        cancelText="Voltar"
         confirmPreset="primary"
-        onConfirm={confirmCollect}
-        onCancel={() => setShowCollectModal(false)}
+        onConfirm={executeCollect}
+        onCancel={() => {
+          setShowCollectModal(false);
+          setShowCollectPinModal(true);
+        }}
         isLoading={isCollecting}
       />
 

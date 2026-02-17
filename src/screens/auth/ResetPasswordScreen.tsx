@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Keyboard, TouchableWithoutFeedback} from 'react-native';
+import {Keyboard, ScrollView, TouchableWithoutFeedback, KeyboardAvoidingView, Platform} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -64,8 +64,15 @@ export function ResetPasswordScreen({navigation, route}: Props) {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <Box flex={1} backgroundColor="background" paddingHorizontal="s24">
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <Box flex={1} backgroundColor="background" paddingHorizontal="s24">
         {/* Back Button */}
         <Box pt="s56" mb="s24">
           <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
@@ -181,7 +188,9 @@ export function ResetPasswordScreen({navigation, route}: Props) {
             </Box>
           </Box>
         </Box>
-      </Box>
-    </TouchableWithoutFeedback>
+          </Box>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

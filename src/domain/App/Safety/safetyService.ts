@@ -3,6 +3,8 @@
  * Lógica de negócio e cache offline para sistema de segurança
  */
 
+import {Platform, PermissionsAndroid} from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 
@@ -21,6 +23,7 @@ import {
 
 const EMERGENCY_CONTACTS_KEY = '@navegaja:emergency_contacts';
 const SOS_ALERTS_KEY = '@navegaja:sos_alerts';
+const LAST_KNOWN_LOCATION_KEY = '@navegaja:last_known_location';
 
 class SafetyService {
   // ========== EMERGENCY CONTACTS ==========
@@ -119,9 +122,39 @@ class SafetyService {
   // ========== SOS ALERTS ==========
 
   /**
-   * Obter localização atual do usuário
+   * Salva a última posição conhecida no cache local
    */
-  async getCurrentLocation(): Promise<SosLocation> {
+  private async saveLastKnownLocation(location: SosLocation): Promise<void> {
+    try {
+      await AsyncStorage.setItem(
+        LAST_KNOWN_LOCATION_KEY,
+        JSON.stringify(location),
+      );
+    } catch {
+      // silencioso
+    }
+  }
+
+  /**
+   * Recupera a última posição conhecida do cache local
+   */
+  private async loadLastKnownLocation(): Promise<SosLocation | null> {
+    try {
+      const stored = await AsyncStorage.getItem(LAST_KNOWN_LOCATION_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Obtém posição via Geolocation API com promise
+   */
+  private getPositionWithTimeout(
+    enableHighAccuracy: boolean,
+    timeout: number,
+    maximumAge: number,
+  ): Promise<SosLocation> {
     return new Promise((resolve, reject) => {
       Geolocation.getCurrentPosition(
         position => {
@@ -132,16 +165,77 @@ class SafetyService {
             timestamp: new Date().toISOString(),
           });
         },
-        error => {
-          reject(new Error(`Erro ao obter localização: ${error.message}`));
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000,
-        },
+        error => reject(error),
+        {enableHighAccuracy, timeout, maximumAge},
       );
     });
+  }
+
+  /**
+   * Obter localização atual do usuário
+   * Estratégia: cache OS (maximumAge alto) → rede → GPS → cache local
+   */
+  async getCurrentLocation(): Promise<SosLocation> {
+    // 1. Solicitar permissão em runtime no Android
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Permissão de Localização',
+          message:
+            'O NavegaJá precisa acessar sua localização para acionar o SOS.',
+          buttonNeutral: 'Perguntar depois',
+          buttonNegative: 'Cancelar',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        throw new Error(
+          'Permissão de localização negada. Ative nas configurações do dispositivo.',
+        );
+      }
+    }
+
+    // 2. Tenta usar cache do SO (última posição do sistema, instantânea)
+    try {
+      const cached = await this.getPositionWithTimeout(false, 3000, 300000);
+      console.log('[SOS] Location from OS cache:', JSON.stringify(cached));
+      await this.saveLastKnownLocation(cached);
+      return cached;
+    } catch {
+      console.log('[SOS] OS cache miss, trying network location...');
+    }
+
+    // 3. Tenta localização por rede (rápida, sem GPS)
+    try {
+      const network = await this.getPositionWithTimeout(false, 8000, 0);
+      console.log('[SOS] Location from network:', JSON.stringify(network));
+      await this.saveLastKnownLocation(network);
+      return network;
+    } catch {
+      console.log('[SOS] Network location failed, trying GPS...');
+    }
+
+    // 4. Tenta GPS (alta precisão, mais lento)
+    try {
+      const gps = await this.getPositionWithTimeout(true, 15000, 0);
+      console.log('[SOS] Location from GPS:', JSON.stringify(gps));
+      await this.saveLastKnownLocation(gps);
+      return gps;
+    } catch {
+      console.log('[SOS] GPS failed, trying local cache...');
+    }
+
+    // 5. Usa última posição salva localmente (fallback final)
+    const lastKnown = await this.loadLastKnownLocation();
+    if (lastKnown) {
+      console.log('[SOS] Using local cached location:', JSON.stringify(lastKnown));
+      return lastKnown;
+    }
+
+    throw new Error(
+      'Não foi possível obter sua localização. Ative o GPS e tente novamente.',
+    );
   }
 
   /**
@@ -149,6 +243,18 @@ class SafetyService {
    */
   async createSosAlert(data: CreateSosAlertData): Promise<SosAlert> {
     const alert = await safetyAPI.createSosAlert(data);
+
+    console.log('[SOS] Created alert from API:', JSON.stringify(alert));
+
+    // Normaliza formato de localização
+    const loc = alert.location as any;
+    if (loc && loc.lat != null && alert.location?.latitude == null) {
+      alert.location = {
+        ...loc,
+        latitude: loc.lat,
+        longitude: loc.lng,
+      };
+    }
 
     // Salvar offline
     const stored = await this.loadSosAlertsOffline();
@@ -171,10 +277,25 @@ class SafetyService {
     try {
       const alerts = await safetyAPI.getMySosAlerts();
 
-      // Salvar offline
-      await this.saveSosAlertsOffline(alerts);
+      console.log('[SOS] Alerts from API:', JSON.stringify(alerts));
 
-      return alerts;
+      // Normaliza formato de localização (backend pode retornar lat/lng ou latitude/longitude)
+      const normalized = alerts.map(alert => {
+        const loc = alert.location as any;
+        if (loc && loc.lat != null && alert.location?.latitude == null) {
+          alert.location = {
+            ...loc,
+            latitude: loc.lat,
+            longitude: loc.lng,
+          };
+        }
+        return alert;
+      });
+
+      // Salvar offline
+      await this.saveSosAlertsOffline(normalized);
+
+      return normalized;
     } catch {
       console.warn('Failed to fetch SOS alerts from API, loading from cache');
       return await this.loadSosAlertsOffline();
@@ -274,7 +395,41 @@ class SafetyService {
     try {
       const alerts = await this.getMySosAlerts();
       const activeAlerts = alerts.filter(alert => alert.status === 'active');
-      return activeAlerts.length > 0 ? activeAlerts[0] : null;
+      if (activeAlerts.length === 0) {
+        return null;
+      }
+
+      const alert = activeAlerts[0];
+
+      // Se o alerta não tem localização válida, tenta obter/restaurar
+      const hasValidLocation =
+        alert.location?.latitude != null &&
+        alert.location?.longitude != null;
+
+      if (!hasValidLocation) {
+        // Primeiro tenta o cache local
+        const cachedLocation = await this.loadLastKnownLocation();
+        if (cachedLocation) {
+          console.log('[SOS] Using cached location for active alert');
+          alert.location = cachedLocation;
+        } else {
+          // Se não tem cache, tenta obter localização rápida (cache do SO)
+          try {
+            const freshLocation = await this.getPositionWithTimeout(
+              false,
+              5000,
+              300000,
+            );
+            console.log('[SOS] Got fresh location for active alert:', JSON.stringify(freshLocation));
+            await this.saveLastKnownLocation(freshLocation);
+            alert.location = freshLocation;
+          } catch {
+            console.log('[SOS] Could not get location for active alert');
+          }
+        }
+      }
+
+      return alert;
     } catch {
       return null;
     }

@@ -21,83 +21,77 @@ export function SafetyOverlay({
 }: SafetyOverlayProps) {
   const config = getSafetyLevelConfig(level);
 
-  const content = isLoading ? (
+  const chip = isLoading ? (
     <Box
       backgroundColor="surface"
-      borderRadius="s12"
-      padding="s12"
+      borderRadius="s20"
+      paddingHorizontal="s12"
+      paddingVertical="s8"
       flexDirection="row"
       alignItems="center"
       style={styles.shadow}>
       <ActivityIndicator size="small" color="#3B82F6" />
-      <Text preset="paragraphSmall" color="textSecondary" ml="s12">
-        Verificando segurança...
+      <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s8">
+        Verificando...
       </Text>
     </Box>
   ) : (
     <Box
       backgroundColor="surface"
-      borderRadius="s16"
-      padding="s16"
-      style={styles.shadowLarge}>
-      <Box flexDirection="row" alignItems="center">
-        {/* Safety Icon */}
+      borderRadius="s20"
+      paddingHorizontal="s12"
+      paddingVertical="s8"
+      flexDirection="row"
+      alignItems="center"
+      style={styles.shadow}>
+      {/* Colored dot */}
+      <Box
+        width={8}
+        height={8}
+        borderRadius="s8"
+        style={{backgroundColor: config.color}}
+        marginRight="s8"
+      />
+
+      {/* Icon */}
+      <Icon name={config.icon as any} size={14} color={config.color} />
+
+      {/* Label */}
+      <Text
+        preset="paragraphCaptionSmall"
+        style={{color: config.color}}
+        bold
+        ml="s6">
+        {config.label}
+      </Text>
+
+      {/* Score */}
+      {score !== undefined && (
+        <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s6">
+          {score}/100
+        </Text>
+      )}
+
+      {/* Alert badge */}
+      {nearbyAlerts > 0 && (
         <Box
-          width={48}
-          height={48}
-          borderRadius="s12"
-          backgroundColor={config.bgColor as any}
+          backgroundColor="warning"
+          borderRadius="s8"
+          width={16}
+          height={16}
           alignItems="center"
-          justifyContent="center">
-          <Icon name={config.icon as any} size={24} color={config.color as any} />
+          justifyContent="center"
+          ml="s8">
+          <Text preset="paragraphCaptionSmall" color="surface" bold>
+            {nearbyAlerts > 9 ? '9+' : nearbyAlerts}
+          </Text>
         </Box>
+      )}
 
-        {/* Info */}
-        <Box ml="s12" flex={1}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Text preset="paragraphMedium" color={config.color as any} bold>
-              {config.label}
-            </Text>
-            {score !== undefined && (
-              <Text preset="paragraphSmall" color="textSecondary">
-                Score: {score}/100
-              </Text>
-            )}
-          </Box>
-
-          <Box flexDirection="row" alignItems="center" mt="s4">
-            <Text preset="paragraphCaptionSmall" color="textSecondary">
-              {config.description}
-            </Text>
-          </Box>
-
-          {/* Nearby Alerts Badge */}
-          {nearbyAlerts > 0 && (
-            <Box
-              mt="s8"
-              flexDirection="row"
-              alignItems="center"
-              backgroundColor="warningBg"
-              paddingHorizontal="s8"
-              paddingVertical="s4"
-              borderRadius="s8"
-              alignSelf="flex-start">
-              <Icon name="warning" size={14} color="warning" />
-              <Text preset="paragraphCaptionSmall" color="warning" bold ml="s4">
-                {nearbyAlerts} alerta{nearbyAlerts > 1 ? 's' : ''} próximo
-                {nearbyAlerts > 1 ? 's' : ''}
-              </Text>
-            </Box>
-          )}
-        </Box>
-
-        {/* Arrow if pressable */}
-        {onPress && (
-          <Box ml="s8">
-            <Icon name="chevron-right" size={20} color="textSecondary" />
-          </Box>
-        )}
-      </Box>
+      {/* Tap hint */}
+      {onPress && (
+        <Icon name="chevron-right" size={14} color="textSecondary" />
+      )}
     </Box>
   );
 
@@ -106,34 +100,26 @@ export function SafetyOverlay({
       <TouchableOpacity
         style={styles.container}
         onPress={onPress}
-        activeOpacity={0.7}>
-        {content}
+        activeOpacity={0.75}>
+        {chip}
       </TouchableOpacity>
     );
   }
 
-  return <Box style={styles.container}>{content}</Box>;
+  return <Box style={styles.container}>{chip}</Box>;
 }
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    right: 16,
+    top: 12,
+    left: 12,
   },
   shadow: {
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  shadowLarge: {
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 5,
   },
 });

@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Alert} from 'react-native';
+import {ScrollView} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, NavigationSafetyAlert} from '@components';
+import {Box, Button, ConfirmationModal, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, NavigationSafetyAlert} from '@components';
 import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
 
 
@@ -13,11 +14,14 @@ type Props = NativeStackScreenProps<AppStackParamList, 'TripDetails'>;
 
 export function TripDetailsScreen({navigation, route}: Props) {
   const {tripId, promotion, context} = route.params;
+  const {top} = useSafeAreaInsets();
   const {trip, getTripById, isLoading, error} = useTripDetails();
 
   // Favorites hooks
   const {isFavorited, fetch: fetchFavorites} = useMyFavorites();
   const {toggle, isLoading: isTogglingFavorite} = useToggleFavorite();
+
+  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
 
   // State local para controlar se está favoritado (atualiza em tempo real)
   const [isFav, setIsFav] = useState(false);
@@ -63,14 +67,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
     try {
       await getTripById(tripId);
     } catch {
-      Alert.alert(
-        'Erro',
-        'Não foi possível carregar os dados da viagem',
-        [
-          {text: 'Tentar novamente', onPress: loadTripDetails},
-          {text: 'Voltar', onPress: () => navigation.goBack()},
-        ]
-      );
+      setShowLoadErrorModal(true);
     }
   }
 
@@ -152,7 +149,8 @@ export function TripDetailsScreen({navigation, route}: Props) {
     : 0;
 
   // Calculate discounted price if applicable
-  const hasDiscount = trip?.discount && trip.discount > 0;
+  // Use Boolean() to avoid {0} rendering bug in React Native (0 renders as text node in Box)
+  const hasDiscount = Boolean(trip?.discount && trip.discount > 0);
   let basePrice = trip?.basePrice ? Number(trip.basePrice) : price;
   let discountedPrice = trip?.discountedPrice ? Number(trip.discountedPrice) : price;
   let displayPrice = hasDiscount ? discountedPrice : price;
@@ -180,6 +178,14 @@ export function TripDetailsScreen({navigation, route}: Props) {
   const boatName = trip?.boat?.name || (trip ? `Barco ${trip.boatId.slice(0, 8)}` : 'Barco');
   const captainName = trip?.captain?.name || (trip ? `Capitão ${trip.captainId.slice(0, 8)}` : 'Capitão');
 
+  // Cargo price per kg (0 means "A combinar")
+  const cargoPrice = trip
+    ? typeof trip.cargoPriceKg === 'number'
+      ? trip.cargoPriceKg
+      : parseFloat(String(trip.cargoPriceKg)) || 0
+    : 0;
+  const hasCargoPrice = cargoPrice > 0;
+
   // Loading state
   if (isLoading) {
     return (
@@ -187,11 +193,11 @@ export function TripDetailsScreen({navigation, route}: Props) {
         {/* Header */}
         <Box
           paddingHorizontal="s24"
-          paddingTop="s40"
           paddingBottom="s12"
           backgroundColor="surface"
           borderBottomWidth={1}
-          borderBottomColor="border">
+          borderBottomColor="border"
+          style={{paddingTop: top + 12}}>
           <Box flexDirection="row" alignItems="center" justifyContent="center">
             <TouchableOpacityBox
               width={40}
@@ -220,10 +226,10 @@ export function TripDetailsScreen({navigation, route}: Props) {
       <Box flex={1} backgroundColor="background">
         <Box
           paddingHorizontal="s24"
-          paddingTop="s48"
           paddingBottom="s16"
           backgroundColor="surface"
           style={{
+            paddingTop: top + 16,
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 2},
             shadowOpacity: 0.05,
@@ -274,11 +280,11 @@ export function TripDetailsScreen({navigation, route}: Props) {
         {/* Header with Back Button */}
         <Box
           paddingHorizontal="s24"
-          paddingTop="s40"
           paddingBottom="s12"
           backgroundColor="surface"
           borderBottomWidth={1}
-          borderBottomColor="border">
+          borderBottomColor="border"
+          style={{paddingTop: top + 12}}>
           <Box flexDirection="row" alignItems="center" justifyContent="center">
             <TouchableOpacityBox
               width={40}
@@ -556,12 +562,21 @@ export function TripDetailsScreen({navigation, route}: Props) {
               </Box>
             )}
             <Box flexDirection="row" alignItems="baseline" gap="s8">
-              <Text preset="headingLarge" color="primary" bold>
-                R$ {context === 'shipment'
-                  ? (typeof trip.cargoPriceKg === 'number' ? trip.cargoPriceKg : parseFloat(String(trip.cargoPriceKg)) || 0).toFixed(2)
-                  : displayPrice.toFixed(2)
-                }
-              </Text>
+              {context === 'shipment' ? (
+                hasCargoPrice ? (
+                  <Text preset="headingLarge" color="primary" bold>
+                    {'R$ '}{cargoPrice.toFixed(2)}{'/kg'}
+                  </Text>
+                ) : (
+                  <Text preset="headingLarge" color="textSecondary" bold>
+                    A combinar
+                  </Text>
+                )
+              ) : (
+                <Text preset="headingLarge" color="primary" bold>
+                  {'R$ '}{displayPrice.toFixed(2)}
+                </Text>
+              )}
               {context === 'shipment' ? (
                 <Box flexDirection="row" alignItems="center" backgroundColor="successBg" paddingHorizontal="s12" paddingVertical="s6" borderRadius="s8">
                   <Icon name="inventory" size={16} color="success" />
@@ -592,6 +607,18 @@ export function TripDetailsScreen({navigation, route}: Props) {
           />
         )}
       </Box>
+
+      <ConfirmationModal
+        visible={showLoadErrorModal}
+        title="Erro"
+        message="Não foi possível carregar os dados da viagem"
+        icon="error"
+        iconColor="danger"
+        confirmText="Tentar novamente"
+        cancelText="Voltar"
+        onConfirm={() => { loadTripDetails(); setShowLoadErrorModal(false); }}
+        onCancel={() => { setShowLoadErrorModal(false); navigation.goBack(); }}
+      />
     </Box>
   );
 }

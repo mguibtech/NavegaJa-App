@@ -1,12 +1,14 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useMyBookings} from '@domain';
+import {useMyBookings, Booking} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 
@@ -17,55 +19,31 @@ type Props = CompositeScreenProps<
 
 type BookingStatus = 'active' | 'completed';
 
-// Mock data
-const MOCK_BOOKINGS = [
-  {
-    id: '1',
-    origin: 'Manaus',
-    destination: 'Parintins',
-    departureTime: '08:00',
-    date: '2026-02-20',
-    price: 85.0,
-    seats: 2,
-    boatName: 'Expresso Amazonas',
-    status: 'active' as BookingStatus,
-    qrCode: 'QR123456',
-  },
-  {
-    id: '2',
-    origin: 'Manaus',
-    destination: 'Itacoatiara',
-    departureTime: '09:30',
-    date: '2026-02-18',
-    price: 45.0,
-    seats: 1,
-    boatName: 'Rio Negro Express',
-    status: 'active' as BookingStatus,
-    qrCode: 'QR789012',
-  },
-  {
-    id: '3',
-    origin: 'Parintins',
-    destination: 'Manaus',
-    departureTime: '15:00',
-    date: '2026-02-10',
-    price: 85.0,
-    seats: 1,
-    boatName: 'Boto Cor de Rosa',
-    status: 'completed' as BookingStatus,
-    qrCode: 'QR345678',
-  },
-];
-
 export function BookingsScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<BookingStatus>('active');
   const [refreshing, setRefreshing] = useState(false);
   const {bookings, fetch: fetchBookings} = useMyBookings();
 
-  // Buscar bookings ao montar a tela
+  // Re-buscar bookings sempre que a tela ganhar foco (ex: após criar uma reserva)
+  useFocusEffect(
+    useCallback(() => {
+      fetchBookings().catch(() => {});
+    }, []),
+  );
+
+  // Atualizar badge da tab com contagem de reservas ativas
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    const activeCount = bookings.filter(
+      b =>
+        b.status === 'pending' ||
+        b.status === 'confirmed' ||
+        b.status === 'checked_in',
+    ).length;
+    navigation.setOptions({
+      tabBarBadge: activeCount > 0 ? activeCount : undefined,
+    });
+  }, [bookings, navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -78,79 +56,66 @@ export function BookingsScreen({navigation}: Props) {
     }
   };
 
-  // Filtrar bookings reais por status
-  const filteredBookings = (() => {
-    // Se não houver bookings reais, usar mock data como fallback
-    const dataSource = bookings.length > 0 ? bookings : MOCK_BOOKINGS;
-
-    return dataSource.filter((booking: any) => {
-      if (selectedTab === 'active') {
-        // Active: pending, confirmed, checked_in
-        if (booking.status === 'active') return true; // Mock data
-        return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in'; // Real data
-      } else {
-        // Completed: completed, cancelled
-        if (booking.status === 'completed') return true; // Mock data
-        return booking.status === 'completed' || booking.status === 'cancelled'; // Real data
-      }
-    });
-  })();
+  // Filtrar bookings por status
+  const filteredBookings = bookings.filter(booking => {
+    if (selectedTab === 'active') {
+      return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in';
+    } else {
+      return booking.status === 'completed' || booking.status === 'cancelled';
+    }
+  });
 
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
       <Box
-        paddingHorizontal="s24"
-        paddingTop="s40"
-        paddingBottom="s12"
+        paddingHorizontal="s20"
+        paddingBottom="s16"
         backgroundColor="surface"
         style={{
+          paddingTop: top + 16,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <Text preset="headingSmall" color="text" bold textAlign="center">
+        <Text preset="headingMedium" color="text" bold mb="s16">
           Minhas Reservas
         </Text>
-      </Box>
 
-      {/* Tabs */}
-      <Box
-        flexDirection="row"
-        paddingHorizontal="s24"
-        paddingTop="s16"
-        gap="s12">
-        <TouchableOpacityBox
-          flex={1}
-          paddingVertical="s12"
-          borderRadius="s12"
-          backgroundColor={selectedTab === 'active' ? 'primary' : 'surface'}
-          alignItems="center"
-          onPress={() => setSelectedTab('active')}>
-          <Text
-            preset="paragraphMedium"
-            color={selectedTab === 'active' ? 'surface' : 'text'}
-            bold>
-            Ativas
-          </Text>
-        </TouchableOpacityBox>
+        {/* Tabs */}
+        <Box flexDirection="row" gap="s12">
+          <TouchableOpacityBox
+            flex={1}
+            paddingVertical="s12"
+            borderRadius="s12"
+            backgroundColor={selectedTab === 'active' ? 'primary' : 'background'}
+            alignItems="center"
+            onPress={() => setSelectedTab('active')}>
+            <Text
+              preset="paragraphMedium"
+              color={selectedTab === 'active' ? 'surface' : 'text'}
+              bold>
+              Ativas
+            </Text>
+          </TouchableOpacityBox>
 
-        <TouchableOpacityBox
-          flex={1}
-          paddingVertical="s12"
-          borderRadius="s12"
-          backgroundColor={selectedTab === 'completed' ? 'primary' : 'surface'}
-          alignItems="center"
-          onPress={() => setSelectedTab('completed')}>
-          <Text
-            preset="paragraphMedium"
-            color={selectedTab === 'completed' ? 'surface' : 'text'}
-            bold>
-            Concluídas
-          </Text>
-        </TouchableOpacityBox>
+          <TouchableOpacityBox
+            flex={1}
+            paddingVertical="s12"
+            borderRadius="s12"
+            backgroundColor={selectedTab === 'completed' ? 'primary' : 'background'}
+            alignItems="center"
+            onPress={() => setSelectedTab('completed')}>
+            <Text
+              preset="paragraphMedium"
+              color={selectedTab === 'completed' ? 'surface' : 'text'}
+              bold>
+              Concluídas
+            </Text>
+          </TouchableOpacityBox>
+        </Box>
       </Box>
 
       {/* Bookings List */}
@@ -161,16 +126,22 @@ export function BookingsScreen({navigation}: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        renderItem={({item}) => {
-          // Handle both mock data and real booking data
-          const isMockData = 'date' in item;
-          const origin = isMockData ? item.origin : item.trip?.origin || 'Origem desconhecida';
-          const destination = isMockData ? item.destination : item.trip?.destination || 'Destino desconhecido';
-          const dateStr = isMockData ? item.date : item.trip?.departureAt;
-          const timeStr = isMockData ? item.departureTime : (item.trip?.departureAt ? new Date(item.trip.departureAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : '--:--');
-          const boatName = isMockData ? item.boatName : (item.trip?.boat?.name || `Barco ${item.trip?.boatId?.slice(0, 8) || 'N/A'}`);
-          const price = isMockData ? item.price : item.totalPrice;
-          const seats = isMockData ? item.seats : item.quantity;
+        renderItem={({item}: {item: Booking}) => {
+          const origin = item.trip?.origin || 'Origem desconhecida';
+          const destination = item.trip?.destination || 'Destino desconhecido';
+          const dateStr = item.trip?.departureAt;
+          const timeStr = dateStr ? new Date(dateStr).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : '--:--';
+          const boatName = item.trip?.boat?.name || `Barco ${item.trip?.boatId?.slice(0, 8) || 'N/A'}`;
+          const seats = item.quantity;
+          // Normaliza para number (backend/AsyncStorage pode retornar string)
+          const rawTotal = Number(item.totalPrice);
+          // totalPrice já é o valor total; fallback: trip.price × quantity
+          const price =
+            rawTotal > 0
+              ? rawTotal
+              : item.trip?.price
+              ? Number(item.trip.price) * seats
+              : 0;
 
           // Format date
           let formattedDate = 'Data não disponível';
@@ -189,10 +160,7 @@ export function BookingsScreen({navigation}: Props) {
             }
           }
 
-          // Determine if active based on status
-          const isActive = isMockData
-            ? item.status === 'active'
-            : (item.status === 'pending' || item.status === 'confirmed' || item.status === 'checked_in');
+          const isActive = item.status === 'pending' || item.status === 'confirmed' || item.status === 'checked_in';
 
           return (
             <TouchableOpacityBox
@@ -208,25 +176,31 @@ export function BookingsScreen({navigation}: Props) {
                 shadowRadius: 8,
                 elevation: 3,
               }}>
-              {/* Status Badge */}
+              {/* Header: Código + Status Badge */}
               <Box
-                position="absolute"
-                top={16}
-                right={16}
-                backgroundColor={isActive ? 'successBg' : 'border'}
-                paddingHorizontal="s12"
-                paddingVertical="s8"
-                borderRadius="s8">
-                <Text
-                  preset="paragraphSmall"
-                  color={isActive ? 'success' : 'textSecondary'}
-                  bold>
-                  {isActive ? 'Ativa' : 'Concluída'}
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                mb="s16">
+                <Text preset="paragraphCaptionSmall" color="textSecondary">
+                  #{item.id?.slice(0, 8).toUpperCase() || 'N/A'}
                 </Text>
+                <Box
+                  backgroundColor={isActive ? 'successBg' : 'border'}
+                  paddingHorizontal="s12"
+                  paddingVertical="s6"
+                  borderRadius="s8">
+                  <Text
+                    preset="paragraphCaptionSmall"
+                    color={isActive ? 'success' : 'textSecondary'}
+                    bold>
+                    {isActive ? 'Ativa' : 'Concluída'}
+                  </Text>
+                </Box>
               </Box>
 
               {/* Route Info */}
-              <Box flexDirection="row" alignItems="center" mb="s16" mt="s8">
+              <Box flexDirection="row" alignItems="center" mb="s16">
                 <Box flex={1}>
                   <Text preset="paragraphSmall" color="textSecondary" mb="s4">
                     Origem
@@ -296,7 +270,7 @@ export function BookingsScreen({navigation}: Props) {
                     Total pago
                   </Text>
                   <Text preset="headingSmall" color="primary" bold>
-                    R$ {(typeof price === 'number' ? price * seats : parseFloat(String(price)) * seats || 0).toFixed(2)}
+                    R$ {price.toFixed(2)}
                   </Text>
                 </Box>
 

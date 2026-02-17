@@ -17,10 +17,9 @@ export function useEmergencyContacts() {
       setContacts(data);
       setIsLoading(false);
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

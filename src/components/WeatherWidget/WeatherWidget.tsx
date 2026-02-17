@@ -99,7 +99,7 @@ export function WeatherWidget({
             Clima Agora
           </Text>
           <Text preset="paragraphMedium" color="text" bold>
-            {weather.location.name}
+            {weather.location?.name ?? 'Localização'}
           </Text>
         </Box>
 
@@ -196,7 +196,7 @@ export function WeatherWidget({
       </Box>
 
       {/* Warnings */}
-      {weather.safetyWarnings.length > 0 && (
+      {(weather.safetyWarnings?.length ?? 0) > 0 && (
         <Box
           mt="s12"
           backgroundColor="warningBg"
@@ -213,7 +213,7 @@ export function WeatherWidget({
               key={index}
               preset="paragraphCaptionSmall"
               color="warning"
-              mt="s2">
+              style={{marginTop: 2}}>
               • {warning}
             </Text>
           ))}

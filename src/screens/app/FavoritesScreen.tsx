@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, RefreshControl, Alert} from 'react-native';
+import {FlatList, RefreshControl} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, ConfirmationModal, InfoModal, Icon, Text, TouchableOpacityBox} from '@components';
 import {
   useMyFavorites,
   useToggleFavorite,
@@ -25,7 +26,11 @@ const TABS: {id: TabType; label: string}[] = [
 ];
 
 export function FavoritesScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<TabType>('all');
+  const [favoriteToRemove, setFavoriteToRemove] = useState<Favorite | null>(null);
+  const [showBoatModal, setShowBoatModal] = useState(false);
+  const [showCaptainModal, setShowCaptainModal] = useState(false);
 
   const {favorites, fetch, isLoading, error} = useMyFavorites(
     selectedTab === 'all' ? undefined : selectedTab,
@@ -57,51 +62,38 @@ export function FavoritesScreen({navigation}: Props) {
       });
     } else if (favorite.type === FavoriteType.BOAT && favorite.boatId) {
       // TODO: Navegar para detalhes do barco quando tela existir
-      Alert.alert('Em breve', 'Detalhes do barco em desenvolvimento');
+      setShowBoatModal(true);
     } else if (favorite.type === FavoriteType.CAPTAIN && favorite.captainId) {
       // TODO: Navegar para perfil do capitão quando tela existir
-      Alert.alert('Em breve', 'Perfil do capitão em desenvolvimento');
+      setShowCaptainModal(true);
     }
   };
 
-  const handleRemoveFavorite = async (favorite: Favorite) => {
-    Alert.alert(
-      'Remover Favorito',
-      'Deseja remover este item dos favoritos?',
-      [
-        {text: 'Cancelar', style: 'cancel'},
-        {
-          text: 'Remover',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Monta DTO baseado no tipo
-              const toggleData =
-                favorite.type === FavoriteType.DESTINATION
-                  ? {
-                      type: FavoriteType.DESTINATION,
-                      destination: favorite.destination || '',
-                      origin: favorite.origin || undefined,
-                    }
-                  : favorite.type === FavoriteType.BOAT
-                  ? {
-                      type: FavoriteType.BOAT,
-                      boatId: favorite.boatId || '',
-                    }
-                  : {
-                      type: FavoriteType.CAPTAIN,
-                      captainId: favorite.captainId || '',
-                    };
+  const handleRemoveFavorite = (favorite: Favorite) => {
+    setFavoriteToRemove(favorite);
+  };
 
-              await toggle(toggleData);
-              await fetch(); // Atualiza lista
-            } catch (err) {
-              console.log('Favorito removido localmente');
+  const confirmRemove = async () => {
+    if (!favoriteToRemove) return;
+    try {
+      const toggleData =
+        favoriteToRemove.type === FavoriteType.DESTINATION
+          ? {
+              type: FavoriteType.DESTINATION,
+              destination: favoriteToRemove.destination || '',
+              origin: favoriteToRemove.origin || undefined,
             }
-          },
-        },
-      ],
-    );
+          : favoriteToRemove.type === FavoriteType.BOAT
+          ? {type: FavoriteType.BOAT, boatId: favoriteToRemove.boatId || ''}
+          : {type: FavoriteType.CAPTAIN, captainId: favoriteToRemove.captainId || ''};
+
+      await toggle(toggleData);
+      await fetch();
+    } catch {
+      console.log('Favorito removido localmente');
+    } finally {
+      setFavoriteToRemove(null);
+    }
   };
 
   const renderFavorite = ({item}: {item: Favorite}) => {
@@ -366,12 +358,12 @@ export function FavoritesScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s40"
         paddingBottom="s12"
         backgroundColor="surface"
         borderBottomWidth={1}
-        borderBottomColor="border">
-        <Box flexDirection="row" alignItems="center" justifyContent="center" mb="s12">
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
+        <Box flexDirection="row" alignItems="center" justifyContent="center" mb="s16">
           <TouchableOpacityBox
             width={40}
             height={40}
@@ -395,16 +387,17 @@ export function FavoritesScreen({navigation}: Props) {
               <TouchableOpacityBox
                 key={tab.id}
                 flex={1}
-                paddingVertical="s10"
-                paddingHorizontal="s12"
+                paddingVertical="s8"
+                paddingHorizontal="s4"
                 borderRadius="s12"
                 backgroundColor={isSelected ? 'primary' : 'background'}
                 alignItems="center"
+                justifyContent="center"
                 onPress={() => setSelectedTab(tab.id)}>
                 <Text
-                  preset="paragraphSmall"
+                  style={{fontSize: 12, fontWeight: '700'}}
                   color={isSelected ? 'surface' : 'text'}
-                  bold>
+                  numberOfLines={1}>
                   {tab.label}
                 </Text>
               </TouchableOpacityBox>
@@ -460,6 +453,39 @@ export function FavoritesScreen({navigation}: Props) {
             </Text>
           </Box>
         }
+      />
+
+      <ConfirmationModal
+        visible={favoriteToRemove !== null}
+        title="Remover Favorito"
+        message="Deseja remover este item dos favoritos?"
+        icon="favorite"
+        iconColor="danger"
+        confirmText="Remover"
+        cancelText="Cancelar"
+        isLoading={isToggling}
+        onConfirm={confirmRemove}
+        onCancel={() => setFavoriteToRemove(null)}
+      />
+
+      <InfoModal
+        visible={showBoatModal}
+        title="Em breve"
+        message="Detalhes do barco em desenvolvimento"
+        icon="info"
+        iconColor="info"
+        buttonText="Entendi"
+        onClose={() => setShowBoatModal(false)}
+      />
+
+      <InfoModal
+        visible={showCaptainModal}
+        title="Em breve"
+        message="Perfil do capitão em desenvolvimento"
+        icon="info"
+        iconColor="info"
+        buttonText="Entendi"
+        onClose={() => setShowCaptainModal(false)}
       />
     </Box>
   );

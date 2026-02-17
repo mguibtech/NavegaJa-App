@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {ScrollView, Linking, Alert, StyleSheet} from 'react-native';
+import {ScrollView, Linking, StyleSheet, ActivityIndicator} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -16,90 +17,14 @@ import {
   DangerZoneData,
   SafetyOverlay,
   EmergencyButton,
+  InfoModal,
+  ConfirmationModal,
 } from '@components';
-import {SosAlert, SosType, SosStatus, SafetyLevel} from '@domain';
+import {SosAlert, SosType, SosStatus, SafetyLevel, useTrackBooking, TrackingStatus} from '@domain';
 
 import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Tracking'>;
-
-type TripStatus =
-  | 'boarding'
-  | 'departed'
-  | 'in_transit'
-  | 'approaching'
-  | 'arrived';
-
-// Mock data
-const MOCK_TRACKING = {
-  bookingId: 'BK123456',
-  currentStatus: 'in_transit' as TripStatus,
-  progress: 65,
-  trip: {
-    origin: 'Manaus',
-    destination: 'Parintins',
-    departureTime: '08:00',
-    arrivalTime: '14:00',
-    actualDepartureTime: '08:05',
-    estimatedArrival: '13:55',
-  },
-  boat: {
-    name: 'Expresso Amazonas',
-    currentSpeed: 45,
-    averageSpeed: 42,
-  },
-  captain: {
-    name: 'João Silva',
-    phone: '(92) 98765-4321',
-  },
-  currentLocation: {
-    latitude: -3.1,
-    longitude: -60.0,
-    lastUpdate: new Date(),
-  },
-  timeline: [
-    {
-      id: '1',
-      label: 'Embarque Iniciado',
-      time: '07:45',
-      status: 'completed',
-      icon: 'assignment',
-    },
-    {
-      id: '2',
-      label: 'Partida',
-      time: '08:05',
-      status: 'completed',
-      icon: 'sailing',
-    },
-    {
-      id: '3',
-      label: 'Ponto de Parada - Itacoatiara',
-      time: '10:30',
-      status: 'completed',
-      icon: 'place',
-    },
-    {
-      id: '4',
-      label: 'Em Trânsito',
-      time: 'Agora',
-      status: 'current',
-      icon: 'navigation',
-    },
-    {
-      id: '5',
-      label: 'Chegada Prevista',
-      time: '13:55',
-      status: 'upcoming',
-      icon: 'check-circle',
-    },
-  ],
-  weather: {
-    condition: 'Ensolarado',
-    temperature: 32,
-    icon: 'wb-sunny',
-  },
-};
 
 // Mock SOS Alerts (simulando alertas ativos próximos)
 const MOCK_SOS_ALERTS: SosAlert[] = [
@@ -116,7 +41,7 @@ const MOCK_SOS_ALERTS: SosAlert[] = [
     },
     description: 'Passageiro com dores no peito, precisa de atendimento urgente',
     contactNumber: '(92) 99888-7766',
-    createdAt: new Date(Date.now() - 15 * 60000).toISOString(), // 15 min atrás
+    createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
     updatedAt: new Date(Date.now() - 15 * 60000).toISOString(),
     user: {
       id: 'user-123',
@@ -142,7 +67,7 @@ const MOCK_SOS_ALERTS: SosAlert[] = [
       timestamp: new Date().toISOString(),
     },
     description: 'Motor apresentando falhas, velocidade reduzida',
-    createdAt: new Date(Date.now() - 45 * 60000).toISOString(), // 45 min atrás
+    createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
     updatedAt: new Date(Date.now() - 45 * 60000).toISOString(),
     user: {
       id: 'user-456',
@@ -155,28 +80,9 @@ const MOCK_SOS_ALERTS: SosAlert[] = [
       boatName: 'Barco Regional',
     },
   },
-  {
-    id: 'sos-003',
-    userId: 'user-789',
-    type: SosType.WEATHER,
-    status: SosStatus.ACTIVE,
-    location: {
-      latitude: -2.75,
-      longitude: -58.8,
-      accuracy: 25,
-      timestamp: new Date().toISOString(),
-    },
-    description: 'Tempestade forte se aproximando, ventos acima de 50km/h',
-    createdAt: new Date(Date.now() - 5 * 60000).toISOString(), // 5 min atrás
-    updatedAt: new Date(Date.now() - 5 * 60000).toISOString(),
-    user: {
-      id: 'user-789',
-      name: 'Carlos Lima',
-    },
-  },
 ];
 
-// Mock Danger Zones (áreas perigosas conhecidas)
+// Mock Danger Zones
 const MOCK_DANGER_ZONES: DangerZoneData[] = [
   {
     id: 'zone-001',
@@ -185,7 +91,7 @@ const MOCK_DANGER_ZONES: DangerZoneData[] = [
     description: 'Área com correnteza forte e pedras submersas',
     level: 'high',
     center: {latitude: -3.05, longitude: -60.1},
-    radius: 2000, // 2km
+    radius: 2000,
   },
   {
     id: 'zone-002',
@@ -200,132 +106,88 @@ const MOCK_DANGER_ZONES: DangerZoneData[] = [
       {latitude: -2.91, longitude: -59.38},
     ],
   },
-  {
-    id: 'zone-003',
-    type: 'circle',
-    name: 'Banco de Areia Móvel',
-    description: 'Profundidade variável, risco de encalhe',
-    level: 'medium',
-    center: {latitude: -2.65, longitude: -57.5},
-    radius: 1500,
-  },
 ];
 
+// Coordenadas padrão (Manaus → Parintins) - fallback quando API não tem coordenadas
+const MANAUS_COORDS = {latitude: -3.119, longitude: -60.0217};
+const PARINTINS_COORDS = {latitude: -2.6283, longitude: -56.7358};
+
 export function TrackingScreen({navigation, route}: Props) {
-  const {bookingId: _bookingId} = route.params;
-  const [_isRefreshing, setIsRefreshing] = useState(false);
-  const [showSosAlerts, setShowSosAlerts] = useState(true);
-  const [showDangerZones, setShowDangerZones] = useState(true);
+  const {bookingId} = route.params;
+  const {top} = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
 
-  // TODO: Buscar dados de rastreamento da API em tempo real
-  const tracking = MOCK_TRACKING;
+  const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
 
-  // Coordenadas reais da Amazônia
-  const originCoords = {latitude: -3.1190, longitude: -60.0217}; // Manaus
-  const destinationCoords = {latitude: -2.6283, longitude: -56.7358}; // Parintins
+  const [showSosAlerts, setShowSosAlerts] = useState(true);
+  const [showDangerZones, setShowDangerZones] = useState(true);
 
-  // Calcula posição atual do barco baseado no progresso
-  const calculateCurrentPosition = () => {
-    const progress = tracking.progress / 100;
-    return {
-      latitude:
-        originCoords.latitude +
-        (destinationCoords.latitude - originCoords.latitude) * progress,
-      longitude:
-        originCoords.longitude +
-        (destinationCoords.longitude - originCoords.longitude) * progress,
-    };
-  };
+  // Modal state
+  const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showSosDetailModal, setShowSosDetailModal] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [selectedSosAlert, setSelectedSosAlert] = useState<SosAlert | null>(null);
 
-  const currentPosition = calculateCurrentPosition();
+  useEffect(() => {
+    if (error) {
+      setShowErrorModal(true);
+    }
+  }, [error]);
 
-  // Coordenadas da rota (simplificado - idealmente viria da API)
+  const trip = trackingInfo?.booking.trip;
+  const booking = trackingInfo?.booking;
+
+  // Resolve origin/destination coordinates
+  // Trip doesn't have explicit lat/lng for origin/destination from the API
+  // We use the current lat/lng from trip, or interpolate
+  const originCoords = MANAUS_COORDS;   // TODO: geocode trip.origin
+  const destinationCoords = PARINTINS_COORDS; // TODO: geocode trip.destination
+
+  // Boat position: prefer real GPS from trip, otherwise interpolate from progress
+  const progress = trackingInfo?.progressPercent ?? 0;
+  const currentPosition =
+    trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
+      ? {latitude: trackingInfo.currentLat, longitude: trackingInfo.currentLng}
+      : {
+          latitude:
+            originCoords.latitude +
+            (destinationCoords.latitude - originCoords.latitude) *
+              (progress / 100),
+          longitude:
+            originCoords.longitude +
+            (destinationCoords.longitude - originCoords.longitude) *
+              (progress / 100),
+        };
+
   const routeCoordinates = [originCoords, currentPosition, destinationCoords];
 
-  // Simula atualização em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // TODO: Atualizar localização em tempo real
-      console.log('Atualizando localização...');
-    }, 10000); // A cada 10 segundos
-
-    return () => clearInterval(interval);
-  }, []);
-
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    // TODO: Buscar dados atualizados da API
-    setTimeout(() => setIsRefreshing(false), 1500);
+    refetch();
   };
 
   const handleCallCaptain = () => {
-    Alert.alert(
-      'Ligar para o Capitão',
-      `Deseja ligar para ${tracking.captain.name}?`,
-      [
-        {text: 'Cancelar', style: 'cancel'},
-        {
-          text: 'Ligar',
-          onPress: () => Linking.openURL(`tel:${tracking.captain.phone}`),
-        },
-      ],
-    );
+    setShowCallCaptainModal(true);
   };
 
   const handleEmergency = () => {
-    Alert.alert(
-      'Emergência',
-      'Você será conectado com os serviços de emergência.',
-      [
-        {text: 'Cancelar', style: 'cancel'},
-        {
-          text: 'Chamar Emergência',
-          style: 'destructive',
-          onPress: () => Linking.openURL('tel:190'),
-        },
-      ],
-    );
+    setShowEmergencyModal(true);
   };
 
   const handleSosPress = () => {
-    navigation.navigate('SosAlert', {tripId: route.params.bookingId});
+    navigation.navigate('SosAlert', {tripId: bookingId});
   };
 
   const handleSosMarkerPress = (alert: SosAlert) => {
-    Alert.alert(
-      `SOS: ${alert.user?.name || 'Usuário'}`,
-      `${alert.description || 'Sem descrição'}\n\n${
-        alert.contactNumber
-          ? `Contato: ${alert.contactNumber}`
-          : 'Sem contato informado'
-      }`,
-      [
-        {text: 'Fechar', style: 'cancel'},
-        ...(alert.contactNumber
-          ? [
-              {
-                text: 'Ligar',
-                onPress: () => Linking.openURL(`tel:${alert.contactNumber}`),
-              },
-            ]
-          : []),
-      ],
-    );
+    setSelectedSosAlert(alert);
+    setShowSosDetailModal(true);
   };
 
   const handleSafetyOverlayPress = () => {
-    Alert.alert(
-      'Segurança da Navegação',
-      'Condições atuais da rota:\n\n• Clima: Favorável\n• Tráfego: Normal\n• Alertas próximos: ' +
-        MOCK_SOS_ALERTS.length +
-        '\n• Zonas de perigo: ' +
-        MOCK_DANGER_ZONES.length,
-      [{text: 'OK'}],
-    );
+    setShowSafetyModal(true);
   };
 
-  // Calcula número de alertas próximos à posição atual (raio de 50km)
   const calculateNearbyAlerts = () => {
     const RADIUS_KM = 50;
     return MOCK_SOS_ALERTS.filter(alert => {
@@ -339,14 +201,13 @@ export function TrackingScreen({navigation, route}: Props) {
     }).length;
   };
 
-  // Função auxiliar para calcular distância (fórmula de Haversine simplificada)
   const calculateDistance = (
     lat1: number,
     lon1: number,
     lat2: number,
     lon2: number,
   ) => {
-    const R = 6371; // Raio da Terra em km
+    const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -359,20 +220,73 @@ export function TrackingScreen({navigation, route}: Props) {
     return R * c;
   };
 
-  const getStatusLabel = (status: TripStatus) => {
+  const getStatusLabel = (status: TrackingStatus): string => {
     switch (status) {
+      case 'scheduled':
+        return 'Aguardando Partida';
       case 'boarding':
         return 'Embarque em Andamento';
-      case 'departed':
-        return 'Partiu do Porto';
       case 'in_transit':
         return 'Em Trânsito';
       case 'approaching':
         return 'Chegando ao Destino';
       case 'arrived':
         return 'Chegou ao Destino';
+      case 'cancelled':
+        return 'Viagem Cancelada';
     }
   };
+
+  const getStatusColor = (status: TrackingStatus): 'success' | 'warning' | 'danger' | 'primary' => {
+    switch (status) {
+      case 'scheduled':
+        return 'primary';
+      case 'boarding':
+        return 'warning';
+      case 'in_transit':
+        return 'success';
+      case 'approaching':
+        return 'success';
+      case 'arrived':
+        return 'success';
+      case 'cancelled':
+        return 'danger';
+    }
+  };
+
+  const getStatusBgColor = (status: TrackingStatus): 'primaryBg' | 'warningBg' | 'dangerBg' | 'successBg' => {
+    switch (status) {
+      case 'scheduled':
+        return 'primaryBg';
+      case 'boarding':
+        return 'warningBg';
+      case 'in_transit':
+        return 'successBg';
+      case 'approaching':
+        return 'successBg';
+      case 'arrived':
+        return 'successBg';
+      case 'cancelled':
+        return 'dangerBg';
+    }
+  };
+
+  const captainName = trip?.captain?.name ?? 'Capitão';
+  const captainPhone = trip?.captain?.phone ?? '';
+  const boatName = trip?.boat?.name ?? '';
+  const boatSpeed = trip?.boat?.type ?? '—';
+  const trackingStatus = trackingInfo?.trackingStatus ?? 'scheduled';
+
+  if (isLoading && !trackingInfo) {
+    return (
+      <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center">
+        <ActivityIndicator size="large" color="#0B5D8A" />
+        <Text preset="paragraphMedium" color="textSecondary" mt="s12">
+          Carregando rastreamento...
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -380,8 +294,9 @@ export function TrackingScreen({navigation, route}: Props) {
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
-        paddingVertical="s16"
         style={{
+          paddingTop: top + 12,
+          paddingBottom: 16,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
@@ -401,7 +316,7 @@ export function TrackingScreen({navigation, route}: Props) {
               Rastreamento
             </Text>
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
-              {tracking.trip.origin} → {tracking.trip.destination}
+              {trip?.origin ?? '—'} → {trip?.destination ?? '—'}
             </Text>
           </Box>
 
@@ -428,7 +343,7 @@ export function TrackingScreen({navigation, route}: Props) {
         <Box
           flexDirection="row"
           alignItems="center"
-          backgroundColor="successBg"
+          backgroundColor={getStatusBgColor(trackingStatus)}
           paddingHorizontal="s16"
           paddingVertical="s10"
           borderRadius="s12"
@@ -437,11 +352,11 @@ export function TrackingScreen({navigation, route}: Props) {
             width={8}
             height={8}
             borderRadius="s8"
-            backgroundColor="success"
+            backgroundColor={getStatusColor(trackingStatus)}
             marginRight="s8"
           />
-          <Text preset="paragraphMedium" color="success" bold>
-            {getStatusLabel(tracking.currentStatus)}
+          <Text preset="paragraphMedium" color={getStatusColor(trackingStatus)} bold>
+            {getStatusLabel(trackingStatus)}
           </Text>
         </Box>
       </Box>
@@ -449,6 +364,28 @@ export function TrackingScreen({navigation, route}: Props) {
       <ScrollView
         contentContainerStyle={{padding: 24}}
         showsVerticalScrollIndicator={false}>
+
+        {/* Trip not started yet banner */}
+        {trackingStatus === 'scheduled' && trip && (
+          <Box
+            backgroundColor="primaryBg"
+            borderRadius="s16"
+            padding="s16"
+            mb="s16"
+            flexDirection="row"
+            alignItems="center">
+            <Icon name="schedule" size={24} color="primary" />
+            <Box ml="s12" flex={1}>
+              <Text preset="paragraphMedium" color="primary" bold>
+                Viagem ainda não iniciada
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                Partida prevista às {new Date(trip.departureAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}
+              </Text>
+            </Box>
+          </Box>
+        )}
+
         {/* Google Maps */}
         <Box
           height={320}
@@ -471,32 +408,32 @@ export function TrackingScreen({navigation, route}: Props) {
             showsMyLocationButton={false}
             showsCompass={true}
             showsScale={true}>
-            {/* Rota (linha entre origem e destino) */}
+            {/* Rota */}
             <Polyline
               coordinates={routeCoordinates}
               strokeColor="#0B5D8A"
               strokeWidth={3}
             />
 
-            {/* Marcador de Origem */}
+            {/* Origem */}
             <Marker
               coordinate={originCoords}
-              title={tracking.trip.origin}
+              title={trip?.origin ?? 'Origem'}
               description="Porto de Origem"
               pinColor="green"
             />
 
-            {/* Marcador do Barco (posição atual) */}
+            {/* Barco */}
             <BoatMarker
               coordinate={currentPosition}
-              title={tracking.boat.name}
-              description={`Velocidade: ${tracking.boat.currentSpeed} km/h`}
+              title={boatName || 'Embarcação'}
+              description={`Progresso: ${progress}%`}
             />
 
-            {/* Marcador de Destino */}
+            {/* Destino */}
             <Marker
               coordinate={destinationCoords}
-              title={tracking.trip.destination}
+              title={trip?.destination ?? 'Destino'}
               description="Porto de Destino"
               pinColor="red"
             />
@@ -526,51 +463,93 @@ export function TrackingScreen({navigation, route}: Props) {
             onPress={handleSafetyOverlayPress}
           />
 
-          {/* Info Overlay sobre o mapa */}
-          <Box
-            position="absolute"
-            bottom={16}
-            left={16}
-            right={16}
-            backgroundColor="surface"
-            borderRadius="s16"
-            padding="s16"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 3,
-            }}>
-            <Box
-              flexDirection="row"
+          {/* Map Filter Buttons */}
+          <Box position="absolute" bottom={12} right={12} gap="s8">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s20"
+              backgroundColor={showSosAlerts ? 'danger' : 'surface'}
               alignItems="center"
-              justifyContent="space-between"
-              mb="s8">
-              <Text preset="paragraphSmall" color="textSecondary">
-                Progresso da Viagem
-              </Text>
-              <Text preset="paragraphMedium" color="primary" bold>
-                {tracking.progress}%
-              </Text>
-            </Box>
-
-            {/* Progress Bar */}
-            <Box
-              height={8}
-              backgroundColor="border"
-              borderRadius="s8"
-              overflow="hidden">
-              <Box
-                width={`${tracking.progress}%`}
-                height="100%"
-                backgroundColor="primary"
+              justifyContent="center"
+              onPress={() => setShowSosAlerts(!showSosAlerts)}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 4,
+              }}>
+              <Icon
+                name="crisis-alert"
+                size={20}
+                color={showSosAlerts ? 'surface' : 'danger'}
               />
-            </Box>
+            </TouchableOpacityBox>
+
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s20"
+              backgroundColor={showDangerZones ? 'warning' : 'surface'}
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => setShowDangerZones(!showDangerZones)}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 4,
+              }}>
+              <Icon
+                name="warning"
+                size={20}
+                color={showDangerZones ? 'surface' : 'warning'}
+              />
+            </TouchableOpacityBox>
           </Box>
         </Box>
 
-        {/* Trip Status */}
+        {/* Progresso da Viagem */}
+        <Box
+          backgroundColor="surface"
+          borderRadius="s16"
+          padding="s16"
+          mb="s16"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}>
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="space-between"
+            mb="s8">
+            <Text preset="paragraphSmall" color="textSecondary">
+              Progresso da Viagem
+            </Text>
+            <Text preset="paragraphMedium" color="primary" bold>
+              {progress}%
+            </Text>
+          </Box>
+          <Box
+            height={8}
+            backgroundColor="border"
+            borderRadius="s8"
+            overflow="hidden">
+            <Box
+              width={`${progress}%`}
+              height="100%"
+              backgroundColor={trackingStatus === 'cancelled' ? 'danger' : 'primary'}
+            />
+          </Box>
+        </Box>
+
+        {/* Trip Info Cards */}
         <Box
           backgroundColor="surface"
           borderRadius="s16"
@@ -590,16 +569,12 @@ export function TrackingScreen({navigation, route}: Props) {
               paddingVertical="s12"
               paddingHorizontal="s12"
               borderRadius="s12">
-              <Icon
-                name="schedule"
-                size={20}
-                color="primary"
-              />
+              <Icon name="schedule" size={20} color="primary" />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
                 Chegada Prevista
               </Text>
               <Text preset="paragraphMedium" color="text" bold>
-                {tracking.trip.estimatedArrival}
+                {trackingInfo?.estimatedArrival ?? '—'}
               </Text>
             </Box>
 
@@ -609,16 +584,12 @@ export function TrackingScreen({navigation, route}: Props) {
               paddingVertical="s12"
               paddingHorizontal="s12"
               borderRadius="s12">
-              <Icon
-                name="speed"
-                size={20}
-                color="secondary"
-              />
+              <Icon name="directions-boat" size={20} color="secondary" />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
-                Velocidade Atual
+                Embarcação
               </Text>
-              <Text preset="paragraphMedium" color="text" bold>
-                {tracking.boat.currentSpeed} km/h
+              <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
+                {boatName || '—'}
               </Text>
             </Box>
 
@@ -628,138 +599,64 @@ export function TrackingScreen({navigation, route}: Props) {
               paddingVertical="s12"
               paddingHorizontal="s12"
               borderRadius="s12">
-              <Icon
-                name={tracking.weather.icon as any}
-                size={20}
-                color="accent"
-              />
+              <Icon name="event-seat" size={20} color="accent" />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
-                Clima
+                Assento
               </Text>
               <Text preset="paragraphMedium" color="text" bold>
-                {tracking.weather.temperature}°C
+                {booking?.seatNumber ?? '—'}
               </Text>
             </Box>
           </Box>
-        </Box>
-
-        {/* Timeline */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s16"
-          padding="s20"
-          mb="s16"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}>
-          <Text preset="paragraphMedium" color="text" bold mb="s20">
-            Linha do Tempo
-          </Text>
-
-          {tracking.timeline.map((item, index) => (
-            <Box key={item.id} flexDirection="row" alignItems="flex-start">
-              {/* Icon & Line */}
-              <Box alignItems="center" marginRight="s16">
-                <Box
-                  width={40}
-                  height={40}
-                  borderRadius="s20"
-                  backgroundColor={
-                    item.status === 'completed'
-                      ? 'success'
-                      : item.status === 'current'
-                      ? 'primary'
-                      : 'border'
-                  }
-                  alignItems="center"
-                  justifyContent="center">
-                  <Icon
-                    name={item.icon as any}
-                    size={20}
-                    color={
-                      item.status === 'upcoming' ? 'textSecondary' : 'surface'
-                    }
-                  />
-                </Box>
-
-                {index < tracking.timeline.length - 1 && (
-                  <Box
-                    width={2}
-                    height={40}
-                    backgroundColor={
-                      item.status === 'completed' ? 'success' : 'border'
-                    }
-                    marginVertical="s4"
-                  />
-                )}
-              </Box>
-
-              {/* Content */}
-              <Box flex={1} paddingBottom="s20">
-                <Text
-                  preset="paragraphMedium"
-                  color={item.status === 'upcoming' ? 'textSecondary' : 'text'}
-                  bold={item.status === 'current'}
-                  mb="s4">
-                  {item.label}
-                </Text>
-                <Text preset="paragraphSmall" color="textSecondary">
-                  {item.time}
-                </Text>
-              </Box>
-            </Box>
-          ))}
         </Box>
 
         {/* Captain Contact */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s16"
-          padding="s20"
-          mb="s16"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}>
-          <Text preset="paragraphMedium" color="text" bold mb="s16">
-            Contato do Barqueiro
-          </Text>
+        {captainPhone ? (
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Text preset="paragraphMedium" color="text" bold mb="s16">
+              Contato do Barqueiro
+            </Text>
 
-          <Box flexDirection="row" alignItems="center" mb="s16">
-            <Box
-              width={56}
-              height={56}
-              borderRadius="s48"
-              backgroundColor="primaryBg"
-              alignItems="center"
-              justifyContent="center"
-              marginRight="s16">
-              <Icon name="person" size={28} color="primary" />
+            <Box flexDirection="row" alignItems="center" mb="s16">
+              <Box
+                width={56}
+                height={56}
+                borderRadius="s48"
+                backgroundColor="primaryBg"
+                alignItems="center"
+                justifyContent="center"
+                marginRight="s16">
+                <Icon name="person" size={28} color="primary" />
+              </Box>
+
+              <Box flex={1}>
+                <Text preset="paragraphMedium" color="text" bold mb="s4">
+                  {captainName}
+                </Text>
+                <Text preset="paragraphSmall" color="textSecondary">
+                  {captainPhone}
+                </Text>
+              </Box>
             </Box>
 
-            <Box flex={1}>
-              <Text preset="paragraphMedium" color="text" bold mb="s4">
-                {tracking.captain.name}
-              </Text>
-              <Text preset="paragraphSmall" color="textSecondary">
-                {tracking.captain.phone}
-              </Text>
-            </Box>
+            <Button
+              title="Ligar para o Capitão"
+              onPress={handleCallCaptain}
+              rightIcon="phone"
+            />
           </Box>
-
-          <Button
-            title="Ligar para o Capitão"
-            onPress={handleCallCaptain}
-            rightIcon="phone"
-          />
-        </Box>
+        ) : null}
 
         {/* Emergency Button */}
         <TouchableOpacityBox
@@ -771,12 +668,8 @@ export function TrackingScreen({navigation, route}: Props) {
           justifyContent="center"
           mb="s24"
           onPress={handleEmergency}>
-          <Icon
-            name="warning"
-            size={24}
-            color="danger"
-          />
-          <Text preset="paragraphLarge" color="danger" bold>
+          <Icon name="warning" size={24} color="danger" />
+          <Text preset="paragraphLarge" color="danger" bold ml="s8">
             Emergência
           </Text>
         </TouchableOpacityBox>
@@ -789,12 +682,8 @@ export function TrackingScreen({navigation, route}: Props) {
           backgroundColor="surface"
           borderRadius="s12"
           mb="s24">
-          <Icon
-            name="info"
-            size={20}
-            color="primary"
-          />
-          <Text preset="paragraphSmall" color="textSecondary" flex={1}>
+          <Icon name="info" size={20} color="primary" />
+          <Text preset="paragraphSmall" color="textSecondary" flex={1} ml="s8">
             A localização é atualizada automaticamente a cada 30 segundos
           </Text>
         </Box>
@@ -803,54 +692,75 @@ export function TrackingScreen({navigation, route}: Props) {
       {/* Emergency SOS Button */}
       <EmergencyButton onPress={handleSosPress} />
 
-      {/* Filter Buttons */}
-      <Box position="absolute" top={100} right={16} gap="s8">
-        {/* Toggle SOS Alerts */}
-        <TouchableOpacityBox
-          width={48}
-          height={48}
-          borderRadius="s24"
-          backgroundColor={showSosAlerts ? 'danger' : 'surface'}
-          alignItems="center"
-          justifyContent="center"
-          onPress={() => setShowSosAlerts(!showSosAlerts)}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.15,
-            shadowRadius: 4,
-            elevation: 4,
-          }}>
-          <Icon
-            name="sos"
-            size={24}
-            color={showSosAlerts ? 'surface' : 'danger'}
-          />
-        </TouchableOpacityBox>
+      {/* Error Modal */}
+      <InfoModal
+        visible={showErrorModal}
+        title="Erro ao carregar"
+        message="Não foi possível carregar os dados do rastreamento. Verifique sua conexão e tente novamente."
+        icon="error"
+        iconColor="danger"
+        buttonText="OK"
+        onClose={() => setShowErrorModal(false)}
+      />
 
-        {/* Toggle Danger Zones */}
-        <TouchableOpacityBox
-          width={48}
-          height={48}
-          borderRadius="s24"
-          backgroundColor={showDangerZones ? 'warning' : 'surface'}
-          alignItems="center"
-          justifyContent="center"
-          onPress={() => setShowDangerZones(!showDangerZones)}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.15,
-            shadowRadius: 4,
-            elevation: 4,
-          }}>
-          <Icon
-            name="warning"
-            size={24}
-            color={showDangerZones ? 'surface' : 'warning'}
-          />
-        </TouchableOpacityBox>
-      </Box>
+      {/* Call Captain Modal */}
+      <ConfirmationModal
+        visible={showCallCaptainModal}
+        title="Ligar para o Capitão"
+        message={`Deseja ligar para ${captainName}?`}
+        icon="phone"
+        iconColor="primary"
+        confirmText="Ligar"
+        cancelText="Cancelar"
+        confirmPreset="primary"
+        onConfirm={() => {
+          Linking.openURL(`tel:${captainPhone}`);
+          setShowCallCaptainModal(false);
+        }}
+        onCancel={() => setShowCallCaptainModal(false)}
+      />
+
+      {/* Emergency Modal */}
+      <ConfirmationModal
+        visible={showEmergencyModal}
+        title="Emergência"
+        message="Você será conectado com os serviços de emergência."
+        icon="warning"
+        iconColor="danger"
+        confirmText="Chamar Emergência"
+        cancelText="Cancelar"
+        confirmPreset="primary"
+        onConfirm={() => {
+          Linking.openURL('tel:190');
+          setShowEmergencyModal(false);
+        }}
+        onCancel={() => setShowEmergencyModal(false)}
+      />
+
+      {/* SOS Detail Modal */}
+      <InfoModal
+        visible={showSosDetailModal && selectedSosAlert != null}
+        title={`SOS: ${selectedSosAlert?.user?.name || 'Usuário'}`}
+        message={`${selectedSosAlert?.description || 'Sem descrição'}${selectedSosAlert?.contactNumber ? `\n\nContato: ${selectedSosAlert.contactNumber}` : '\n\nSem contato informado'}`}
+        icon="crisis-alert"
+        iconColor="danger"
+        buttonText="Fechar"
+        onClose={() => {
+          setShowSosDetailModal(false);
+          setSelectedSosAlert(null);
+        }}
+      />
+
+      {/* Safety Info Modal */}
+      <InfoModal
+        visible={showSafetyModal}
+        title="Segurança da Navegação"
+        message={`Condições atuais da rota:\n\n• Clima: Favorável\n• Tráfego: Normal\n• Alertas próximos: ${MOCK_SOS_ALERTS.length}\n• Zonas de perigo: ${MOCK_DANGER_ZONES.length}`}
+        icon="security"
+        iconColor="info"
+        buttonText="OK"
+        onClose={() => setShowSafetyModal(false)}
+      />
     </Box>
   );
 }

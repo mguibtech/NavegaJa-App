@@ -27,11 +27,10 @@ export function useMyBookings() {
       setBookings(result);
       setIsLoading(false);
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
       // Don't clear bookings on error - keep offline data
-      throw error;
+      throw err;
     }
   }
 

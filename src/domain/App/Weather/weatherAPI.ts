@@ -24,7 +24,7 @@ class WeatherAPI {
     const response = await api.get<CurrentWeather>(
       `/weather/region/${region}`,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -37,7 +37,7 @@ class WeatherAPI {
     const response = await api.get<CurrentWeather>('/weather/current', {
       params: {lat, lng},
     });
-    return response.data;
+    return response;
   }
 
   // ========== WEATHER FORECAST ==========
@@ -57,7 +57,7 @@ class WeatherAPI {
     const response = await api.get<WeatherForecast>('/weather/forecast', {
       params: {lat, lng, days},
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -76,7 +76,7 @@ class WeatherAPI {
         params: {days},
       },
     );
-    return response.data;
+    return response;
   }
 
   // ========== NAVIGATION SAFETY ==========
@@ -97,7 +97,7 @@ class WeatherAPI {
         params: {lat, lng},
       },
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -111,7 +111,7 @@ class WeatherAPI {
     const response = await api.get<NavigationSafetyAssessment>(
       `/weather/region/${region}/navigation-safety`,
     );
-    return response.data;
+    return response;
   }
 
   // ========== WEATHER ALERTS ==========
@@ -127,7 +127,7 @@ class WeatherAPI {
       const response = await api.get<WeatherAlert[]>('/weather/alerts', {
         params: {lat, lng},
       });
-      return response.data;
+      return response;
     } catch (error: any) {
       // Se não houver alertas, retorna array vazio
       if (error?.response?.status === 404) {
@@ -147,7 +147,7 @@ class WeatherAPI {
       const response = await api.get<WeatherAlert[]>(
         `/weather/region/${region}/alerts`,
       );
-      return response.data;
+      return response;
     } catch (error: any) {
       if (error?.response?.status === 404) {
         return [];
@@ -173,7 +173,7 @@ class WeatherAPI {
     const response = await api.get<CurrentWeather>('/weather/history', {
       params: {lat, lng, date},
     });
-    return response.data;
+    return response;
   }
 }
 

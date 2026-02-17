@@ -21,10 +21,9 @@ export function useWeather() {
       setIsLoading(false);
       return data;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 
@@ -44,10 +43,9 @@ export function useWeather() {
       setIsLoading(false);
       return data;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

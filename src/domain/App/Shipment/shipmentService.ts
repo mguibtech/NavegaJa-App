@@ -210,7 +210,7 @@ class ShipmentService {
    */
   async collectShipment(
     id: string,
-    data: {collectionPhoto?: string},
+    data: {validationCode?: string; collectionPhoto?: string},
   ): Promise<{shipment: Shipment; message: string}> {
     const response = await shipmentAPI.collectShipment(id, data);
 

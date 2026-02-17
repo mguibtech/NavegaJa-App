@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {ScrollView} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
@@ -62,6 +63,7 @@ const MENU_ITEMS = [
 ];
 
 export function ProfileScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const {user, logout} = useAuthStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -104,11 +106,11 @@ export function ProfileScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s40"
         paddingBottom="s12"
         backgroundColor="surface"
         borderBottomWidth={1}
-        borderBottomColor="border">
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
         <Text preset="headingSmall" color="text" bold textAlign="center">
           Meu Perfil
         </Text>

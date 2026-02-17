@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {ScrollView, Alert, KeyboardAvoidingView, Platform} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Text, TextInput} from '@components';
+import {Box, Button, InfoModal, Text, TextInput} from '@components';
 import {useValidateDelivery} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -17,22 +17,30 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
   const [trackingCode, setTrackingCode] = useState(trackingCodeParam);
   const [pin, setPin] = useState(pinParam);
 
+  const [showTrackingCodeErrorModal, setShowTrackingCodeErrorModal] = useState(false);
+  const [showPinErrorModal, setShowPinErrorModal] = useState(false);
+  const [showPinLengthErrorModal, setShowPinLengthErrorModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const {validate, isLoading} = useValidateDelivery();
 
   async function handleValidate() {
     // Validações
     if (!trackingCode.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe o código de rastreamento');
+      setShowTrackingCodeErrorModal(true);
       return;
     }
 
     if (!pin.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe o PIN de validação');
+      setShowPinErrorModal(true);
       return;
     }
 
     if (pin.length !== 6) {
-      Alert.alert('Atenção', 'O PIN deve ter 6 dígitos');
+      setShowPinLengthErrorModal(true);
       return;
     }
 
@@ -41,23 +49,16 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
 
       // Mostrar sucesso com NavegaCoins
       const message = result.navegaCoinsEarned
-        ? `${result.message}\n\nO remetente ganhou ${result.navegaCoinsEarned} NavegaCoins! 🎉`
+        ? `${result.message}\n\nO remetente ganhou ${result.navegaCoinsEarned} NavegaCoins!`
         : result.message;
 
-      Alert.alert('Entrega Confirmada! ✅', message, [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Navegar para detalhes da encomenda se possível
-            navigation.navigate('Shipments');
-          },
-        },
-      ]);
+      setSuccessMessage(message);
+      setShowSuccessModal(true);
     } catch (error: any) {
-      Alert.alert(
-        'Erro na Validação',
+      setErrorMessage(
         error?.message || 'Não foi possível validar a entrega. Verifique o código de rastreamento e o PIN.',
       );
+      setShowErrorModal(true);
     }
   }
 
@@ -205,6 +206,59 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
           </Box>
         </ScrollView>
       </Box>
+
+      <InfoModal
+        visible={showTrackingCodeErrorModal}
+        title="Atenção"
+        message="Por favor, informe o código de rastreamento"
+        icon="warning"
+        iconColor="warning"
+        buttonText="Entendi"
+        onClose={() => setShowTrackingCodeErrorModal(false)}
+      />
+
+      <InfoModal
+        visible={showPinErrorModal}
+        title="Atenção"
+        message="Por favor, informe o PIN de validação"
+        icon="warning"
+        iconColor="warning"
+        buttonText="Entendi"
+        onClose={() => setShowPinErrorModal(false)}
+      />
+
+      <InfoModal
+        visible={showPinLengthErrorModal}
+        title="Atenção"
+        message="O PIN deve ter 6 dígitos"
+        icon="warning"
+        iconColor="warning"
+        buttonText="Entendi"
+        onClose={() => setShowPinLengthErrorModal(false)}
+      />
+
+      <InfoModal
+        visible={showSuccessModal}
+        title="Entrega Confirmada!"
+        message={successMessage}
+        icon="check-circle"
+        iconColor="success"
+        buttonText="OK"
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigation.navigate('Shipments');
+        }}
+      />
+
+      <InfoModal
+        visible={showErrorModal}
+        title="Erro na Validação"
+        message={errorMessage}
+        icon="error"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => setShowErrorModal(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

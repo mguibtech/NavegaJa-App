@@ -32,8 +32,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const isFocused = state.index === index;
 
-          // Badge count - exemplo: "Bookings" tem 3 notificações
-          const badgeCount = route.name === 'Bookings' ? 3 : undefined;
+          const badgeCount = options.tabBarBadge as number | undefined;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -169,10 +168,11 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
         {/* Label */}
         <Text
           style={{
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: isFocused ? '700' : '500',
           }}
-          color={textColor}>
+          color={textColor}
+          numberOfLines={1}>
           {label}
         </Text>
       </Box>
@@ -198,10 +198,10 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
-    maxWidth: 80,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
+    paddingHorizontal: 4,
   },
   iconContainer: {
     alignItems: 'center',

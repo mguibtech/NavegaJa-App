@@ -1,16 +1,21 @@
-import React from 'react';
-import {FlatList, Linking, Alert} from 'react-native';
+import React, {useState} from 'react';
+import {FlatList, Linking} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, ConfirmationModal, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
 import {useEmergencyContacts} from '@domain';
 import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'EmergencyContacts'>;
 
 export function EmergencyContactsScreen({}: Props) {
+  const {top} = useSafeAreaInsets();
   const {contacts, isLoading} = useEmergencyContacts();
+
+  const [selectedContact, setSelectedContact] = useState<{name: string; number: string} | null>(null);
+  const [showDialerErrorModal, setShowDialerErrorModal] = useState(false);
 
   const handleCallContact = async (name: string, number: string) => {
     const url = `tel:${number}`;
@@ -18,20 +23,9 @@ export function EmergencyContactsScreen({}: Props) {
     const canOpen = await Linking.canOpenURL(url);
 
     if (canOpen) {
-      Alert.alert(
-        `Ligar para ${name}?`,
-        `Você será redirecionado para discar ${number}`,
-        [
-          {text: 'Cancelar', style: 'cancel'},
-          {
-            text: 'Ligar',
-            style: 'default',
-            onPress: () => Linking.openURL(url),
-          },
-        ],
-      );
+      setSelectedContact({name, number});
     } else {
-      Alert.alert('Erro', 'Não foi possível abrir o discador de telefone.');
+      setShowDialerErrorModal(true);
     }
   };
 
@@ -52,7 +46,7 @@ export function EmergencyContactsScreen({}: Props) {
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
-      <Box padding="s20" backgroundColor="danger">
+      <Box paddingHorizontal="s20" paddingBottom="s20" backgroundColor="danger" style={{paddingTop: top + 16}}>
         <Text preset="headingMedium" color="surface" bold mb="s8">
           Contatos de Emergência
         </Text>
@@ -145,6 +139,33 @@ export function EmergencyContactsScreen({}: Props) {
             </Text>
           </Box>
         }
+      />
+
+      <ConfirmationModal
+        visible={selectedContact != null}
+        title={`Ligar para ${selectedContact?.name}?`}
+        message={`Você será redirecionado para discar ${selectedContact?.number}`}
+        icon="phone"
+        iconColor="primary"
+        confirmText="Ligar"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          if (selectedContact) {
+            Linking.openURL(`tel:${selectedContact.number}`);
+          }
+          setSelectedContact(null);
+        }}
+        onCancel={() => setSelectedContact(null)}
+      />
+
+      <InfoModal
+        visible={showDialerErrorModal}
+        title="Erro"
+        message="Não foi possível abrir o discador de telefone."
+        icon="error"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => setShowDialerErrorModal(false)}
       />
     </Box>
   );

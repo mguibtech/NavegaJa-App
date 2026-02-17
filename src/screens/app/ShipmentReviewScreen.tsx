@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -99,8 +99,13 @@ export function ShipmentReviewScreen({navigation, route}: Props) {
 
   return (
     <>
-      <Box flex={1} backgroundColor="background">
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <Box flex={1} backgroundColor="background">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
           <Box padding="s20">
             <Text preset="headingMedium" color="text" bold mb="s8">
               Avaliar Entrega
@@ -175,8 +180,9 @@ export function ShipmentReviewScreen({navigation, route}: Props) {
               disabled={isLoading}
             />
           </Box>
-        </ScrollView>
-      </Box>
+          </ScrollView>
+        </Box>
+      </KeyboardAvoidingView>
 
       {/* Rating Required Modal */}
       <InfoModal

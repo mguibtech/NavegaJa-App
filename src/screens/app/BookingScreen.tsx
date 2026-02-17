@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, Alert, ActivityIndicator} from 'react-native';
+import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -7,6 +8,7 @@ import {
   Box,
   Button,
   Icon,
+  InfoModal,
   Text,
   TextInput,
   TouchableOpacityBox,
@@ -72,6 +74,7 @@ function isCPFComplete(cpf: string): boolean {
 type Props = NativeStackScreenProps<AppStackParamList, 'Booking'>;
 
 export function BookingScreen({navigation, route}: Props) {
+  const {top} = useSafeAreaInsets();
   const {tripId} = route.params;
   const {create: createBooking, isLoading: isCreatingBooking} = useCreateBooking();
 
@@ -83,6 +86,13 @@ export function BookingScreen({navigation, route}: Props) {
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
+
+  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
+  const [showNameErrorModal, setShowNameErrorModal] = useState(false);
+  const [showCpfErrorModal, setShowCpfErrorModal] = useState(false);
+  const [cpfErrorMessage, setCpfErrorMessage] = useState('');
+  const [showBookingErrorModal, setShowBookingErrorModal] = useState(false);
+  const [bookingErrorMessage, setBookingErrorMessage] = useState('');
 
   const {calculate, isLoading: isCalculatingPrice} = useCalculatePrice();
   const couponValidation = useCouponValidation();
@@ -105,9 +115,8 @@ export function BookingScreen({navigation, route}: Props) {
       const tripData = await tripAPI.getById(tripId);
       setTrip(tripData);
     } catch (_error) {
-      Alert.alert('Erro', 'Não foi possível carregar os dados da viagem');
       console.error('Failed to load trip:', _error);
-      navigation.goBack();
+      setShowLoadErrorModal(true);
     } finally {
       setIsLoadingTrip(false);
     }
@@ -222,13 +231,14 @@ export function BookingScreen({navigation, route}: Props) {
   const handleConfirmBooking = async () => {
     // Validações
     if (!passengerName.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe o nome do passageiro');
+      setShowNameErrorModal(true);
       return;
     }
 
     // Valida CPF completo (com dígitos verificadores)
     if (!validateCPF()) {
-      Alert.alert('CPF Inválido', cpfError || 'Por favor, informe um CPF válido');
+      setCpfErrorMessage(cpfError || 'Por favor, informe um CPF válido');
+      setShowCpfErrorModal(true);
       return;
     }
 
@@ -252,10 +262,8 @@ export function BookingScreen({navigation, route}: Props) {
         paymentMethod,
       });
     } catch (_error: any) {
-      Alert.alert(
-        'Erro',
-        _error.message || 'Não foi possível processar sua reserva. Tente novamente.'
-      );
+      setBookingErrorMessage(_error.message || 'Não foi possível processar sua reserva. Tente novamente.');
+      setShowBookingErrorModal(true);
     }
   };
 
@@ -296,11 +304,11 @@ export function BookingScreen({navigation, route}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s40"
         paddingBottom="s12"
         backgroundColor="surface"
         borderBottomWidth={1}
-        borderBottomColor="border">
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
         <Box flexDirection="row" alignItems="center">
           <TouchableOpacityBox
             width={40}
@@ -320,9 +328,13 @@ export function BookingScreen({navigation, route}: Props) {
         </Box>
       </Box>
 
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
         contentContainerStyle={{padding: 24}}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         {/* Trip Summary */}
         <Box
           backgroundColor="surface"
@@ -416,11 +428,11 @@ export function BookingScreen({navigation, route}: Props) {
               Adultos (máx. {trip.availableSeats})
             </Text>
 
-            <Box flexDirection="row" alignItems="center" gap="s16">
+            <Box flexDirection="row" alignItems="center" gap="s12">
               <TouchableOpacityBox
-                width={40}
-                height={40}
-                borderRadius="s20"
+                width={32}
+                height={32}
+                borderRadius="s16"
                 backgroundColor={passengers <= 1 ? 'disabled' : 'primary'}
                 alignItems="center"
                 justifyContent="center"
@@ -428,19 +440,19 @@ export function BookingScreen({navigation, route}: Props) {
                 disabled={passengers <= 1}>
                 <Icon
                   name="remove"
-                  size={20}
+                  size={16}
                   color={passengers <= 1 ? 'disabledText' : 'surface'}
                 />
               </TouchableOpacityBox>
 
-              <Text preset="headingMedium" color="text" bold minWidth={40} textAlign="center">
+              <Text preset="paragraphMedium" color="text" bold minWidth={32} textAlign="center">
                 {passengers}
               </Text>
 
               <TouchableOpacityBox
-                width={40}
-                height={40}
-                borderRadius="s20"
+                width={32}
+                height={32}
+                borderRadius="s16"
                 backgroundColor={passengers >= trip.availableSeats ? 'disabled' : 'primary'}
                 alignItems="center"
                 justifyContent="center"
@@ -448,7 +460,7 @@ export function BookingScreen({navigation, route}: Props) {
                 disabled={passengers >= trip.availableSeats}>
                 <Icon
                   name="add"
-                  size={20}
+                  size={16}
                   color={passengers >= trip.availableSeats ? 'disabledText' : 'surface'}
                 />
               </TouchableOpacityBox>
@@ -639,6 +651,7 @@ export function BookingScreen({navigation, route}: Props) {
         {/* Spacer */}
         <Box height={100} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Fixed Footer */}
       <Box
@@ -671,6 +684,46 @@ export function BookingScreen({navigation, route}: Props) {
           rightIcon={isCreatingBooking ? undefined : 'check'}
         />
       </Box>
+
+      <InfoModal
+        visible={showLoadErrorModal}
+        title="Erro"
+        message="Não foi possível carregar os dados da viagem"
+        icon="error"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => { setShowLoadErrorModal(false); navigation.goBack(); }}
+      />
+
+      <InfoModal
+        visible={showNameErrorModal}
+        title="Atenção"
+        message="Por favor, informe o nome do passageiro"
+        icon="warning"
+        iconColor="warning"
+        buttonText="Entendi"
+        onClose={() => setShowNameErrorModal(false)}
+      />
+
+      <InfoModal
+        visible={showCpfErrorModal}
+        title="CPF Inválido"
+        message={cpfErrorMessage}
+        icon="warning"
+        iconColor="warning"
+        buttonText="Entendi"
+        onClose={() => setShowCpfErrorModal(false)}
+      />
+
+      <InfoModal
+        visible={showBookingErrorModal}
+        title="Erro"
+        message={bookingErrorMessage}
+        icon="error"
+        iconColor="danger"
+        buttonText="Entendi"
+        onClose={() => setShowBookingErrorModal(false)}
+      />
     </Box>
   );
 }

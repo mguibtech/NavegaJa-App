@@ -1,11 +1,14 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, Alert, ActivityIndicator} from 'react-native';
+import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useTheme} from '@shopify/restyle';
 
 import {
   Box,
   Button,
+  ConfirmationModal,
   Icon,
   Text,
   TouchableOpacityBox,
@@ -18,7 +21,9 @@ import {
   SosTypeConfig,
 } from '@domain';
 import {useToast} from '@hooks';
+import {formatPhone} from '@utils';
 import {AppStackParamList} from '@routes';
+import {Theme} from '@theme';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'SosAlert'>;
 
@@ -27,11 +32,15 @@ export function SosAlertScreen({navigation, route}: Props) {
   const {createAlert, cancelAlert, checkActiveAlert, activeAlert, isLoading} =
     useSosAlert();
   const toast = useToast();
+  const {top} = useSafeAreaInsets();
+  const theme = useTheme<Theme>();
 
   const [selectedType, setSelectedType] = useState<SosType | null>(null);
   const [description, setDescription] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [showConfirmSosModal, setShowConfirmSosModal] = useState(false);
+  const [showCancelSosModal, setShowCancelSosModal] = useState(false);
 
   useEffect(() => {
     checkActiveAlert();
@@ -52,72 +61,55 @@ export function SosAlertScreen({navigation, route}: Props) {
       return;
     }
 
-    Alert.alert(
-      'Confirmar Emergência',
-      'Você está prestes a acionar um alerta SOS. As autoridades serão notificadas da sua localização. Deseja continuar?',
-      [
-        {text: 'Cancelar', style: 'cancel'},
-        {
-          text: 'Acionar SOS',
-          style: 'destructive',
-          onPress: async () => {
-            setIsCreating(true);
+    setShowConfirmSosModal(true);
+  };
 
-            try {
-              const alert = await createAlert(selectedType, {
-                tripId,
-                description: description.trim() || undefined,
-                contactNumber: contactNumber.trim() || undefined,
-              });
+  const handleConfirmSos = async () => {
+    setShowConfirmSosModal(false);
+    setIsCreating(true);
 
-              toast.showSuccess(
-                `SOS acionado com sucesso! Código: ${alert.id.slice(0, 8).toUpperCase()}`,
-              );
+    try {
+      const alert = await createAlert(selectedType!, {
+        tripId,
+        description: description.trim() || undefined,
+        contactNumber: contactNumber.trim() || undefined,
+      });
 
-              // Resetar formulário
-              setSelectedType(null);
-              setDescription('');
-              setContactNumber('');
+      toast.showSuccess(
+        `SOS acionado com sucesso! Código: ${alert.id.slice(0, 8).toUpperCase()}`,
+      );
 
-              // Navegar para tela de emergência ativa (opcional)
-              // navigation.replace('ActiveSos', {alertId: alert.id});
-            } catch (error: any) {
-              toast.showError(
-                error?.message || 'Não foi possível acionar SOS. Tente novamente.',
-              );
-            } finally {
-              setIsCreating(false);
-            }
-          },
-        },
-      ],
-    );
+      // Resetar formulário
+      setSelectedType(null);
+      setDescription('');
+      setContactNumber('');
+
+      // Navegar para tela de emergência ativa (opcional)
+      // navigation.replace('ActiveSos', {alertId: alert.id});
+    } catch (error: any) {
+      toast.showError(
+        error?.message || 'Não foi possível acionar SOS. Tente novamente.',
+      );
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleCancelAlert = async () => {
     if (!activeAlert) return;
+    setShowCancelSosModal(true);
+  };
 
-    Alert.alert(
-      'Cancelar SOS',
-      'Tem certeza que deseja cancelar o alerta de emergência?',
-      [
-        {text: 'Não', style: 'cancel'},
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await cancelAlert(activeAlert.id);
-              toast.showSuccess('Alerta SOS cancelado com sucesso');
-            } catch (error: any) {
-              toast.showError(
-                error?.message || 'Não foi possível cancelar o SOS.',
-              );
-            }
-          },
-        },
-      ],
-    );
+  const handleConfirmCancelSos = async () => {
+    setShowCancelSosModal(false);
+    try {
+      await cancelAlert(activeAlert!.id);
+      toast.showSuccess('Alerta SOS cancelado com sucesso');
+    } catch (error: any) {
+      toast.showError(
+        error?.message || 'Não foi possível cancelar o SOS.',
+      );
+    }
   };
 
   const sosTypes: SosTypeConfig[] = Object.values(SOS_TYPE_CONFIGS);
@@ -128,7 +120,8 @@ export function SosAlertScreen({navigation, route}: Props) {
         flex={1}
         justifyContent="center"
         alignItems="center"
-        backgroundColor="background">
+        backgroundColor="background"
+        style={{paddingTop: top}}>
         <ActivityIndicator size="large" color="#DC2626" />
         <Text preset="paragraphMedium" color="text" mt="s16">
           Verificando alertas...
@@ -143,8 +136,39 @@ export function SosAlertScreen({navigation, route}: Props) {
 
     return (
       <Box flex={1} backgroundColor="background">
+        {/* Header com botão voltar */}
+        <Box
+          backgroundColor="surface"
+          paddingHorizontal="s20"
+          paddingBottom="s16"
+          style={{
+            paddingTop: top + 12,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+          }}>
+          <Box flexDirection="row" alignItems="center">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s12"
+              backgroundColor="background"
+              alignItems="center"
+              justifyContent="center"
+              borderWidth={1}
+              borderColor="border"
+              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTabs')}>
+              <Icon name="arrow-back" size={22} color="text" />
+            </TouchableOpacityBox>
+            <Text preset="headingSmall" color="text" bold ml="s12">
+              SOS Ativo
+            </Text>
+          </Box>
+        </Box>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <Box padding="s20">
+          <Box style={{padding: 20, paddingTop: 20}}>
             {/* Header com status */}
             <Box
               backgroundColor="warningBg"
@@ -169,20 +193,20 @@ export function SosAlertScreen({navigation, route}: Props) {
                 Tipo de Emergência
               </Text>
               <Box
-                backgroundColor={config.bgColor as any}
+                style={{backgroundColor: config.bgColor}}
                 padding="s16"
                 borderRadius="s12"
                 flexDirection="row"
                 alignItems="center">
                 <Icon name={config.icon as any} size={28} color={config.color as any} />
                 <Box ml="s12" flex={1}>
-                  <Text preset="paragraphMedium" color={config.color as any} bold>
+                  <Text preset="paragraphMedium" bold style={{color: config.color}}>
                     {config.label}
                   </Text>
                   <Text
                     preset="paragraphCaptionSmall"
-                    color={config.color as any}
-                    mt="s4">
+                    mt="s4"
+                    style={{color: config.color}}>
                     Prioridade: {config.priority.toUpperCase()}
                   </Text>
                 </Box>
@@ -203,14 +227,18 @@ export function SosAlertScreen({navigation, route}: Props) {
                 <Icon name="location-on" size={24} color="primary" />
                 <Box ml="s12" flex={1}>
                   <Text preset="paragraphMedium" color="text">
-                    Lat: {activeAlert.location.latitude.toFixed(6)}
+                    Lat: {activeAlert.location?.latitude != null
+                      ? Number(activeAlert.location.latitude).toFixed(6)
+                      : 'N/A'}
                   </Text>
                   <Text preset="paragraphMedium" color="text">
-                    Lng: {activeAlert.location.longitude.toFixed(6)}
+                    Lng: {activeAlert.location?.longitude != null
+                      ? Number(activeAlert.location.longitude).toFixed(6)
+                      : 'N/A'}
                   </Text>
-                  {activeAlert.location.accuracy && (
+                  {activeAlert.location?.accuracy != null && (
                     <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
-                      Precisão: {activeAlert.location.accuracy.toFixed(0)}m
+                      Precisão: {Number(activeAlert.location.accuracy).toFixed(0)}m
                     </Text>
                   )}
                 </Box>
@@ -243,20 +271,65 @@ export function SosAlertScreen({navigation, route}: Props) {
             />
           </Box>
         </ScrollView>
+
+        <ConfirmationModal
+          visible={showCancelSosModal}
+          title="Cancelar SOS"
+          message="Tem certeza que deseja cancelar o alerta de emergência?"
+          icon="warning"
+          iconColor="warning"
+          confirmText="Sim, Cancelar"
+          cancelText="Não"
+          onConfirm={handleConfirmCancelSos}
+          onCancel={() => setShowCancelSosModal(false)}
+        />
       </Box>
     );
   }
 
   // Se não tem alerta ativo, mostrar formulário de criação
   return (
-    <Box flex={1} backgroundColor="background">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Box padding="s20">
-          {/* Header */}
-          <Box mb="s24">
-            <Text preset="headingMedium" color="text" bold mb="s8">
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <Box flex={1} backgroundColor="background">
+        {/* Header com botão voltar */}
+        <Box
+          backgroundColor="surface"
+          paddingHorizontal="s20"
+          paddingBottom="s16"
+          style={{
+            paddingTop: top + 12,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+          }}>
+          <Box flexDirection="row" alignItems="center">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s12"
+              backgroundColor="background"
+              alignItems="center"
+              justifyContent="center"
+              borderWidth={1}
+              borderColor="border"
+              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTabs')}>
+              <Icon name="arrow-back" size={22} color="text" />
+            </TouchableOpacityBox>
+            <Text preset="headingSmall" color="text" bold ml="s12">
               Acionar SOS
             </Text>
+          </Box>
+        </Box>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Box style={{padding: 20, paddingTop: 20}}>
+          {/* Subtítulo */}
+          <Box mb="s24">
             <Text preset="paragraphMedium" color="textSecondary">
               Selecione o tipo de emergência. Sua localização será compartilhada
               com as autoridades.
@@ -269,63 +342,54 @@ export function SosAlertScreen({navigation, route}: Props) {
               Tipo de Emergência
             </Text>
 
-            {sosTypes.map(config => (
-              <TouchableOpacityBox
-                key={config.type}
-                mb="s12"
-                backgroundColor={
-                  selectedType === config.type ? config.bgColor : 'surface'
-                }
-                borderRadius="s12"
-                padding="s16"
-                onPress={() => handleSelectType(config.type)}
-                borderWidth={selectedType === config.type ? 2 : 1}
-                borderColor={
-                  selectedType === config.type ? config.color : 'border'
-                }>
-                <Box flexDirection="row" alignItems="center">
-                  <Icon
-                    name={config.icon as any}
-                    size={28}
-                    color={
-                      selectedType === config.type
-                        ? (config.color as any)
-                        : 'textSecondary'
-                    }
-                  />
-                  <Box ml="s12" flex={1}>
-                    <Text
-                      preset="paragraphMedium"
-                      color={
-                        selectedType === config.type
-                          ? (config.color as any)
-                          : 'text'
-                      }
-                      bold>
-                      {config.label}
-                    </Text>
-                    <Text
-                      preset="paragraphCaptionSmall"
-                      color={
-                        selectedType === config.type
-                          ? (config.color as any)
-                          : 'textSecondary'
-                      }
-                      mt="s4">
-                      {config.description}
-                    </Text>
-                  </Box>
-
-                  {selectedType === config.type && (
+            {sosTypes.map(config => {
+              const isSelected = selectedType === config.type;
+              return (
+                <TouchableOpacityBox
+                  key={config.type}
+                  mb="s12"
+                  borderRadius="s12"
+                  padding="s16"
+                  onPress={() => handleSelectType(config.type)}
+                  style={{
+                    backgroundColor: isSelected ? config.bgColor : theme.colors.surface,
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? config.color : theme.colors.border,
+                  }}>
+                  <Box flexDirection="row" alignItems="center">
                     <Icon
-                      name="check-circle"
-                      size={24}
-                      color={config.color as any}
+                      name={config.icon as any}
+                      size={28}
+                      color={isSelected ? (config.color as any) : 'textSecondary'}
                     />
-                  )}
-                </Box>
-              </TouchableOpacityBox>
-            ))}
+                    <Box ml="s12" flex={1}>
+                      <Text
+                        preset="paragraphMedium"
+                        bold
+                        color={isSelected ? undefined : 'text'}
+                        style={isSelected ? {color: config.color} : undefined}>
+                        {config.label}
+                      </Text>
+                      <Text
+                        preset="paragraphCaptionSmall"
+                        mt="s4"
+                        color={isSelected ? undefined : 'textSecondary'}
+                        style={isSelected ? {color: config.color} : undefined}>
+                        {config.description}
+                      </Text>
+                    </Box>
+
+                    {isSelected && (
+                      <Icon
+                        name="check-circle"
+                        size={24}
+                        color={config.color as any}
+                      />
+                    )}
+                  </Box>
+                </TouchableOpacityBox>
+              );
+            })}
           </Box>
 
           {/* Descrição (opcional) */}
@@ -350,9 +414,10 @@ export function SosAlertScreen({navigation, route}: Props) {
             </Text>
             <TextInput
               value={contactNumber}
-              onChangeText={setContactNumber}
+              onChangeText={text => setContactNumber(formatPhone(text))}
               placeholder="(00) 00000-0000"
               keyboardType="phone-pad"
+              maxLength={15}
             />
           </Box>
 
@@ -382,6 +447,19 @@ export function SosAlertScreen({navigation, route}: Props) {
           </TouchableOpacityBox>
         </Box>
       </ScrollView>
+
+      <ConfirmationModal
+        visible={showConfirmSosModal}
+        title="Confirmar Emergência"
+        message="Você está prestes a acionar um alerta SOS. As autoridades serão notificadas da sua localização. Deseja continuar?"
+        icon="sos"
+        iconColor="danger"
+        confirmText="Acionar SOS"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmSos}
+        onCancel={() => setShowConfirmSosModal(false)}
+      />
     </Box>
+    </KeyboardAvoidingView>
   );
 }

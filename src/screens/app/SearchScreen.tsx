@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {Keyboard, ScrollView, TouchableWithoutFeedback, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {format} from 'date-fns';
 
@@ -24,6 +25,7 @@ const POPULAR_ROUTES = [
 ];
 
 export function SearchScreen({navigation, route}: Props) {
+  const {top} = useSafeAreaInsets();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
@@ -92,11 +94,11 @@ export function SearchScreen({navigation, route}: Props) {
         {/* Header */}
         <Box
           paddingHorizontal="s24"
-          paddingTop="s40"
           paddingBottom="s12"
           backgroundColor="surface"
           borderBottomWidth={1}
-          borderBottomColor="border">
+          borderBottomColor="border"
+          style={{paddingTop: top + 12}}>
           <Text preset="headingSmall" color="text" bold textAlign="center">
             Buscar Viagem
           </Text>

@@ -15,7 +15,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'ScanShipmentQR'>;
 export function ScanShipmentQRScreen({navigation}: Props) {
   const [hasPermission, setHasPermission] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
-  const [scannedData, setScannedData] = useState<{shipmentId: string; trackingCode?: string} | null>(null);
+  const [scannedData, setScannedData] = useState<{shipmentId: string; trackingCode?: string; validationCode?: string} | null>(null);
 
   // Modal states
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -81,7 +81,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
 
     try {
       // TODO: Implementar captura de foto opcional
-      const result = await collect(scannedData.shipmentId);
+      const result = await collect(scannedData.shipmentId, scannedData.validationCode);
 
       toast.showSuccess(result.message);
 

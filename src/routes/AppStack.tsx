@@ -1,10 +1,10 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {CustomTabBar, Icon} from '@components';
 
-import { Promotion, PaymentMethod } from '@domain';
+import { Promotion, PaymentMethod, bookingService, BookingStatus } from '@domain';
 import { BookingScreen, BookingsScreen, CreateShipmentScreen, EditProfileScreen, EmergencyContactsScreen, FavoritesScreen, HelpScreen, HomeScreen, NotificationsScreen, PaymentMethodsScreen, PaymentScreen, PopularRoutesScreen, PrivacyScreen, ProfileScreen, ScanShipmentQRScreen, SearchResultsScreen, SearchScreen, ShipmentDetailsScreen, ShipmentReviewScreen, ShipmentsScreen, SosAlertScreen, TermsScreen, TicketScreen, TrackingScreen, TripDetailsScreen, ValidateDeliveryScreen } from '@screens';
 
 export type AppStackParamList = {
@@ -78,6 +78,26 @@ const Stack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<TabsParamList>();
 
 function HomeTabs() {
+  const [bookingsBadge, setBookingsBadge] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    async function loadBadge() {
+      try {
+        const bookings = await bookingService.getMyBookings();
+        const activeCount = bookings.filter(
+          b =>
+            b.status === BookingStatus.CONFIRMED ||
+            b.status === BookingStatus.PENDING ||
+            b.status === BookingStatus.CHECKED_IN,
+        ).length;
+        setBookingsBadge(activeCount > 0 ? activeCount : undefined);
+      } catch {
+        // ignore badge errors silently
+      }
+    }
+    loadBadge();
+  }, []);
+
   return (
     <Tab.Navigator
       tabBar={props => <CustomTabBar {...props} />}
@@ -112,13 +132,14 @@ function HomeTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="receipt-long" size={size} color={color} />
           ),
+          tabBarBadge: bookingsBadge,
         }}
       />
       <Tab.Screen
         name="Shipments"
         component={ShipmentsScreen}
         options={{
-          tabBarLabel: 'Encomendas',
+          tabBarLabel: 'Entregas',
           tabBarIcon: ({color, size}) => (
             <Icon name="inventory" size={size} color={color} />
           ),
@@ -143,6 +164,7 @@ export function AppStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        contentStyle: {backgroundColor: '#F5F7F8'},
       }}>
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
       <Stack.Screen name="SearchResults" component={SearchResultsScreen} />

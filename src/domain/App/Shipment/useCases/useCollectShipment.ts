@@ -9,6 +9,7 @@ export function useCollectShipment() {
 
   async function collect(
     shipmentId: string,
+    validationCode?: string,
     collectionPhotoUri?: string,
   ): Promise<CollectShipmentResponse> {
     setIsLoading(true);
@@ -28,16 +29,16 @@ export function useCollectShipment() {
       }
 
       const result = await shipmentService.collectShipment(shipmentId, {
+        validationCode,
         collectionPhoto,
       });
 
       setIsLoading(false);
       return result;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

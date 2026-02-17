@@ -27,11 +27,10 @@ export function useMyFavorites(type?: FavoriteType) {
       const result = await favoriteService.getMyFavorites(type);
       setFavorites(result);
     } catch (err) {
-      const error = err as any;
 
       // Ignora erros 401 (são tratados automaticamente pelo refresh token)
-      if (error?.statusCode !== 401) {
-        setError(error);
+      if ((err as any)?.statusCode !== 401) {
+        setError(err as Error);
       }
 
       throw err;

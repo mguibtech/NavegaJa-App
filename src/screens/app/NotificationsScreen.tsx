@@ -3,8 +3,9 @@ import {ScrollView, Switch, Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Text, Icon, InfoModal} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, InfoModal} from '@components';
 import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
@@ -32,6 +33,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 export function NotificationsScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [_isLoading, setIsLoading] = useState(true);
   const [showSavedModal, setShowSavedModal] = useState(false);
@@ -85,23 +87,28 @@ export function NotificationsScreen({navigation}: Props) {
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
-        paddingVertical="s16"
+        paddingBottom="s16"
         flexDirection="row"
         alignItems="center"
         style={{
+          paddingTop: top + 12,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
+        <TouchableOpacityBox
+          width={40}
+          height={40}
+          borderRadius="s20"
+          alignItems="center"
+          justifyContent="center"
           onPress={() => navigation.goBack()}
-        />
-        <Text preset="headingSmall" color="text" bold ml="s12">
+          mr="s12">
+          <Icon name="arrow-back" size={24} color="text" />
+        </TouchableOpacityBox>
+        <Text preset="headingSmall" color="text" bold>
           Notificações
         </Text>
       </Box>

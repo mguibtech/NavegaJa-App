@@ -30,6 +30,7 @@ export interface TripBoat {
   registrationNum: string;
   isVerified: boolean;
   createdAt: string;
+  currentLocation?: {lat: number; lng: number};
 }
 
 export interface Trip {

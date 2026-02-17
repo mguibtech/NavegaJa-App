@@ -26,7 +26,7 @@ class SafetyAPI {
     const response = await api.get<EmergencyContact[]>(
       '/safety/emergency-contacts',
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -50,7 +50,7 @@ class SafetyAPI {
       '/safety/checklists',
       data,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -65,7 +65,7 @@ class SafetyAPI {
       `/safety/checklists/${id}`,
       data,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -76,7 +76,7 @@ class SafetyAPI {
     const response = await api.get<ChecklistStatusResponse>(
       `/safety/checklists/trip/${tripId}/status`,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -87,7 +87,7 @@ class SafetyAPI {
     const response = await api.get<SafetyChecklist>(
       `/safety/checklists/${id}`,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -99,7 +99,7 @@ class SafetyAPI {
       const response = await api.get<SafetyChecklist>(
         `/safety/checklists/trip/${tripId}`,
       );
-      return response.data;
+      return response;
     } catch (error: any) {
       if (error?.response?.status === 404) {
         return null;
@@ -116,7 +116,7 @@ class SafetyAPI {
    */
   async createSosAlert(data: CreateSosAlertData): Promise<SosAlert> {
     const response = await api.post<SosAlert>('/safety/sos', data);
-    return response.data;
+    return response;
   }
 
   /**
@@ -125,7 +125,7 @@ class SafetyAPI {
    */
   async getActiveSosAlerts(): Promise<SosAlert[]> {
     const response = await api.get<SosAlert[]>('/safety/sos/active');
-    return response.data;
+    return response;
   }
 
   /**
@@ -134,7 +134,7 @@ class SafetyAPI {
    */
   async getMySosAlerts(): Promise<SosAlert[]> {
     const response = await api.get<SosAlert[]>('/safety/sos/my-alerts');
-    return response.data;
+    return response;
   }
 
   /**
@@ -143,7 +143,7 @@ class SafetyAPI {
    */
   async getSosAlertById(id: string): Promise<SosAlert> {
     const response = await api.get<SosAlert>(`/safety/sos/${id}`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -158,7 +158,7 @@ class SafetyAPI {
       `/safety/sos/${id}/resolve`,
       data,
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -167,7 +167,7 @@ class SafetyAPI {
    */
   async cancelSosAlert(id: string): Promise<SosAlert> {
     const response = await api.patch<SosAlert>(`/safety/sos/${id}/cancel`);
-    return response.data;
+    return response;
   }
 
   /**

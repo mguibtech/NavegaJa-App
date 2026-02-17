@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking} from 'react-native';
+import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidingView, Platform} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -78,8 +78,11 @@ export function RegisterScreen({navigation}: Props) {
   const isPassenger = role === UserRole.PASSENGER;
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <ScrollView
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
         contentContainerStyle={{flexGrow: 1}}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
@@ -312,7 +315,8 @@ export function RegisterScreen({navigation}: Props) {
             </Box>
           </Box>
         </Box>
-      </ScrollView>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

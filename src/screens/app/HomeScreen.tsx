@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {FlatList, Image, RefreshControl, ScrollView, ImageBackground, Linking, Dimensions} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -43,27 +44,9 @@ const POPULAR_ROUTES = [
   },
 ];
 
-// Mock data - My Next Trips
-const MY_TRIPS = [
-  {
-    id: '1',
-    origin: 'Manaus',
-    destination: 'Tefé',
-    date: '2026-02-20',
-    time: '08:00',
-    status: 'completed' as const,
-  },
-  {
-    id: '2',
-    origin: 'Manaus',
-    destination: 'Canete',
-    date: '2026-02-25',
-    time: '14:30',
-    status: 'upcoming' as const,
-  },
-];
 
 export function HomeScreen({navigation}: Props) {
+  const {top} = useSafeAreaInsets();
   const {user} = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
@@ -177,7 +160,7 @@ export function HomeScreen({navigation}: Props) {
               </Text>
             </Box>
 
-            {tripsCount && (
+            {!!tripsCount && (
               <Box
                 backgroundColor="successBg"
                 paddingHorizontal="s8"
@@ -185,7 +168,7 @@ export function HomeScreen({navigation}: Props) {
                 borderRadius="s8"
                 flexShrink={0}>
                 <Text preset="paragraphCaptionSmall" color="success" bold>
-                  {tripsCount}
+                  {String(tripsCount)}
                 </Text>
               </Box>
             )}
@@ -287,23 +270,13 @@ export function HomeScreen({navigation}: Props) {
   };
 
   const renderMyTrip = ({item}: {item: any}) => {
-    // Handle both mock data structure and real booking data structure
-    const isMockData = 'date' in item; // Mock data has 'date', real booking has 'trip'
+    const origin = item.trip?.origin || 'Origem desconhecida';
+    const destination = item.trip?.destination || 'Destino desconhecido';
+    const dateStr = item.trip?.departureAt;
+    const timeStr = dateStr ? new Date(dateStr).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : null;
 
-    // Extract data from appropriate structure
-    const origin = isMockData ? item.origin : item.trip?.origin || 'Origem desconhecida';
-    const destination = isMockData ? item.destination : item.trip?.destination || 'Destino desconhecido';
-    const dateStr = isMockData ? item.date : item.trip?.departureAt;
-    const timeStr = isMockData ? item.time : (item.trip?.departureAt ? new Date(item.trip.departureAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : null);
-
-    // Map booking status to display status
-    let displayStatus: 'completed' | 'upcoming' = 'upcoming';
-    if (isMockData) {
-      displayStatus = item.status;
-    } else {
-      // Real booking: map BookingStatus to display status
-      displayStatus = (item.status === 'completed' || item.trip?.status === 'completed') ? 'completed' : 'upcoming';
-    }
+    const displayStatus: 'completed' | 'upcoming' =
+      item.status === 'completed' ? 'completed' : 'upcoming';
 
     const statusColor = displayStatus === 'completed' ? 'success' : 'warning';
     const statusBg = displayStatus === 'completed' ? 'successBg' : 'warningBg';
@@ -392,10 +365,10 @@ export function HomeScreen({navigation}: Props) {
       {/* Header */}
       <Box
         paddingHorizontal="s24"
-        paddingTop="s40"
         paddingBottom="s16"
         backgroundColor="surface"
         style={{
+          paddingTop: top + 12,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
@@ -675,18 +648,12 @@ export function HomeScreen({navigation}: Props) {
 
           {(() => {
             // Filtrar apenas viagens ativas/futuras (não concluídas ou canceladas)
-            const activeBookings = bookings.filter((booking: any) => {
-              const status = booking.status;
-              return status === 'pending' || status === 'confirmed' || status === 'checked_in';
-            });
-
-            // Se não houver bookings ativos, usar mock data filtrado
-            const tripsToShow = activeBookings.length > 0
-              ? activeBookings
-              : MY_TRIPS.filter(trip => trip.status === 'upcoming');
+            const activeBookings = bookings.filter(booking =>
+              booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in'
+            );
 
             // Se não houver nenhuma viagem futura
-            if (tripsToShow.length === 0) {
+            if (activeBookings.length === 0) {
               return (
                 <Box
                   backgroundColor="surface"
@@ -720,7 +687,7 @@ export function HomeScreen({navigation}: Props) {
             }
 
             // Pegar apenas as 3 próximas
-            return tripsToShow.slice(0, 3).map((trip: any) => (
+            return activeBookings.slice(0, 3).map((trip: any) => (
               <Box key={trip.id}>
                 {renderMyTrip({item: trip})}
               </Box>
@@ -917,7 +884,7 @@ export function HomeScreen({navigation}: Props) {
 
       {/* Emergency SOS Button */}
       <EmergencyButton
-        onPress={() => navigation.navigate('SosAlert')}
+        onPress={() => navigation.navigate('SosAlert', {})}
         hasActiveAlert={!!activeAlert}
       />
     </Box>

@@ -44,10 +44,9 @@ export function useSosAlert() {
       setIsLoading(false);
       return alert;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 
@@ -64,10 +63,9 @@ export function useSosAlert() {
       setIsLoading(false);
       return alert;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 
@@ -83,8 +81,7 @@ export function useSosAlert() {
       setActiveAlert(alert);
       setIsLoading(false);
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
     }
   }
@@ -103,10 +100,9 @@ export function useSosAlert() {
       setIsLoading(false);
       return alerts;
     } catch (err) {
-      const error = err as Error;
-      setError(error);
+      setError(err as Error);
       setIsLoading(false);
-      throw error;
+      throw err;
     }
   }
 

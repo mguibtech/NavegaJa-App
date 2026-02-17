@@ -163,6 +163,7 @@ export interface ConfirmPaymentResponse {
 
 // Collect Shipment (v2.0 - Capitão)
 export interface CollectShipmentData {
+  validationCode?: string;  // PIN 6 dígitos para validação manual
   collectionPhoto?: string; // URL da foto no momento da coleta
 }
 

@@ -277,7 +277,26 @@ export function CreateShipmentScreen({navigation, route}: Props) {
   }
 
   const totalPrice = priceData?.finalPrice || 0;
-  const canSubmit = validateForm() && totalPrice > 0 && !isCreatingShipment;
+
+  // Pure check sem side effects (para não causar re-render loop)
+  function isFormValid(): boolean {
+    if (!recipientName.trim() || recipientName.trim().length < 3) return false;
+    if (!isPhoneComplete(recipientPhone)) return false;
+    if (!recipientAddress.trim() || recipientAddress.trim().length < 10) return false;
+    if (!description.trim() || description.trim().length < 5) return false;
+    const weightNum = parseFloat(weight);
+    if (!weight || isNaN(weightNum) || weightNum < 0.1 || weightNum > 50) return false;
+    if (length || width || heightDim) {
+      const l = parseFloat(length);
+      const w = parseFloat(width);
+      const h = parseFloat(heightDim);
+      if (!length || !width || !heightDim || isNaN(l) || isNaN(w) || isNaN(h)) return false;
+      if (l > 200 || w > 200 || h > 200) return false;
+    }
+    return true;
+  }
+
+  const canSubmit = isFormValid() && totalPrice > 0 && !isCreatingShipment;
 
   return (
     <KeyboardAvoidingView

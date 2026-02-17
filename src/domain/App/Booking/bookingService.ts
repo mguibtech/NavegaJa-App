@@ -6,6 +6,10 @@ import {Booking, CreateBookingData} from './bookingTypes';
 const BOOKINGS_STORAGE_KEY = '@navegaja:bookings';
 
 class BookingService {
+  async getById(id: string): Promise<Booking> {
+    return bookingAPI.getById(id);
+  }
+
   async getMyBookings(): Promise<Booking[]> {
     const bookings = await bookingAPI.getMyBookings();
 
