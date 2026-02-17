@@ -327,13 +327,14 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
               shadowRadius: 8,
               elevation: 3,
             }}>
-            {shipment.qrCode ? (
+            {shipment.trackingCode ? (
               <>
                 <QRCode
-                  value={shipment.qrCode}
+                  value={shipment.trackingCode}
                   size={200}
                   backgroundColor="white"
                   color="black"
+                  errorCorrectionLevel="L"
                 />
                 <Text preset="paragraphSmall" color="textSecondary" mt="s16">
                   Código de Rastreamento
