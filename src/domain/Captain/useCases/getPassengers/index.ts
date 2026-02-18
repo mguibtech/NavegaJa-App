@@ -1,1 +1,0 @@
-export {getPassengersUseCase} from './getPassengersUseCase';

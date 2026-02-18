@@ -1,0 +1,1 @@
+export {useDeleteBoat} from './useDeleteBoat';

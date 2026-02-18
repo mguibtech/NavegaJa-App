@@ -2,10 +2,51 @@ import React, {useEffect, useState} from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import {CustomTabBar, Icon} from '@components';
+import {CaptainTabBar, CustomTabBar, Icon} from '@components';
 
-import { Promotion, PaymentMethod, bookingService, BookingStatus } from '@domain';
-import { BookingScreen, BookingsScreen, CreateShipmentScreen, EditProfileScreen, EmergencyContactsScreen, FavoritesScreen, HelpScreen, HomeScreen, NotificationsScreen, PaymentMethodsScreen, PaymentScreen, PopularRoutesScreen, PrivacyScreen, ProfileScreen, ScanShipmentQRScreen, SearchResultsScreen, SearchScreen, ShipmentDetailsScreen, ShipmentReviewScreen, ShipmentsScreen, SosAlertScreen, TermsScreen, TicketScreen, TrackingScreen, TripDetailsScreen, ValidateDeliveryScreen } from '@screens';
+import {Promotion, PaymentMethod, bookingService, BookingStatus} from '@domain';
+import {
+  BookingScreen,
+  BookingsScreen,
+  CaptainChecklistScreen,
+  CaptainShipmentCollectScreen,
+  CaptainTripLiveScreen,
+  CaptainCreateBoatScreen,
+  CaptainCreateTripScreen,
+  CaptainDashboardScreen,
+  CaptainEditBoatScreen,
+  CaptainStartTripScreen,
+  CaptainFinancialScreen,
+  CaptainMyBoatsScreen,
+  CaptainMyTripsScreen,
+  CaptainOperationsScreen,
+  CaptainTripManageScreen,
+  CreateShipmentScreen,
+  EditProfileScreen,
+  EmergencyContactsScreen,
+  FavoritesScreen,
+  HelpScreen,
+  HomeScreen,
+  NotificationsScreen,
+  PaymentMethodsScreen,
+  PaymentScreen,
+  PopularRoutesScreen,
+  PrivacyScreen,
+  ProfileScreen,
+  ScanShipmentQRScreen,
+  SearchResultsScreen,
+  SearchScreen,
+  ShipmentDetailsScreen,
+  ShipmentReviewScreen,
+  ShipmentsScreen,
+  SosAlertScreen,
+  TermsScreen,
+  TicketScreen,
+  TrackingScreen,
+  TripDetailsScreen,
+  ValidateDeliveryScreen,
+} from '@screens';
+import {useAuthStore} from '@store';
 
 export type AppStackParamList = {
   HomeTabs: undefined;
@@ -62,6 +103,17 @@ export type AppStackParamList = {
   SosAlert: {
     tripId?: string;
   };
+  // Captain screens
+  CaptainMyTrips: undefined;
+  CaptainCreateTrip: undefined;
+  CaptainTripManage: {tripId: string};
+  CaptainMyBoats: undefined;
+  CaptainCreateBoat: undefined;
+  CaptainEditBoat: {boatId: string};
+  CaptainChecklist: {tripId: string};
+  CaptainStartTrip: {tripId: string};
+  CaptainShipmentCollect: {shipmentId: string};
+  CaptainTripLive: {tripId: string; origin: string; destination: string};
 };
 
 export type TabsParamList = {
@@ -74,8 +126,16 @@ export type TabsParamList = {
   Profile: undefined;
 };
 
+export type CaptainTabsParamList = {
+  Dashboard: undefined;
+  Operations: undefined;
+  Financial: undefined;
+  Profile: undefined;
+};
+
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<TabsParamList>();
+const CaptainTab = createBottomTabNavigator<CaptainTabsParamList>();
 
 function HomeTabs() {
   const [bookingsBadge, setBookingsBadge] = useState<number | undefined>(undefined);
@@ -159,14 +219,69 @@ function HomeTabs() {
   );
 }
 
+function CaptainHomeTabs() {
+  return (
+    <CaptainTab.Navigator
+      tabBar={props => <CaptainTabBar {...props} />}
+      screenOptions={{headerShown: false}}>
+      <CaptainTab.Screen
+        name="Dashboard"
+        component={CaptainDashboardScreen}
+        options={{
+          tabBarLabel: 'Dashboard',
+          tabBarIcon: ({color, size}) => (
+            <Icon name="dashboard" size={size} color={color} />
+          ),
+        }}
+      />
+      <CaptainTab.Screen
+        name="Operations"
+        component={CaptainOperationsScreen}
+        options={{
+          tabBarLabel: 'Operações',
+          tabBarIcon: ({color, size}) => (
+            <Icon name="directions-boat" size={size} color={color} />
+          ),
+        }}
+      />
+      <CaptainTab.Screen
+        name="Financial"
+        component={CaptainFinancialScreen}
+        options={{
+          tabBarLabel: 'Financeiro',
+          tabBarIcon: ({color, size}) => (
+            <Icon name="attach-money" size={size} color={color} />
+          ),
+        }}
+      />
+      <CaptainTab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Perfil',
+          tabBarIcon: ({color, size}) => (
+            <Icon name="person" size={size} color={color} />
+          ),
+        }}
+      />
+    </CaptainTab.Navigator>
+  );
+}
+
 export function AppStack() {
+  const user = useAuthStore(s => s.user);
+  const isCaptain = user?.role === 'captain';
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
         contentStyle: {backgroundColor: '#F5F7F8'},
       }}>
-      <Stack.Screen name="HomeTabs" component={HomeTabs} />
+      <Stack.Screen
+        name="HomeTabs"
+        component={isCaptain ? CaptainHomeTabs : HomeTabs}
+      />
       <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
       <Stack.Screen name="PopularRoutes" component={PopularRoutesScreen} />
       <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
@@ -189,6 +304,17 @@ export function AppStack() {
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
       <Stack.Screen name="SosAlert" component={SosAlertScreen} />
+      {/* Captain stack screens */}
+      <Stack.Screen name="CaptainMyTrips" component={CaptainMyTripsScreen} />
+      <Stack.Screen name="CaptainCreateTrip" component={CaptainCreateTripScreen} />
+      <Stack.Screen name="CaptainTripManage" component={CaptainTripManageScreen} />
+      <Stack.Screen name="CaptainMyBoats" component={CaptainMyBoatsScreen} />
+      <Stack.Screen name="CaptainCreateBoat" component={CaptainCreateBoatScreen} />
+      <Stack.Screen name="CaptainEditBoat" component={CaptainEditBoatScreen} />
+      <Stack.Screen name="CaptainChecklist" component={CaptainChecklistScreen} />
+      <Stack.Screen name="CaptainStartTrip" component={CaptainStartTripScreen} />
+      <Stack.Screen name="CaptainShipmentCollect" component={CaptainShipmentCollectScreen} />
+      <Stack.Screen name="CaptainTripLive" component={CaptainTripLiveScreen} />
     </Stack.Navigator>
   );
 }

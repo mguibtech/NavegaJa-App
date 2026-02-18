@@ -432,7 +432,7 @@ export function CreateShipmentScreen({navigation, route}: Props) {
                   borderColor: acceptsCargo ? '#16A34A33' : '#DC262633',
                 }}>
                 {/* Status */}
-                <Box flexDirection="row" alignItems="center" mb={acceptsCargo ? 's12' : 's0'}>
+                <Box flexDirection="row" alignItems="center" mb={acceptsCargo ? 's12' : undefined}>
                   <Icon
                     name={acceptsCargo ? 'check-circle' : 'cancel'}
                     size={20}

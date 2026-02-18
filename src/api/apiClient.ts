@@ -64,7 +64,14 @@ class ApiClient {
       async (error: AxiosError<ApiError>) => {
         // Não loga erros 401 no console (são tratados automaticamente pelo refresh token)
         if (__DEV__ && error.response?.status !== 401) {
-          console.error('[API] Error:', error.response?.data || error.message);
+          const status = error.response?.status ?? 500;
+          // 4xx: log como warn (evita LogBox overlay — erros tratados no componente)
+          // 5xx: log como error (erros reais do servidor)
+          if (status >= 500) {
+            console.error('[API] Error:', error.response?.data || error.message);
+          } else {
+            console.warn('[API] 4xx:', error.response?.data || error.message);
+          }
         }
 
         const originalRequest = error.config as InternalAxiosRequestConfig & {_retry?: boolean};

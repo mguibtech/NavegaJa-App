@@ -22,6 +22,12 @@ export * from './Safety';
 // Weather
 export * from './Weather';
 
+// Boat
+export * from './Boat';
+
+// Captain
+export * from './Captain';
+
 // TODO: Add more domains
 // export * from './Route';
 // export * from './User';

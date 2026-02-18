@@ -1,3 +1,15 @@
+// Passenger info (returned by GET /trips/:id/passengers)
+export interface TripPassenger {
+  id: string;        // booking ID
+  userId: string;
+  name: string;      // passenger name
+  phone: string;     // passenger phone
+  quantity: number;  // seats booked
+  status: string;    // booking status string
+  checkedInAt: string | null;
+  createdAt: string;
+}
+
 // Captain info (populated from backend)
 export interface TripCaptain {
   id: string;
@@ -88,6 +100,7 @@ export interface CreateTripData {
   departureTime: string;
   arrivalTime: string;
   price: number;
+  cargoPriceKg?: number;
   totalSeats: number;
   boatId: string;
 }
