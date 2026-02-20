@@ -160,9 +160,17 @@ export function SearchResultsScreen({navigation, route}: Props) {
           </TouchableOpacityBox>
 
           <Box flex={1} ml="s12">
-            <Text preset="headingSmall" color="text" bold numberOfLines={1}>
-              {`${origin} → ${destination}`}
-            </Text>
+            <Box flexDirection="row" alignItems="center" flexShrink={1}>
+              <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
+                {origin || 'Qualquer origem'}
+              </Text>
+              <Box mx="s4">
+                <Icon name="arrow-forward" size={14} color="primary" />
+              </Box>
+              <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
+                {destination || 'Qualquer destino'}
+              </Text>
+            </Box>
             <Text preset="paragraphSmall" color="textSecondary" style={{marginTop: 2}}>
               {dateLabel}
             </Text>

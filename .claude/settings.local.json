@@ -83,7 +83,10 @@
       "Bash(\"/c/www/softLive/projects/navegaja/navegaJaAPP/src/screens/app/NotificationsScreen.tsx\":*)",
       "Bash(python3:*)",
       "Bash(tee:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(npx react-native:*)",
+      "Bash(/c/www/softLive/projects/navegaja/navegaJaAPP/src/screens/app/ProfileScreen.tsx:*)",
+      "WebFetch(domain:www.dicebear.com)"
     ]
   }
 }

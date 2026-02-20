@@ -2,61 +2,71 @@ import {useState, useEffect} from 'react';
 import {promotionAPI} from '../promotionAPI';
 import {Promotion} from '../promotionTypes';
 
+// Cache simples em memória: evita 429 buscando dados com frequência
+let _cachedPromotions: Promotion[] | null = null;
+let _cacheTimestamp = 0;
+let _pendingFetch: Promise<void> | null = null; // deduplicação de chamadas simultâneas
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
 export function usePromotions() {
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>(_cachedPromotions ?? []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   async function fetch(): Promise<void> {
+    // Usa cache se ainda válido
+    const now = Date.now();
+    if (_cachedPromotions !== null && now - _cacheTimestamp < CACHE_TTL_MS) {
+      setPromotions(_cachedPromotions);
+      return;
+    }
+
+    // Deduplica: se já tem uma requisição em andamento, aguarda ela
+    if (_pendingFetch) {
+      await _pendingFetch;
+      if (_cachedPromotions !== null) {setPromotions(_cachedPromotions);}
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    _pendingFetch = doFetch();
+    await _pendingFetch;
+    _pendingFetch = null;
+  }
+
+  async function doFetch(): Promise<void> {
 
     try {
-      console.log('[Promotions] 🔍 Buscando promoções...');
       const response = await promotionAPI.getActivePromotions();
-      console.log('[Promotions] ✅ Resposta recebida:', JSON.stringify(response, null, 2));
 
-      // Verificar se a resposta é válida
       if (!response || !Array.isArray(response.promotions)) {
-        console.log('[Promotions] ❌ Resposta inválida do backend');
         setPromotions([]);
+        _cachedPromotions = [];
+        _cacheTimestamp = Date.now();
         return;
       }
 
-      console.log('[Promotions] 📦 Total de promoções:', response.promotions.length);
+      const nowDate = new Date();
+      const activePromotions = response.promotions
+        .filter(promo => {
+          const isActive = promo.isActive !== undefined ? promo.isActive : true;
+          const isDateValid =
+            nowDate >= new Date(promo.startDate) && nowDate <= new Date(promo.endDate);
+          return isActive && isDateValid;
+        })
+        .sort((a, b) => b.priority - a.priority);
 
-      // Filtrar apenas promoções ativas e dentro do período válido
-      const now = new Date();
-      const activePromotions = response.promotions.filter(promo => {
-        const startDate = new Date(promo.startDate);
-        const endDate = new Date(promo.endDate);
-        const isDateValid = now >= startDate && now <= endDate;
-
-        // Se isActive não existir, considera como true (tolerante)
-        const isActive = promo.isActive !== undefined ? promo.isActive : true;
-
-        console.log(`[Promotions] Filtro - ${promo.title}: isActive=${isActive}, dateValid=${isDateValid}`);
-
-        return isActive && isDateValid;
-      });
-
-      console.log('[Promotions] ✨ Promoções ativas após filtro:', activePromotions.length);
-
-      // Ordenar por prioridade
-      const sorted = activePromotions.sort((a, b) => b.priority - a.priority);
-
-      setPromotions(sorted);
-      console.log('[Promotions] 🎉 Promoções definidas no state!');
+      _cachedPromotions = activePromotions;
+      _cacheTimestamp = Date.now();
+      setPromotions(activePromotions);
     } catch (err: any) {
-      // Se o endpoint não existir (404), ignora silenciosamente
-      // Isso permite que o app funcione mesmo sem o backend de promoções implementado
-      if (err?.statusCode === 404 || err?.response?.status === 404) {
-        setPromotions([]);
-        console.log('[Promotions] Endpoint não implementado ainda, continuando sem promoções');
+      const status = err?.statusCode ?? err?.response?.status;
+      // 404: endpoint não implementado; 429: rate limit — ambos silenciosos
+      if (status === 404 || status === 429) {
+        setPromotions(_cachedPromotions ?? []);
       } else {
-        // Outros erros são reportados
         setError(err as Error);
-        console.error('Error fetching promotions:', err);
       }
     } finally {
       setIsLoading(false);

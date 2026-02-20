@@ -100,10 +100,15 @@ export function HomeScreen({navigation}: Props) {
   };
 
   const renderPopularRoute = ({item}: {item: any}) => {
+    // Normaliza campos de rota (backend pode usar nomes diferentes)
+    const origin =
+      item.origin || item.from || item.originCity || item.departure || '';
+    const destination =
+      item.destination || item.to || item.destinationCity || item.arrival || '';
     // Use minPrice from API (PopularRoute) or price from mock data
-    const price = (item as any).minPrice ?? (item as any).price ?? 0;
-    const image = (item as any).image ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400';
-    const tripsCount = (item as any).tripsCount;
+    const price = item.minPrice ?? item.avgPrice ?? item.price ?? 0;
+    const image = item.image ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400';
+    const tripsCount = item.tripsCount ?? item.count ?? item.total;
 
     return (
       <TouchableOpacityBox
@@ -115,8 +120,8 @@ export function HomeScreen({navigation}: Props) {
         onPress={() => {
           // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
           navigation.navigate('SearchResults', {
-            origin: item.origin,
-            destination: item.destination,
+            origin,
+            destination,
           });
         }}
         style={{
@@ -137,7 +142,7 @@ export function HomeScreen({navigation}: Props) {
           <Box mb="s12">
             <Box flexDirection="row" alignItems="center" mb="s6">
               <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
-                {item.origin}
+                {origin || 'Origem'}
               </Text>
             </Box>
             <Box flexDirection="row" alignItems="center">
@@ -145,7 +150,7 @@ export function HomeScreen({navigation}: Props) {
                 <Icon name="arrow-forward" size={14} color="primary" />
               </Box>
               <Text preset="paragraphMedium" color="text" bold ml="s6" numberOfLines={1} flexShrink={1}>
-                {item.destination}
+                {destination || 'Destino'}
               </Text>
             </Box>
           </Box>

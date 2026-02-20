@@ -24,7 +24,7 @@ class UserAPI {
   }
 
   async updateAvatar(avatarUrl: string): Promise<User> {
-    const response = await api.patch<User>('/users/avatar', {avatarUrl});
+    const response = await api.patch<User>('/users/profile', {avatarUrl});
     return response;
   }
 
