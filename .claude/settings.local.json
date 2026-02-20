@@ -86,7 +86,8 @@
       "Bash(printf:*)",
       "Bash(npx react-native:*)",
       "Bash(/c/www/softLive/projects/navegaja/navegaJaAPP/src/screens/app/ProfileScreen.tsx:*)",
-      "WebFetch(domain:www.dicebear.com)"
+      "WebFetch(domain:www.dicebear.com)",
+      "Bash(git restore:*)"
     ]
   }
 }
