@@ -43,4 +43,7 @@ export type {DangerZoneData} from './DangerZone/DangerZone';
 export {SafetyOverlay} from './SafetyOverlay/SafetyOverlay';
 
 export {UserAvatar} from './UserAvatar/UserAvatar';
-export type {UserAvatarProps, AvatarSize} from './UserAvatar/UserAvatar';
+export type {UserAvatarProps, AvatarSize, DiceBearStyle} from './UserAvatar/UserAvatar';
+export {generateDiceBearSvg, buildDiceBearUrl, parseDiceBearUrl} from './UserAvatar/UserAvatar';
+
+export {AvatarEditorModal} from './AvatarEditor/AvatarEditorModal';

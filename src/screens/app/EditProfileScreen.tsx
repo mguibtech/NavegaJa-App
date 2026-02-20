@@ -5,7 +5,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
 import {useAuthStore} from '@store';
 import {useUpdateProfile, userAPI} from '@domain';
 import {useToast} from '@hooks';
@@ -53,6 +53,7 @@ export function EditProfileScreen({navigation}: Props) {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [isUploadingLicense, setIsUploadingLicense] = useState(false);
   const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
 
@@ -111,6 +112,21 @@ export function EditProfileScreen({navigation}: Props) {
       toast.showSuccess('Foto atualizada!');
     } catch {
       toast.showError('Não foi possível atualizar a foto.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }
+
+  async function handleSaveDiceBearAvatar(dicebearUrl: string) {
+    setShowAvatarEditor(false);
+    setIsUploadingAvatar(true);
+    try {
+      await userAPI.updateAvatar(dicebearUrl);
+      setAvatarUrl(dicebearUrl);
+      updateUser({...user!, avatarUrl: dicebearUrl});
+      toast.showSuccess('Avatar atualizado!');
+    } catch {
+      toast.showError('Não foi possível salvar o avatar.');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -286,11 +302,21 @@ export function EditProfileScreen({navigation}: Props) {
                   }
                 </Box>
               </TouchableOpacityBox>
-              <TouchableOpacityBox onPress={handleChangeAvatar} disabled={isUploadingAvatar}>
-                <Text preset="paragraphMedium" color="primary" bold>
-                  {isUploadingAvatar ? 'Enviando...' : 'Alterar foto'}
-                </Text>
-              </TouchableOpacityBox>
+              <Box flexDirection="row" alignItems="center" g="s12">
+                <TouchableOpacityBox onPress={handleChangeAvatar} disabled={isUploadingAvatar}>
+                  <Text preset="paragraphMedium" color="primary" bold>
+                    {isUploadingAvatar ? 'Enviando...' : 'Alterar foto'}
+                  </Text>
+                </TouchableOpacityBox>
+                <Text preset="paragraphSmall" color="border">|</Text>
+                <TouchableOpacityBox
+                  onPress={() => setShowAvatarEditor(true)}
+                  disabled={isUploadingAvatar}>
+                  <Text preset="paragraphMedium" color="secondary" bold>
+                    Criar avatar
+                  </Text>
+                </TouchableOpacityBox>
+              </Box>
             </Box>
 
             {/* Form */}
@@ -575,6 +601,14 @@ export function EditProfileScreen({navigation}: Props) {
           />
         </Box>
       </Modal>
+
+      <AvatarEditorModal
+        visible={showAvatarEditor}
+        currentAvatarUrl={avatarUrl}
+        userName={user?.name}
+        onConfirm={handleSaveDiceBearAvatar}
+        onClose={() => setShowAvatarEditor(false)}
+      />
 
       <InfoModal
         visible={showSuccessModal}
