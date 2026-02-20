@@ -43,7 +43,7 @@ export function ForgotPasswordScreen({navigation}: Props) {
       navigation.navigate('ResetPassword', {email: email.trim().toLowerCase()});
     } catch (_error: any) {
       const msg =
-        _error?.response?.data?.message ||
+        _error?.message ||
         'Erro ao enviar código. Tente novamente.';
       toast.showError(msg);
     }

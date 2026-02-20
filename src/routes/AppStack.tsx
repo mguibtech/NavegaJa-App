@@ -6,9 +6,11 @@ import {CaptainTabBar, CustomTabBar, Icon} from '@components';
 
 import {Promotion, PaymentMethod, bookingService, BookingStatus} from '@domain';
 import {
+  BoatDetailScreen,
   BookingScreen,
   BookingsScreen,
   CaptainChecklistScreen,
+  CaptainProfileScreen,
   CaptainShipmentCollectScreen,
   CaptainTripLiveScreen,
   CaptainCreateBoatScreen,
@@ -25,6 +27,7 @@ import {
   EditProfileScreen,
   EmergencyContactsScreen,
   FavoritesScreen,
+  GamificationScreen,
   HelpScreen,
   HomeScreen,
   NotificationsScreen,
@@ -39,6 +42,7 @@ import {
   ShipmentDetailsScreen,
   ShipmentReviewScreen,
   ShipmentsScreen,
+  TripReviewScreen,
   SosAlertScreen,
   TermsScreen,
   TicketScreen,
@@ -89,6 +93,35 @@ export type AppStackParamList = {
   ShipmentReview: {
     shipmentId: string;
   };
+  TripReview: {
+    tripId: string;
+    captainName?: string;
+    boatName?: string;
+  };
+  CaptainProfile: {
+    captainId: string;
+    captainName?: string;
+    captainRating?: string | number;
+    captainTotalTrips?: number;
+    captainLevel?: string;
+    captainCreatedAt?: string;
+    captainAvatarUrl?: string | null;
+    captainIsVerified?: boolean;
+    captainHasLicensePhoto?: boolean;
+  };
+  BoatDetail: {
+    boatId: string;
+    boatName?: string;
+    boatType?: string;
+    boatCapacity?: number;
+    boatModel?: string | null;
+    boatYear?: number | null;
+    boatAmenities?: string[];
+    boatRegistrationNum?: string;
+    boatIsVerified?: boolean;
+    boatPhotoUrl?: string | null;
+    boatCreatedAt?: string;
+  };
   ValidateDelivery: {
     trackingCode?: string;
     pin?: string;
@@ -96,6 +129,7 @@ export type AppStackParamList = {
   ScanShipmentQR: undefined;
   PaymentMethods: undefined;
   Notifications: undefined;
+  Gamification: undefined;
   Help: undefined;
   Terms: undefined;
   Privacy: undefined;
@@ -295,10 +329,14 @@ export function AppStack() {
       <Stack.Screen name="Shipments" component={ShipmentsScreen} />
       <Stack.Screen name="ShipmentDetails" component={ShipmentDetailsScreen} />
       <Stack.Screen name="ShipmentReview" component={ShipmentReviewScreen} />
+      <Stack.Screen name="TripReview" component={TripReviewScreen} />
+      <Stack.Screen name="CaptainProfile" component={CaptainProfileScreen} />
+      <Stack.Screen name="BoatDetail" component={BoatDetailScreen} />
       <Stack.Screen name="ValidateDelivery" component={ValidateDeliveryScreen} />
       <Stack.Screen name="ScanShipmentQR" component={ScanShipmentQRScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Gamification" component={GamificationScreen} />
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />

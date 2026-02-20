@@ -75,6 +75,82 @@ export function CaptainDashboardScreen({navigation}: Props) {
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={fetchMyTrips} />
         }>
+
+        {/* Banner: conta não pode operar (capabilities presentes e canOperate=false) */}
+        {user?.capabilities && !user.capabilities.canOperate && (
+          <>
+            {/* Sem documentos — solicita envio */}
+            {!user.capabilities.pendingVerification && (
+              <TouchableOpacityBox
+                margin="s16"
+                marginBottom="s4"
+                backgroundColor="warningBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="warning"
+                onPress={() => navigation.navigate('EditProfile')}>
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="warning"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="upload-file" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    Envie sua habilitação náutica
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                    Envie sua licença de arrais e certificado para começar a operar.
+                  </Text>
+                </Box>
+                <Icon name="chevron-right" size={20} color="textSecondary" />
+              </TouchableOpacityBox>
+            )}
+
+            {/* Documentos enviados — aguardando aprovação */}
+            {user.capabilities.pendingVerification && (
+              <Box
+                margin="s16"
+                marginBottom="s4"
+                backgroundColor="infoBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="info">
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="info"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="hourglass-top" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    Documentos enviados. Aguardando aprovação
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                    Seus documentos estão sendo analisados pelo NavegaJá. Em breve você poderá criar viagens.
+                  </Text>
+                </Box>
+              </Box>
+            )}
+          </>
+        )}
+
         {/* Stats Row */}
         <Box flexDirection="row" padding="s20" gap="s12">
           <Box

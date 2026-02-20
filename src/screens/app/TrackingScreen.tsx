@@ -20,70 +20,15 @@ import {
   InfoModal,
   ConfirmationModal,
 } from '@components';
-import {SosAlert, SosType, SosStatus, SafetyLevel, useTrackBooking, TrackingStatus} from '@domain';
+import {SosAlert, SosType, SosStatus, SafetyLevel, useTrackBooking, TrackingStatus, safetyAPI} from '@domain';
 
 import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Tracking'>;
 
-// Mock SOS Alerts (simulando alertas ativos próximos)
-const MOCK_SOS_ALERTS: SosAlert[] = [
-  {
-    id: 'sos-001',
-    userId: 'user-123',
-    type: SosType.MEDICAL,
-    status: SosStatus.ACTIVE,
-    location: {
-      latitude: -3.05,
-      longitude: -59.95,
-      accuracy: 15,
-      timestamp: new Date().toISOString(),
-    },
-    description: 'Passageiro com dores no peito, precisa de atendimento urgente',
-    contactNumber: '(92) 99888-7766',
-    createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
-    updatedAt: new Date(Date.now() - 15 * 60000).toISOString(),
-    user: {
-      id: 'user-123',
-      name: 'Maria Santos',
-      phone: '(92) 99888-7766',
-    },
-    trip: {
-      id: 'trip-001',
-      origin: 'Manaus',
-      destination: 'Itacoatiara',
-      boatName: 'Lancha Rápida',
-    },
-  },
-  {
-    id: 'sos-002',
-    userId: 'user-456',
-    type: SosType.MECHANICAL,
-    status: SosStatus.ACTIVE,
-    location: {
-      latitude: -2.9,
-      longitude: -59.5,
-      accuracy: 20,
-      timestamp: new Date().toISOString(),
-    },
-    description: 'Motor apresentando falhas, velocidade reduzida',
-    createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
-    updatedAt: new Date(Date.now() - 45 * 60000).toISOString(),
-    user: {
-      id: 'user-456',
-      name: 'Pedro Costa',
-    },
-    trip: {
-      id: 'trip-002',
-      origin: 'Parintins',
-      destination: 'Manaus',
-      boatName: 'Barco Regional',
-    },
-  },
-];
 
-// Mock Danger Zones
-const MOCK_DANGER_ZONES: DangerZoneData[] = [
+// Zonas de perigo estáticas — dados geográficos reais do Rio Amazonas
+const DANGER_ZONES: DangerZoneData[] = [
   {
     id: 'zone-001',
     type: 'circle',
@@ -119,8 +64,15 @@ export function TrackingScreen({navigation, route}: Props) {
 
   const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
 
+  const [mySosAlerts, setMySosAlerts] = useState<SosAlert[]>([]);
   const [showSosAlerts, setShowSosAlerts] = useState(true);
   const [showDangerZones, setShowDangerZones] = useState(true);
+
+  useEffect(() => {
+    safetyAPI.getMySosAlerts().then(alerts => {
+      setMySosAlerts(alerts.filter(a => a.status === SosStatus.ACTIVE));
+    }).catch(() => {});
+  }, []);
 
   // Modal state
   const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
@@ -189,35 +141,7 @@ export function TrackingScreen({navigation, route}: Props) {
   };
 
   const calculateNearbyAlerts = () => {
-    const RADIUS_KM = 50;
-    return MOCK_SOS_ALERTS.filter(alert => {
-      const distance = calculateDistance(
-        currentPosition.latitude,
-        currentPosition.longitude,
-        alert.location.latitude,
-        alert.location.longitude,
-      );
-      return distance <= RADIUS_KM;
-    }).length;
-  };
-
-  const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    return mySosAlerts.length;
   };
 
   const getStatusLabel = (status: TrackingStatus): string => {
@@ -440,7 +364,7 @@ export function TrackingScreen({navigation, route}: Props) {
 
             {/* SOS Alerts */}
             {showSosAlerts &&
-              MOCK_SOS_ALERTS.map(alert => (
+              mySosAlerts.map(alert => (
                 <SosMarker
                   key={alert.id}
                   alert={alert}
@@ -450,7 +374,7 @@ export function TrackingScreen({navigation, route}: Props) {
 
             {/* Danger Zones */}
             {showDangerZones &&
-              MOCK_DANGER_ZONES.map(zone => (
+              DANGER_ZONES.map(zone => (
                 <DangerZone key={zone.id} zone={zone} />
               ))}
           </MapView>
@@ -755,7 +679,7 @@ export function TrackingScreen({navigation, route}: Props) {
       <InfoModal
         visible={showSafetyModal}
         title="Segurança da Navegação"
-        message={`Condições atuais da rota:\n\n• Clima: Favorável\n• Tráfego: Normal\n• Alertas próximos: ${MOCK_SOS_ALERTS.length}\n• Zonas de perigo: ${MOCK_DANGER_ZONES.length}`}
+        message={`Condições atuais da rota:\n\n• Clima: Favorável\n• Tráfego: Normal\n• Alertas próximos: ${mySosAlerts.length}\n• Zonas de perigo: ${DANGER_ZONES.length}`}
         icon="security"
         iconColor="info"
         buttonText="OK"

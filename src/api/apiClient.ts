@@ -1,6 +1,6 @@
 import axios, {AxiosInstance, AxiosError, InternalAxiosRequestConfig} from 'axios';
 import {API_BASE_URL, API_TIMEOUT, DEFAULT_HEADERS} from './config';
-import {authStorage} from '@services';
+import {authStorage, ToastService} from '@services';
 import type {ApiError} from './types';
 
 class ApiClient {
@@ -84,6 +84,24 @@ class ApiClient {
           !originalRequest.url?.includes('/auth/login') &&
           !originalRequest.url?.includes('/auth/register')
         ) {
+          // Conta bloqueada: não tentar refresh, logout imediato com alerta
+          const errorMessage = error.response?.data?.message ?? '';
+          if (errorMessage === 'Conta bloqueada ou não encontrada') {
+            await authStorage.clear();
+            ToastService.error(
+              'Conta suspensa. Contacte o suporte: suporte@navegaja.com',
+              {duration: 6000},
+            );
+            if (this.onUnauthorized) {
+              this.onUnauthorized();
+            }
+            return Promise.reject({
+              statusCode: 401,
+              message: errorMessage,
+              error: 'AccountBlocked',
+            } as ApiError);
+          }
+
           if (this.isRefreshing) {
             // Se já está fazendo refresh, adiciona na fila
             return new Promise((resolve, reject) => {

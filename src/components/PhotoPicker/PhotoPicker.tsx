@@ -8,12 +8,16 @@ interface PhotoPickerProps {
   photos: Array<{uri: string; type: string; name: string}>;
   onPhotosChange: (photos: Array<{uri: string; type: string; name: string}>) => void;
   maxPhotos?: number;
+  label?: string;
+  description?: string;
 }
 
 export function PhotoPicker({
   photos,
   onPhotosChange,
   maxPhotos = 5,
+  label = 'Fotos da Encomenda (Opcional)',
+  description,
 }: PhotoPickerProps) {
   const handlePickPhoto = () => {
     if (photos.length >= maxPhotos) {
@@ -123,10 +127,10 @@ export function PhotoPicker({
   return (
     <Box>
       <Text preset="paragraphMedium" color="text" bold mb="s8">
-        Fotos da Encomenda (Opcional)
+        {label}
       </Text>
       <Text preset="paragraphSmall" color="textSecondary" mb="s12">
-        Tire fotos da encomenda para referência. Máximo {maxPhotos} fotos.
+        {description ?? `Tire fotos para referência. Máximo ${maxPhotos} fotos.`}
       </Text>
 
       {/* Grid de fotos */}

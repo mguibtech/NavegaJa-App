@@ -1,10 +1,9 @@
 import {api} from '@api';
 
-import {CreateReviewData, Review} from '../../reviewTypes';
+import {CreatePassengerReviewData, Review} from '../../reviewTypes';
 
 export async function createReviewUseCase(
-  data: CreateReviewData,
+  data: CreatePassengerReviewData,
 ): Promise<Review> {
-  const response = await api.post<Review>('/reviews', data);
-  return response;
+  return api.post<Review>('/reviews', data);
 }

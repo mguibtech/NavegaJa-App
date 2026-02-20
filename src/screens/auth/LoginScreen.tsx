@@ -50,7 +50,7 @@ export function LoginScreen({navigation}: Props) {
       }
     } catch (_error: any) {
       const msg =
-        _error?.response?.data?.message ||
+        _error?.message ||
         'Erro ao fazer login. Tente novamente.';
 
       toast.showWarning(msg);

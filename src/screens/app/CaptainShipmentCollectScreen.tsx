@@ -7,6 +7,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Box, Button, Icon, Text, TextInput} from '@components';
 import {captainAPI, Shipment, ShipmentStatus} from '@domain';
 import {useToast} from '@hooks';
+import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
 
@@ -25,6 +26,10 @@ export function CaptainShipmentCollectScreen({navigation, route}: Props) {
   const {shipmentId} = route.params;
   const {top} = useSafeAreaInsets();
   const toast = useToast();
+  const user = useAuthStore(s => s.user);
+
+  // Guard: bloqueia se capabilities existem e canManageShipments=false
+  const canManageShipments = !user?.capabilities || user.capabilities.canManageShipments;
 
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -249,7 +254,7 @@ export function CaptainShipmentCollectScreen({navigation, route}: Props) {
               <Button
                 title={isCollecting ? 'Coletando...' : 'Confirmar Coleta'}
                 onPress={handleCollect}
-                disabled={isCollecting || validationCode.trim().length < 4}
+                disabled={isCollecting || validationCode.trim().length < 4 || !canManageShipments}
               />
             </Box>
           )}
@@ -289,7 +294,7 @@ export function CaptainShipmentCollectScreen({navigation, route}: Props) {
               <Button
                 title={isMarkingDelivery ? 'Atualizando...' : 'Confirmar: Saiu para Entrega'}
                 onPress={handleOutForDelivery}
-                disabled={isMarkingDelivery}
+                disabled={isMarkingDelivery || !canManageShipments}
               />
             </Box>
           )}

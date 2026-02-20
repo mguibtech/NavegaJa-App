@@ -9,13 +9,16 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} from '@components';
 import {useUpdateBoat, getBoatByIdUseCase} from '@domain';
 import {useToast} from '@hooks';
+import {api} from '@api';
+import {API_BASE_URL} from '../../api/config';
 
 import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'CaptainEditBoat'>;
+type PhotoItem = {uri: string; type: string; name: string};
 
 const BOAT_TYPES = [
   'Lancha',
@@ -39,6 +42,16 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
   const [registrationNum, setRegistrationNum] = useState('');
   const [showTypePicker, setShowTypePicker] = useState(false);
 
+  // Fotos da galeria (photos[]) — novos picks pelo usuário
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  // Documentos (documentPhotos[]) — novos picks pelo usuário
+  const [docPhotos, setDocPhotos] = useState<PhotoItem[]>([]);
+  // URLs já salvas no backend (exibição)
+  const [savedPhotos, setSavedPhotos] = useState<string[]>([]);
+  const [savedDocPhotos, setSavedDocPhotos] = useState<string[]>([]);
+
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+
   useEffect(() => {
     loadBoat();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,6 +65,9 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
       setType(boat.type);
       setCapacity(String(boat.capacity));
       setRegistrationNum(boat.registrationNum ?? '');
+      setSavedPhotos(boat.photos ?? []);
+      setSavedDocPhotos(boat.documentPhotos ?? []);
+      setRejectionReason(boat.rejectionReason ?? null);
     } catch {
       toast.showError('Não foi possível carregar os dados da embarcação');
       navigation.goBack();
@@ -61,12 +77,33 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
   }
 
   function validate(): string | null {
-    if (!name.trim()) return 'Informe o nome da embarcação';
-    if (!type.trim()) return 'Selecione o tipo de embarcação';
-    if (!capacity.trim() || isNaN(Number(capacity)) || Number(capacity) < 1)
+    if (!name.trim()) {return 'Informe o nome da embarcação';}
+    if (!type.trim()) {return 'Selecione o tipo de embarcação';}
+    if (!capacity.trim() || isNaN(Number(capacity)) || Number(capacity) < 1) {
       return 'Informe a capacidade de passageiros';
-    if (!registrationNum.trim()) return 'Informe o número de registro';
+    }
+    if (!registrationNum.trim()) {return 'Informe o número de registro';}
     return null;
+  }
+
+  async function uploadPhotos(items: PhotoItem[], folder: string): Promise<string[]> {
+    return Promise.all(
+      items.map(async photo => {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: photo.uri,
+          type: photo.type || 'image/jpeg',
+          name: photo.name || 'photo.jpg',
+        } as any);
+        const res = await api.upload<{url: string}>(
+          `/upload/image?folder=${folder}`,
+          formData,
+        );
+        return res.url.startsWith('http')
+          ? res.url
+          : `${API_BASE_URL}${res.url}`;
+      }),
+    );
   }
 
   async function handleSubmit() {
@@ -77,12 +114,21 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
     }
 
     try {
+      // Upload das novas fotos em paralelo
+      const [newPhotoUrls, newDocUrls] = await Promise.all([
+        photos.length > 0 ? uploadPhotos(photos, 'boats') : Promise.resolve([]),
+        docPhotos.length > 0 ? uploadPhotos(docPhotos, 'boats') : Promise.resolve([]),
+      ]);
+
       await updateBoat(boatId, {
         name: name.trim(),
         type: type.trim(),
         capacity: Number(capacity),
         registrationNum: registrationNum.trim().toUpperCase(),
+        photos: [...savedPhotos, ...newPhotoUrls],
+        documentPhotos: [...savedDocPhotos, ...newDocUrls],
       });
+
       toast.showSuccess('Embarcação atualizada com sucesso!');
       navigation.goBack();
     } catch (err: any) {
@@ -92,7 +138,11 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
 
   if (isLoadingBoat) {
     return (
-      <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center">
+      <Box
+        flex={1}
+        backgroundColor="background"
+        alignItems="center"
+        justifyContent="center">
         <ActivityIndicator size="large" color="#0a6fbd" />
       </Box>
     );
@@ -111,7 +161,10 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
           borderBottomWidth={1}
           borderBottomColor="border"
           style={{paddingTop: top + 12}}>
-          <Box flexDirection="row" alignItems="center" justifyContent="center">
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="center">
             <TouchableOpacityBox
               width={40}
               height={40}
@@ -130,6 +183,34 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
         <ScrollView
           contentContainerStyle={{padding: 20, paddingBottom: 120}}
           keyboardShouldPersistTaps="handled">
+
+          {/* Banner de rejeição */}
+          {rejectionReason && (
+            <Box
+              backgroundColor="dangerBg"
+              borderRadius="s12"
+              padding="s16"
+              mb="s16"
+              flexDirection="row"
+              alignItems="flex-start">
+              <Icon name="error-outline" size={20} color="danger" />
+              <Box flex={1} ml="s12">
+                <Text preset="paragraphSmall" color="danger" bold mb="s4">
+                  Embarcação rejeitada
+                </Text>
+                <Text preset="paragraphSmall" color="danger">
+                  {rejectionReason}
+                </Text>
+                <Text
+                  preset="paragraphCaptionSmall"
+                  color="danger"
+                  mt="s8">
+                  Corrija os documentos abaixo e salve para reenviar para análise.
+                </Text>
+              </Box>
+            </Box>
+          )}
+
           <Text preset="paragraphMedium" color="text" bold mb="s12">
             Informações básicas
           </Text>
@@ -192,7 +273,11 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
                     setShowTypePicker(false);
                   }}>
                   <Icon
-                    name={type === t ? 'check-circle' : 'radio-button-unchecked'}
+                    name={
+                      type === t
+                        ? 'check-circle'
+                        : 'radio-button-unchecked'
+                    }
                     size={20}
                     color={type === t ? 'secondary' : 'textSecondary'}
                   />
@@ -214,13 +299,35 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
             />
           </Box>
 
-          <Box mb="s12">
+          <Box mb="s20">
             <TextInput
               placeholder="Número de registro"
               value={registrationNum}
               onChangeText={setRegistrationNum}
               autoCapitalize="characters"
               leftIcon="tag"
+            />
+          </Box>
+
+          {/* Fotos da embarcação */}
+          <Box mb="s20">
+            <PhotoPicker
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={Math.max(0, 10 - savedPhotos.length)}
+              label="Fotos da Embarcação"
+              description={`${savedPhotos.length} foto(s) já salva(s). Adicione mais para complementar.`}
+            />
+          </Box>
+
+          {/* Documentos da embarcação */}
+          <Box mb="s20">
+            <PhotoPicker
+              photos={docPhotos}
+              onPhotosChange={setDocPhotos}
+              maxPhotos={Math.max(0, 5 - savedDocPhotos.length)}
+              label="Documentos da Embarcação"
+              description={`Licença, registro, DPEM etc. ${savedDocPhotos.length} documento(s) já enviado(s). Ao adicionar novos documentos, a embarcação volta para análise.`}
             />
           </Box>
 

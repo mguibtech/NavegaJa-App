@@ -418,10 +418,7 @@ export function HomeScreen({navigation}: Props) {
               backgroundColor="background"
               alignItems="center"
               justifyContent="center"
-              onPress={() => {
-                // TODO: Navigate to notifications
-                console.log('Notifications pressed');
-              }}
+              onPress={() => navigation.navigate('Notifications')}
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 1},

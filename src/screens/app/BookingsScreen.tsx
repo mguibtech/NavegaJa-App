@@ -7,8 +7,9 @@ import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useFocusEffect} from '@react-navigation/native';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useMyBookings, Booking} from '@domain';
+import {Box, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
+import {useMyBookings, useCancelBooking, Booking} from '@domain';
+import {useToast} from '@hooks';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 import {formatBRL} from '@utils';
@@ -22,9 +23,12 @@ type BookingStatus = 'active' | 'completed';
 
 export function BookingsScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
+  const toast = useToast();
   const [selectedTab, setSelectedTab] = useState<BookingStatus>('active');
   const [refreshing, setRefreshing] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const {bookings, fetch: fetchBookings} = useMyBookings();
+  const {cancel, isLoading: isCancelling} = useCancelBooking();
 
   // Re-buscar bookings sempre que a tela ganhar foco (ex: após criar uma reserva)
   useFocusEffect(
@@ -57,7 +61,31 @@ export function BookingsScreen({navigation}: Props) {
     }
   };
 
+  async function handleConfirmCancel() {
+    if (!bookingToCancel) return;
+    try {
+      await cancel(bookingToCancel.id);
+      setBookingToCancel(null);
+      toast.showSuccess('Reserva cancelada com sucesso.');
+      await fetchBookings();
+    } catch (_err) {
+      setBookingToCancel(null);
+      toast.showError('Não foi possível cancelar. Tente novamente.');
+    }
+  }
+
   // Filtrar bookings por status
+  function getStatusBadge(status: string): {label: string; bg: string; textColor: string} {
+    switch (status) {
+      case 'pending':    return {label: 'Ag. Pagamento', bg: '#FEF3C7', textColor: '#92400E'};
+      case 'confirmed':  return {label: 'Confirmada',    bg: '#D1FAE5', textColor: '#065F46'};
+      case 'checked_in': return {label: 'Embarcado',     bg: '#DBEAFE', textColor: '#1E40AF'};
+      case 'completed':  return {label: 'Concluída',     bg: '#F3F4F6', textColor: '#6B7280'};
+      case 'cancelled':  return {label: 'Cancelada',     bg: '#FEE2E2', textColor: '#991B1B'};
+      default:           return {label: status,          bg: '#F3F4F6', textColor: '#6B7280'};
+    }
+  }
+
   const filteredBookings = bookings.filter(booking => {
     if (selectedTab === 'active') {
       return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in';
@@ -186,18 +214,23 @@ export function BookingsScreen({navigation}: Props) {
                 <Text preset="paragraphCaptionSmall" color="textSecondary">
                   #{item.id?.slice(0, 8).toUpperCase() || 'N/A'}
                 </Text>
-                <Box
-                  backgroundColor={isActive ? 'successBg' : 'border'}
-                  paddingHorizontal="s12"
-                  paddingVertical="s6"
-                  borderRadius="s8">
-                  <Text
-                    preset="paragraphCaptionSmall"
-                    color={isActive ? 'success' : 'textSecondary'}
-                    bold>
-                    {isActive ? 'Ativa' : 'Concluída'}
-                  </Text>
-                </Box>
+                {(() => {
+                  const badge = getStatusBadge(item.status);
+                  return (
+                    <Box
+                      paddingHorizontal="s10"
+                      paddingVertical="s4"
+                      borderRadius="s8"
+                      style={{backgroundColor: badge.bg}}>
+                      <Text
+                        preset="paragraphCaptionSmall"
+                        bold
+                        style={{color: badge.textColor}}>
+                        {badge.label}
+                      </Text>
+                    </Box>
+                  );
+                })()}
               </Box>
 
               {/* Route Info */}
@@ -289,7 +322,7 @@ export function BookingsScreen({navigation}: Props) {
                 </Box>
               </Box>
 
-              {/* Actions */}
+              {/* Actions — Ativas */}
               {isActive && (
                 <Box mt="s16" flexDirection="row" gap="s12">
                   <TouchableOpacityBox
@@ -313,8 +346,35 @@ export function BookingsScreen({navigation}: Props) {
                     borderRadius="s12"
                     backgroundColor="dangerBg"
                     alignItems="center"
-                    justifyContent="center">
+                    justifyContent="center"
+                    onPress={() => setBookingToCancel(item)}>
                     <Icon name="close" size={20} color="danger" />
+                  </TouchableOpacityBox>
+                </Box>
+              )}
+
+              {/* Actions — Concluídas */}
+              {item.status === 'completed' && item.trip?.captainId && (
+                <Box mt="s16">
+                  <TouchableOpacityBox
+                    paddingVertical="s12"
+                    borderRadius="s12"
+                    borderWidth={1}
+                    borderColor="primary"
+                    alignItems="center"
+                    flexDirection="row"
+                    justifyContent="center"
+                    onPress={() =>
+                      navigation.navigate('TripReview', {
+                        tripId: item.tripId,
+                        captainName: item.trip?.captain?.name,
+                        boatName: item.trip?.boat?.name,
+                      })
+                    }>
+                    <Icon name="star" size={18} color="primary" />
+                    <Text preset="paragraphMedium" color="primary" bold ml="s8">
+                      Avaliar Viagem
+                    </Text>
                   </TouchableOpacityBox>
                 </Box>
               )}
@@ -343,7 +403,19 @@ export function BookingsScreen({navigation}: Props) {
           </Box>
         }
       />
-      
+
+      <ConfirmationModal
+        visible={!!bookingToCancel}
+        title="Cancelar reserva?"
+        message="Esta ação não pode ser desfeita. Deseja cancelar sua reserva?"
+        confirmText="Sim, cancelar"
+        cancelText="Voltar"
+        icon="warning"
+        iconColor="danger"
+        isLoading={isCancelling}
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setBookingToCancel(null)}
+      />
     </Box>
   );
 }

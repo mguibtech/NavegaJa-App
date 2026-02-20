@@ -1,4 +1,4 @@
-import {UserRole} from './User/userTypes';
+import {UserRole, CaptainCapabilities} from './User/userTypes';
 
 /**
  * DTO para registro de novo usuário
@@ -9,6 +9,8 @@ export interface RegisterDto {
   email?: string;
   password: string;
   role?: UserRole;
+  city: string;
+  state?: string;
   cpf?: string;
   referralCode?: string;
 }
@@ -56,8 +58,15 @@ export interface AuthResponse {
     phone: string;
     email?: string;
     role: UserRole | 'passenger' | 'captain' | 'admin';
+    isActive: boolean;
+    isVerified?: boolean;
     cpf?: string;
     avatarUrl?: string;
+    city?: string;
+    state?: string;
+    licensePhotoUrl?: string | null;
+    certificatePhotoUrl?: string | null;
+    capabilities?: CaptainCapabilities | null;
     rating: number;
     totalTrips: number;
     totalPoints: number;

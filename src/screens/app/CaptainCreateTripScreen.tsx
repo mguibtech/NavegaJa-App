@@ -15,6 +15,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useMyBoats, useCreateTrip, Boat} from '@domain';
 import {useToast} from '@hooks';
+import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
 
@@ -41,9 +42,58 @@ function onMoneyChange(text: string, setter: (v: string) => void) {
 export function CaptainCreateTripScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
   const toast = useToast();
+  const user = useAuthStore(s => s.user);
 
   const {boats, fetchBoats} = useMyBoats();
   const {createTrip, isLoading} = useCreateTrip();
+
+  // Guard: bloqueia se capabilities existem e canCreateTrips=false
+  const canCreateTrips = !user?.capabilities || user.capabilities.canCreateTrips;
+  if (!canCreateTrips) {
+    const isPending = user?.capabilities?.pendingVerification ?? false;
+    return (
+      <Box flex={1} backgroundColor="background">
+        <Box
+          paddingHorizontal="s20"
+          paddingBottom="s16"
+          backgroundColor="surface"
+          style={{paddingTop: top + 12, elevation: 3}}>
+          <Box flexDirection="row" alignItems="center">
+            <TouchableOpacityBox
+              width={40} height={40} borderRadius="s20"
+              alignItems="center" justifyContent="center"
+              onPress={() => navigation.goBack()} mr="s12">
+              <Icon name="arrow-back" size={24} color="text" />
+            </TouchableOpacityBox>
+            <Text preset="headingSmall" color="text" bold>Nova Viagem</Text>
+          </Box>
+        </Box>
+        <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s32">
+          <Box
+            width={80} height={80} borderRadius="s48"
+            backgroundColor={isPending ? 'infoBg' : 'warningBg'}
+            alignItems="center" justifyContent="center" mb="s24">
+            <Icon name={isPending ? 'hourglass-top' : 'lock'} size={40} color={isPending ? 'info' : 'warning'} />
+          </Box>
+          <Text preset="headingSmall" color="text" bold mb="s12" style={{textAlign: 'center'}}>
+            {isPending ? 'Conta em análise' : 'Conta pendente de verificação'}
+          </Text>
+          <Text preset="paragraphMedium" color="textSecondary" style={{textAlign: 'center'}}>
+            {isPending
+              ? 'Seus documentos estão sendo analisados. Em breve você poderá criar viagens.'
+              : 'Envie sua habilitação náutica para começar a criar viagens.'}
+          </Text>
+          {!isPending && (
+            <Button
+              title="Enviar documentos"
+              onPress={() => navigation.navigate('EditProfile')}
+              style={{marginTop: 32}}
+            />
+          )}
+        </Box>
+      </Box>
+    );
+  }
 
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');

@@ -439,6 +439,36 @@ export function TripDetailsScreen({navigation, route}: Props) {
                  trip.status === 'completed' ? '✓ Concluída' : '✗ Cancelada'}
               </Text>
             </Box>
+
+            {/* Link to boat detail screen */}
+            <TouchableOpacityBox
+              mt="s16"
+              pt="s12"
+              borderTopWidth={1}
+              borderTopColor="border"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() =>
+                navigation.navigate('BoatDetail', {
+                  boatId: trip.boatId,
+                  boatName: trip.boat?.name,
+                  boatType: trip.boat?.type,
+                  boatCapacity: trip.boat?.capacity,
+                  boatModel: trip.boat?.model,
+                  boatYear: trip.boat?.year,
+                  boatAmenities: trip.boat?.amenities,
+                  boatRegistrationNum: trip.boat?.registrationNum,
+                  boatIsVerified: trip.boat?.isVerified,
+                  boatPhotoUrl: trip.boat?.photoUrl,
+                  boatCreatedAt: trip.boat?.createdAt,
+                })
+              }>
+              <Text preset="paragraphSmall" color="secondary" bold>
+                Ver embarcação completa
+              </Text>
+              <Icon name="chevron-right" size={16} color="secondary" />
+            </TouchableOpacityBox>
           </Box>
 
           {/* Navigation Safety Alert */}
@@ -520,6 +550,32 @@ export function TripDetailsScreen({navigation, route}: Props) {
                 </TouchableOpacityBox>
               )}
             </Box>
+
+            {/* Link to captain profile screen */}
+            <TouchableOpacityBox
+              mt="s16"
+              pt="s12"
+              borderTopWidth={1}
+              borderTopColor="border"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() =>
+                navigation.navigate('CaptainProfile', {
+                  captainId: trip.captainId,
+                  captainName: trip.captain?.name,
+                  captainRating: trip.captain?.rating,
+                  captainTotalTrips: trip.captain?.totalTrips,
+                  captainLevel: trip.captain?.level,
+                  captainCreatedAt: trip.captain?.createdAt,
+                  captainAvatarUrl: trip.captain?.avatarUrl,
+                })
+              }>
+              <Text preset="paragraphSmall" color="primary" bold>
+                Ver perfil completo
+              </Text>
+              <Icon name="chevron-right" size={16} color="primary" />
+            </TouchableOpacityBox>
           </Box>
 
           {/* Spacer for fixed footer */}

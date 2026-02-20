@@ -1,0 +1,1 @@
+export {useGamificationHistory} from './useGamificationHistory';

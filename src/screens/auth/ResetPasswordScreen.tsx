@@ -57,7 +57,7 @@ export function ResetPasswordScreen({navigation, route}: Props) {
       }, 1500);
     } catch (_error: any) {
       const msg =
-        _error?.response?.data?.message ||
+        _error?.message ||
         'Erro ao resetar senha. Verifique o código e tente novamente.';
       toast.showError(msg);
     }

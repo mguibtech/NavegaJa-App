@@ -1,84 +1,217 @@
-import React, {useState, useEffect} from 'react';
-import {ScrollView, Switch, Platform} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useState, useCallback} from 'react';
+import {FlatList, TouchableOpacity} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox, InfoModal} from '@components';
-import {useToast} from '@hooks';
+import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {
+  getNotificationHistory,
+  markNotificationRead,
+  markAllNotificationsRead,
+  clearNotificationHistory,
+} from '@services';
+import type {StoredNotification} from '@services';
 
 import {AppStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Notifications'>;
 
-const STORAGE_KEY = '@navegaja:notifications';
+type NotificationIconConfig = {
+  icon: string;
+  color: 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'info' | 'textSecondary';
+  bg: 'primaryBg' | 'secondaryBg' | 'dangerBg' | 'warningBg' | 'successBg' | 'infoBg' | 'background';
+};
 
-interface NotificationSettings {
-  pushEnabled: boolean;
-  bookings: boolean;
-  shipments: boolean;
-  promotions: boolean;
-  news: boolean;
-  whatsapp: boolean;
+function getNotificationConfig(type: string): NotificationIconConfig {
+  switch (type) {
+    case 'booking_confirmed':
+    case 'payment_confirmed':
+      return {icon: 'confirmation-number', color: 'primary', bg: 'primaryBg'};
+    case 'booking_cancelled':
+    case 'trip_cancelled':
+      return {icon: 'cancel', color: 'danger', bg: 'dangerBg'};
+    case 'trip_started':
+      return {icon: 'directions-boat', color: 'success', bg: 'successBg'};
+    case 'trip_completed':
+      return {icon: 'check-circle', color: 'success', bg: 'successBg'};
+    case 'shipment_collected':
+    case 'shipment_in_transit':
+    case 'shipment_arrived':
+    case 'shipment_out_for_delivery':
+    case 'shipment_delivered':
+      return {icon: 'local-shipping', color: 'secondary', bg: 'secondaryBg'};
+    case 'new_booking':
+      return {icon: 'people', color: 'primary', bg: 'primaryBg'};
+    default:
+      return {icon: 'notifications', color: 'textSecondary', bg: 'background'};
+  }
 }
 
-const DEFAULT_SETTINGS: NotificationSettings = {
-  pushEnabled: true,
-  bookings: true,
-  shipments: true,
-  promotions: true,
-  news: false,
-  whatsapp: true,
-};
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) {
+    return 'Agora mesmo';
+  }
+  if (diffMin < 60) {
+    return `${diffMin}min atrás`;
+  }
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) {
+    return `${diffHour}h atrás`;
+  }
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) {
+    return `${diffDay}d atrás`;
+  }
+  return date.toLocaleDateString('pt-BR');
+}
 
 export function NotificationsScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
-  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
-  const [_isLoading, setIsLoading] = useState(true);
-  const [showSavedModal, setShowSavedModal] = useState(false);
-  const toast = useToast();
+  const [notifications, setNotifications] = useState<StoredNotification[]>([]);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+    }, []),
+  );
 
-  async function loadSettings() {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setSettings(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Error loading notification settings:', error);
-    } finally {
-      setIsLoading(false);
+  async function loadNotifications() {
+    const history = await getNotificationHistory();
+    setNotifications(history);
+  }
+
+  async function handleTap(notification: StoredNotification) {
+    await markNotificationRead(notification.id);
+    setNotifications(prev =>
+      prev.map(n => (n.id === notification.id ? {...n, read: true} : n)),
+    );
+
+    const {type, bookingId, tripId, shipmentId} = notification.data;
+
+    switch (type) {
+      case 'booking_confirmed':
+      case 'payment_confirmed':
+        if (bookingId) {
+          navigation.navigate('Ticket', {bookingId});
+        }
+        break;
+      case 'booking_cancelled':
+        navigation.navigate('HomeTabs', undefined);
+        break;
+      case 'trip_started':
+      case 'trip_cancelled':
+        if (bookingId) {
+          navigation.navigate('Tracking', {bookingId});
+        }
+        break;
+      case 'trip_completed':
+        if (tripId) {
+          navigation.navigate('TripReview', {tripId});
+        }
+        break;
+      case 'shipment_collected':
+      case 'shipment_in_transit':
+      case 'shipment_arrived':
+      case 'shipment_out_for_delivery':
+      case 'shipment_delivered':
+        if (shipmentId) {
+          navigation.navigate('ShipmentDetails', {shipmentId});
+        }
+        break;
+      case 'new_booking':
+        if (tripId) {
+          navigation.navigate('CaptainTripManage', {tripId});
+        }
+        break;
+      default:
+        break;
     }
   }
 
-  async function saveSettings(newSettings: NotificationSettings) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
-      setSettings(newSettings);
-      setShowSavedModal(true);
-    } catch (error) {
-      console.error('Error saving notification settings:', error);
-      toast.showError('Não foi possível salvar as configurações');
-    }
+  async function handleMarkAllRead() {
+    await markAllNotificationsRead();
+    setNotifications(prev => prev.map(n => ({...n, read: true})));
   }
 
-  function toggleSetting(key: keyof NotificationSettings) {
-    const newSettings = {...settings, [key]: !settings[key]};
+  async function handleClear() {
+    await clearNotificationHistory();
+    setNotifications([]);
+  }
 
-    // Se desabilitar push, desabilitar todas as categorias
-    if (key === 'pushEnabled' && !newSettings.pushEnabled) {
-      newSettings.bookings = false;
-      newSettings.shipments = false;
-      newSettings.promotions = false;
-      newSettings.news = false;
-    }
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-    saveSettings(newSettings);
+  function renderItem({item}: {item: StoredNotification}) {
+    const config = getNotificationConfig(item.type);
+    return (
+      <TouchableOpacity activeOpacity={0.7} onPress={() => handleTap(item)}>
+        <Box
+          backgroundColor="surface"
+          flexDirection="row"
+          alignItems="flex-start"
+          paddingHorizontal="s16"
+          paddingVertical="s16"
+          style={{
+            borderBottomWidth: 1,
+            borderBottomColor: '#F0F0F0',
+            borderLeftWidth: item.read ? 0 : 3,
+            borderLeftColor: '#0E7AFE',
+          }}>
+          {/* Ícone */}
+          <Box
+            width={44}
+            height={44}
+            borderRadius="s24"
+            backgroundColor={config.bg}
+            alignItems="center"
+            justifyContent="center"
+            mr="s12"
+            style={{flexShrink: 0}}>
+            <Icon name={config.icon} size={22} color={config.color} />
+          </Box>
+
+          {/* Conteúdo */}
+          <Box flex={1}>
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              mb="s4">
+              <Text
+                preset="paragraphMedium"
+                color="text"
+                bold={!item.read}
+                style={{flex: 1, marginRight: 8}}
+                numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                {formatTimeAgo(item.receivedAt)}
+              </Text>
+            </Box>
+            <Text preset="paragraphSmall" color="textSecondary" numberOfLines={2}>
+              {item.body}
+            </Text>
+          </Box>
+
+          {/* Indicador não lido */}
+          {!item.read && (
+            <Box
+              width={8}
+              height={8}
+              borderRadius="s8"
+              backgroundColor="primary"
+              style={{marginLeft: 8, marginTop: 6, flexShrink: 0}}
+            />
+          )}
+        </Box>
+      </TouchableOpacity>
+    );
   }
 
   return (
@@ -88,300 +221,112 @@ export function NotificationsScreen({navigation}: Props) {
         backgroundColor="surface"
         paddingHorizontal="s20"
         paddingBottom="s16"
-        flexDirection="row"
-        alignItems="center"
         style={{
           paddingTop: top + 12,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.08,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <TouchableOpacityBox
-          width={40}
-          height={40}
-          borderRadius="s20"
+        <Box
+          flexDirection="row"
           alignItems="center"
-          justifyContent="center"
-          onPress={() => navigation.goBack()}
-          mr="s12">
-          <Icon name="arrow-back" size={24} color="text" />
-        </TouchableOpacityBox>
-        <Text preset="headingSmall" color="text" bold>
-          Notificações
-        </Text>
+          justifyContent="space-between">
+          <Box flexDirection="row" alignItems="center">
+            <TouchableOpacityBox
+              width={40}
+              height={40}
+              borderRadius="s20"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => navigation.goBack()}
+              mr="s12">
+              <Icon name="arrow-back" size={24} color="text" />
+            </TouchableOpacityBox>
+            <Box>
+              <Text preset="headingSmall" color="text" bold>
+                Notificações
+              </Text>
+              {unreadCount > 0 && (
+                <Text preset="paragraphSmall" color="textSecondary">
+                  {unreadCount} não {unreadCount === 1 ? 'lida' : 'lidas'}
+                </Text>
+              )}
+            </Box>
+          </Box>
+
+          {notifications.length > 0 && (
+            <Box flexDirection="row" gap="s8">
+              {unreadCount > 0 && (
+                <TouchableOpacityBox
+                  paddingHorizontal="s12"
+                  paddingVertical="s8"
+                  borderRadius="s8"
+                  backgroundColor="primaryBg"
+                  onPress={handleMarkAllRead}>
+                  <Text preset="paragraphSmall" color="primary" bold>
+                    Ler todas
+                  </Text>
+                </TouchableOpacityBox>
+              )}
+              <TouchableOpacityBox
+                paddingHorizontal="s12"
+                paddingVertical="s8"
+                borderRadius="s8"
+                backgroundColor="background"
+                onPress={handleClear}>
+                <Text preset="paragraphSmall" color="textSecondary">
+                  Limpar
+                </Text>
+              </TouchableOpacityBox>
+            </Box>
+          )}
+        </Box>
       </Box>
 
-      {/* Content */}
-      <ScrollView
-        contentContainerStyle={{padding: 24}}
-        showsVerticalScrollIndicator={false}>
-        {/* Master Toggle */}
+      {/* Lista / Empty State */}
+      {notifications.length === 0 ? (
         <Box
-          backgroundColor="surface"
-          borderRadius="s16"
-          padding="s20"
-          mb="s24"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s8">
-                <Box
-                  width={40}
-                  height={40}
-                  borderRadius="s20"
-                  backgroundColor="primaryBg"
-                  alignItems="center"
-                  justifyContent="center"
-                  mr="s12">
-                  <Icon name="notifications-active" size={24} color="primary" />
-                </Box>
-                <Text preset="paragraphLarge" color="text" bold>
-                  Notificações Push
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Receba alertas importantes no seu dispositivo
-              </Text>
-            </Box>
-            <Switch
-              value={settings.pushEnabled}
-              onValueChange={() => toggleSetting('pushEnabled')}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.pushEnabled ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
+          flex={1}
+          alignItems="center"
+          justifyContent="center"
+          paddingHorizontal="s40">
+          <Box
+            width={80}
+            height={80}
+            borderRadius="s48"
+            backgroundColor="surface"
+            alignItems="center"
+            justifyContent="center"
+            mb="s24"
+            style={{elevation: 2}}>
+            <Icon name="notifications-none" size={40} color="textSecondary" />
           </Box>
+          <Text
+            preset="paragraphLarge"
+            color="text"
+            bold
+            mb="s8"
+            style={{textAlign: 'center'}}>
+            Nenhuma notificação
+          </Text>
+          <Text
+            preset="paragraphSmall"
+            color="textSecondary"
+            style={{textAlign: 'center'}}>
+            Quando você receber notificações, elas aparecerão aqui.
+          </Text>
         </Box>
-
-        {/* Categories */}
-        <Text preset="paragraphMedium" color="text" bold mb="s16">
-          Categorias
-        </Text>
-
-        {/* Bookings */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s12"
-          padding="s16"
-          mb="s12"
-          opacity={settings.pushEnabled ? 1 : 0.5}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s4">
-                <Icon name="confirmation-number" size={20} color="primary" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  Minhas Viagens
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Atualizações sobre reservas e embarques
-              </Text>
-            </Box>
-            <Switch
-              value={settings.bookings}
-              onValueChange={() => toggleSetting('bookings')}
-              disabled={!settings.pushEnabled}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.bookings ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
-          </Box>
-        </Box>
-
-        {/* Shipments */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s12"
-          padding="s16"
-          mb="s12"
-          opacity={settings.pushEnabled ? 1 : 0.5}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s4">
-                <Icon name="local-shipping" size={20} color="secondary" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  Encomendas
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Status de rastreamento e entregas
-              </Text>
-            </Box>
-            <Switch
-              value={settings.shipments}
-              onValueChange={() => toggleSetting('shipments')}
-              disabled={!settings.pushEnabled}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.shipments ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
-          </Box>
-        </Box>
-
-        {/* Promotions */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s12"
-          padding="s16"
-          mb="s12"
-          opacity={settings.pushEnabled ? 1 : 0.5}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s4">
-                <Icon name="local-offer" size={20} color="warning" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  Promoções
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Ofertas especiais e cupons de desconto
-              </Text>
-            </Box>
-            <Switch
-              value={settings.promotions}
-              onValueChange={() => toggleSetting('promotions')}
-              disabled={!settings.pushEnabled}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.promotions ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
-          </Box>
-        </Box>
-
-        {/* News */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s12"
-          padding="s16"
-          mb="s24"
-          opacity={settings.pushEnabled ? 1 : 0.5}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s4">
-                <Icon name="campaign" size={20} color="info" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  Novidades
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Novos recursos e melhorias do app
-              </Text>
-            </Box>
-            <Switch
-              value={settings.news}
-              onValueChange={() => toggleSetting('news')}
-              disabled={!settings.pushEnabled}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.news ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
-          </Box>
-        </Box>
-
-        {/* WhatsApp */}
-        <Text preset="paragraphMedium" color="text" bold mb="s16">
-          Outros Canais
-        </Text>
-
-        <Box
-          backgroundColor="surface"
-          borderRadius="s12"
-          padding="s16"
-          mb="s24"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
-          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
-            <Box flex={1} mr="s16">
-              <Box flexDirection="row" alignItems="center" mb="s4">
-                <Icon name="whatsapp" size={20} color="success" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  WhatsApp
-                </Text>
-              </Box>
-              <Text preset="paragraphSmall" color="textSecondary">
-                Atualizações importantes via WhatsApp
-              </Text>
-            </Box>
-            <Switch
-              value={settings.whatsapp}
-              onValueChange={() => toggleSetting('whatsapp')}
-              trackColor={{false: '#E0E0E0', true: '#A3D5FF'}}
-              thumbColor={settings.whatsapp ? '#0E7AFE' : '#f4f3f4'}
-              ios_backgroundColor="#E0E0E0"
-            />
-          </Box>
-        </Box>
-
-        {/* Info */}
-        <Box
-          backgroundColor="infoBg"
-          borderRadius="s12"
-          padding="s16"
-          style={{
-            borderLeftWidth: 4,
-            borderLeftColor: '#2196F3',
-          }}>
-          <Box flexDirection="row" alignItems="flex-start">
-            <Icon name="info" size={20} color="info" />
-            <Text preset="paragraphSmall" color="info" ml="s8" flex={1}>
-              Suas preferências são salvas automaticamente. Você pode alterá-las a qualquer
-              momento.
-            </Text>
-          </Box>
-        </Box>
-      </ScrollView>
-
-      {/* Saved Modal */}
-      <InfoModal
-        visible={showSavedModal}
-        title="Configurações Salvas"
-        message="Suas preferências de notificação foram atualizadas com sucesso!"
-        icon="check-circle"
-        iconColor="success"
-        buttonText="Entendi"
-        onClose={() => setShowSavedModal(false)}
-      />
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 24}}
+        />
+      )}
     </Box>
   );
 }

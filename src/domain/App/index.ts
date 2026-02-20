@@ -28,6 +28,12 @@ export * from './Boat';
 // Captain
 export * from './Captain';
 
+// Review
+export * from './Review';
+
+// Gamification
+export * from './Gamification';
+
 // TODO: Add more domains
 // export * from './Route';
 // export * from './User';

@@ -12,8 +12,10 @@ export interface Boat {
   description?: string;
   amenities?: string[];
   photos?: string[];
+  documentPhotos?: string[];
   isActive: boolean;
   isVerified: boolean;
+  rejectionReason?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,4 +29,5 @@ export interface CreateBoatData {
   year?: number;
   amenities?: string[];
   photos?: string[];
+  documentPhotos?: string[];
 }

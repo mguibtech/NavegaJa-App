@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 
-import {authStorage} from '@services';
+import {authStorage, registerPushToken, unregisterPushToken} from '@services';
 import {loginAPI, loginAdapter, RegisterDto} from '@domain';
 import {registerAPI, registerAdapter} from '@domain';
 import {userAPI} from '@domain';
@@ -60,6 +60,9 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
 
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
+
+      // Registra token FCM (não bloqueia o login se falhar)
+      registerPushToken();
     } catch (_error) {
       set({isLoading: false});
       throw _error;
@@ -83,6 +86,9 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
 
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
+
+      // Registra token FCM (não bloqueia o registro se falhar)
+      registerPushToken();
     } catch (_error) {
       set({isLoading: false});
       throw _error;
@@ -90,6 +96,8 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
   },
 
   logout: async () => {
+    // Remove token FCM antes de limpar a sessão
+    await unregisterPushToken();
     await authStorage.clear();
     set({user: null, isLoggedIn: false});
   },
