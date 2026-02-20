@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {FlatList, ActivityIndicator, Clipboard, Share, TouchableOpacity} from 'react-native';
+import {FlatList, ActivityIndicator, Clipboard, Share, TouchableOpacity, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -67,6 +67,7 @@ export function GamificationScreen({navigation}: Props) {
   const {user} = useAuthStore();
   const [activeTab, setActiveTab] = useState<ActiveTab>('history');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {stats, isLoading: statsLoading, fetchStats} = useGamificationStats();
   const {history, isLoading: historyLoading, fetchHistory} = useGamificationHistory();
@@ -79,6 +80,16 @@ export function GamificationScreen({navigation}: Props) {
       fetchLeaderboard().catch(() => {});
     }, []),
   );
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await Promise.all([
+      fetchStats().catch(() => {}),
+      fetchHistory().catch(() => {}),
+      fetchLeaderboard().catch(() => {}),
+    ]);
+    setRefreshing(false);
+  }
 
   const points = stats?.totalPoints ?? user?.totalPoints ?? 0;
   const level = stats?.level ?? user?.level ?? 'Marinheiro';
@@ -461,6 +472,9 @@ export function GamificationScreen({navigation}: Props) {
             renderItem={renderTransaction}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 24}}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+            }
           />
         )
       ) : leaderboardLoading ? (
@@ -481,6 +495,9 @@ export function GamificationScreen({navigation}: Props) {
           renderItem={renderLeaderboardItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{paddingBottom: 24}}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+          }
         />
       )}
     </Box>

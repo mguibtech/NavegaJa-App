@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {FlatList, RefreshControl, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -74,6 +74,7 @@ function formatTimeAgo(dateStr: string): string {
 export function NotificationsScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -84,6 +85,12 @@ export function NotificationsScreen({navigation}: Props) {
   async function loadNotifications() {
     const history = await getNotificationHistory();
     setNotifications(history);
+  }
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await loadNotifications();
+    setRefreshing(false);
   }
 
   async function handleTap(notification: StoredNotification) {
@@ -285,48 +292,38 @@ export function NotificationsScreen({navigation}: Props) {
         </Box>
       </Box>
 
-      {/* Lista / Empty State */}
-      {notifications.length === 0 ? (
-        <Box
-          flex={1}
-          alignItems="center"
-          justifyContent="center"
-          paddingHorizontal="s40">
-          <Box
-            width={80}
-            height={80}
-            borderRadius="s48"
-            backgroundColor="surface"
-            alignItems="center"
-            justifyContent="center"
-            mb="s24"
-            style={{elevation: 2}}>
-            <Icon name="notifications-none" size={40} color="textSecondary" />
+      {/* Lista */}
+      <FlatList
+        data={notifications}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 24, flexGrow: 1}}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+        }
+        ListEmptyComponent={
+          <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40" style={{paddingTop: 80}}>
+            <Box
+              width={80}
+              height={80}
+              borderRadius="s48"
+              backgroundColor="surface"
+              alignItems="center"
+              justifyContent="center"
+              mb="s24"
+              style={{elevation: 2}}>
+              <Icon name="notifications-none" size={40} color="textSecondary" />
+            </Box>
+            <Text preset="paragraphLarge" color="text" bold mb="s8" style={{textAlign: 'center'}}>
+              Nenhuma notificação
+            </Text>
+            <Text preset="paragraphSmall" color="textSecondary" style={{textAlign: 'center'}}>
+              Quando você receber notificações, elas aparecerão aqui.
+            </Text>
           </Box>
-          <Text
-            preset="paragraphLarge"
-            color="text"
-            bold
-            mb="s8"
-            style={{textAlign: 'center'}}>
-            Nenhuma notificação
-          </Text>
-          <Text
-            preset="paragraphSmall"
-            color="textSecondary"
-            style={{textAlign: 'center'}}>
-            Quando você receber notificações, elas aparecerão aqui.
-          </Text>
-        </Box>
-      ) : (
-        <FlatList
-          data={notifications}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{paddingBottom: 24}}
-        />
-      )}
+        }
+      />
     </Box>
   );
 }

@@ -55,6 +55,7 @@ export function RegisterScreen({navigation}: Props) {
   const [role, setRole] = useState<UserRole>(UserRole.PASSENGER);
   const [city, setCity] = useState('Manaus');
   const [cpf, setCpf] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
 
@@ -86,6 +87,7 @@ export function RegisterScreen({navigation}: Props) {
         city: city.trim(),
         state: 'AM',
         cpf: cpf.replace(/\D/g, '') || undefined,
+        referralCode: referralCode.trim().toUpperCase() || undefined,
       });
 
       // Registro bem-sucedido - o store já atualizou o estado global
@@ -308,6 +310,20 @@ export function RegisterScreen({navigation}: Props) {
                   onChangeText={v => setCpf(formatCPF(v))}
                   maxLength={14}
                   leftIcon="badge"
+                />
+              </Box>
+
+              {/* Código de indicação (opcional) */}
+              <Box mt="s16">
+                <TextInput
+                  label="Código de Indicação (opcional)"
+                  placeholder="Ex: ABC123"
+                  value={referralCode}
+                  onChangeText={v => setReferralCode(v.toUpperCase())}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={12}
+                  leftIcon="card-giftcard"
                 />
               </Box>
 
