@@ -41,3 +41,4 @@ export * from './CaptainStartTripScreen';
 export * from './CaptainShipmentCollectScreen';
 export * from './CaptainTripLiveScreen';
 export * from './GamificationScreen';
+export * from './MyReviewsScreen';

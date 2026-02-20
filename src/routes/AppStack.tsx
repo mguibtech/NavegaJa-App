@@ -49,6 +49,7 @@ import {
   TrackingScreen,
   TripDetailsScreen,
   ValidateDeliveryScreen,
+  MyReviewsScreen,
 } from '@screens';
 import {useAuthStore} from '@store';
 
@@ -130,6 +131,7 @@ export type AppStackParamList = {
   PaymentMethods: undefined;
   Notifications: undefined;
   Gamification: undefined;
+  MyReviews: undefined;
   Help: undefined;
   Terms: undefined;
   Privacy: undefined;
@@ -337,6 +339,7 @@ export function AppStack() {
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Gamification" component={GamificationScreen} />
+      <Stack.Screen name="MyReviews" component={MyReviewsScreen} />
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />

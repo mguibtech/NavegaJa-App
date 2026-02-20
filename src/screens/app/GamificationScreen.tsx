@@ -70,7 +70,10 @@ export function GamificationScreen({navigation}: Props) {
   const [refreshing, setRefreshing] = useState(false);
 
   const {stats, isLoading: statsLoading, fetchStats} = useGamificationStats();
-  const {history, isLoading: historyLoading, fetchHistory} = useGamificationHistory();
+  const {
+    history, isLoading: historyLoading, isLoadingMore, error: historyError,
+    hasMore, fetchHistory, fetchMoreHistory,
+  } = useGamificationHistory();
   const {leaderboard, isLoading: leaderboardLoading, fetchLeaderboard} = useLeaderboard();
 
   useFocusEffect(
@@ -451,29 +454,50 @@ export function GamificationScreen({navigation}: Props) {
           <Box flex={1} alignItems="center" justifyContent="center">
             <ActivityIndicator color="#0E7AFE" />
           </Box>
-        ) : history.length === 0 ? (
-          <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40">
-            <Icon name="monetization-on" size={64} color="border" />
-            <Text preset="headingSmall" color="textSecondary" mt="s16" style={{textAlign: 'center'}}>
-              Nenhuma transação ainda
-            </Text>
-            <Text
-              preset="paragraphSmall"
-              color="textSecondary"
-              mt="s8"
-              style={{textAlign: 'center'}}>
-              Complete viagens e avaliações para ganhar NavegaCoins.
-            </Text>
-          </Box>
         ) : (
           <FlatList
             data={history}
             keyExtractor={item => item.id}
             renderItem={renderTransaction}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{paddingBottom: 24}}
+            contentContainerStyle={{paddingBottom: 24, flexGrow: 1}}
+            onEndReached={fetchMoreHistory}
+            onEndReachedThreshold={0.3}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+            }
+            ListEmptyComponent={
+              historyError ? (
+                <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40" style={{paddingTop: 80}}>
+                  <Icon name="wifi-off" size={48} color="border" />
+                  <Text preset="headingSmall" color="textSecondary" mt="s16" style={{textAlign: 'center'}}>
+                    Sem conexão
+                  </Text>
+                  <TouchableOpacityBox
+                    mt="s16" paddingHorizontal="s24" paddingVertical="s12"
+                    backgroundColor="primaryBg" borderRadius="s12"
+                    onPress={() => fetchHistory().catch(() => {})}>
+                    <Text preset="paragraphMedium" color="primary" bold>Tentar novamente</Text>
+                  </TouchableOpacityBox>
+                </Box>
+              ) : (
+                <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40" style={{paddingTop: 80}}>
+                  <Icon name="monetization-on" size={64} color="border" />
+                  <Text preset="headingSmall" color="textSecondary" mt="s16" style={{textAlign: 'center'}}>
+                    Nenhuma transação ainda
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s8" style={{textAlign: 'center'}}>
+                    Complete viagens e avaliações para ganhar NavegaCoins.
+                  </Text>
+                </Box>
+              )
+            }
+            ListFooterComponent={
+              isLoadingMore ? (
+                <Box paddingVertical="s16" alignItems="center">
+                  <ActivityIndicator color="#0E7AFE" size="small" />
+                </Box>
+              ) : null
             }
           />
         )

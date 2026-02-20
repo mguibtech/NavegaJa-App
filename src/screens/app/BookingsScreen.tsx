@@ -27,7 +27,7 @@ export function BookingsScreen({navigation}: Props) {
   const [selectedTab, setSelectedTab] = useState<BookingStatus>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
-  const {bookings, fetch: fetchBookings} = useMyBookings();
+  const {bookings, fetch: fetchBookings, error: bookingsError} = useMyBookings();
   const {cancel, isLoading: isCancelling} = useCancelBooking();
 
   // Re-buscar bookings sempre que a tela ganhar foco (ex: após criar uma reserva)
@@ -146,6 +146,24 @@ export function BookingsScreen({navigation}: Props) {
           </TouchableOpacityBox>
         </Box>
       </Box>
+
+      {/* Error banner */}
+      {bookingsError && (
+        <Box
+          flexDirection="row"
+          alignItems="center"
+          paddingHorizontal="s16"
+          paddingVertical="s12"
+          style={{backgroundColor: '#FEF3C7', borderBottomWidth: 1, borderBottomColor: '#FDE68A'}}>
+          <Icon name="wifi-off" size={16} color="warning" />
+          <Text preset="paragraphSmall" color="text" ml="s8" flex={1}>
+            Sem conexão. Exibindo dados em cache.
+          </Text>
+          <TouchableOpacityBox onPress={() => fetchBookings().catch(() => {})} pl="s12">
+            <Text preset="paragraphSmall" color="primary" bold>Tentar</Text>
+          </TouchableOpacityBox>
+        </Box>
+      )}
 
       {/* Bookings List */}
       <FlatList
