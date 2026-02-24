@@ -6,7 +6,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {getReviewsByBoatUseCase, Review} from '@domain';
-import {API_BASE_URL} from '../../api/config';
+import {API_BASE_URL, apiImageSource} from '../../api/config';
 
 import {AppStackParamList} from '@routes';
 
@@ -152,7 +152,7 @@ export function BoatDetailScreen({navigation, route}: Props) {
               }}>
               {showPhoto ? (
                 <Image
-                  source={{uri: photoUri!}}
+                  source={apiImageSource(photoUri)}
                   style={{width: 96, height: 96}}
                   onError={() => setPhotoError(true)}
                 />
@@ -440,7 +440,7 @@ export function BoatDetailScreen({navigation, route}: Props) {
                         keyExtractor={(item, i) => `${review.id}-photo-${i}`}
                         renderItem={({item: photoUrl}) => (
                           <Image
-                            source={{uri: photoUrl}}
+                            source={apiImageSource(photoUrl)}
                             style={{
                               width: 80,
                               height: 80,

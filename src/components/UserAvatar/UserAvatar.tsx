@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {Image} from 'react-native';
+import {apiImageSource} from '../../api/config';
 
 import {createAvatar} from '@dicebear/core';
 import {
@@ -270,7 +271,7 @@ export function UserAvatar({
       style={{borderRadius: radius}}>
       {hasRealPhoto ? (
         <Image
-          source={{uri: avatarUrl!}}
+          source={apiImageSource(avatarUrl)}
           style={{width: dim, height: dim}}
           onError={() => setImgError(true)}
         />

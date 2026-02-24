@@ -17,6 +17,7 @@ export const registerAdapter = {
       licensePhotoUrl: response.user.licensePhotoUrl,
       certificatePhotoUrl: response.user.certificatePhotoUrl,
       capabilities: response.user.capabilities ?? null,
+      rejectionReason: response.user.rejectionReason ?? null,
       rating: response.user.rating,
       totalTrips: response.user.totalTrips,
       totalPoints: response.user.totalPoints,

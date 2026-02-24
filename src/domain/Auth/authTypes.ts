@@ -67,6 +67,7 @@ export interface AuthResponse {
     licensePhotoUrl?: string | null;
     certificatePhotoUrl?: string | null;
     capabilities?: CaptainCapabilities | null;
+    rejectionReason?: string | null;
     rating: number;
     totalTrips: number;
     totalPoints: number;

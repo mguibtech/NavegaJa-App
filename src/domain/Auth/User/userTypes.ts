@@ -28,6 +28,7 @@ export interface User {
   licensePhotoUrl?: string | null;
   certificatePhotoUrl?: string | null;
   capabilities?: CaptainCapabilities | null;
+  rejectionReason?: string | null;
   rating: string | number; // Backend retorna como string
   totalTrips: number;
   totalPoints: number;

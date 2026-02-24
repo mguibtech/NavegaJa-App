@@ -6,7 +6,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {getReviewsByCaptainUseCase, Review} from '@domain';
-import {API_BASE_URL} from '../../api/config';
+import {API_BASE_URL, apiImageSource} from '../../api/config';
 
 import {AppStackParamList} from '@routes';
 
@@ -148,7 +148,7 @@ export function CaptainProfileScreen({navigation, route}: Props) {
               }}>
               {showAvatar ? (
                 <Image
-                  source={{uri: avatarUri!}}
+                  source={apiImageSource(avatarUri)}
                   style={{width: 88, height: 88}}
                   onError={() => setAvatarError(true)}
                 />

@@ -80,3 +80,35 @@ export const DEFAULT_HEADERS = {
   'Accept': 'application/json',
   'ngrok-skip-browser-warning': 'true',
 };
+
+/**
+ * Normaliza uma URL de arquivo retornada pelo backend.
+ * Problema: o servidor pode retornar `http://localhost:3000/uploads/...`
+ * Em devices físicos `localhost` aponta pro próprio celular → imagem falha.
+ * Fix: substituir o host localhost/127.0.0.1 pelo API_BASE_URL configurado.
+ */
+export function normalizeFileUrl(url: string | null | undefined): string {
+  if (!url) {return '';}
+  // Se a URL começa com http mas contém localhost/127.0.0.1, substitui pelo host real
+  const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//;
+  if (localhostPattern.test(url)) {
+    return url.replace(localhostPattern, `${API_BASE_URL}/`);
+  }
+  // URL relativa → prefixar com base
+  if (!url.startsWith('http')) {
+    return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  }
+  return url;
+}
+
+/**
+ * Wrapper para <Image source={...}> que:
+ * - Normaliza URLs localhost → API_BASE_URL
+ * - Inclui header ngrok (inofensivo em produção)
+ *
+ * Uso: <Image source={apiImageSource(url)} />
+ */
+export const apiImageSource = (uri: string | null | undefined) => ({
+  uri: normalizeFileUrl(uri),
+  headers: {'ngrok-skip-browser-warning': 'true'},
+});

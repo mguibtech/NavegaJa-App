@@ -1,11 +1,12 @@
-import React, {useEffect, useState} from 'react';
-import {ActivityIndicator} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {ActivityIndicator, AppState, AppStateStatus} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 
 import {NavigationContainer} from '@react-navigation/native';
 
 import {Box} from '@components';
+import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 import {OnboardingScreen} from '../screens/onboarding/OnboardingScreen';
 import {SplashScreen} from '../screens/splash/SplashScreen';
@@ -24,7 +25,7 @@ function handleNotificationNavigation(data: Record<string, string>) {
     return;
   }
 
-  const {type, bookingId, tripId, shipmentId} = data;
+  const {type, bookingId, tripId, shipmentId, boatId} = data;
 
   switch (type) {
     case 'booking_confirmed':
@@ -68,6 +69,30 @@ function handleNotificationNavigation(data: Record<string, string>) {
       }
       break;
 
+    case 'captain_verified':
+      // Documentação aprovada — exibe dashboard já atualizado
+      navigationRef.navigate('HomeTabs', undefined);
+      break;
+
+    case 'captain_rejected':
+      // Documentação rejeitada — direciona para reenvio
+      navigationRef.navigate('EditProfile');
+      break;
+
+    case 'boat_verified':
+      // Embarcação aprovada — exibe lista de embarcações atualizada
+      navigationRef.navigate('CaptainMyBoats');
+      break;
+
+    case 'boat_rejected':
+      // Embarcação rejeitada — abre tela de edição da embarcação específica
+      if (boatId) {
+        navigationRef.navigate('CaptainEditBoat', {boatId});
+      } else {
+        navigationRef.navigate('CaptainMyBoats');
+      }
+      break;
+
     default:
       break;
   }
@@ -77,6 +102,19 @@ export function Router() {
   const {isLoggedIn, isLoading, loadStoredUser, logout} = useAuthStore();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const {showSuccess, showError} = useToast();
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  // Atualiza perfil ao voltar ao foreground (garante estados de verificação atualizados sem FCM)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      if (appStateRef.current !== 'active' && nextState === 'active' && isLoggedIn) {
+        useAuthStore.getState().loadStoredUser();
+      }
+      appStateRef.current = nextState;
+    });
+    return () => subscription.remove();
+  }, [isLoggedIn]);
 
   useEffect(() => {
     checkOnboarding();
@@ -131,7 +169,7 @@ export function Router() {
         }
       });
 
-    // Notificação recebida com app em foreground — salva no histórico local
+    // Notificação recebida com app em foreground — salva no histórico + trata capitão
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
       const title = remoteMessage.notification?.title ?? '';
       const body = remoteMessage.notification?.body ?? '';
@@ -142,6 +180,46 @@ export function Router() {
           body,
           data: remoteMessage.data as Record<string, string>,
         });
+      }
+
+      const data = remoteMessage.data as Record<string, string> | undefined;
+      if (data?.type === 'captain_verified') {
+        // Atualiza perfil e notifica aprovação
+        await useAuthStore.getState().loadStoredUser();
+        showSuccess('Parabéns! Sua documentação foi aprovada. Você já pode criar viagens.');
+      } else if (data?.type === 'captain_rejected') {
+        // Atualiza perfil e notifica rejeição com motivo
+        await useAuthStore.getState().loadStoredUser();
+        const reason = data.reason || data.rejectionReason || '';
+        showError(
+          reason
+            ? `Documentação rejeitada: ${reason}`
+            : 'Sua documentação foi rejeitada. Verifique seu perfil.',
+        );
+        setTimeout(() => {
+          if (navigationRef.isReady()) {
+            navigationRef.navigate('EditProfile');
+          }
+        }, 1500);
+      } else if (data?.type === 'boat_verified') {
+        showSuccess('Embarcação aprovada! Você já pode criar viagens com ela.');
+      } else if (data?.type === 'boat_rejected') {
+        const reason = data.reason || data.rejectionReason || '';
+        showError(
+          reason
+            ? `Embarcação rejeitada: ${reason}`
+            : 'Uma embarcação foi rejeitada. Verifique os documentos.',
+        );
+        const bId = data.boatId;
+        setTimeout(() => {
+          if (navigationRef.isReady()) {
+            if (bId) {
+              navigationRef.navigate('CaptainEditBoat', {boatId: bId});
+            } else {
+              navigationRef.navigate('CaptainMyBoats');
+            }
+          }
+        }, 1500);
       }
     });
 
