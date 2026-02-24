@@ -84,8 +84,9 @@ export enum TripStatus {
 }
 
 export interface SearchTripsParams {
-  origin: string;
-  destination: string;
+  routeId?: string | null;
+  origin?: string;
+  destination?: string;
   date?: string;
   // Filtros opcionais
   minPrice?: number;

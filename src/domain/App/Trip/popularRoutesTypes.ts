@@ -4,6 +4,7 @@ export interface PopularCity {
 }
 
 export interface PopularRoute {
+  routeId?: string | null;
   origin: string;
   destination: string;
   tripsCount: number;

@@ -7,7 +7,6 @@ import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@co
 import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
-import {UserRole} from '@domain';
 
 import {AuthStackParamList} from '@routes';
 
@@ -52,7 +51,6 @@ export function RegisterScreen({navigation}: Props) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>(UserRole.PASSENGER);
   const [city, setCity] = useState('Manaus');
   const [cpf, setCpf] = useState('');
   const [referralCode, setReferralCode] = useState('');
@@ -83,24 +81,15 @@ export function RegisterScreen({navigation}: Props) {
         email: email.trim().toLowerCase(),
         phone: unformatPhone(phone),
         password,
-        role,
         city: city.trim(),
         state: 'AM',
         cpf: cpf.replace(/\D/g, '') || undefined,
         referralCode: referralCode.trim().toUpperCase() || undefined,
       });
 
-      // Registro bem-sucedido - o store já atualizou o estado global
-      // O Router vai detectar isLoggedIn=true e redirecionar automaticamente
       const currentUser = useAuthStore.getState().user;
       if (currentUser) {
-        if (currentUser.role === UserRole.CAPTAIN) {
-          toast.showInfo(
-            `Bem-vindo, Capitão ${currentUser.name}! Envie seus documentos para ativar sua conta.`,
-          );
-        } else {
-          toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
-        }
+        toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
     } catch (_error: any) {
       const msg =
@@ -119,8 +108,6 @@ export function RegisterScreen({navigation}: Props) {
     const formatted = formatEmail(text);
     setEmail(formatted);
   }
-
-  const isPassenger = role === UserRole.PASSENGER;
 
   return (
     <>
@@ -171,95 +158,6 @@ export function RegisterScreen({navigation}: Props) {
               <Text preset="paragraphMedium" color="textSecondary">
                 Junte-se à maior rede de transporte fluvial da Amazônia
               </Text>
-            </Box>
-
-            {/* Role Selection Cards */}
-            <Box mb="s24">
-              <Text preset="paragraphSmall" color="text" semibold mb="s12">
-                Como você quer se cadastrar?
-              </Text>
-
-              <Box flexDirection="row" gap="s12">
-                {/* Passageiro Card */}
-                <TouchableOpacityBox
-                  flex={1}
-                  onPress={() => setRole(UserRole.PASSENGER)}
-                  backgroundColor={isPassenger ? 'primaryBg' : 'surface'}
-                  borderRadius="s16"
-                  padding="s20"
-                  alignItems="center"
-                  borderWidth={2}
-                  borderColor={isPassenger ? 'primary' : 'border'}
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 2},
-                    shadowOpacity: isPassenger ? 0.1 : 0.05,
-                    shadowRadius: 8,
-                    elevation: isPassenger ? 4 : 2,
-                  }}>
-                  <Box
-                    width={56}
-                    height={56}
-                    borderRadius="s20"
-                    backgroundColor={isPassenger ? 'primary' : 'primaryBg'}
-                    alignItems="center"
-                    justifyContent="center"
-                    mb="s12">
-                    <Icon
-                      name="person"
-                      size={28}
-                      color={isPassenger ? 'surface' : 'primary'}
-                    />
-                  </Box>
-                  <Text
-                    preset="paragraphSmall"
-                    color={isPassenger ? 'primary' : 'text'}
-                    bold
-                    textAlign="center">
-                    Passageiro
-                  </Text>
-                </TouchableOpacityBox>
-
-                {/* Barqueiro Card */}
-                <TouchableOpacityBox
-                  flex={1}
-                  onPress={() => setRole(UserRole.CAPTAIN)}
-                  backgroundColor={!isPassenger ? 'secondaryBg' : 'surface'}
-                  borderRadius="s16"
-                  padding="s20"
-                  alignItems="center"
-                  borderWidth={2}
-                  borderColor={!isPassenger ? 'secondary' : 'border'}
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 2},
-                    shadowOpacity: !isPassenger ? 0.1 : 0.05,
-                    shadowRadius: 8,
-                    elevation: !isPassenger ? 4 : 2,
-                  }}>
-                  <Box
-                    width={56}
-                    height={56}
-                    borderRadius="s20"
-                    backgroundColor={!isPassenger ? 'secondary' : 'secondaryBg'}
-                    alignItems="center"
-                    justifyContent="center"
-                    mb="s12">
-                    <Icon
-                      name="directions-boat"
-                      size={28}
-                      color={!isPassenger ? 'surface' : 'secondary'}
-                    />
-                  </Box>
-                  <Text
-                    preset="paragraphSmall"
-                    color={!isPassenger ? 'secondary' : 'text'}
-                    bold
-                    textAlign="center">
-                    Barqueiro
-                  </Text>
-                </TouchableOpacityBox>
-              </Box>
             </Box>
 
             {/* Form Fields */}

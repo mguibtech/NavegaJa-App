@@ -41,7 +41,7 @@ function formatTime(dateString: string): string {
 }
 
 export function SearchResultsScreen({navigation, route}: Props) {
-  const {origin, destination, date, promotion, context} = route.params;
+  const {routeId, origin, destination, date, promotion, context} = route.params;
   const {trips, search, isLoading, error} = useSearchTrips();
   const {top} = useSafeAreaInsets();
   const [sortBy, setSortBy] = useState<SortOption>('price');
@@ -56,7 +56,7 @@ export function SearchResultsScreen({navigation, route}: Props) {
   useEffect(() => {
     loadTrips();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [origin, destination, date]);
+  }, [routeId, origin, destination, date]);
 
   useEffect(() => {
     setSortedTrips(trips);
@@ -64,7 +64,10 @@ export function SearchResultsScreen({navigation, route}: Props) {
 
   async function loadTrips() {
     try {
-      const params: any = {origin, destination, date};
+      // Usa routeId quando disponível (filtro exato) — fallback por origin/destination
+      const params: any = routeId
+        ? {routeId, origin, destination, date}
+        : {origin, destination, date};
       if (minPrice) params.minPrice = parseFloat(minPrice);
       if (maxPrice) params.maxPrice = parseFloat(maxPrice);
       if (departureTime) params.departureTime = departureTime;
@@ -576,16 +579,27 @@ export function SearchResultsScreen({navigation, route}: Props) {
                 alignItems="center"
                 justifyContent="center"
                 mb="s16">
-                <Icon name="search-off" size={40} color="textSecondary" />
+                <Icon name={error ? 'wifi-off' : 'search-off'} size={40} color="textSecondary" />
               </Box>
               <Text preset="headingSmall" color="text" bold mb="s8">
-                {error ? 'Erro ao buscar' : 'Nenhuma viagem'}
+                {error ? 'Não foi possível buscar' : 'Nenhuma viagem'}
               </Text>
               <Text preset="paragraphMedium" color="textSecondary" textAlign="center" mb="s24">
                 {error
-                  ? error.message
+                  ? ((error as any)?.statusCode === 429
+                      ? 'Muitas requisições. Aguarde um momento e tente novamente.'
+                      : 'Erro de conexão. Verifique sua internet e tente novamente.')
                   : 'Não encontramos viagens para essa rota. Tente outra data ou destino.'}
               </Text>
+              {error && (
+                <Box mb="s12">
+                  <Button
+                    title="Tentar Novamente"
+                    onPress={loadTrips}
+                    leftIcon="refresh"
+                  />
+                </Box>
+              )}
               <Button
                 title="Voltar e editar busca"
                 preset="outline"

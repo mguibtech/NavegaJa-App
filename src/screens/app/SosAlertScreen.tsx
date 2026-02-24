@@ -148,6 +148,7 @@ export function SosAlertScreen({navigation, route}: Props) {
             shadowOpacity: 0.1,
             shadowRadius: 8,
             elevation: 3,
+            zIndex: 10,
           }}>
           <Box flexDirection="row" alignItems="center">
             <TouchableOpacityBox
@@ -305,6 +306,7 @@ export function SosAlertScreen({navigation, route}: Props) {
             shadowOpacity: 0.1,
             shadowRadius: 8,
             elevation: 3,
+            zIndex: 10,
           }}>
           <Box flexDirection="row" alignItems="center">
             <TouchableOpacityBox

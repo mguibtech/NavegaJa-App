@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
 import {useMyBoats, useDeleteBoat, Boat} from '@domain';
@@ -22,10 +23,12 @@ export function CaptainMyBoatsScreen({navigation}: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [boatToDelete, setBoatToDelete] = useState<Boat | null>(null);
 
-  useEffect(() => {
-    fetchBoats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchBoats();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   async function onRefresh() {
     setRefreshing(true);
@@ -50,6 +53,9 @@ export function CaptainMyBoatsScreen({navigation}: Props) {
   }
 
   function renderBoat({item: boat}: {item: Boat}) {
+    const isRejected = !boat.isVerified && !!boat.rejectionReason;
+    const isPending = !boat.isVerified && !boat.rejectionReason;
+
     return (
       <Box
         backgroundColor="surface"
@@ -68,11 +74,11 @@ export function CaptainMyBoatsScreen({navigation}: Props) {
             width={52}
             height={52}
             borderRadius="s16"
-            backgroundColor="secondaryBg"
+            backgroundColor={isRejected ? 'dangerBg' : 'secondaryBg'}
             alignItems="center"
             justifyContent="center"
             mr="s16">
-            <Icon name="sailing" size={28} color="secondary" />
+            <Icon name="sailing" size={28} color={isRejected ? 'danger' : 'secondary'} />
           </Box>
           <Box flex={1}>
             <Text preset="paragraphMedium" color="text" bold>
@@ -81,6 +87,29 @@ export function CaptainMyBoatsScreen({navigation}: Props) {
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               {boat.type}
             </Text>
+            {/* Status chip de verificação */}
+            <Box
+              alignSelf="flex-start"
+              paddingHorizontal="s8"
+              paddingVertical="s4"
+              borderRadius="s8"
+              mt="s6"
+              style={{
+                backgroundColor: isRejected
+                  ? '#FEE2E2'
+                  : isPending
+                  ? '#DBEAFE'
+                  : '#D1FAE5',
+              }}>
+              <Text
+                preset="paragraphCaptionSmall"
+                bold
+                style={{
+                  color: isRejected ? '#991B1B' : isPending ? '#1E40AF' : '#065F46',
+                }}>
+                {isRejected ? 'Rejeitada' : isPending ? 'Em análise' : 'Verificada'}
+              </Text>
+            </Box>
           </Box>
           <Box flexDirection="row" gap="s4">
             <TouchableOpacityBox
@@ -131,6 +160,29 @@ export function CaptainMyBoatsScreen({navigation}: Props) {
             </Box>
           )}
         </Box>
+
+        {/* Banner de motivo de rejeição */}
+        {isRejected && (
+          <TouchableOpacityBox
+            mt="s12"
+            backgroundColor="dangerBg"
+            borderRadius="s8"
+            padding="s12"
+            flexDirection="row"
+            alignItems="center"
+            onPress={() => navigation.navigate('CaptainEditBoat', {boatId: boat.id})}>
+            <Icon name="error-outline" size={16} color="danger" />
+            <Text
+              preset="paragraphCaptionSmall"
+              color="danger"
+              bold
+              flex={1}
+              ml="s8">
+              {boat.rejectionReason}
+            </Text>
+            <Icon name="chevron-right" size={16} color="danger" />
+          </TouchableOpacityBox>
+        )}
 
         {boat.description ? (
           <Text

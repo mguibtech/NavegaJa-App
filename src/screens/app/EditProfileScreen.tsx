@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, ActionSheetIOS} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, ActionSheetIOS, Linking, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -10,7 +10,8 @@ import {useAuthStore} from '@store';
 import {useUpdateProfile, userAPI} from '@domain';
 import {useToast} from '@hooks';
 import {api} from '@api';
-import {API_BASE_URL} from '../../api/config';
+import {apiImageSource, normalizeFileUrl} from '../../api/config';
+import {pickDocument, isDocumentPickerCancelled} from '../../native/documentPicker';
 
 import {AppStackParamList} from '@routes';
 
@@ -39,6 +40,10 @@ export function EditProfileScreen({navigation}: Props) {
 
   const isCaptain = user?.role === 'captain';
 
+  // Rastreia se documentos do capitão foram alterados (para aviso de re-aprovação)
+  const originalLicenseUrl = user?.licensePhotoUrl ?? null;
+  const originalCertificateUrl = user?.certificatePhotoUrl ?? null;
+
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [cpf, setCpf] = useState(formatCPF(user?.cpf || ''));
@@ -46,10 +51,16 @@ export function EditProfileScreen({navigation}: Props) {
   const [showCityPicker, setShowCityPicker] = useState(false);
 
   const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(
-    user?.licensePhotoUrl ?? null,
+    normalizeFileUrl(user?.licensePhotoUrl) || null,
+  );
+  const [licensePhotoType, setLicensePhotoType] = useState<'image' | 'pdf'>(
+    user?.licensePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
   );
   const [certificatePhotoUrl, setCertificatePhotoUrl] = useState<string | null>(
-    user?.certificatePhotoUrl ?? null,
+    normalizeFileUrl(user?.certificatePhotoUrl) || null,
+  );
+  const [certificatePhotoType, setCertificatePhotoType] = useState<'image' | 'pdf'>(
+    user?.certificatePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -67,6 +78,9 @@ export function EditProfileScreen({navigation}: Props) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [showDocPicker, setShowDocPicker] = useState(false);
+  const [docPickerField, setDocPickerField] = useState<'license' | 'certificate' | null>(null);
 
   function handleCpfChange(value: string) {
     setCpf(formatCPF(value));
@@ -104,7 +118,7 @@ export function EditProfileScreen({navigation}: Props) {
       formData.append('file', {uri: asset.uri ?? '', type: asset.type ?? 'image/jpeg', name: asset.fileName ?? 'avatar.jpg'} as any);
 
       const response = await api.upload<{url: string}>('/upload/image?folder=avatars', formData);
-      const url = response.url.startsWith('http') ? response.url : `${API_BASE_URL}${response.url}`;
+      const url = normalizeFileUrl(response.url);
 
       await userAPI.updateAvatar(url);
       setAvatarUrl(url);
@@ -132,21 +146,73 @@ export function EditProfileScreen({navigation}: Props) {
     }
   }
 
-  async function uploadCaptainPhoto(field: 'license' | 'certificate') {
-    const setter =
-      field === 'license' ? setIsUploadingLicense : setIsUploadingCertificate;
+  function uploadCaptainDoc(field: 'license' | 'certificate') {
+    setDocPickerField(field);
+    setShowDocPicker(true);
+  }
+
+  function handleDocPickerOption(option: 'camera' | 'gallery' | 'pdf') {
+    const field = docPickerField;
+    setShowDocPicker(false);
+    setDocPickerField(null);
+    if (!field) return;
+    const setter = field === 'license' ? setIsUploadingLicense : setIsUploadingCertificate;
+    if (option === 'pdf') {
+      pickCaptainDocFromPdf(field, setter);
+    } else {
+      pickCaptainDocFrom(option, field, setter);
+    }
+  }
+
+  async function pickCaptainDocFromPdf(
+    field: 'license' | 'certificate',
+    setter: (v: boolean) => void,
+  ) {
     setter(true);
     try {
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-        maxWidth: 1920,
-        maxHeight: 1920,
-      });
+      const doc = await pickDocument(['application/pdf']);
+      const formData = new FormData();
+      formData.append('file', {
+        uri: doc.uri,
+        type: doc.type || 'application/pdf',
+        name: doc.name || 'document.pdf',
+      } as any);
 
-      if (result.didCancel || !result.assets?.[0]) {
-        return;
+      const response = await api.upload<{url: string}>(
+        '/upload/document?folder=documents',
+        formData,
+      );
+      const url = normalizeFileUrl(response.url);
+
+      if (field === 'license') {
+        setLicensePhotoUrl(url);
+        setLicensePhotoType('pdf');
+      } else {
+        setCertificatePhotoUrl(url);
+        setCertificatePhotoType('pdf');
       }
+    } catch (error: any) {
+      if (!isDocumentPickerCancelled(error)) {
+        const msg = error?.message ?? 'Não foi possível fazer o upload do PDF';
+        toast.showError(msg);
+      }
+    } finally {
+      setter(false);
+    }
+  }
+
+  async function pickCaptainDocFrom(
+    source: 'camera' | 'gallery',
+    field: 'license' | 'certificate',
+    setter: (v: boolean) => void,
+  ) {
+    setter(true);
+    try {
+      const opts = {mediaType: 'photo' as const, quality: 0.8 as const, maxWidth: 1920, maxHeight: 1920};
+      const result = source === 'camera'
+        ? await launchCamera(opts)
+        : await launchImageLibrary(opts);
+      if (result.didCancel || !result.assets?.[0]) return;
 
       const asset = result.assets[0];
       const formData = new FormData();
@@ -157,20 +223,20 @@ export function EditProfileScreen({navigation}: Props) {
       } as any);
 
       const response = await api.upload<{url: string}>(
-        '/upload/image?folder=captains',
+        '/upload/document?folder=documents',
         formData,
       );
-      const url = response.url.startsWith('http')
-        ? response.url
-        : `${API_BASE_URL}${response.url}`;
+      const url = normalizeFileUrl(response.url);
 
       if (field === 'license') {
         setLicensePhotoUrl(url);
+        setLicensePhotoType('image');
       } else {
         setCertificatePhotoUrl(url);
+        setCertificatePhotoType('image');
       }
     } catch {
-      Alert.alert('Erro', 'Não foi possível fazer o upload da foto');
+      Alert.alert('Erro', 'Não foi possível fazer o upload do documento');
     } finally {
       setter(false);
     }
@@ -204,6 +270,11 @@ export function EditProfileScreen({navigation}: Props) {
     }
   }
 
+  const docsChanged = isCaptain && (
+    licensePhotoUrl !== originalLicenseUrl ||
+    certificatePhotoUrl !== originalCertificateUrl
+  );
+
   async function handleSave() {
     try {
       const updatedUser = await updateProfile({
@@ -216,7 +287,18 @@ export function EditProfileScreen({navigation}: Props) {
         certificatePhotoUrl: certificatePhotoUrl ?? undefined,
       });
 
-      updateUser(updatedUser);
+      // PATCH /users/profile não retorna capabilities nem rejectionReason.
+      // Fazer merge explícito para não apagar esses campos do store.
+      updateUser({
+        ...user!,
+        ...updatedUser,
+        capabilities: updatedUser.capabilities !== undefined
+          ? updatedUser.capabilities
+          : (user?.capabilities ?? null),
+        rejectionReason: updatedUser.rejectionReason !== undefined
+          ? updatedUser.rejectionReason
+          : (user?.rejectionReason ?? null),
+      });
       setShowSuccessModal(true);
     } catch (err: any) {
       setErrorMessage(
@@ -440,17 +522,19 @@ export function EditProfileScreen({navigation}: Props) {
                   <CaptainDocField
                     label="Licença de Navegação"
                     photoUrl={licensePhotoUrl}
+                    isPdf={licensePhotoType === 'pdf'}
                     isUploading={isUploadingLicense}
-                    onPress={() => uploadCaptainPhoto('license')}
-                    onRemove={() => setLicensePhotoUrl(null)}
+                    onPress={() => uploadCaptainDoc('license')}
+                    onRemove={() => { setLicensePhotoUrl(null); setLicensePhotoType('image'); }}
                   />
 
                   <CaptainDocField
                     label="Certificado de Habilitação"
                     photoUrl={certificatePhotoUrl}
+                    isPdf={certificatePhotoType === 'pdf'}
                     isUploading={isUploadingCertificate}
-                    onPress={() => uploadCaptainPhoto('certificate')}
-                    onRemove={() => setCertificatePhotoUrl(null)}
+                    onPress={() => uploadCaptainDoc('certificate')}
+                    onRemove={() => { setCertificatePhotoUrl(null); setCertificatePhotoType('image'); }}
                   />
                 </Box>
               )}
@@ -610,10 +694,145 @@ export function EditProfileScreen({navigation}: Props) {
         onClose={() => setShowAvatarEditor(false)}
       />
 
+      {/* Bottom sheet — seleção de documento */}
+      <Modal
+        visible={showDocPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDocPicker(false)}>
+        <TouchableOpacityBox
+          flex={1}
+          style={{backgroundColor: 'rgba(0,0,0,0.45)'}}
+          onPress={() => setShowDocPicker(false)}
+          activeOpacity={1}
+        />
+        <Box
+          backgroundColor="surface"
+          borderTopLeftRadius="s24"
+          borderTopRightRadius="s24"
+          paddingHorizontal="s20"
+          paddingTop="s20"
+          paddingBottom="s24"
+          style={{position: 'absolute', bottom: 0, left: 0, right: 0}}>
+          <Box
+            alignSelf="center"
+            width={40}
+            height={4}
+            borderRadius="s8"
+            backgroundColor="border"
+            mb="s20"
+          />
+          <Text preset="paragraphMedium" color="text" bold mb="s4">
+            Selecionar documento
+          </Text>
+          <Text preset="paragraphSmall" color="textSecondary" mb="s20">
+            Escolha como enviar seu documento
+          </Text>
+
+          <TouchableOpacityBox
+            onPress={() => handleDocPickerOption('camera')}
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="s16"
+            borderBottomWidth={1}
+            borderBottomColor="border">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              mr="s16">
+              <Icon name="photo-camera" size={22} color="primary" />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Câmera
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                Fotografar documento agora
+              </Text>
+            </Box>
+            <Icon name="chevron-right" size={20} color="textSecondary" />
+          </TouchableOpacityBox>
+
+          <TouchableOpacityBox
+            onPress={() => handleDocPickerOption('gallery')}
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="s16"
+            borderBottomWidth={1}
+            borderBottomColor="border">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              mr="s16">
+              <Icon name="photo-library" size={22} color="primary" />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Galeria
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                Selecionar imagem da galeria
+              </Text>
+            </Box>
+            <Icon name="chevron-right" size={20} color="textSecondary" />
+          </TouchableOpacityBox>
+
+          <TouchableOpacityBox
+            onPress={() => handleDocPickerOption('pdf')}
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="s16"
+            mb="s8">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              alignItems="center"
+              justifyContent="center"
+              mr="s16"
+              style={{backgroundColor: '#FEE2E2'}}>
+              <Icon name="picture-as-pdf" size={22} color={'#DC2626' as any} />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Arquivo PDF
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                Selecionar PDF do armazenamento
+              </Text>
+            </Box>
+            <Icon name="chevron-right" size={20} color="textSecondary" />
+          </TouchableOpacityBox>
+
+          <TouchableOpacityBox
+            onPress={() => setShowDocPicker(false)}
+            backgroundColor="background"
+            borderRadius="s12"
+            paddingVertical="s16"
+            alignItems="center">
+            <Text preset="paragraphMedium" color="textSecondary" bold>
+              Cancelar
+            </Text>
+          </TouchableOpacityBox>
+        </Box>
+      </Modal>
+
       <InfoModal
         visible={showSuccessModal}
         title="Sucesso"
-        message="Perfil atualizado com sucesso!"
+        message={
+          docsChanged
+            ? 'Perfil atualizado! Seus documentos serão reanalisados pelo NavegaJá. Você será notificado após a aprovação.'
+            : 'Perfil atualizado com sucesso!'
+        }
         icon="check-circle"
         iconColor="success"
         buttonText="OK"
@@ -635,29 +854,106 @@ export function EditProfileScreen({navigation}: Props) {
 function CaptainDocField({
   label,
   photoUrl,
+  isPdf,
   isUploading,
   onPress,
   onRemove,
 }: {
   label: string;
   photoUrl: string | null;
+  isPdf: boolean;
   isUploading: boolean;
   onPress: () => void;
   onRemove: () => void;
 }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [previewError, setPreviewError] = useState(false);
+
+  function handlePreview() {
+    if (!photoUrl) {return;}
+    if (isPdf) {
+      Linking.openURL(photoUrl).catch(() =>
+        Alert.alert('Erro', 'Não foi possível abrir o documento'),
+      );
+    } else {
+      setPreviewLoading(true);
+      setPreviewError(false);
+      setShowPreview(true);
+    }
+  }
+
   return (
     <Box mb="s16">
       <Text preset="paragraphSmall" color="text" bold mb="s8">
         {label}
       </Text>
       {photoUrl ? (
-        <Box flexDirection="row" alignItems="center" gap="s12">
-          <Image
-            source={{uri: photoUrl}}
-            style={{width: 80, height: 80, borderRadius: 8}}
-            resizeMode="cover"
-          />
-          <Box flex={1}>
+        <Box flexDirection="row" alignItems="flex-start" gap="s12">
+          {/* Thumbnail tappable — toca para abrir preview */}
+          <TouchableOpacityBox
+            onPress={handlePreview}
+            width={80}
+            height={80}
+            borderRadius="s8"
+            backgroundColor="background"
+            alignItems="center"
+            justifyContent="center"
+            overflow="hidden"
+            style={{borderWidth: 1, borderColor: '#D1D5DB'}}>
+            {isPdf ? (
+              <>
+                <Icon name="picture-as-pdf" size={30} color={'#DC2626' as any} />
+                <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                  PDF
+                </Text>
+              </>
+            ) : (
+              <Image
+                source={apiImageSource(photoUrl)}
+                style={{width: 80, height: 80}}
+                resizeMode="cover"
+              />
+            )}
+            {/* Badge de preview no canto inferior */}
+            <Box
+              style={{
+                position: 'absolute',
+                bottom: 4,
+                right: 4,
+                backgroundColor: 'rgba(0,0,0,0.55)',
+                borderRadius: 6,
+                padding: 3,
+              }}>
+              <Icon
+                name={isPdf ? 'open-in-new' : 'zoom-in'}
+                size={11}
+                color={'white' as any}
+              />
+            </Box>
+          </TouchableOpacityBox>
+
+          <Box flex={1} gap="s8">
+            {/* Botão visualizar / abrir */}
+            <TouchableOpacityBox
+              onPress={handlePreview}
+              borderRadius="s8"
+              paddingVertical="s8"
+              paddingHorizontal="s12"
+              flexDirection="row"
+              alignItems="center"
+              style={{borderWidth: 1, borderColor: '#D1D5DB', backgroundColor: '#F9FAFB'}}>
+              <Icon
+                name={isPdf ? 'open-in-new' : 'visibility'}
+                size={15}
+                color="textSecondary"
+              />
+              <Text preset="paragraphSmall" color="textSecondary" bold ml="s4">
+                {isPdf ? 'Abrir PDF' : 'Visualizar'}
+              </Text>
+            </TouchableOpacityBox>
+
+            {/* Substituir */}
             <TouchableOpacityBox
               onPress={onPress}
               backgroundColor="primaryBg"
@@ -665,13 +961,14 @@ function CaptainDocField({
               paddingVertical="s8"
               paddingHorizontal="s12"
               flexDirection="row"
-              alignItems="center"
-              mb="s8">
-              <Icon name="refresh" size={16} color="primary" />
+              alignItems="center">
+              <Icon name="refresh" size={15} color="primary" />
               <Text preset="paragraphSmall" color="primary" bold ml="s4">
                 Substituir
               </Text>
             </TouchableOpacityBox>
+
+            {/* Remover */}
             <TouchableOpacityBox
               onPress={onRemove}
               backgroundColor="dangerBg"
@@ -680,7 +977,7 @@ function CaptainDocField({
               paddingHorizontal="s12"
               flexDirection="row"
               alignItems="center">
-              <Icon name="delete" size={16} color="danger" />
+              <Icon name="delete" size={15} color="danger" />
               <Text preset="paragraphSmall" color="danger" bold ml="s4">
                 Remover
               </Text>
@@ -708,6 +1005,94 @@ function CaptainDocField({
           </Text>
         </TouchableOpacityBox>
       )}
+
+      {/* Modal de preview em tela cheia (apenas para imagens) */}
+      <Modal
+        visible={showPreview}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setShowPreview(false)}>
+        <View style={previewStyles.overlay}>
+          <TouchableOpacity
+            style={previewStyles.closeBtn}
+            onPress={() => setShowPreview(false)}>
+            <View style={previewStyles.closeBtnInner}>
+              <Icon name="close" size={24} color={'white' as any} />
+            </View>
+          </TouchableOpacity>
+
+          <Text
+            preset="paragraphSmall"
+            style={previewStyles.label}>
+            {label}
+          </Text>
+
+          {photoUrl && !previewError && (
+            <Image
+              source={apiImageSource(photoUrl)}
+              style={previewStyles.image}
+              resizeMode="contain"
+              onLoadStart={() => setPreviewLoading(true)}
+              onLoad={() => setPreviewLoading(false)}
+              onError={() => { setPreviewLoading(false); setPreviewError(true); }}
+            />
+          )}
+
+          {previewLoading && !previewError && (
+            <ActivityIndicator size="large" color="white" style={previewStyles.image} />
+          )}
+
+          {previewError && (
+            <View style={[previewStyles.image, {alignItems: 'center', justifyContent: 'center'}]}>
+              <Icon name="broken-image" size={48} color={'rgba(255,255,255,0.4)' as any} />
+              <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.5)', marginTop: 8, textAlign: 'center', paddingHorizontal: 16}}>
+                Não foi possível carregar a imagem.{'\n'}
+                {photoUrl}
+              </Text>
+            </View>
+          )}
+
+          <Text
+            preset="paragraphSmall"
+            style={previewStyles.hint}>
+            Toque em × para fechar
+          </Text>
+        </View>
+      </Modal>
     </Box>
   );
 }
+
+const {width: SW, height: SH} = Dimensions.get('window');
+const previewStyles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.93)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    zIndex: 10,
+  },
+  closeBtnInner: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  label: {
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 12,
+  },
+  image: {
+    width: SW * 0.92,
+    height: SH * 0.68,
+  },
+  hint: {
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 16,
+  },
+});

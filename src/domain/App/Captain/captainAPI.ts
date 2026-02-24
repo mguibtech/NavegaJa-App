@@ -53,7 +53,7 @@ class CaptainAPI {
   }
 
   async updateBoat(id: string, data: Partial<CreateBoatData>): Promise<Boat> {
-    return api.put<Boat>(`/boats/${id}`, data);
+    return api.patch<Boat>(`/boats/${id}`, data);
   }
 
   async deleteBoat(id: string): Promise<void> {

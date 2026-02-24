@@ -1,5 +1,5 @@
 import React, {useState, useCallback, useMemo} from 'react';
-import {Modal, ScrollView, TouchableOpacity} from 'react-native';
+import {Modal, ScrollView, TouchableOpacity, View} from 'react-native';
 import {SvgXml} from 'react-native-svg';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
@@ -421,7 +421,7 @@ function ColorSwatchPicker({colors, selected, onSelect}: ColorSwatchPickerProps)
   );
 }
 
-const THUMB_SIZE = 52;
+const THUMB_SIZE = 64;
 
 interface AvatarThumbRowProps {
   values: string[];
@@ -436,7 +436,7 @@ interface AvatarThumbRowProps {
 function AvatarThumbRow({values, optionKey, selected, onSelect, svgMap, toggleable, noneLabel}: AvatarThumbRowProps) {
   const noneSelected = toggleable && (selected === 'none' || selected === undefined);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4}}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4, flexDirection: 'row', alignItems: 'center'}}>
       {/* None option for toggleable */}
       {toggleable && (
         <TouchableOpacity key="none" onPress={() => onSelect('none')} activeOpacity={0.7}>
@@ -444,14 +444,14 @@ function AvatarThumbRow({values, optionKey, selected, onSelect, svgMap, toggleab
             borderWidth: noneSelected ? 2 : 1,
             borderColor: noneSelected ? '#0B5D8A' : '#E5E7EB',
             borderRadius: 12,
-            backgroundColor: noneSelected ? '#EFF6FF' : '#F9FAFB',
+            backgroundColor: noneSelected ? '#EFF6FF' : '#F0F4F8',
             padding: 4, marginRight: 8,
             width: THUMB_SIZE + 8, height: THUMB_SIZE + 8 + 18,
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Box width={THUMB_SIZE} height={THUMB_SIZE} alignItems="center" justifyContent="center">
-              <Icon name="close" size={26} color={noneSelected ? 'primary' : 'textSecondary'} />
-            </Box>
+            <View style={{width: THUMB_SIZE, height: THUMB_SIZE, alignItems: 'center', justifyContent: 'center'}}>
+              <Icon name="close" size={28} color={noneSelected ? 'primary' : 'textSecondary'} />
+            </View>
             <Text style={{fontSize: 10, color: noneSelected ? '#0B5D8A' : '#9CA3AF', textAlign: 'center', marginTop: 2}}>
               {noneLabel ?? 'Nenhum'}
             </Text>
@@ -467,10 +467,14 @@ function AvatarThumbRow({values, optionKey, selected, onSelect, svgMap, toggleab
               borderWidth: isSelected ? 2 : 1,
               borderColor: isSelected ? '#0B5D8A' : '#E5E7EB',
               borderRadius: 12,
-              backgroundColor: isSelected ? '#EFF6FF' : '#F9FAFB',
+              backgroundColor: isSelected ? '#EFF6FF' : '#F0F4F8',
               padding: 4, marginRight: 8, alignItems: 'center',
+              overflow: 'hidden',
             }}>
-              <SvgXml xml={svgMap[value] ?? ''} width={THUMB_SIZE} height={THUMB_SIZE} />
+              {/* View explícito necessário para SvgXml renderizar dentro de ScrollView horizontal no Android */}
+              <View style={{width: THUMB_SIZE, height: THUMB_SIZE}}>
+                <SvgXml xml={svgMap[value] ?? ''} width={THUMB_SIZE} height={THUMB_SIZE} />
+              </View>
               {isSelected && (
                 <Box position="absolute" style={{
                   top: 4, right: 4, backgroundColor: '#0B5D8A',
@@ -656,8 +660,10 @@ export function AvatarEditorModal({visible, currentAvatarUrl, userName, onConfir
                   <TouchableOpacity key={key} activeOpacity={0.7} onPress={() => handleStyleChange(key)} style={{width: '30%'}}>
                     <Box borderRadius="s12" overflow="hidden" alignItems="center" paddingVertical="s8"
                       style={{borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? '#0B5D8A' : '#E5E7EB', backgroundColor: isSelected ? '#EFF6FF' : '#fff'}}>
-                      <Box style={{width: 52, height: 52, borderRadius: 26, overflow: 'hidden', backgroundColor: '#F3F4F6'}}>
-                        <SvgXml xml={styleThumbs[key] ?? ''} width={52} height={52} />
+                      <Box style={{width: 52, height: 52, borderRadius: 26, overflow: 'hidden', backgroundColor: '#D8E9F5'}}>
+                        <View style={{width: 52, height: 52}}>
+                          <SvgXml xml={styleThumbs[key] ?? ''} width={52} height={52} />
+                        </View>
                       </Box>
                       <Text preset="paragraphSmall" bold={isSelected} mt="s4"
                         style={{color: isSelected ? '#0B5D8A' : '#6B7280', textAlign: 'center', fontSize: 11}}>

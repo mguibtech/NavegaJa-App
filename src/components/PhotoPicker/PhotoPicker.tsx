@@ -1,8 +1,8 @@
-import React from 'react';
-import {Image, Alert} from 'react-native';
+import React, {useState} from 'react';
+import {Image, Alert, Modal} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {pickDocument, isDocumentPickerCancelled} from '../../native/documentPicker';
 
 interface PhotoPickerProps {
   photos: Array<{uri: string; type: string; name: string}>;
@@ -10,6 +10,7 @@ interface PhotoPickerProps {
   maxPhotos?: number;
   label?: string;
   description?: string;
+  allowPdf?: boolean;
 }
 
 export function PhotoPicker({
@@ -18,32 +19,23 @@ export function PhotoPicker({
   maxPhotos = 5,
   label = 'Fotos da Encomenda (Opcional)',
   description,
+  allowPdf = false,
 }: PhotoPickerProps) {
+  const [showPicker, setShowPicker] = useState(false);
+
   const handlePickPhoto = () => {
     if (photos.length >= maxPhotos) {
-      Alert.alert('Limite Atingido', `Você pode adicionar no máximo ${maxPhotos} fotos`);
+      Alert.alert('Limite Atingido', `Você pode adicionar no máximo ${maxPhotos} arquivos`);
       return;
     }
+    setShowPicker(true);
+  };
 
-    Alert.alert(
-      'Adicionar Foto',
-      'Escolha uma opção',
-      [
-        {
-          text: 'Câmera',
-          onPress: () => openCamera(),
-        },
-        {
-          text: 'Galeria',
-          onPress: () => openGallery(),
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
+  const handleOption = (option: 'camera' | 'gallery' | 'pdf') => {
+    setShowPicker(false);
+    if (option === 'camera') {openCamera();}
+    else if (option === 'gallery') {openGallery();}
+    else {openPdf();}
   };
 
   const openCamera = async () => {
@@ -57,9 +49,7 @@ export function PhotoPicker({
         cameraType: 'back',
       });
 
-      if (result.didCancel) {
-        return;
-      }
+      if (result.didCancel) {return;}
 
       if (result.errorCode) {
         Alert.alert('Erro', result.errorMessage || 'Não foi possível acessar a câmera');
@@ -74,8 +64,7 @@ export function PhotoPicker({
           name: asset.fileName || `photo_${Date.now()}.jpg`,
         });
       }
-    } catch (error) {
-      console.error('Error opening camera:', error);
+    } catch {
       Alert.alert('Erro', 'Não foi possível abrir a câmera');
     }
   };
@@ -91,9 +80,7 @@ export function PhotoPicker({
         selectionLimit: maxPhotos - photos.length,
       });
 
-      if (result.didCancel) {
-        return;
-      }
+      if (result.didCancel) {return;}
 
       if (result.errorCode) {
         Alert.alert('Erro', result.errorMessage || 'Não foi possível acessar a galeria');
@@ -106,12 +93,25 @@ export function PhotoPicker({
           type: asset.type || 'image/jpeg',
           name: asset.fileName || `photo_${Date.now()}.jpg`,
         }));
-
         onPhotosChange([...photos, ...newPhotos]);
       }
-    } catch (error) {
-      console.error('Error opening gallery:', error);
+    } catch {
       Alert.alert('Erro', 'Não foi possível abrir a galeria');
+    }
+  };
+
+  const openPdf = async () => {
+    try {
+      const result = await pickDocument(['application/pdf']);
+      addPhoto({
+        uri: result.uri,
+        type: result.type || 'application/pdf',
+        name: result.name || `document_${Date.now()}.pdf`,
+      });
+    } catch (error) {
+      if (!isDocumentPickerCancelled(error)) {
+        Alert.alert('Erro', 'Não foi possível selecionar o PDF');
+      }
     }
   };
 
@@ -120,9 +120,11 @@ export function PhotoPicker({
   };
 
   const removePhoto = (index: number) => {
-    const newPhotos = photos.filter((_, i) => i !== index);
-    onPhotosChange(newPhotos);
+    onPhotosChange(photos.filter((_, i) => i !== index));
   };
+
+  const isPdf = (item: {type: string}) =>
+    item.type === 'application/pdf' || item.type?.includes('pdf');
 
   return (
     <Box>
@@ -130,10 +132,10 @@ export function PhotoPicker({
         {label}
       </Text>
       <Text preset="paragraphSmall" color="textSecondary" mb="s12">
-        {description ?? `Tire fotos para referência. Máximo ${maxPhotos} fotos.`}
+        {description ?? `Tire fotos para referência. Máximo ${maxPhotos} ${allowPdf ? 'arquivos' : 'fotos'}.`}
       </Text>
 
-      {/* Grid de fotos */}
+      {/* Grid de fotos/documentos */}
       <Box flexDirection="row" flexWrap="wrap" gap="s12" mb="s12">
         {photos.map((photo, index) => (
           <Box
@@ -143,16 +145,32 @@ export function PhotoPicker({
             borderRadius="s12"
             backgroundColor="background"
             style={{position: 'relative'}}>
-            <Image
-              source={{uri: photo.uri}}
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 12,
-              }}
-              resizeMode="cover"
-            />
-            {/* Botão remover */}
+            {isPdf(photo) ? (
+              <Box
+                width={100}
+                height={100}
+                borderRadius="s12"
+                backgroundColor="primaryBg"
+                alignItems="center"
+                justifyContent="center"
+                style={{borderWidth: 1, borderColor: '#BFDBFE'}}>
+                <Icon name="picture-as-pdf" size={32} color={'#DC2626' as any} />
+                <Text
+                  preset="paragraphCaptionSmall"
+                  color="primary"
+                  mt="s4"
+                  numberOfLines={1}
+                  style={{maxWidth: 80, textAlign: 'center'}}>
+                  PDF
+                </Text>
+              </Box>
+            ) : (
+              <Image
+                source={{uri: photo.uri}}
+                style={{width: '100%', height: '100%', borderRadius: 12}}
+                resizeMode="cover"
+              />
+            )}
             <TouchableOpacityBox
               onPress={() => removePhoto(index)}
               style={{
@@ -165,10 +183,6 @@ export function PhotoPicker({
                 backgroundColor: '#DC3545',
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.3,
-                shadowRadius: 4,
                 elevation: 4,
               }}>
               <Icon name="close" size={16} color="white" />
@@ -176,7 +190,7 @@ export function PhotoPicker({
           </Box>
         ))}
 
-        {/* Botão adicionar foto */}
+        {/* Botão adicionar */}
         {photos.length < maxPhotos && (
           <TouchableOpacityBox
             onPress={handlePickPhoto}
@@ -189,7 +203,7 @@ export function PhotoPicker({
             alignItems="center"
             justifyContent="center"
             backgroundColor="background">
-            <Icon name="add-a-photo" size={32} color="textSecondary" />
+            <Icon name={allowPdf ? 'upload-file' : 'add-a-photo'} size={32} color="textSecondary" />
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Adicionar
             </Text>
@@ -199,8 +213,146 @@ export function PhotoPicker({
 
       {/* Contador */}
       <Text preset="paragraphSmall" color="textSecondary">
-        {photos.length} de {maxPhotos} fotos
+        {photos.length} de {maxPhotos} {allowPdf ? 'arquivos' : 'fotos'}
       </Text>
+
+      {/* Bottom sheet — seleção */}
+      <Modal
+        visible={showPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPicker(false)}>
+        <TouchableOpacityBox
+          flex={1}
+          style={{backgroundColor: 'rgba(0,0,0,0.45)'}}
+          onPress={() => setShowPicker(false)}
+          activeOpacity={1}
+        />
+        <Box
+          backgroundColor="surface"
+          borderTopLeftRadius="s24"
+          borderTopRightRadius="s24"
+          paddingHorizontal="s20"
+          paddingTop="s20"
+          paddingBottom="s24"
+          style={{position: 'absolute', bottom: 0, left: 0, right: 0}}>
+          {/* Handle */}
+          <Box
+            alignSelf="center"
+            width={40}
+            height={4}
+            borderRadius="s8"
+            backgroundColor="border"
+            mb="s20"
+          />
+          <Text preset="paragraphMedium" color="text" bold mb="s4">
+            {allowPdf ? 'Adicionar arquivo' : 'Adicionar foto'}
+          </Text>
+          <Text preset="paragraphSmall" color="textSecondary" mb="s20">
+            Escolha como enviar
+          </Text>
+
+          {/* Câmera */}
+          <TouchableOpacityBox
+            onPress={() => handleOption('camera')}
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="s16"
+            borderBottomWidth={1}
+            borderBottomColor="border">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              mr="s16">
+              <Icon name="photo-camera" size={22} color="primary" />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Câmera
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                Fotografar agora
+              </Text>
+            </Box>
+            <Icon name="chevron-right" size={20} color="textSecondary" />
+          </TouchableOpacityBox>
+
+          {/* Galeria */}
+          <TouchableOpacityBox
+            onPress={() => handleOption('gallery')}
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="s16"
+            borderBottomWidth={allowPdf ? 1 : 0}
+            borderBottomColor="border">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              backgroundColor="primaryBg"
+              alignItems="center"
+              justifyContent="center"
+              mr="s16">
+              <Icon name="photo-library" size={22} color="primary" />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphMedium" color="text" bold>
+                Galeria
+              </Text>
+              <Text preset="paragraphSmall" color="textSecondary">
+                Selecionar da galeria
+              </Text>
+            </Box>
+            <Icon name="chevron-right" size={20} color="textSecondary" />
+          </TouchableOpacityBox>
+
+          {/* PDF — apenas quando allowPdf */}
+          {allowPdf && (
+            <TouchableOpacityBox
+              onPress={() => handleOption('pdf')}
+              flexDirection="row"
+              alignItems="center"
+              paddingVertical="s16"
+              mb="s8">
+              <Box
+                width={44}
+                height={44}
+                borderRadius="s12"
+                alignItems="center"
+                justifyContent="center"
+                mr="s16"
+                style={{backgroundColor: '#FEE2E2'}}>
+                <Icon name="picture-as-pdf" size={22} color={'#DC2626' as any} />
+              </Box>
+              <Box flex={1}>
+                <Text preset="paragraphMedium" color="text" bold>
+                  Arquivo PDF
+                </Text>
+                <Text preset="paragraphSmall" color="textSecondary">
+                  Selecionar PDF do armazenamento
+                </Text>
+              </Box>
+              <Icon name="chevron-right" size={20} color="textSecondary" />
+            </TouchableOpacityBox>
+          )}
+
+          {/* Cancelar */}
+          <TouchableOpacityBox
+            onPress={() => setShowPicker(false)}
+            backgroundColor="background"
+            borderRadius="s12"
+            paddingVertical="s16"
+            alignItems="center">
+            <Text preset="paragraphMedium" color="textSecondary" bold>
+              Cancelar
+            </Text>
+          </TouchableOpacityBox>
+        </Box>
+      </Modal>
     </Box>
   );
 }

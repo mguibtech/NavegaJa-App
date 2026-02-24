@@ -56,6 +56,7 @@ import {useAuthStore} from '@store';
 export type AppStackParamList = {
   HomeTabs: undefined;
   SearchResults: {
+    routeId?: string | null;
     origin: string;
     destination: string;
     date?: string;

@@ -33,9 +33,7 @@ export function CaptainTabBar({state, descriptors, navigation}: BottomTabBarProp
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const isFocused = state.index === index;
 
-          // Badge count - exemplo: tab específica do capitão pode ter badges
-          // Por exemplo, "Operações" poderia ter notificações de check-ins pendentes
-          const badgeCount = route.name === 'Operations' ? 8 : undefined;
+          const badgeCount: number | undefined = undefined;
 
           const onPress = () => {
             const event = navigation.emit({

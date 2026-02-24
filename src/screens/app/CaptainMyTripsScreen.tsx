@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {useCaptainTrips, Trip, TripStatus} from '@domain';
@@ -28,10 +29,12 @@ export function CaptainMyTripsScreen({navigation}: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
 
-  useEffect(() => {
-    fetchMyTrips();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyTrips();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   async function onRefresh() {
     setRefreshing(true);

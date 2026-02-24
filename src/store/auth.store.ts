@@ -37,9 +37,15 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
       } else {
         set({user: null, isLoggedIn: false, isLoading: false});
       }
-    } catch {
-      await authStorage.clear();
-      set({user: null, isLoggedIn: false, isLoading: false});
+    } catch (error: any) {
+      // Só faz logout se o token é genuinamente inválido (401).
+      // Erros de rede ou servidor transitórios NÃO devem deslogar o usuário.
+      if (error?.statusCode === 401) {
+        await authStorage.clear();
+        set({user: null, isLoggedIn: false, isLoading: false});
+      } else {
+        set({isLoading: false});
+      }
     }
   },
 

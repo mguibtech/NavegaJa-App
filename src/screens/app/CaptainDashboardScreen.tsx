@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ScrollView, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {format} from 'date-fns';
@@ -8,8 +8,8 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useCaptainTrips, Trip, TripStatus} from '@domain';
+import {Box, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
+import {useCaptainTrips, Trip, TripStatus, useMyBoats} from '@domain';
 import {useAuthStore} from '@store';
 
 import {AppStackParamList, CaptainTabsParamList} from '@routes';
@@ -29,12 +29,51 @@ const STATUS_CONFIG = {
 export function CaptainDashboardScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
   const user = useAuthStore(s => s.user);
+  const loadStoredUser = useAuthStore(s => s.loadStoredUser);
   const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
+  const {boats, fetchBoats} = useMyBoats();
+
+  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetchMyTrips();
+    fetchBoats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Polling: enquanto isPending, verifica o status a cada 30s automaticamente
+  const canOperate = !user?.capabilities || user.capabilities.canOperate;
+  const isBlocked = user?.capabilities && !user.capabilities.canOperate;
+  const isRejected = !!isBlocked && !!user?.rejectionReason;
+  const isPending = !!isBlocked && !isRejected;
+
+  useEffect(() => {
+    if (isPending) {
+      pollingRef.current = setInterval(() => {
+        loadStoredUser();
+      }, 30000); // 30 segundos
+    }
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [isPending, loadStoredUser]);
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([fetchMyTrips(), fetchBoats(), loadStoredUser()]);
+  }, [fetchMyTrips, fetchBoats, loadStoredUser]);
+
+  async function handleCheckStatus() {
+    setIsRefreshingStatus(true);
+    try {
+      await loadStoredUser();
+    } finally {
+      setIsRefreshingStatus(false);
+    }
+  }
 
   const activeTrip = trips.find(
     t => t.status === TripStatus.IN_PROGRESS || t.status === TripStatus.SCHEDULED,
@@ -46,12 +85,21 @@ export function CaptainDashboardScreen({navigation}: Props) {
     return new Date(t.updatedAt).toDateString() === today;
   }).length;
 
+  const pendingBoats = boats.filter(b => !b.isVerified && !b.rejectionReason);
+  const rejectedBoats = boats.filter(b => !b.isVerified && !!b.rejectionReason);
+
   function formatDeparture(trip: Trip) {
     try {
       return format(new Date(trip.departureAt), "dd/MM 'às' HH:mm", {locale: ptBR});
     } catch {
       return trip.departureAt;
     }
+  }
+
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+
+  function handleBlockedAction() {
+    setShowBlockedModal(true);
   }
 
   return (
@@ -68,19 +116,105 @@ export function CaptainDashboardScreen({navigation}: Props) {
         <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
           {user?.name || 'Capitão'}
         </Text>
+
+        {/* Status chip no header */}
+        {isBlocked && (
+          <Box
+            mt="s12"
+            alignSelf="flex-start"
+            flexDirection="row"
+            alignItems="center"
+            paddingHorizontal="s12"
+            paddingVertical="s6"
+            borderRadius="s20"
+            style={{
+              backgroundColor: isRejected
+                ? 'rgba(239,68,68,0.25)'
+                : isPending
+                ? 'rgba(59,130,246,0.25)'
+                : 'rgba(245,158,11,0.25)',
+            }}>
+            <Icon
+              name={isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock'}
+              size={14}
+              color={
+                isRejected
+                  ? ('#FCA5A5' as any)
+                  : isPending
+                  ? ('#93C5FD' as any)
+                  : ('#FCD34D' as any)
+              }
+            />
+            <Text
+              preset="paragraphCaptionSmall"
+              bold
+              ml="s6"
+              style={{
+                color: isRejected ? '#FCA5A5' : isPending ? '#93C5FD' : '#FCD34D',
+              }}>
+              {isRejected
+                ? 'Documentação rejeitada'
+                : isPending
+                ? 'Documentação em análise'
+                : 'Verificação pendente'}
+            </Text>
+          </Box>
+        )}
       </Box>
 
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchMyTrips} />
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }>
 
-        {/* Banner: conta não pode operar (capabilities presentes e canOperate=false) */}
-        {user?.capabilities && !user.capabilities.canOperate && (
+        {/* Banner: conta não pode operar */}
+        {isBlocked && (
           <>
+            {/* Documentação rejeitada — mostra motivo + CTA reenviar */}
+            {isRejected && (
+              <TouchableOpacityBox
+                margin="s16"
+                marginBottom="s4"
+                backgroundColor="dangerBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="danger"
+                onPress={() => navigation.navigate('EditProfile')}>
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="danger"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="cancel" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    Documentação rejeitada
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                    {user?.rejectionReason || 'Seus documentos foram reprovados.'}
+                  </Text>
+                  <Text
+                    preset="paragraphSmall"
+                    color="danger"
+                    bold
+                    mt="s8">
+                    Toque para reenviar os documentos →
+                  </Text>
+                </Box>
+              </TouchableOpacityBox>
+            )}
+
             {/* Sem documentos — solicita envio */}
-            {!user.capabilities.pendingVerification && (
+            {!isPending && !isRejected && (
               <TouchableOpacityBox
                 margin="s16"
                 marginBottom="s4"
@@ -116,36 +250,55 @@ export function CaptainDashboardScreen({navigation}: Props) {
             )}
 
             {/* Documentos enviados — aguardando aprovação */}
-            {user.capabilities.pendingVerification && (
+            {isPending && (
               <Box
                 margin="s16"
                 marginBottom="s4"
                 backgroundColor="infoBg"
                 borderRadius="s12"
                 padding="s16"
-                flexDirection="row"
-                alignItems="center"
                 borderLeftWidth={4}
                 borderLeftColor="info">
-                <Box
-                  width={40}
-                  height={40}
-                  borderRadius="s20"
-                  backgroundColor="info"
+                <Box flexDirection="row" alignItems="center">
+                  <Box
+                    width={40}
+                    height={40}
+                    borderRadius="s20"
+                    backgroundColor="info"
+                    alignItems="center"
+                    justifyContent="center"
+                    mr="s12"
+                    style={{flexShrink: 0}}>
+                    <Icon name="hourglass-top" size={20} color="surface" />
+                  </Box>
+                  <Box flex={1}>
+                    <Text preset="paragraphMedium" color="text" bold>
+                      Documentação em análise
+                    </Text>
+                    <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                      Seus documentos estão sendo analisados. Você será notificado após a aprovação.
+                    </Text>
+                  </Box>
+                </Box>
+                <TouchableOpacityBox
+                  mt="s12"
+                  flexDirection="row"
                   alignItems="center"
                   justifyContent="center"
-                  mr="s12"
-                  style={{flexShrink: 0}}>
-                  <Icon name="hourglass-top" size={20} color="surface" />
-                </Box>
-                <Box flex={1}>
-                  <Text preset="paragraphMedium" color="text" bold>
-                    Documentos enviados. Aguardando aprovação
+                  paddingVertical="s8"
+                  borderRadius="s8"
+                  backgroundColor="info"
+                  onPress={handleCheckStatus}
+                  disabled={isRefreshingStatus}>
+                  <Icon
+                    name={isRefreshingStatus ? 'hourglass-top' : 'refresh'}
+                    size={16}
+                    color={'#FFFFFF' as any}
+                  />
+                  <Text preset="paragraphSmall" bold ml="s6" style={{color: '#FFFFFF'}}>
+                    {isRefreshingStatus ? 'Verificando...' : 'Verificar status'}
                   </Text>
-                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
-                    Seus documentos estão sendo analisados pelo NavegaJá. Em breve você poderá criar viagens.
-                  </Text>
-                </Box>
+                </TouchableOpacityBox>
               </Box>
             )}
           </>
@@ -182,6 +335,124 @@ export function CaptainDashboardScreen({navigation}: Props) {
             </Text>
           </Box>
         </Box>
+
+        {/* Boat Status Banners — visível apenas quando captain pode operar */}
+        {canOperate && (
+          <>
+            {/* Nenhuma embarcação cadastrada */}
+            {boats.length === 0 && (
+              <TouchableOpacityBox
+                marginHorizontal="s20"
+                mb="s12"
+                backgroundColor="warningBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="warning"
+                onPress={() => navigation.navigate('CaptainCreateBoat')}>
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="warning"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="sailing" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    Nenhuma embarcação cadastrada
+                  </Text>
+                  <Text preset="paragraphSmall" color="secondary" bold mt="s4">
+                    Cadastrar agora →
+                  </Text>
+                </Box>
+              </TouchableOpacityBox>
+            )}
+
+            {/* Embarcações com documentação rejeitada */}
+            {rejectedBoats.length > 0 && (
+              <TouchableOpacityBox
+                marginHorizontal="s20"
+                mb="s12"
+                backgroundColor="dangerBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="danger"
+                onPress={() => navigation.navigate('CaptainMyBoats')}>
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="danger"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="error" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    {rejectedBoats.length === 1
+                      ? '1 embarcação rejeitada'
+                      : `${rejectedBoats.length} embarcações rejeitadas`}
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                    Corrija os documentos para poder criar viagens.
+                  </Text>
+                  <Text preset="paragraphSmall" color="danger" bold mt="s6">
+                    Ver embarcações →
+                  </Text>
+                </Box>
+              </TouchableOpacityBox>
+            )}
+
+            {/* Embarcações em análise */}
+            {pendingBoats.length > 0 && (
+              <TouchableOpacityBox
+                marginHorizontal="s20"
+                mb="s12"
+                backgroundColor="infoBg"
+                borderRadius="s12"
+                padding="s16"
+                flexDirection="row"
+                alignItems="center"
+                borderLeftWidth={4}
+                borderLeftColor="info"
+                onPress={() => navigation.navigate('CaptainMyBoats')}>
+                <Box
+                  width={40}
+                  height={40}
+                  borderRadius="s20"
+                  backgroundColor="info"
+                  alignItems="center"
+                  justifyContent="center"
+                  mr="s12"
+                  style={{flexShrink: 0}}>
+                  <Icon name="hourglass-top" size={20} color="surface" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    {pendingBoats.length === 1
+                      ? '1 embarcação em análise'
+                      : `${pendingBoats.length} embarcações em análise`}
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                    Aguarde a aprovação para criar viagens com {pendingBoats.length === 1 ? 'essa embarcação' : 'essas embarcações'}.
+                  </Text>
+                </Box>
+                <Icon name="chevron-right" size={20} color="textSecondary" />
+              </TouchableOpacityBox>
+            )}
+          </>
+        )}
 
         {/* Active Trip Card */}
         {activeTrip ? (
@@ -256,25 +527,39 @@ export function CaptainDashboardScreen({navigation}: Props) {
             Ações rápidas
           </Text>
           <Box flexDirection="row" gap="s12">
+            {/* Criar Viagem — bloqueado se !canOperate */}
             <TouchableOpacityBox
               flex={1}
               backgroundColor="surface"
               borderRadius="s16"
               padding="s20"
               alignItems="center"
-              onPress={() => navigation.navigate('CaptainCreateTrip')}
-              style={{elevation: 2}}>
-              <Box
-                width={48}
-                height={48}
-                borderRadius="s24"
-                backgroundColor="secondaryBg"
-                alignItems="center"
-                justifyContent="center"
-                mb="s12">
-                <Icon name="add" size={28} color="secondary" />
+              onPress={() => canOperate ? navigation.navigate('CaptainCreateTrip') : handleBlockedAction()}
+              style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
+              <Box style={{position: 'relative'}}>
+                <Box
+                  width={48}
+                  height={48}
+                  borderRadius="s24"
+                  backgroundColor={canOperate ? 'secondaryBg' : 'border'}
+                  alignItems="center"
+                  justifyContent="center"
+                  mb="s12">
+                  <Icon name="add" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
+                </Box>
+                {!canOperate && (
+                  <Box
+                    style={{
+                      position: 'absolute', top: -4, right: -4,
+                      backgroundColor: '#F59E0B',
+                      borderRadius: 10, width: 20, height: 20,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    <Icon name="lock" size={12} color={'#FFFFFF' as any} />
+                  </Box>
+                )}
               </Box>
-              <Text preset="paragraphSmall" color="text" bold textAlign="center">
+              <Text preset="paragraphSmall" color={canOperate ? 'text' : 'textSecondary'} bold textAlign="center">
                 Criar Viagem
               </Text>
             </TouchableOpacityBox>
@@ -304,25 +589,39 @@ export function CaptainDashboardScreen({navigation}: Props) {
           </Box>
 
           <Box flexDirection="row" gap="s12" mt="s12">
+            {/* Embarcações — bloqueado se !canOperate */}
             <TouchableOpacityBox
               flex={1}
               backgroundColor="surface"
               borderRadius="s16"
               padding="s20"
               alignItems="center"
-              onPress={() => navigation.navigate('CaptainMyBoats')}
-              style={{elevation: 2}}>
-              <Box
-                width={48}
-                height={48}
-                borderRadius="s24"
-                backgroundColor="secondaryBg"
-                alignItems="center"
-                justifyContent="center"
-                mb="s12">
-                <Icon name="sailing" size={28} color="secondary" />
+              onPress={() => canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction()}
+              style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
+              <Box style={{position: 'relative'}}>
+                <Box
+                  width={48}
+                  height={48}
+                  borderRadius="s24"
+                  backgroundColor={canOperate ? 'secondaryBg' : 'border'}
+                  alignItems="center"
+                  justifyContent="center"
+                  mb="s12">
+                  <Icon name="sailing" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
+                </Box>
+                {!canOperate && (
+                  <Box
+                    style={{
+                      position: 'absolute', top: -4, right: -4,
+                      backgroundColor: '#F59E0B',
+                      borderRadius: 10, width: 20, height: 20,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    <Icon name="lock" size={12} color={'#FFFFFF' as any} />
+                  </Box>
+                )}
               </Box>
-              <Text preset="paragraphSmall" color="text" bold textAlign="center">
+              <Text preset="paragraphSmall" color={canOperate ? 'text' : 'textSecondary'} bold textAlign="center">
                 Embarcações
               </Text>
             </TouchableOpacityBox>
@@ -352,6 +651,33 @@ export function CaptainDashboardScreen({navigation}: Props) {
           </Box>
         </Box>
       </ScrollView>
+
+      <InfoModal
+        visible={showBlockedModal}
+        title={
+          isRejected
+            ? 'Documentação rejeitada'
+            : isPending
+            ? 'Documentação em análise'
+            : 'Verificação pendente'
+        }
+        message={
+          isRejected
+            ? `Sua documentação foi reprovada: "${user?.rejectionReason || 'verifique seu perfil'}". Corrija os documentos e reenvie para continuar operando.`
+            : isPending
+            ? 'Seus documentos estão sendo analisados pelo NavegaJá. Você será notificado assim que a conta for aprovada e poderá criar viagens e cadastrar embarcações.'
+            : 'Envie sua licença de navegação e certificado de habilitação para que sua conta seja verificada e você possa criar viagens e embarcações.'
+        }
+        icon={isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock'}
+        iconColor={isRejected ? 'danger' : isPending ? 'info' : 'warning'}
+        buttonText={isRejected ? 'Reenviar documentos' : isPending ? 'Entendido' : 'Enviar documentos'}
+        onClose={() => {
+          setShowBlockedModal(false);
+          if (!isPending) {
+            navigation.navigate('EditProfile');
+          }
+        }}
+      />
     </Box>
   );
 }

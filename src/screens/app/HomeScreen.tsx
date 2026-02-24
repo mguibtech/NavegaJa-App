@@ -9,6 +9,7 @@ import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget} from '@components';
+import {apiImageSource} from '../../api/config';
 import {useAuthStore} from '@store';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';
@@ -120,6 +121,7 @@ export function HomeScreen({navigation}: Props) {
         onPress={() => {
           // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
           navigation.navigate('SearchResults', {
+            routeId: item.routeId ?? null,
             origin,
             destination,
           });
@@ -132,7 +134,7 @@ export function HomeScreen({navigation}: Props) {
           elevation: 5,
         }}>
         <Image
-          source={{uri: image}}
+          source={apiImageSource(image)}
           style={{width: '100%', height: 110}}
           resizeMode="cover"
         />
@@ -601,14 +603,35 @@ export function HomeScreen({navigation}: Props) {
             </TouchableOpacityBox>
           </Box>
 
-          <FlatList
-            horizontal
-            data={popularData?.routes || POPULAR_ROUTES}
-            keyExtractor={(item, index) => (item as any).id || `${item.origin}-${item.destination}-${index}`}
-            renderItem={renderPopularRoute}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{paddingHorizontal: 24}}
-          />
+          {(popularData?.routes || POPULAR_ROUTES).length === 0 ? (
+            <Box
+              mx="s24"
+              backgroundColor="surface"
+              borderRadius="s16"
+              padding="s32"
+              alignItems="center"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 2,
+              }}>
+              <Icon name="route" size={48} color="border" />
+              <Text preset="paragraphMedium" color="textSecondary" mt="s16" textAlign="center">
+                Nenhuma rota popular disponível no momento
+              </Text>
+            </Box>
+          ) : (
+            <FlatList
+              horizontal
+              data={popularData?.routes || POPULAR_ROUTES}
+              keyExtractor={(item, index) => (item as any).id || `${item.origin}-${item.destination}-${index}`}
+              renderItem={renderPopularRoute}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{paddingHorizontal: 24}}
+            />
+          )}
         </Box>
 
         {/* Favorites Section */}
@@ -802,7 +825,7 @@ export function HomeScreen({navigation}: Props) {
                       elevation: 6,
                     }}>
                     <ImageBackground
-                      source={{uri: promo.imageUrl}}
+                      source={apiImageSource(promo.imageUrl)}
                       style={{width: '100%', minHeight: 200}}
                       imageStyle={{borderRadius: 20}}
                       resizeMode="cover">

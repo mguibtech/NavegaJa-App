@@ -13,7 +13,7 @@ import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} fr
 import {useUpdateBoat, getBoatByIdUseCase} from '@domain';
 import {useToast} from '@hooks';
 import {api} from '@api';
-import {API_BASE_URL} from '../../api/config';
+import {normalizeFileUrl} from '../../api/config';
 
 import {AppStackParamList} from '@routes';
 
@@ -51,6 +51,7 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
   const [savedDocPhotos, setSavedDocPhotos] = useState<string[]>([]);
 
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [uploadLabel, setUploadLabel] = useState('');
 
   useEffect(() => {
     loadBoat();
@@ -86,24 +87,38 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
     return null;
   }
 
-  async function uploadPhotos(items: PhotoItem[], folder: string): Promise<string[]> {
-    return Promise.all(
-      items.map(async photo => {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: photo.uri,
-          type: photo.type || 'image/jpeg',
-          name: photo.name || 'photo.jpg',
-        } as any);
-        const res = await api.upload<{url: string}>(
-          `/upload/image?folder=${folder}`,
-          formData,
-        );
-        return res.url.startsWith('http')
-          ? res.url
-          : `${API_BASE_URL}${res.url}`;
-      }),
-    );
+  async function uploadImages(items: PhotoItem[]): Promise<string[]> {
+    const urls: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      setUploadLabel(`Enviando foto ${i + 1} de ${items.length}...`);
+      const photo = items[i];
+      const formData = new FormData();
+      formData.append('file', {
+        uri: photo.uri,
+        type: photo.type || 'image/jpeg',
+        name: photo.name || 'photo.jpg',
+      } as any);
+      const res = await api.upload<{url: string}>('/upload/image?folder=boats', formData);
+      urls.push(normalizeFileUrl(res.url));
+    }
+    return urls;
+  }
+
+  async function uploadDocuments(items: PhotoItem[]): Promise<string[]> {
+    const urls: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      setUploadLabel(`Enviando documento ${i + 1} de ${items.length}...`);
+      const doc = items[i];
+      const formData = new FormData();
+      formData.append('file', {
+        uri: doc.uri,
+        type: doc.type || 'image/jpeg',
+        name: doc.name || 'doc.jpg',
+      } as any);
+      const res = await api.upload<{url: string}>('/upload/document?folder=documents', formData);
+      urls.push(normalizeFileUrl(res.url));
+    }
+    return urls;
   }
 
   async function handleSubmit() {
@@ -114,12 +129,10 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
     }
 
     try {
-      // Upload das novas fotos em paralelo
-      const [newPhotoUrls, newDocUrls] = await Promise.all([
-        photos.length > 0 ? uploadPhotos(photos, 'boats') : Promise.resolve([]),
-        docPhotos.length > 0 ? uploadPhotos(docPhotos, 'boats') : Promise.resolve([]),
-      ]);
+      const newPhotoUrls = photos.length > 0 ? await uploadImages(photos) : [];
+      const newDocUrls = docPhotos.length > 0 ? await uploadDocuments(docPhotos) : [];
 
+      setUploadLabel('Salvando alterações...');
       await updateBoat(boatId, {
         name: name.trim(),
         type: type.trim(),
@@ -132,6 +145,7 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
       toast.showSuccess('Embarcação atualizada com sucesso!');
       navigation.goBack();
     } catch (err: any) {
+      setUploadLabel('');
       toast.showError(err?.message || 'Erro ao atualizar embarcação');
     }
   }
@@ -326,17 +340,18 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
               photos={docPhotos}
               onPhotosChange={setDocPhotos}
               maxPhotos={Math.max(0, 5 - savedDocPhotos.length)}
+              allowPdf
               label="Documentos da Embarcação"
-              description={`Licença, registro, DPEM etc. ${savedDocPhotos.length} documento(s) já enviado(s). Ao adicionar novos documentos, a embarcação volta para análise.`}
+              description={`Licença, registro, DPEM etc. Aceita imagens e PDF. ${savedDocPhotos.length} documento(s) já enviado(s). Ao adicionar novos documentos, a embarcação volta para análise.`}
             />
           </Box>
 
           <Button
-            title={isSaving ? 'Salvando...' : 'Salvar Alterações'}
+            title={uploadLabel || (isSaving ? 'Salvando...' : 'Salvar Alterações')}
             onPress={handleSubmit}
-            disabled={isSaving}
+            disabled={isSaving || !!uploadLabel}
           />
-          {isSaving && (
+          {(isSaving || !!uploadLabel) && (
             <Box alignItems="center" mt="s16">
               <ActivityIndicator size="small" color="#0a6fbd" />
             </Box>
