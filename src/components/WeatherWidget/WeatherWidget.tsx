@@ -195,6 +195,40 @@ export function WeatherWidget({
         </Box>
       </Box>
 
+      {/* Sunrise / Sunset */}
+      {(weather.sunrise || weather.sunset) && (
+        <Box
+          flexDirection="row"
+          justifyContent="space-around"
+          paddingTop="s12"
+          mt="s8"
+          borderTopWidth={1}
+          borderTopColor="border">
+          {weather.sunrise && (
+            <Box flexDirection="row" alignItems="center">
+              <Text preset="paragraphSmall" color="textSecondary" mr="s4">🌅</Text>
+              <Text preset="paragraphSmall" color="text">
+                {new Date(weather.sunrise).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </Box>
+          )}
+          {weather.sunset && (
+            <Box flexDirection="row" alignItems="center">
+              <Text preset="paragraphSmall" color="textSecondary" mr="s4">🌇</Text>
+              <Text preset="paragraphSmall" color="text">
+                {new Date(weather.sunset).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </Box>
+          )}
+        </Box>
+      )}
+
       {/* Warnings */}
       {(weather.safetyWarnings?.length ?? 0) > 0 && (
         <Box

@@ -69,6 +69,15 @@ function handleNotificationNavigation(data: Record<string, string>) {
       }
       break;
 
+    case 'weather_alert':
+      // Alerta de clima — passageiro vai para a reserva, capitão vai para a viagem
+      if (bookingId) {
+        navigationRef.navigate('Ticket', {bookingId});
+      } else if (tripId) {
+        navigationRef.navigate('TripDetails', {tripId});
+      }
+      break;
+
     case 'captain_verified':
       // Documentação aprovada — exibe dashboard já atualizado
       navigationRef.navigate('HomeTabs', undefined);

@@ -215,6 +215,56 @@ export const SAFETY_LEVEL_CONFIGS: Record<SafetyLevel, SafetyLevelConfig> = {
   },
 };
 
+// ========== RIVER LEVELS ==========
+
+export type RiverLevelStatus =
+  | 'low'
+  | 'normal'
+  | 'attention'
+  | 'alert'
+  | 'emergency'
+  | 'unknown';
+
+export interface RiverLevel {
+  station: string;       // "Manaus"
+  stationCode: string;   // "14100000"
+  river: string;         // "Rio Negro"
+  levelCm: number | null;
+  levelStatus: RiverLevelStatus;
+  recordedAt: string;    // "25/02/2026 06:00:00"
+  source: string;        // "ANA"
+}
+
+export interface RiverLevelStatusConfig {
+  label: string;
+  color: string;
+  bgColor: string;
+  description: string;
+}
+
+export const RIVER_LEVEL_STATUS_CONFIGS: Record<RiverLevelStatus, RiverLevelStatusConfig> = {
+  low:       {label: 'Baixo',      color: '#B45309', bgColor: '#FEF3C7', description: 'Rio baixo — risco de encalhe'},
+  normal:    {label: 'Normal',     color: '#059669', bgColor: '#D1FAE5', description: 'Navegação normal'},
+  attention: {label: 'Atenção',    color: '#D97706', bgColor: '#FEF3C7', description: 'Nível de atenção'},
+  alert:     {label: 'Alerta',     color: '#EA580C', bgColor: '#FFEDD5', description: 'Alerta — obstáculos submersos'},
+  emergency: {label: 'Emergência', color: '#DC2626', bgColor: '#FEE2E2', description: 'Emergência — navegação restrita'},
+  unknown:   {label: 'Desconhecido', color: '#6B7280', bgColor: '#F3F4F6', description: 'Dado indisponível'},
+};
+
+// ========== TRIP WEATHER ==========
+
+export interface TripWeather {
+  tripId: string;
+  origin: string;
+  destination: string;
+  departureAt: string;
+  weather: CurrentWeather;
+  isSafeForNavigation: boolean;
+  safetyScore: number; // 0-100
+  warnings: string[];
+  recommendations: string[];
+}
+
 // ========== HELPER FUNCTIONS ==========
 
 export function getWeatherIcon(iconCode: string): {emoji: string; name: string} {

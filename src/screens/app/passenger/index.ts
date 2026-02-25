@@ -14,3 +14,4 @@ export * from './ShipmentsScreen';
 export * from './TripReviewScreen';
 export * from './ValidateDeliveryScreen';
 export * from './ScanShipmentQRScreen';
+export * from './WeatherScreen';

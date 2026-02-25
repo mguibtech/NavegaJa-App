@@ -10,6 +10,8 @@ import {
   NavigationSafetyAssessment,
   WeatherAlert,
   Region,
+  TripWeather,
+  RiverLevel,
 } from './weatherTypes';
 
 // ========== CURRENT WEATHER ==========
@@ -155,6 +157,46 @@ async function getRegionAlerts(region: Region): Promise<WeatherAlert[]> {
   }
 }
 
+// ========== TRIP WEATHER ==========
+
+/**
+ * GET /weather/trip/:tripId
+ * Clima específico de uma viagem (origem/destino/horário de partida)
+ * Público — sem JWT
+ */
+async function getTripWeather(tripId: string): Promise<TripWeather> {
+  const response = await api.get<TripWeather>(`/weather/trip/${tripId}`);
+  return response;
+}
+
+// ========== RIVER LEVELS ==========
+
+/**
+ * GET /weather/river-levels
+ * Nível atual de todos os rios monitorados (fonte: ANA)
+ * Público — sem JWT
+ */
+async function getRiverLevels(): Promise<RiverLevel[]> {
+  try {
+    const response = await api.get<RiverLevel[]>('/weather/river-levels');
+    return response;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+/**
+ * GET /weather/river-level/:code
+ * Nível de um rio específico pelo código da estação ANA
+ */
+async function getRiverLevel(stationCode: string): Promise<RiverLevel> {
+  const response = await api.get<RiverLevel>(`/weather/river-level/${stationCode}`);
+  return response;
+}
+
 // ========== HISTORICAL DATA (OPCIONAL) ==========
 
 /**
@@ -185,4 +227,7 @@ export const weatherAPI = {
   getAlerts,
   getRegionAlerts,
   getHistorical,
+  getTripWeather,
+  getRiverLevels,
+  getRiverLevel,
 };

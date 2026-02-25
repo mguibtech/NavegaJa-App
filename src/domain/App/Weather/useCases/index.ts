@@ -2,3 +2,5 @@ export * from './useWeather';
 export * from './useNavigationSafety';
 export * from './useWeatherForecast';
 export * from './useWeatherAlerts';
+export * from './useTripWeather';
+export * from './useRiverLevels';

@@ -36,6 +36,8 @@ export type {InfoModalProps} from './InfoModal/InfoModal';
 export {EmergencyButton} from './EmergencyButton/EmergencyButton';
 export {WeatherIcon} from './WeatherIcon/WeatherIcon';
 export {WeatherWidget} from './WeatherWidget/WeatherWidget';
+export {TripWeatherWidget} from './TripWeatherWidget/TripWeatherWidget';
+export {RiverLevelsPanel} from './RiverLevelsPanel/RiverLevelsPanel';
 export {NavigationSafetyAlert} from './NavigationSafetyAlert/NavigationSafetyAlert';
 export {SosMarker} from './SosMarker/SosMarker';
 export {DangerZone} from './DangerZone/DangerZone';

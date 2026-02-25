@@ -2,7 +2,7 @@ import React from 'react';
 import {ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, ConfirmationModal, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, NavigationSafetyAlert} from '@components';
+import {Box, Button, ConfirmationModal, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, TripWeatherWidget} from '@components';
 
 import {formatBRL} from '@utils';
 
@@ -312,12 +312,9 @@ export function TripDetailsScreen() {
             </TouchableOpacityBox>
           </Box>
 
-          {/* Navigation Safety Alert */}
+          {/* Weather da viagem */}
           <Box mb="s16">
-            <NavigationSafetyAlert
-              latitude={trip.boat?.currentLocation?.lat}
-              longitude={trip.boat?.currentLocation?.lng}
-            />
+            <TripWeatherWidget tripId={trip.id} />
           </Box>
 
           {/* Captain Info */}

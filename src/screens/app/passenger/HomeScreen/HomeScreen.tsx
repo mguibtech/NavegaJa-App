@@ -600,7 +600,10 @@ export function HomeScreen({navigation}: Props) {
 
         {/* Weather Widget */}
         <Box paddingHorizontal="s24" mt="s24">
-          <WeatherWidget region={weatherRegion as Region} />
+          <WeatherWidget
+            region={weatherRegion as Region}
+            onPress={() => navigation.navigate('WeatherScreen', {region: weatherRegion})}
+          />
         </Box>
 
         {/* Popular Routes */}

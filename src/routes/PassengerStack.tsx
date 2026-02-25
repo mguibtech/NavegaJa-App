@@ -27,6 +27,7 @@ import {
   TripReviewScreen,
   ValidateDeliveryScreen,
   ScanShipmentQRScreen,
+  WeatherScreen,
   // Shared screens
   ShipmentDetailsScreen,
   ShipmentReviewScreen,
@@ -141,6 +142,7 @@ export function PassengerStack() {
       <Stack.Screen name="HomeTabs" component={PassengerTabs} />
 
       {/* ── Telas do Navegador ─────────────────────────────── */}
+      <Stack.Screen name="WeatherScreen" component={WeatherScreen} />
       <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
       <Stack.Screen name="PopularRoutes" component={PopularRoutesScreen} />
       <Stack.Screen name="TripDetails" component={TripDetailsScreen} />

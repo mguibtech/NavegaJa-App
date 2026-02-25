@@ -12,11 +12,15 @@ import {
   NavigationSafetyAssessment,
   WeatherAlert,
   Region,
+  TripWeather,
+  RiverLevel,
 } from './weatherTypes';
 
 const WEATHER_CACHE_KEY = '@navegaja:weather_cache';
 const FORECAST_CACHE_KEY = '@navegaja:forecast_cache';
 const SAFETY_CACHE_KEY = '@navegaja:safety_cache';
+const TRIP_WEATHER_CACHE_KEY = '@navegaja:trip_weather_cache';
+const RIVER_LEVELS_CACHE_KEY = '@navegaja:river_levels_cache';
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos (igual ao backend)
 
 interface CachedData<T> {
@@ -271,6 +275,55 @@ async function getRegionAlerts(region: Region): Promise<WeatherAlert[]> {
   return await weatherAPI.getRegionAlerts(region);
 }
 
+// ========== TRIP WEATHER ==========
+
+/**
+ * Clima específico de uma viagem (com cache curto de 10 min)
+ */
+async function getTripWeather(tripId: string): Promise<TripWeather> {
+  const cacheKey = `${TRIP_WEATHER_CACHE_KEY}:${tripId}`;
+
+  try {
+    const tripWeather = await weatherAPI.getTripWeather(tripId);
+    await saveToCache(cacheKey, tripWeather);
+    return tripWeather;
+  } catch (error) {
+    const cached = await loadFromCache<TripWeather>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+// ========== RIVER LEVELS ==========
+
+/**
+ * Nível dos rios monitorados (com cache de 30 min)
+ */
+async function getRiverLevels(): Promise<RiverLevel[]> {
+  const cacheKey = RIVER_LEVELS_CACHE_KEY;
+
+  try {
+    const levels = await weatherAPI.getRiverLevels();
+    await saveToCache(cacheKey, levels);
+    return levels;
+  } catch (error) {
+    const cached = await loadFromCache<RiverLevel[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    return [];
+  }
+}
+
+/**
+ * Nível de um rio específico (sem cache — fresh)
+ */
+async function getRiverLevel(stationCode: string): Promise<RiverLevel> {
+  return await weatherAPI.getRiverLevel(stationCode);
+}
+
 // ========== CACHE MANAGEMENT ==========
 
 /**
@@ -331,6 +384,9 @@ export const weatherService = {
   getRegionNavigationSafety,
   getAlerts,
   getRegionAlerts,
+  getTripWeather,
+  getRiverLevels,
+  getRiverLevel,
   clearCache,
   clearExpiredCache,
 };

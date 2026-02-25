@@ -58,6 +58,7 @@ type SharedParamList = {
 // Stack do passageiro/navegador
 export type PassengerStackParamList = {
   HomeTabs: undefined;
+  WeatherScreen: {region?: string} | undefined;
   SearchResults: {
     routeId?: string | null;
     origin: string;
