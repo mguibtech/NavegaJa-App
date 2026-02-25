@@ -1,10 +1,10 @@
 import React from 'react';
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Image} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Camera} from 'react-native-vision-camera';
 
-import {Box, Button, Text, Icon, ConfirmationModal, InfoModal} from '@components';
+import {Box, Button, Text, Icon, TouchableOpacityBox, ConfirmationModal, InfoModal} from '@components';
 
 import {useScanShipmentQRScreen} from './useScanShipmentQRScreen';
 
@@ -19,18 +19,20 @@ export function ScanShipmentQRScreen() {
     // State
     scannedData,
     isLoading,
+    capturedPhotoUri,
     // Handlers
     handleGoBack,
+    handleTakePhoto,
     confirmCollection,
     handlePermissionConfirm,
     handlePermissionCancel,
     handleInvalidQRClose,
     handleConfirmCancel,
     handleErrorModalClose,
-    // Modal states
+    // Modal/Panel states
     showPermissionModal,
     showInvalidQRModal,
-    showConfirmModal,
+    showConfirmPanel,
     showErrorModal,
     errorMessage,
   } = useScanShipmentQRScreen();
@@ -199,20 +201,132 @@ export function ScanShipmentQRScreen() {
         onClose={handleInvalidQRClose}
       />
 
-      {/* Confirm Collection Modal */}
-      <ConfirmationModal
-        visible={showConfirmModal}
-        title="Coletar Encomenda"
-        message={`Código: ${scannedData?.trackingCode || 'N/A'}\n\nConfirma a coleta desta encomenda?`}
-        icon="inventory-2"
-        iconColor="success"
-        confirmText="Confirmar Coleta"
-        cancelText="Cancelar"
-        confirmPreset="primary"
-        onConfirm={confirmCollection}
-        onCancel={handleConfirmCancel}
-        isLoading={isLoading}
-      />
+      {/* Confirm Collection Panel — painel fixo no fundo da tela */}
+      {showConfirmPanel && (
+        <Box
+          position="absolute"
+          bottom={0}
+          left={0}
+          right={0}
+          backgroundColor="surface"
+          borderRadius="s24"
+          padding="s20"
+          style={{
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: -4},
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 10,
+          }}>
+          {/* Drag handle */}
+          <Box
+            width={40}
+            height={4}
+            backgroundColor="border"
+            borderRadius="s8"
+            alignSelf="center"
+            mb="s16"
+          />
+
+          {/* Código da encomenda */}
+          <Box flexDirection="row" alignItems="center" mb="s16">
+            <Box
+              width={44}
+              height={44}
+              borderRadius="s12"
+              backgroundColor="successBg"
+              alignItems="center"
+              justifyContent="center"
+              mr="s12">
+              <Icon name="inventory-2" size={24} color="success" />
+            </Box>
+            <Box flex={1}>
+              <Text preset="paragraphSmall" color="textSecondary">Encomenda escaneada</Text>
+              <Text preset="paragraphMedium" color="text" bold>
+                {scannedData?.trackingCode || scannedData?.shipmentId?.slice(0, 8).toUpperCase() || 'N/A'}
+              </Text>
+            </Box>
+          </Box>
+
+          {/* Foto opcional */}
+          <Box mb="s16">
+            <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+              Foto de confirmação (opcional)
+            </Text>
+            {capturedPhotoUri ? (
+              <Box flexDirection="row" alignItems="center" gap="s12">
+                <Image
+                  source={{uri: capturedPhotoUri}}
+                  style={{width: 72, height: 72, borderRadius: 8}}
+                  resizeMode="cover"
+                />
+                <TouchableOpacityBox
+                  flex={1}
+                  flexDirection="row"
+                  alignItems="center"
+                  paddingVertical="s10"
+                  paddingHorizontal="s12"
+                  backgroundColor="background"
+                  borderRadius="s8"
+                  onPress={handleTakePhoto}>
+                  <Icon name="camera-alt" size={18} color="primary" />
+                  <Text preset="paragraphSmall" color="primary" bold ml="s8">
+                    Tirar outra foto
+                  </Text>
+                </TouchableOpacityBox>
+              </Box>
+            ) : (
+              <TouchableOpacityBox
+                flexDirection="row"
+                alignItems="center"
+                paddingVertical="s12"
+                paddingHorizontal="s16"
+                backgroundColor="background"
+                borderRadius="s12"
+                onPress={handleTakePhoto}>
+                <Icon name="camera-alt" size={20} color="primary" />
+                <Box ml="s12">
+                  <Text preset="paragraphSmall" color="primary" bold>
+                    Tirar foto da encomenda
+                  </Text>
+                  <Text preset="paragraphCaptionSmall" color="textSecondary">
+                    Recomendado para comprovante
+                  </Text>
+                </Box>
+              </TouchableOpacityBox>
+            )}
+          </Box>
+
+          {/* Botões */}
+          <Box flexDirection="row" gap="s12">
+            <TouchableOpacityBox
+              flex={1}
+              paddingVertical="s14"
+              borderRadius="s12"
+              backgroundColor="background"
+              alignItems="center"
+              onPress={handleConfirmCancel}>
+              <Text preset="paragraphMedium" color="text" bold>Cancelar</Text>
+            </TouchableOpacityBox>
+            <TouchableOpacityBox
+              flex={2}
+              paddingVertical="s14"
+              borderRadius="s12"
+              backgroundColor="primary"
+              alignItems="center"
+              flexDirection="row"
+              justifyContent="center"
+              onPress={confirmCollection}>
+              <Icon name="check-circle" size={20} color="surface" />
+              <Text preset="paragraphMedium" color="surface" bold ml="s8">
+                Confirmar Coleta
+              </Text>
+            </TouchableOpacityBox>
+          </Box>
+        </Box>
+      )}
 
       {/* Error Modal */}
       <InfoModal

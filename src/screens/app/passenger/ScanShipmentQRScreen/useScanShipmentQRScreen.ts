@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Linking} from 'react-native';
+import {launchCamera} from 'react-native-image-picker';
 
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -21,10 +22,12 @@ export function useScanShipmentQRScreen() {
     validationCode?: string;
   } | null>(null);
 
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+
   // Modal states
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [showInvalidQRModal, setShowInvalidQRModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showConfirmPanel, setShowConfirmPanel] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -72,25 +75,38 @@ export function useScanShipmentQRScreen() {
       }
 
       setScannedData(data);
-      setShowConfirmModal(true);
+      setCapturedPhotoUri(null);
+      setShowConfirmPanel(true);
     } catch {
       setShowInvalidQRModal(true);
       setIsScanning(true);
     }
   }
 
+  async function handleTakePhoto() {
+    const response = await launchCamera({
+      mediaType: 'photo',
+      quality: 0.7,
+      saveToPhotos: false,
+    });
+    if (!response.didCancel && response.assets?.[0]?.uri) {
+      setCapturedPhotoUri(response.assets[0].uri);
+    }
+  }
+
   async function confirmCollection() {
     if (!scannedData) return;
 
-    setShowConfirmModal(false);
+    setShowConfirmPanel(false);
 
     try {
-      // TODO: Implementar captura de foto opcional
-      const result = await collect(scannedData.shipmentId, scannedData.validationCode);
+      const result = await collect(
+        scannedData.shipmentId,
+        scannedData.validationCode,
+        capturedPhotoUri ?? undefined,
+      );
 
       toast.showSuccess(result.message);
-
-      // Navegar para detalhes da encomenda
       navigation.replace('ShipmentDetails', {shipmentId: scannedData.shipmentId});
     } catch (error: any) {
       setErrorMessage(error?.message || 'Não foi possível coletar a encomenda');
@@ -119,8 +135,9 @@ export function useScanShipmentQRScreen() {
   }
 
   function handleConfirmCancel() {
-    setShowConfirmModal(false);
+    setShowConfirmPanel(false);
     setScannedData(null);
+    setCapturedPhotoUri(null);
     setIsScanning(true);
   }
 
@@ -138,18 +155,20 @@ export function useScanShipmentQRScreen() {
     // State
     scannedData,
     isLoading,
+    capturedPhotoUri,
     // Handlers
     handleGoBack,
+    handleTakePhoto,
     confirmCollection,
     handlePermissionConfirm,
     handlePermissionCancel,
     handleInvalidQRClose,
     handleConfirmCancel,
     handleErrorModalClose,
-    // Modal states
+    // Modal/Panel states
     showPermissionModal,
     showInvalidQRModal,
-    showConfirmModal,
+    showConfirmPanel,
     showErrorModal,
     errorMessage,
   };

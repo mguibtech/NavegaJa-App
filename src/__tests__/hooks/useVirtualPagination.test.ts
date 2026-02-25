@@ -72,7 +72,10 @@ describe('useVirtualPagination', () => {
 
   it('reseta para a primeira página quando o tamanho dos dados muda', () => {
     let data = makeList(50);
-    const {result, rerender} = renderHook(
+    const {result, rerender} = renderHook<
+      ReturnType<typeof useVirtualPagination>,
+      {d: number[]}
+    >(
       ({d}) => useVirtualPagination(d, 10),
       {initialProps: {d: data}},
     );

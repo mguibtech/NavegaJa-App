@@ -23,7 +23,7 @@ export {CouponInputV2} from './CouponInput/CouponInputV2';
 export type {CouponInputV2Props} from './CouponInput/CouponInputV2';
 export {PriceBreakdown} from './PriceBreakdown/PriceBreakdown';
 export type {PriceBreakdownProps} from './PriceBreakdown/PriceBreakdown';
-export {Skeleton, TripCardSkeleton, TripListSkeleton, TripDetailsSkeleton} from './Skeleton/Skeleton';
+export {Skeleton, TripCardSkeleton, TripListSkeleton, TripDetailsSkeleton, BookingCardSkeleton, ShipmentCardSkeleton} from './Skeleton/Skeleton';
 export type {SkeletonProps} from './Skeleton/Skeleton';
 export {ShipmentCard} from './ShipmentCard/ShipmentCard';
 export {PhotoPicker} from './PhotoPicker/PhotoPicker';

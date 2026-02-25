@@ -1,33 +1,51 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 
-const TOKEN_KEY = '@navegaja:token';
-const REFRESH_TOKEN_KEY = '@navegaja:refreshToken';
 const USER_KEY = '@navegaja:user';
 
+const KEYCHAIN_SERVICE_TOKEN = 'navegaja.token';
+const KEYCHAIN_SERVICE_REFRESH = 'navegaja.refreshToken';
+
 export const authStorage = {
+  // ─── Token (JWT) — armazenado de forma segura no Keychain ─────────────────
+
   async saveToken(token: string): Promise<void> {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await Keychain.setGenericPassword('token', token, {
+      service: KEYCHAIN_SERVICE_TOKEN,
+    });
   },
 
   async getToken(): Promise<string | null> {
-    return AsyncStorage.getItem(TOKEN_KEY);
+    const credentials = await Keychain.getGenericPassword({
+      service: KEYCHAIN_SERVICE_TOKEN,
+    });
+    return credentials ? credentials.password : null;
   },
 
   async removeToken(): Promise<void> {
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    await Keychain.resetGenericPassword({service: KEYCHAIN_SERVICE_TOKEN});
   },
 
+  // ─── Refresh Token — armazenado de forma segura no Keychain ───────────────
+
   async saveRefreshToken(refreshToken: string): Promise<void> {
-    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    await Keychain.setGenericPassword('refreshToken', refreshToken, {
+      service: KEYCHAIN_SERVICE_REFRESH,
+    });
   },
 
   async getRefreshToken(): Promise<string | null> {
-    return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    const credentials = await Keychain.getGenericPassword({
+      service: KEYCHAIN_SERVICE_REFRESH,
+    });
+    return credentials ? credentials.password : null;
   },
 
   async removeRefreshToken(): Promise<void> {
-    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+    await Keychain.resetGenericPassword({service: KEYCHAIN_SERVICE_REFRESH});
   },
+
+  // ─── User (dados não-sensíveis) — AsyncStorage ────────────────────────────
 
   async saveUser(user: object): Promise<void> {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -42,7 +60,13 @@ export const authStorage = {
     await AsyncStorage.removeItem(USER_KEY);
   },
 
+  // ─── Clear all ─────────────────────────────────────────────────────────────
+
   async clear(): Promise<void> {
-    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+    await Promise.all([
+      Keychain.resetGenericPassword({service: KEYCHAIN_SERVICE_TOKEN}),
+      Keychain.resetGenericPassword({service: KEYCHAIN_SERVICE_REFRESH}),
+      AsyncStorage.removeItem(USER_KEY),
+    ]);
   },
 };

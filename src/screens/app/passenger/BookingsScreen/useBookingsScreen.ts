@@ -13,7 +13,7 @@ export function useBookingsScreen() {
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
-  const {bookings, fetch: fetchBookings, error: bookingsError} = useMyBookings();
+  const {bookings, fetch: fetchBookings, isLoading: isLoadingBookings, error: bookingsError} = useMyBookings();
   const {cancel, isLoading: isCancelling} = useCancelBooking();
 
   useFocusEffect(
@@ -92,6 +92,7 @@ export function useBookingsScreen() {
     selectedTab,
     setSelectedTab,
     refreshing,
+    isLoadingBookings,
     bookingToCancel,
     setBookingToCancel,
     bookingsError,

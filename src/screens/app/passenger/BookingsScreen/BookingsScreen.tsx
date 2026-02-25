@@ -2,7 +2,7 @@ import React from 'react';
 import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, BookingCardSkeleton, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
 import {Booking} from '@domain';
 import {formatBRL} from '@utils';
 
@@ -19,6 +19,7 @@ export function BookingsScreen() {
     bookingsError,
     fetchBookings,
     isCancelling,
+    isLoadingBookings,
     filteredBookings,
     hasMoreBookings,
     loadMoreBookings,
@@ -317,25 +318,33 @@ export function BookingsScreen() {
           );
         }}
         ListEmptyComponent={
-          <Box alignItems="center" paddingVertical="s48">
-            <Icon
-              name={selectedTab === 'active' ? 'receipt-long' : 'check-circle'}
-              size={64}
-              color="border"
-            />
-            <Text preset="headingSmall" color="textSecondary" mt="s16">
-              Nenhuma reserva {selectedTab === 'active' ? 'ativa' : 'concluída'}
-            </Text>
-            <Text
-              preset="paragraphMedium"
-              color="textSecondary"
-              mt="s8"
-              textAlign="center">
-              {selectedTab === 'active'
-                ? 'Suas próximas viagens aparecerão aqui'
-                : 'Seu histórico de viagens aparecerá aqui'}
-            </Text>
-          </Box>
+          isLoadingBookings ? (
+            <Box paddingTop="s8">
+              <BookingCardSkeleton />
+              <BookingCardSkeleton />
+              <BookingCardSkeleton />
+            </Box>
+          ) : (
+            <Box alignItems="center" paddingVertical="s48">
+              <Icon
+                name={selectedTab === 'active' ? 'receipt-long' : 'check-circle'}
+                size={64}
+                color="border"
+              />
+              <Text preset="headingSmall" color="textSecondary" mt="s16">
+                Nenhuma reserva {selectedTab === 'active' ? 'ativa' : 'concluída'}
+              </Text>
+              <Text
+                preset="paragraphMedium"
+                color="textSecondary"
+                mt="s8"
+                textAlign="center">
+                {selectedTab === 'active'
+                  ? 'Suas próximas viagens aparecerão aqui'
+                  : 'Seu histórico de viagens aparecerá aqui'}
+              </Text>
+            </Box>
+          )
         }
       />
 

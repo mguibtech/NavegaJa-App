@@ -4,7 +4,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, ConfirmationModal, InfoModal, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
 import {
   useMyFavorites,
   useToggleFavorite,
@@ -29,8 +29,6 @@ export function FavoritesScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<TabType>('all');
   const [favoriteToRemove, setFavoriteToRemove] = useState<Favorite | null>(null);
-  const [showBoatModal, setShowBoatModal] = useState(false);
-  const [showCaptainModal, setShowCaptainModal] = useState(false);
 
   const {favorites, fetch, isLoading, error} = useMyFavorites(
     selectedTab === 'all' ? undefined : selectedTab,
@@ -62,11 +60,21 @@ export function FavoritesScreen({navigation}: Props) {
         destination: favorite.destination || '',
       });
     } else if (favorite.type === FavoriteType.BOAT && favorite.boatId) {
-      // TODO: Navegar para detalhes do barco quando tela existir
-      setShowBoatModal(true);
+      navigation.navigate('BoatDetail', {
+        boatId: favorite.boatId,
+        boatName: favorite.boat?.name,
+        boatType: favorite.boat?.type,
+        boatCapacity: favorite.boat?.capacity,
+        boatPhotoUrl: favorite.boat?.photoUrl,
+      });
     } else if (favorite.type === FavoriteType.CAPTAIN && favorite.captainId) {
-      // TODO: Navegar para perfil do capitão quando tela existir
-      setShowCaptainModal(true);
+      navigation.navigate('CaptainProfile', {
+        captainId: favorite.captainId,
+        captainName: favorite.captain?.name,
+        captainRating: favorite.captain?.rating,
+        captainTotalTrips: favorite.captain?.totalTrips,
+        captainAvatarUrl: favorite.captain?.avatarUrl,
+      });
     }
   };
 
@@ -469,25 +477,7 @@ export function FavoritesScreen({navigation}: Props) {
         onCancel={() => setFavoriteToRemove(null)}
       />
 
-      <InfoModal
-        visible={showBoatModal}
-        title="Em breve"
-        message="Detalhes do barco em desenvolvimento"
-        icon="info"
-        iconColor="info"
-        buttonText="Entendi"
-        onClose={() => setShowBoatModal(false)}
-      />
 
-      <InfoModal
-        visible={showCaptainModal}
-        title="Em breve"
-        message="Perfil do capitão em desenvolvimento"
-        icon="info"
-        iconColor="info"
-        buttonText="Entendi"
-        onClose={() => setShowCaptainModal(false)}
-      />
     </Box>
   );
 }

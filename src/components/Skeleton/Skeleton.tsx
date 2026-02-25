@@ -143,6 +143,123 @@ export function TripCardSkeleton() {
 }
 
 /**
+ * Skeleton para card de reserva
+ */
+export function BookingCardSkeleton() {
+  return (
+    <Box
+      mb="s16"
+      backgroundColor="surface"
+      borderRadius="s16"
+      padding="s20"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}>
+      {/* ID + Badge */}
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s16">
+        <Skeleton width={80} height={14} borderRadius={6} />
+        <Skeleton width={90} height={24} borderRadius={8} />
+      </Box>
+
+      {/* Origem → Destino */}
+      <Box flexDirection="row" alignItems="center" mb="s16">
+        <Box flex={1}>
+          <Skeleton width={48} height={12} borderRadius={4} mb="s4" />
+          <Skeleton width="80%" height={18} borderRadius={6} />
+        </Box>
+        <Box width={40} height={40} borderRadius="s20" style={{backgroundColor: '#E5E7EB'}} mx="s12" />
+        <Box flex={1}>
+          <Skeleton width={48} height={12} borderRadius={4} mb="s4" />
+          <Skeleton width="80%" height={18} borderRadius={6} />
+        </Box>
+      </Box>
+
+      {/* Data */}
+      <Box
+        flexDirection="row"
+        alignItems="center"
+        mb="s12"
+        paddingVertical="s12"
+        paddingHorizontal="s16"
+        backgroundColor="background"
+        borderRadius="s12">
+        <Skeleton width={20} height={20} borderRadius={10} />
+        <Box flex={1} ml="s8">
+          <Skeleton width="70%" height={16} borderRadius={6} />
+        </Box>
+      </Box>
+
+      {/* Barco */}
+      <Box flexDirection="row" alignItems="center" mb="s16">
+        <Skeleton width={18} height={18} borderRadius={9} />
+        <Skeleton width="50%" height={14} borderRadius={6} />
+      </Box>
+
+      {/* Preço + Passagens */}
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" paddingTop="s16">
+        <Box>
+          <Skeleton width={60} height={12} borderRadius={4} mb="s4" />
+          <Skeleton width={100} height={22} borderRadius={6} />
+        </Box>
+        <Skeleton width={120} height={40} borderRadius={8} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Skeleton para card de encomenda
+ */
+export function ShipmentCardSkeleton() {
+  return (
+    <Box
+      mb="s12"
+      backgroundColor="surface"
+      borderRadius="s16"
+      padding="s16"
+      mx="s20"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}>
+      {/* Código + Status */}
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
+        <Skeleton width={120} height={16} borderRadius={6} />
+        <Skeleton width={80} height={24} borderRadius={8} />
+      </Box>
+
+      {/* Remetente / Destinatário */}
+      <Box flexDirection="row" mb="s12">
+        <Box flex={1}>
+          <Skeleton width={56} height={12} borderRadius={4} mb="s4" />
+          <Skeleton width="90%" height={16} borderRadius={6} />
+        </Box>
+        <Box width={24} alignItems="center" justifyContent="center">
+          <Skeleton width={16} height={16} borderRadius={8} />
+        </Box>
+        <Box flex={1}>
+          <Skeleton width={56} height={12} borderRadius={4} mb="s4" />
+          <Skeleton width="90%" height={16} borderRadius={6} />
+        </Box>
+      </Box>
+
+      {/* Info extra */}
+      <Box flexDirection="row" gap="s16">
+        <Skeleton width={90} height={14} borderRadius={6} />
+        <Skeleton width={80} height={14} borderRadius={6} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
  * Skeleton para lista de viagens
  */
 export function TripListSkeleton({count = 3}: {count?: number}) {

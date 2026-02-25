@@ -10,7 +10,7 @@ export function useShipmentsScreen() {
   const navigation = useNavigation<NavigationProp<AppStackParamList>>();
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [refreshing, setRefreshing] = useState(false);
-  const {shipments, fetch: fetchShipments, error: shipmentsError} = useMyShipments();
+  const {shipments, fetch: fetchShipments, isLoading: isLoadingShipments, error: shipmentsError} = useMyShipments();
 
   const filteredShipments = shipments.filter((shipment: Shipment) => {
     if (selectedTab === 'active') {
@@ -55,6 +55,7 @@ export function useShipmentsScreen() {
     selectedTab,
     setSelectedTab,
     refreshing,
+    isLoadingShipments,
     filteredShipments: visibleShipments,
     hasMoreShipments,
     loadMoreShipments,

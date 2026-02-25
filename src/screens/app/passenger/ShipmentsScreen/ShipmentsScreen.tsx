@@ -2,7 +2,7 @@ import React from 'react';
 import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox, ShipmentCard} from '@components';
+import {Box, Icon, ShipmentCardSkeleton, Text, TouchableOpacityBox, ShipmentCard} from '@components';
 
 import {useShipmentsScreen} from './useShipmentsScreen';
 
@@ -12,6 +12,7 @@ export function ShipmentsScreen() {
     selectedTab,
     setSelectedTab,
     refreshing,
+    isLoadingShipments,
     filteredShipments,
     hasMoreShipments,
     loadMoreShipments,
@@ -113,49 +114,57 @@ export function ShipmentsScreen() {
           ) : null
         }
         ListEmptyComponent={
-          <Box flex={1} justifyContent="center" alignItems="center" padding="s40">
-            <Icon
-              name={selectedTab === 'active' ? 'local-shipping' : 'check-circle'}
-              size={64}
-              color="textSecondary"
-            />
-            <Text
-              preset="headingSmall"
-              color="text"
-              bold
-              textAlign="center"
-              mt="s20"
-              mb="s12">
-              {selectedTab === 'active'
-                ? 'Nenhuma encomenda ativa'
-                : 'Nenhuma encomenda concluída'}
-            </Text>
-            <Text
-              preset="paragraphMedium"
-              color="textSecondary"
-              textAlign="center"
-              mb="s24">
-              {selectedTab === 'active'
-                ? 'Você ainda não enviou nenhuma encomenda'
-                : 'Suas encomendas entregues aparecerão aqui'}
-            </Text>
+          isLoadingShipments ? (
+            <Box paddingTop="s8">
+              <ShipmentCardSkeleton />
+              <ShipmentCardSkeleton />
+              <ShipmentCardSkeleton />
+            </Box>
+          ) : (
+            <Box flex={1} justifyContent="center" alignItems="center" padding="s40">
+              <Icon
+                name={selectedTab === 'active' ? 'local-shipping' : 'check-circle'}
+                size={64}
+                color="textSecondary"
+              />
+              <Text
+                preset="headingSmall"
+                color="text"
+                bold
+                textAlign="center"
+                mt="s20"
+                mb="s12">
+                {selectedTab === 'active'
+                  ? 'Nenhuma encomenda ativa'
+                  : 'Nenhuma encomenda concluída'}
+              </Text>
+              <Text
+                preset="paragraphMedium"
+                color="textSecondary"
+                textAlign="center"
+                mb="s24">
+                {selectedTab === 'active'
+                  ? 'Você ainda não enviou nenhuma encomenda'
+                  : 'Suas encomendas entregues aparecerão aqui'}
+              </Text>
 
-            {selectedTab === 'active' && (
-              <TouchableOpacityBox
-                flexDirection="row"
-                alignItems="center"
-                paddingHorizontal="s24"
-                paddingVertical="s16"
-                backgroundColor="primary"
-                borderRadius="s12"
-                onPress={handleCreateShipment}>
-                <Icon name="add-circle" size={24} color="surface" />
-                <Text preset="paragraphMedium" color="surface" bold ml="s12">
-                  Enviar Encomenda
-                </Text>
-              </TouchableOpacityBox>
-            )}
-          </Box>
+              {selectedTab === 'active' && (
+                <TouchableOpacityBox
+                  flexDirection="row"
+                  alignItems="center"
+                  paddingHorizontal="s24"
+                  paddingVertical="s16"
+                  backgroundColor="primary"
+                  borderRadius="s12"
+                  onPress={handleCreateShipment}>
+                  <Icon name="add-circle" size={24} color="surface" />
+                  <Text preset="paragraphMedium" color="surface" bold ml="s12">
+                    Enviar Encomenda
+                  </Text>
+                </TouchableOpacityBox>
+              )}
+            </Box>
+          )
         }
       />
 

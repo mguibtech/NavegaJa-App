@@ -2,7 +2,7 @@ import React from 'react';
 import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, TripListSkeleton} from '@components';
 import {Trip, TripStatus} from '@domain';
 
 import {useCaptainMyTrips, FilterTab} from './useCaptainMyTrips';
@@ -228,38 +228,44 @@ export function CaptainMyTripsScreen() {
           ) : null
         }
         ListEmptyComponent={
-          <Box flex={1} alignItems="center" justifyContent="center" padding="s32">
-            <Icon name="directions-boat" size={64} color="textSecondary" />
-            <Text
-              preset="headingSmall"
-              color="text"
-              bold
-              textAlign="center"
-              mt="s20"
-              mb="s12">
-              Nenhuma viagem encontrada
-            </Text>
-            <Text
-              preset="paragraphMedium"
-              color="textSecondary"
-              textAlign="center"
-              mb="s24">
-              Crie sua primeira viagem para começar
-            </Text>
-            <TouchableOpacityBox
-              flexDirection="row"
-              alignItems="center"
-              paddingHorizontal="s24"
-              paddingVertical="s16"
-              backgroundColor="secondary"
-              borderRadius="s12"
-              onPress={() => navigation.navigate('CaptainCreateTrip')}>
-              <Icon name="add-circle" size={24} color="surface" />
-              <Text preset="paragraphMedium" color="surface" bold ml="s12">
-                Criar Viagem
+          isLoading ? (
+            <Box paddingTop="s8">
+              <TripListSkeleton count={3} />
+            </Box>
+          ) : (
+            <Box flex={1} alignItems="center" justifyContent="center" padding="s32">
+              <Icon name="directions-boat" size={64} color="textSecondary" />
+              <Text
+                preset="headingSmall"
+                color="text"
+                bold
+                textAlign="center"
+                mt="s20"
+                mb="s12">
+                Nenhuma viagem encontrada
               </Text>
-            </TouchableOpacityBox>
-          </Box>
+              <Text
+                preset="paragraphMedium"
+                color="textSecondary"
+                textAlign="center"
+                mb="s24">
+                Crie sua primeira viagem para começar
+              </Text>
+              <TouchableOpacityBox
+                flexDirection="row"
+                alignItems="center"
+                paddingHorizontal="s24"
+                paddingVertical="s16"
+                backgroundColor="secondary"
+                borderRadius="s12"
+                onPress={() => navigation.navigate('CaptainCreateTrip')}>
+                <Icon name="add-circle" size={24} color="surface" />
+                <Text preset="paragraphMedium" color="surface" bold ml="s12">
+                  Criar Viagem
+                </Text>
+              </TouchableOpacityBox>
+            </Box>
+          )
         }
       />
     </Box>
