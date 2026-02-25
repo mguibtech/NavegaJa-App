@@ -10,6 +10,7 @@ import {
   useCalculateShipmentPrice,
   CreateShipmentData,
   useCouponValidation,
+  useCepLookup,
 } from '@domain';
 import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
@@ -70,6 +71,8 @@ export function useCreateShipmentScreen() {
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
+  const [recipientCep, setRecipientCep] = useState('');
+  const {result: cepResult, lookup: lookupCep, isLoading: isCepLoading} = useCepLookup();
 
   // Dados da encomenda
   const [description, setDescription] = useState('');
@@ -315,6 +318,18 @@ export function useCreateShipmentScreen() {
     setCreateErrorMessage('');
   }
 
+  async function handleCepChange(text: string) {
+    const digits = text.replace(/\D/g, '');
+    setRecipientCep(text);
+    if (digits.length === 8) {
+      const result = await lookupCep(digits);
+      if (result) {
+        const addr = [result.logradouro, result.bairro, result.cidade].filter(Boolean).join(", ");
+        setRecipientAddress(addr);
+      }
+    }
+  }
+
   return {
     // Data
     trip,
@@ -354,6 +369,10 @@ export function useCreateShipmentScreen() {
     // Handlers
     handleCreateShipment,
     handleGoBack,
+    recipientCep,
+    handleCepChange,
+    isCepLoading,
+    cepResult,
     getButtonTitle,
     // Modal states
     showLoadTripErrorModal,

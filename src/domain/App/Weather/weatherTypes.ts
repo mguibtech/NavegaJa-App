@@ -19,6 +19,7 @@ export interface CurrentWeather {
   visibility: number; // metros
   sunrise: string; // ISO timestamp
   sunset: string; // ISO timestamp
+  uvIndex: number | null; // Indice UV -- null em planos gratuitos
   timestamp: string; // ISO timestamp da leitura
   location: {
     name: string;
@@ -305,4 +306,30 @@ export function formatVisibility(meters: number): string {
     return `${(meters / 1000).toFixed(1)} km`;
   }
   return `${meters} m`;
+}
+
+// ========== UV INDEX ==========
+
+export type UvLevel = 'low' | 'moderate' | 'high' | 'very_high' | 'extreme';
+
+export interface UvLevelConfig {
+  label: string;
+  emoji: string;
+  color: string;
+}
+
+export const UV_LEVEL_CONFIGS: Record<UvLevel, UvLevelConfig> = {
+  low:       {label: 'Baixo',      emoji: '🟢', color: '#059669'},
+  moderate:  {label: 'Moderado',   emoji: '🟡', color: '#D97706'},
+  high:      {label: 'Alto',       emoji: '🟠', color: '#EA580C'},
+  very_high: {label: 'Muito alto', emoji: '🔴', color: '#DC2626'},
+  extreme:   {label: 'Extremo',    emoji: '🟣', color: '#7C3AED'},
+};
+
+export function getUvLevel(uvIndex: number): UvLevel {
+  if (uvIndex <= 2) {return 'low';}
+  if (uvIndex <= 5) {return 'moderate';}
+  if (uvIndex <= 7) {return 'high';}
+  if (uvIndex <= 10) {return 'very_high';}
+  return 'extreme';
 }

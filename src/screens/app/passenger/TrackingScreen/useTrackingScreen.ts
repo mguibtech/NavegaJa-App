@@ -5,7 +5,7 @@ import MapView from 'react-native-maps';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {SosAlert, SosStatus, useTrackBooking, TrackingStatus, useSosAlert} from '@domain';
+import {SosAlert, SosStatus, useTrackBooking, TrackingStatus, useSosAlert, useLocationLabel} from '@domain';
 import {AppStackParamList} from '@routes';
 
 // Coordenadas padrão (Manaus → Parintins) - fallback quando API não tem coordenadas
@@ -22,6 +22,7 @@ export function useTrackingScreen() {
 
   const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
   const {alerts} = useSosAlert();
+  const {label: locationLabel, fetchLabel} = useLocationLabel();
   const mySosAlerts = alerts.filter(a => a.status === SosStatus.ACTIVE);
 
   const [showSosAlerts, setShowSosAlerts] = useState(true);
@@ -34,6 +35,15 @@ export function useTrackingScreen() {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedSosAlert, setSelectedSosAlert] = useState<SosAlert | null>(null);
+
+  useEffect(() => {
+    const lat = trackingInfo?.currentLat;
+    const lng = trackingInfo?.currentLng;
+    if (lat != null && lng != null) {
+      fetchLabel(lat, lng);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackingInfo?.currentLat, trackingInfo?.currentLng]);
 
   useEffect(() => {
     if (error) {
@@ -227,5 +237,6 @@ export function useTrackingScreen() {
     handleConfirmEmergency,
     handleCancelEmergency,
     handleCloseSosDetail,
+    locationLabel,
   };
 }

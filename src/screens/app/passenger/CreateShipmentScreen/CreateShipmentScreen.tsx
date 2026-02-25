@@ -38,6 +38,10 @@ export function CreateShipmentScreen() {
     setRecipientPhone,
     recipientAddress,
     setRecipientAddress,
+    recipientCep,
+    handleCepChange,
+    isCepLoading,
+    cepResult,
     description,
     setDescription,
     weight,
@@ -318,6 +322,15 @@ export function CreateShipmentScreen() {
               />
             </Box>
 
+            <TextInput
+              label="CEP (opcional)"
+              placeholder="00000-000"
+              value={recipientCep}
+              onChangeText={handleCepChange}
+              leftIcon={isCepLoading ? 'hourglass-empty' : cepResult ? 'check-circle' : 'pin'}
+              keyboardType="numeric"
+              maxLength={9}
+            />
             <TextInput
               label="Endereço no destino"
               placeholder="Rua, número, bairro"

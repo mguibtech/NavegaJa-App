@@ -5,7 +5,7 @@ import {ptBR} from 'date-fns/locale';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {useMyBoats, useCreateTrip, Boat} from '@domain';
+import {useMyBoats, useCreateTrip, Boat, useCities} from '@domain';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 
@@ -42,6 +42,8 @@ export function useCaptainCreateTrip() {
   const user = useAuthStore(s => s.user);
 
   const {boats, fetchBoats} = useMyBoats();
+  const {cityNames} = useCities();
+  const cityList = cityNames.length > 0 ? cityNames : AM_CITIES;
   const {createTrip, isLoading} = useCreateTrip();
 
   const [origin, setOrigin] = useState('');
@@ -222,6 +224,7 @@ export function useCaptainCreateTrip() {
     selectCity,
     handleSubmit,
     goBack,
+    cityList,
     navigateToCreateBoat,
     navigateToEditProfile,
     onMoneyChange,

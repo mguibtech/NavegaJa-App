@@ -94,6 +94,7 @@ export function TrackingScreen() {
     handleConfirmEmergency,
     handleCancelEmergency,
     handleCloseSosDetail,
+    locationLabel,
   } = useTrackingScreen();
 
   if (isLoading && !trackingInfo) {
@@ -179,6 +180,23 @@ export function TrackingScreen() {
           </Text>
         </Box>
       </Box>
+
+      {/* Posição atual da embarcação (geocoding reverso) */}
+      {locationLabel && (
+        <Box
+          backgroundColor='surface'
+          paddingHorizontal='s20'
+          paddingVertical='s10'
+          borderTopWidth={1}
+          borderTopColor='border'
+          flexDirection='row'
+          alignItems='center'>
+          <Icon name='place' size={14} color='textSecondary' />
+          <Text preset='paragraphCaptionSmall' color='textSecondary' ml='s6'>
+            {locationLabel}
+          </Text>
+        </Box>
+      )}
 
       <ScrollView
         contentContainerStyle={{padding: 24}}

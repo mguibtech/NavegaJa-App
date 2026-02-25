@@ -40,3 +40,6 @@ export * from './Gamification';
 
 // PaymentMethod
 export * from './PaymentMethod';
+
+// Location
+export * from './Location';

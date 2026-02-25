@@ -15,7 +15,6 @@ import {Boat} from '@domain';
 
 import {
   useCaptainCreateTrip,
-  AM_CITIES,
   formatMoney,
   onMoneyChange,
 } from './useCaptainCreateTrip';
@@ -57,6 +56,7 @@ export function CaptainCreateTripScreen() {
     selectCity,
     handleSubmit,
     goBack,
+    cityList,
     navigateToCreateBoat,
     navigateToEditProfile,
   } = useCaptainCreateTrip();
@@ -483,7 +483,7 @@ export function CaptainCreateTripScreen() {
             </TouchableOpacityBox>
           </Box>
           <FlatList
-            data={AM_CITIES}
+            data={cityList}
             keyExtractor={item => item}
             renderItem={({item}) => {
               const isSelected = item === currentCityValue;

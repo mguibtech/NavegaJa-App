@@ -9,6 +9,8 @@ import {
   formatWindSpeed,
   formatWindDirection,
   formatVisibility,
+  getUvLevel,
+  UV_LEVEL_CONFIGS,
 } from '@domain';
 
 interface WeatherWidgetProps {
@@ -226,11 +228,12 @@ export function WeatherWidget({
         </Box>
       </Box>
 
-      {/* Sunrise / Sunset */}
-      {(weather.sunrise || weather.sunset) && (
+      {/* Sunrise / Sunset / UV */}
+      {(weather.sunrise || weather.sunset || weather.uvIndex != null) && (
         <Box
           flexDirection="row"
           justifyContent="space-around"
+          alignItems="center"
           paddingTop="s12"
           mt="s8"
           borderTopWidth={1}
@@ -257,6 +260,19 @@ export function WeatherWidget({
               </Text>
             </Box>
           )}
+          {weather.uvIndex != null && (() => {
+            const uvCfg = UV_LEVEL_CONFIGS[getUvLevel(weather.uvIndex!)];
+            return (
+              <Box flexDirection="row" alignItems="center">
+                <Text preset="paragraphSmall" color="textSecondary" mr="s4">☀️</Text>
+                <Text
+                  preset="paragraphSmall"
+                  style={{color: uvCfg.color}}>
+                  UV {weather.uvIndex} · {uvCfg.label}
+                </Text>
+              </Box>
+            );
+          })()}
         </Box>
       )}
 
