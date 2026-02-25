@@ -6,11 +6,27 @@ async function getStats(): Promise<GamificationStats> {
 }
 
 async function getHistory(page = 1, limit = 20): Promise<GamificationTransaction[]> {
-  return gamificationAPI.getHistory(page, limit);
+  const response = await gamificationAPI.getHistory(page, limit);
+  return response.data.map(item => ({
+    id: item.id,
+    action: item.action,
+    points: Math.abs(item.points),
+    description: item.description,
+    createdAt: item.createdAt,
+    type: item.points >= 0 ? 'earned' : 'spent',
+  }));
 }
 
 async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
-  return gamificationAPI.getLeaderboard(limit);
+  const raw = await gamificationAPI.getLeaderboard(limit);
+  return raw.map(item => ({
+    rank: item.position,
+    userId: item.id,
+    name: item.name,
+    avatarUrl: item.avatarUrl,
+    level: item.level,
+    totalPoints: item.totalPoints,
+  }));
 }
 
 export const gamificationService = {

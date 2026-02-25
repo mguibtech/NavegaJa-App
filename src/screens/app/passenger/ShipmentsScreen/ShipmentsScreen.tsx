@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox, ShipmentCard} from '@components';
@@ -13,6 +13,8 @@ export function ShipmentsScreen() {
     setSelectedTab,
     refreshing,
     filteredShipments,
+    hasMoreShipments,
+    loadMoreShipments,
     shipmentsError,
     fetchShipments,
     onRefresh,
@@ -98,8 +100,17 @@ export function ShipmentsScreen() {
           </Box>
         )}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
+        onEndReached={loadMoreShipments}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListFooterComponent={
+          hasMoreShipments ? (
+            <Box paddingVertical="s16" alignItems="center">
+              <ActivityIndicator />
+            </Box>
+          ) : null
         }
         ListEmptyComponent={
           <Box flex={1} justifyContent="center" alignItems="center" padding="s40">

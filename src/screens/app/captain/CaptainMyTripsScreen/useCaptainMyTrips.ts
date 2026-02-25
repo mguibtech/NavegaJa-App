@@ -5,6 +5,7 @@ import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
 import {useCaptainTrips, Trip, TripStatus} from '@domain';
+import {useVirtualPagination} from '@hooks';
 
 import {AppStackParamList} from '@routes';
 
@@ -49,6 +50,9 @@ export function useCaptainMyTrips() {
     return true;
   });
 
+  const {visibleItems: visibleTrips, hasMore: hasMoreTrips, loadMore: loadMoreTrips} =
+    useVirtualPagination(filteredTrips);
+
   function formatDepartureStr(trip: Trip): string {
     try {
       return format(new Date(trip.departureAt), "dd 'de' MMM, HH:mm", {locale: ptBR});
@@ -64,7 +68,9 @@ export function useCaptainMyTrips() {
     refreshing,
     trips,
     isLoading,
-    filteredTrips,
+    filteredTrips: visibleTrips,
+    hasMoreTrips,
+    loadMoreTrips,
     onRefresh,
     formatDepartureStr,
     STATUS_CONFIG,

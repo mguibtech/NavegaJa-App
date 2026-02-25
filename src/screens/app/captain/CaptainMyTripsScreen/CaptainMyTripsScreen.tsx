@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
@@ -72,6 +72,8 @@ export function CaptainMyTripsScreen() {
     refreshing,
     isLoading,
     filteredTrips,
+    hasMoreTrips,
+    loadMoreTrips,
     onRefresh,
     formatDepartureStr,
     STATUS_CONFIG,
@@ -213,8 +215,17 @@ export function CaptainMyTripsScreen() {
         keyExtractor={item => item.id}
         renderItem={renderTrip}
         contentContainerStyle={{padding: 20, paddingBottom: 100}}
+        onEndReached={loadMoreTrips}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl refreshing={refreshing || isLoading} onRefresh={onRefresh} />
+        }
+        ListFooterComponent={
+          hasMoreTrips ? (
+            <Box paddingVertical="s16" alignItems="center">
+              <ActivityIndicator />
+            </Box>
+          ) : null
         }
         ListEmptyComponent={
           <Box flex={1} alignItems="center" justifyContent="center" padding="s32">

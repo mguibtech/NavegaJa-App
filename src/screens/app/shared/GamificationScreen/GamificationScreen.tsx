@@ -12,6 +12,9 @@ import {
   getLevelColor,
   getTransactionIcon,
   formatDate,
+  HistoryFilter,
+  HISTORY_FILTER_CONFIG,
+  LEVEL_INFO,
 } from './useGamificationScreen';
 
 export function GamificationScreen() {
@@ -22,6 +25,8 @@ export function GamificationScreen() {
     user,
     activeTab,
     setActiveTab,
+    historyFilter,
+    setHistoryFilter,
     copiedCode,
     refreshing,
     statsLoading,
@@ -31,6 +36,7 @@ export function GamificationScreen() {
     leaderboardLoading,
     history,
     leaderboard,
+    myLeaderboardPosition,
     points,
     level,
     discount,
@@ -331,48 +337,86 @@ export function GamificationScreen() {
 
       {/* Tabs */}
       <Box
-        flexDirection="row"
         backgroundColor="surface"
         paddingHorizontal="s16"
-        paddingVertical="s8"
+        paddingTop="s8"
         style={{borderBottomWidth: 1, borderBottomColor: colors.border}}>
-        <TouchableOpacityBox
-          flex={1}
-          paddingVertical="s10"
-          borderRadius="s8"
-          backgroundColor={activeTab === 'history' ? 'primaryBg' : 'surface'}
-          alignItems="center"
-          mr="s8"
-          onPress={() => setActiveTab('history')}>
-          <Text
-            preset="paragraphMedium"
-            color={activeTab === 'history' ? 'primary' : 'textSecondary'}
-            bold>
-            Histórico
-          </Text>
-        </TouchableOpacityBox>
+        {/* Tab principal */}
+        <Box flexDirection="row" mb="s8">
+          <TouchableOpacityBox
+            flex={1}
+            paddingVertical="s10"
+            borderRadius="s8"
+            backgroundColor={activeTab === 'history' ? 'primaryBg' : 'surface'}
+            alignItems="center"
+            mr="s8"
+            onPress={() => setActiveTab('history')}>
+            <Text
+              preset="paragraphMedium"
+              color={activeTab === 'history' ? 'primary' : 'textSecondary'}
+              bold>
+              Histórico
+            </Text>
+          </TouchableOpacityBox>
 
-        <TouchableOpacityBox
-          flex={1}
-          paddingVertical="s10"
-          borderRadius="s8"
-          backgroundColor={activeTab === 'leaderboard' ? 'primaryBg' : 'surface'}
-          alignItems="center"
-          onPress={() => setActiveTab('leaderboard')}>
-          <Text
-            preset="paragraphMedium"
-            color={activeTab === 'leaderboard' ? 'primary' : 'textSecondary'}
-            bold>
-            Ranking
-          </Text>
-        </TouchableOpacityBox>
+          <TouchableOpacityBox
+            flex={1}
+            paddingVertical="s10"
+            borderRadius="s8"
+            backgroundColor={activeTab === 'leaderboard' ? 'primaryBg' : 'surface'}
+            alignItems="center"
+            onPress={() => setActiveTab('leaderboard')}>
+            <Text
+              preset="paragraphMedium"
+              color={activeTab === 'leaderboard' ? 'primary' : 'textSecondary'}
+              bold>
+              Ranking
+            </Text>
+          </TouchableOpacityBox>
+        </Box>
+
+        {/* Filtro do histórico por categoria de ação */}
+        {activeTab === 'history' && (
+          <Box pb="s8">
+            <FlatList
+              data={Object.keys(HISTORY_FILTER_CONFIG) as HistoryFilter[]}
+              keyExtractor={f => f}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{gap: 8}}
+              renderItem={({item: f}) => {
+                const cfg = HISTORY_FILTER_CONFIG[f];
+                const active = historyFilter === f;
+                return (
+                  <TouchableOpacityBox
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s20"
+                    backgroundColor={active ? 'primaryBg' : 'background'}
+                    flexDirection="row"
+                    alignItems="center"
+                    onPress={() => setHistoryFilter(f)}
+                    style={{gap: 4}}>
+                    <Icon name={cfg.icon as any} size={13} color={active ? 'primary' : 'textSecondary'} />
+                    <Text
+                      preset="paragraphSmall"
+                      bold
+                      color={active ? 'primary' : 'textSecondary'}>
+                      {cfg.label}
+                    </Text>
+                  </TouchableOpacityBox>
+                );
+              }}
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Content */}
       {activeTab === 'history' ? (
         historyLoading ? (
           <Box flex={1} alignItems="center" justifyContent="center">
-            <ActivityIndicator color="#0E7AFE" />
+            <ActivityIndicator color={colors.primary} />
           </Box>
         ) : (
           <FlatList
@@ -384,7 +428,51 @@ export function GamificationScreen() {
             onEndReached={() => fetchMoreHistory()}
             onEndReachedThreshold={0.3}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            }
+            ListHeaderComponent={
+              historyFilter === 'all' ? (
+                <Box
+                  backgroundColor="surface"
+                  margin="s16"
+                  borderRadius="s12"
+                  padding="s16"
+                  style={{
+                    borderLeftWidth: 3,
+                    borderLeftColor: colors.primary,
+                    shadowColor: '#000', shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+                  }}>
+                  <Box flexDirection="row" alignItems="center" mb="s12">
+                    <Icon name="stars" size={16} color="primary" />
+                    <Text preset="paragraphSmall" color="primary" bold ml="s8">
+                      Como ganhar NavegaCoins
+                    </Text>
+                  </Box>
+                  {([
+                    {icon: 'directions-boat', label: 'Viagem concluída', pts: '+10'},
+                    {icon: 'local-shipping', label: 'Encomenda entregue', pts: '+15'},
+                    {icon: 'star', label: 'Avaliação enviada', pts: '+5'},
+                    {icon: 'emoji-events', label: '1ª viagem do mês', pts: '+20'},
+                    {icon: 'person-add', label: 'Indicação de amigo', pts: '+50'},
+                  ] as const).map((row, idx) => (
+                    <Box
+                      key={row.label}
+                      flexDirection="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      pt={idx > 0 ? 's8' : undefined}
+                      mt={idx > 0 ? 's8' : undefined}
+                      style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border}}>
+                      <Box flexDirection="row" alignItems="center">
+                        <Icon name={row.icon as any} size={14} color="textSecondary" />
+                        <Text preset="paragraphSmall" color="textSecondary" ml="s8">{row.label}</Text>
+                      </Box>
+                      <Text preset="paragraphSmall" color="success" bold>{row.pts} pts</Text>
+                    </Box>
+                  ))}
+                </Box>
+              ) : null
             }
             ListEmptyComponent={
               historyError ? (
@@ -415,7 +503,7 @@ export function GamificationScreen() {
             ListFooterComponent={
               isLoadingMore ? (
                 <Box paddingVertical="s16" alignItems="center">
-                  <ActivityIndicator color="#0E7AFE" size="small" />
+                  <ActivityIndicator color={colors.primary} size="small" />
                 </Box>
               ) : null
             }
@@ -423,7 +511,7 @@ export function GamificationScreen() {
         )
       ) : leaderboardLoading ? (
         <Box flex={1} alignItems="center" justifyContent="center">
-          <ActivityIndicator color="#0E7AFE" />
+          <ActivityIndicator color={colors.primary} />
         </Box>
       ) : leaderboard.length === 0 ? (
         <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40">
@@ -440,7 +528,97 @@ export function GamificationScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{paddingBottom: 24}}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+          }
+          ListHeaderComponent={
+            <Box margin="s16" style={{gap: 12}}>
+              {/* Tabela de níveis */}
+              <Box
+                backgroundColor="surface"
+                borderRadius="s12"
+                padding="s16"
+                style={{
+                  borderLeftWidth: 3,
+                  borderLeftColor: colors.warning,
+                  shadowColor: '#000', shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+                }}>
+                <Box flexDirection="row" alignItems="center" mb="s12">
+                  <Icon name="military-tech" size={16} color="warning" />
+                  <Text preset="paragraphSmall" color="warning" bold ml="s8">
+                    Níveis e Descontos
+                  </Text>
+                </Box>
+                {LEVEL_INFO.map((info, idx) => {
+                  const isCurrentLevel = info.level === level;
+                  return (
+                    <Box
+                      key={info.level}
+                      flexDirection="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      pt={idx > 0 ? 's8' : undefined}
+                      mt={idx > 0 ? 's8' : undefined}
+                      style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border}}>
+                      <Box flexDirection="row" alignItems="center" style={{gap: 8}}>
+                        <Icon name={info.icon as any} size={14} color={getLevelColor(info.level)} />
+                        <Text
+                          preset="paragraphSmall"
+                          color={getLevelColor(info.level)}
+                          bold={isCurrentLevel}>
+                          {info.level}
+                        </Text>
+                        {isCurrentLevel && (
+                          <Box
+                            paddingHorizontal="s6"
+                            paddingVertical="s4"
+                            borderRadius="s8"
+                            backgroundColor="primaryBg">
+                            <Text preset="paragraphCaptionSmall" color="primary" bold>
+                              você
+                            </Text>
+                          </Box>
+                        )}
+                      </Box>
+                      <Box flexDirection="row" alignItems="center" style={{gap: 16}}>
+                        <Text preset="paragraphCaptionSmall" color="textSecondary">
+                          {info.points}+ pts
+                        </Text>
+                        <Text
+                          preset="paragraphSmall"
+                          color={info.discount > 0 ? 'success' : 'textSecondary'}
+                          bold={info.discount > 0}>
+                          {info.discount > 0 ? `${info.discount}% off` : '—'}
+                        </Text>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              {/* Posição do utilizador se estiver no ranking */}
+              {myLeaderboardPosition && (
+                <Box
+                  backgroundColor="primaryBg"
+                  borderRadius="s12"
+                  paddingHorizontal="s16"
+                  paddingVertical="s12"
+                  flexDirection="row"
+                  alignItems="center"
+                  style={{gap: 12}}>
+                  <Icon name="location-on" size={18} color="primary" />
+                  <Box flex={1}>
+                    <Text preset="paragraphSmall" color="primary" bold>
+                      A sua posição no ranking
+                    </Text>
+                    <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                      #{myLeaderboardPosition.rank} · {myLeaderboardPosition.totalPoints.toLocaleString('pt-BR')} NavegaCoins
+                    </Text>
+                  </Box>
+                  <Icon name="chevron-right" size={18} color="primary" />
+                </Box>
+              )}
+            </Box>
           }
         />
       )}

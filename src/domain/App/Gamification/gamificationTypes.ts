@@ -12,6 +12,24 @@ export interface GamificationStats {
   nextLevel: NextLevelInfo | null;
 }
 
+// Raw shape returned by the API
+export interface GamificationTransactionRaw {
+  id: string;
+  action: string;
+  points: number;
+  description: string;
+  referenceId?: string;
+  createdAt: string;
+}
+
+export interface HistoryApiResponse {
+  data: GamificationTransactionRaw[];
+  total: number;
+  page: number;
+  lastPage: number;
+}
+
+// Normalized shape used by the UI (type derived from points sign)
 export interface GamificationTransaction {
   id: string;
   type: 'earned' | 'spent';
@@ -21,6 +39,17 @@ export interface GamificationTransaction {
   createdAt: string;
 }
 
+// Raw shape returned by the API
+export interface LeaderboardEntryRaw {
+  position: number;
+  id: string;
+  name: string;
+  avatarUrl?: string | null;
+  level: string;
+  totalPoints: number;
+}
+
+// Normalized shape used by the UI
 export interface LeaderboardEntry {
   rank: number;
   userId: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
@@ -20,6 +20,8 @@ export function BookingsScreen() {
     fetchBookings,
     isCancelling,
     filteredBookings,
+    hasMoreBookings,
+    loadMoreBookings,
     onRefresh,
     handleConfirmCancel,
     getStatusBadge,
@@ -100,8 +102,17 @@ export function BookingsScreen() {
         data={filteredBookings}
         keyExtractor={item => item.id}
         contentContainerStyle={{padding: 24}}
+        onEndReached={loadMoreBookings}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListFooterComponent={
+          hasMoreBookings ? (
+            <Box paddingVertical="s16" alignItems="center">
+              <ActivityIndicator />
+            </Box>
+          ) : null
         }
         renderItem={({item}: {item: Booking}) => {
           const origin = item.trip?.origin || 'Origem desconhecida';

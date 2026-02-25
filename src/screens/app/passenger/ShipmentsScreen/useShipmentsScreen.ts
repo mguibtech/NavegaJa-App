@@ -3,6 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
 import {useMyShipments, Shipment, ShipmentStatus} from '@domain';
+import {useVirtualPagination} from '@hooks';
 import type {AppStackParamList} from '@routes';
 
 export function useShipmentsScreen() {
@@ -28,6 +29,9 @@ export function useShipmentsScreen() {
     );
   });
 
+  const {visibleItems: visibleShipments, hasMore: hasMoreShipments, loadMore: loadMoreShipments} =
+    useVirtualPagination(filteredShipments);
+
   async function onRefresh() {
     setRefreshing(true);
     try {
@@ -51,7 +55,9 @@ export function useShipmentsScreen() {
     selectedTab,
     setSelectedTab,
     refreshing,
-    filteredShipments,
+    filteredShipments: visibleShipments,
+    hasMoreShipments,
+    loadMoreShipments,
     shipmentsError,
     fetchShipments,
     onRefresh,

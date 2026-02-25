@@ -4,7 +4,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
 import {useMyBookings, useCancelBooking, Booking} from '@domain';
-import {useToast} from '@hooks';
+import {useToast, useVirtualPagination} from '@hooks';
 import type {AppStackParamList} from '@routes';
 
 export function useBookingsScreen() {
@@ -76,6 +76,9 @@ export function useBookingsScreen() {
     return booking.status === 'completed' || booking.status === 'cancelled';
   });
 
+  const {visibleItems: visibleBookings, hasMore: hasMoreBookings, loadMore: loadMoreBookings} =
+    useVirtualPagination(filteredBookings);
+
   function navigateToTicket(bookingId: string) {
     navigation.navigate('Ticket', {bookingId});
   }
@@ -93,7 +96,9 @@ export function useBookingsScreen() {
     bookingsError,
     fetchBookings,
     isCancelling,
-    filteredBookings,
+    filteredBookings: visibleBookings,
+    hasMoreBookings,
+    loadMoreBookings,
     onRefresh,
     handleConfirmCancel,
     getStatusBadge,
