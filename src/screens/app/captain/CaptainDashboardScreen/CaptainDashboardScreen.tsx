@@ -3,7 +3,6 @@ import {ScrollView, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
-import {Trip} from '@domain';
 
 import {useCaptainDashboard} from './useCaptainDashboard';
 

@@ -49,7 +49,6 @@ export function BoatDetailScreen() {
     boatIsVerified,
     reviews,
     loading,
-    photoError,
     setPhotoError,
     overallAvg,
     avgCleanliness,

@@ -35,12 +35,14 @@ export function usePaymentScreen() {
       toast.showError('Erro ao carregar dados de pagamento');
       navigation.goBack();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingError]);
 
   useEffect(() => {
     if (!isLoading && booking && paymentMethod !== PaymentMethod.PIX && booking.status === 'confirmed') {
       navigation.replace('Ticket', {bookingId});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking, isLoading]);
 
   // Countdown timer para PIX
@@ -76,6 +78,7 @@ export function usePaymentScreen() {
     }, 5000);
 
     return () => clearInterval(pollingInterval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking, paymentMethod]);
 
   async function checkPaymentStatus() {

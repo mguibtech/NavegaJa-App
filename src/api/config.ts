@@ -18,6 +18,10 @@ import {API_BASE_URL as ENV_API_URL, API_TIMEOUT as ENV_API_TIMEOUT} from '@env'
 // Usa variável de ambiente ou fallback para desenvolvimento
 export const API_BASE_URL = ENV_API_URL || 'http://10.0.2.2:3000';
 
+if (!__DEV__ && API_BASE_URL.startsWith('http://')) {
+  console.warn('[Security] API_BASE_URL should use HTTPS in production');
+}
+
 // Endpoints
 export const API_ENDPOINTS = {
   // Auth
@@ -78,7 +82,7 @@ export const API_TIMEOUT = ENV_API_TIMEOUT ? parseInt(ENV_API_TIMEOUT, 10) : 300
 export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json',
-  'ngrok-skip-browser-warning': 'true',
+  ...(__DEV__ && {'ngrok-skip-browser-warning': 'true'}),
 };
 
 /**
@@ -110,5 +114,7 @@ export function normalizeFileUrl(url: string | null | undefined): string {
  */
 export const apiImageSource = (uri: string | null | undefined) => ({
   uri: normalizeFileUrl(uri),
-  headers: {'ngrok-skip-browser-warning': 'true'},
+  headers: {
+    ...(__DEV__ && {'ngrok-skip-browser-warning': 'true'}),
+  },
 });

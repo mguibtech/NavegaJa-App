@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Platform, Alert, ActionSheetIOS} from 'react-native';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 
@@ -31,6 +31,15 @@ export function formatCPF(value: string): string {
 
 export function useEditProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    });
+    return unsubscribe;
+  }, [navigation]);
   const toast = useToast();
   const {user, updateUser} = useAuthStore();
   const {updateProfile, isLoading} = useUpdateProfile();

@@ -1,5 +1,23 @@
 /* eslint-env jest */
 
+// Mock @react-native-firebase/messaging
+jest.mock('@react-native-firebase/messaging', () => {
+  const messaging = jest.fn(() => ({
+    getToken: jest.fn(() => Promise.resolve('mock-fcm-token')),
+    deleteToken: jest.fn(() => Promise.resolve()),
+    onMessage: jest.fn(() => jest.fn()),
+    onNotificationOpenedApp: jest.fn(() => jest.fn()),
+    getInitialNotification: jest.fn(() => Promise.resolve(null)),
+    requestPermission: jest.fn(() => Promise.resolve(1)),
+    hasPermission: jest.fn(() => Promise.resolve(1)),
+    setBackgroundMessageHandler: jest.fn(),
+    subscribeToTopic: jest.fn(() => Promise.resolve()),
+    unsubscribeFromTopic: jest.fn(() => Promise.resolve()),
+  }));
+  messaging.AuthorizationStatus = {AUTHORIZED: 1, PROVISIONAL: 2, DENIED: 0, NOT_DETERMINED: -1};
+  return {__esModule: true, default: messaging};
+});
+
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),

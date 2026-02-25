@@ -92,6 +92,7 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         false,
       );
     }, 1500);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Props animadas para o glow

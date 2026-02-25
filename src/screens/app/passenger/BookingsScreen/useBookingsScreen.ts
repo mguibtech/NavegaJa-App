@@ -19,6 +19,7 @@ export function useBookingsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchBookings().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 

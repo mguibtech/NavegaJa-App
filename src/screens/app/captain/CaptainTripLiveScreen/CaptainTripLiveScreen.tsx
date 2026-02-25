@@ -25,7 +25,6 @@ import {
 
 import {
   useCaptainTripLive,
-  SAFETY_CIRCLE_COLORS,
   ALERT_SEVERITY_COLORS,
 } from './useCaptainTripLive';
 

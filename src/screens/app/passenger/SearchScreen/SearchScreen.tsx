@@ -103,15 +103,6 @@ export function SearchScreen({navigation, route}: Props) {
     setShowDatePicker(true);
   }
 
-  function formatDateForDisplay() {
-    if (selectedDate) {
-      return selectedDate.toLocaleDateString('pt-BR', {
-        day: 'numeric',
-        month: 'long',
-      });
-    }
-    return '';
-  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

@@ -4,7 +4,6 @@ import {Marker, Callout} from 'react-native-maps';
 
 import {Icon, Text, Box} from '@components';
 import {SosAlert, SOS_TYPE_CONFIGS} from '@domain';
-import {theme} from '@theme';
 
 interface SosMarkerProps {
   alert: SosAlert;

@@ -148,7 +148,7 @@ export function ProfileScreen() {
             label: 'Viagens',
             value: String(user?.totalTrips ?? 0),
             color: '#0B5D8A',
-            onPress: () => isCaptain ? navigation.navigate('CaptainMyTrips') : navigation.navigate('Bookings'),
+            onPress: () => isCaptain ? navigation.navigate('CaptainMyTrips') : (navigation as any).navigate('Bookings'),
           },
           {
             icon: 'star',

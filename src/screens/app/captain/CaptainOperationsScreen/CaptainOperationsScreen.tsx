@@ -10,7 +10,6 @@ export function CaptainOperationsScreen() {
   const {top} = useSafeAreaInsets();
   const {
     navigation,
-    trips,
     boats,
     isLoading,
     recentTrips,

@@ -230,6 +230,7 @@ export function Router() {
       unsubscribeResponse();
       unsubscribeForeground();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkOnboarding() {

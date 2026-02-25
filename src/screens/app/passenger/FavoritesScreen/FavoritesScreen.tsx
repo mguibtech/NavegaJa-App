@@ -39,6 +39,7 @@ export function FavoritesScreen({navigation}: Props) {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTab]);
 
   async function loadData() {

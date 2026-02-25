@@ -28,7 +28,6 @@ export function CreateShipmentScreen() {
     priceData,
     totalPrice,
     hasWeight,
-    isPIX,
     canSubmit,
     isCreatingShipment,
     isCalculatingPrice,

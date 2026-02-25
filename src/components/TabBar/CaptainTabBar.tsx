@@ -98,6 +98,7 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
         useNativeDriver: true,
       }),
     ]).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   const iconColor = isFocused ? 'surface' : 'textSecondary';

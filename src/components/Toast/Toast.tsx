@@ -63,6 +63,7 @@ export function Toast({id, type, message, action, onHide}: ToastProps) {
     // Animate in
     translateY.value = withSpring(0, {damping: 15});
     opacity.value = withTiming(1, {duration: 300});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleHide = () => {

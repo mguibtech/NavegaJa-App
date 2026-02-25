@@ -17,6 +17,7 @@ import {usePopularRoutes} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
 import {usePromotions} from '@domain';
 import {useSosAlert} from '@domain';
+import {Region} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 import {formatBRL} from '@utils';
@@ -64,10 +65,10 @@ export function HomeScreen({navigation}: Props) {
   const weatherRegion = user?.city
     ? user.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     : 'manaus';
-
   // Buscar dados ao carregar a tela
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadData() {
@@ -599,7 +600,7 @@ export function HomeScreen({navigation}: Props) {
 
         {/* Weather Widget */}
         <Box paddingHorizontal="s24" mt="s24">
-          <WeatherWidget region={weatherRegion} />
+          <WeatherWidget region={weatherRegion as Region} />
         </Box>
 
         {/* Popular Routes */}

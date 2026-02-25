@@ -61,6 +61,7 @@ export function InfoModal({
       fadeAnim.setValue(0);
       bounceAnim.setValue(0);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const iconBgMap = {

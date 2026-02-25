@@ -47,7 +47,6 @@ export function CaptainProfileScreen() {
     captainHasLicensePhoto,
     reviews,
     loading,
-    avatarError,
     setAvatarError,
     overallAvg,
     avgPunctuality,

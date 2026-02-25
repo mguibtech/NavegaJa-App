@@ -658,6 +658,7 @@ function CaptainDocField({
   const [showPreview, setShowPreview] = React.useState(false);
   const [previewLoading, setPreviewLoading] = React.useState(true);
   const [previewError, setPreviewError] = React.useState(false);
+  const {colors} = useTheme<Theme>();
 
   function handlePreview() {
     if (!photoUrl) {return;}

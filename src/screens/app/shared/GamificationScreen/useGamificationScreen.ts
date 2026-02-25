@@ -98,6 +98,7 @@ export function useGamificationScreen() {
       fetchStats().catch(() => {});
       fetchHistory().catch(() => {});
       fetchLeaderboard().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 

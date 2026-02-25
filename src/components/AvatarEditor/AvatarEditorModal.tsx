@@ -433,7 +433,7 @@ interface AvatarThumbRowProps {
   toggleable?: boolean;
   noneLabel?: string;
 }
-function AvatarThumbRow({values, optionKey, selected, onSelect, svgMap, toggleable, noneLabel}: AvatarThumbRowProps) {
+function AvatarThumbRow({values, optionKey: _optionKey, style: _style, selected, onSelect, svgMap, toggleable, noneLabel}: AvatarThumbRowProps) {
   const noneSelected = toggleable && (selected === 'none' || selected === undefined);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4, flexDirection: 'row', alignItems: 'center'}}>

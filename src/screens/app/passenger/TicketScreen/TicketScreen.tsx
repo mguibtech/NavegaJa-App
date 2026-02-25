@@ -31,6 +31,7 @@ export function TicketScreen({navigation, route}: Props) {
 
   useEffect(() => {
     loadBookingData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
   async function loadBookingData() {
