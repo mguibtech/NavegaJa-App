@@ -38,6 +38,7 @@ export {WeatherIcon} from './WeatherIcon/WeatherIcon';
 export {WeatherWidget} from './WeatherWidget/WeatherWidget';
 export {TripWeatherWidget} from './TripWeatherWidget/TripWeatherWidget';
 export {RiverLevelsPanel} from './RiverLevelsPanel/RiverLevelsPanel';
+export {WeatherAlertCard} from './WeatherAlertCard/WeatherAlertCard';
 export {NavigationSafetyAlert} from './NavigationSafetyAlert/NavigationSafetyAlert';
 export {SosMarker} from './SosMarker/SosMarker';
 export {DangerZone} from './DangerZone/DangerZone';

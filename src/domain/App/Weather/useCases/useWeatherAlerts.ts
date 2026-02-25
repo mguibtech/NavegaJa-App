@@ -1,19 +1,42 @@
-import {useMutation} from '@tanstack/react-query';
+import {useState} from 'react';
 
 import {weatherService} from '../weatherService';
-import {WeatherAlert} from '../weatherTypes';
-
-type AlertParams = {lat: number; lng: number};
+import {WeatherAlert, Region} from '../weatherTypes';
 
 export function useWeatherAlerts() {
-  const mutation = useMutation<WeatherAlert[], Error, AlertParams>({
-    mutationFn: ({lat, lng}) => weatherService.getAlerts(lat, lng),
-  });
+  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  return {
-    fetchAlerts: (lat: number, lng: number) => mutation.mutateAsync({lat, lng}),
-    alerts: mutation.data ?? [],
-    isLoading: mutation.isPending,
-    error: mutation.error,
-  };
+  async function fetchAlerts(lat: number, lng: number): Promise<WeatherAlert[]> {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await weatherService.getAlerts(lat, lng);
+      setAlerts(data);
+      return data;
+    } catch (e) {
+      setError(e as Error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function fetchRegionAlerts(region: Region): Promise<WeatherAlert[]> {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await weatherService.getRegionAlerts(region);
+      setAlerts(data);
+      return data;
+    } catch (e) {
+      setError(e as Error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return {alerts, fetchAlerts, fetchRegionAlerts, isLoading, error};
 }

@@ -62,11 +62,27 @@ export function TripWeatherWidget({tripId}: TripWeatherWidgetProps) {
       }}>
       {/* Título */}
       <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
-        <Box flexDirection="row" alignItems="center">
-          <Icon name="wb-sunny" size={16} color="primary" />
-          <Text preset="paragraphSmall" color="text" bold ml="s8">
-            Clima na Partida
+        <Box flex={1} mr="s8">
+          <Box flexDirection="row" alignItems="center" mb="s4">
+            <Icon name="wb-sunny" size={13} color="primary" />
+            <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s6">
+              Clima na Partida
+            </Text>
+          </Box>
+          <Text preset="paragraphSmall" color="text" bold numberOfLines={1}>
+            {tripWeather.origin} → {tripWeather.destination}
           </Text>
+          {!!tripWeather.departureAt && (
+            <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+              📅{' '}
+              {new Date(tripWeather.departureAt).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          )}
         </Box>
         <Box
           paddingHorizontal="s10"

@@ -8,6 +8,7 @@ import {
   formatTemperature,
   formatWindSpeed,
   formatWindDirection,
+  formatVisibility,
 } from '@domain';
 
 interface WeatherWidgetProps {
@@ -191,6 +192,36 @@ export function WeatherWidget({
           <Icon name="cloud" size={18} color="primary" />
           <Text preset="paragraphSmall" color="text" ml="s6">
             {weather.cloudiness}%
+          </Text>
+        </Box>
+      </Box>
+
+      {/* Pressão + Visibilidade + Descrição */}
+      <Box
+        flexDirection="row"
+        alignItems="center"
+        paddingTop="s12"
+        mt="s8"
+        borderTopWidth={1}
+        borderTopColor="border">
+        <Box flexDirection="row" alignItems="center" flex={1}>
+          <Icon name="compress" size={16} color="primary" />
+          <Text preset="paragraphCaptionSmall" color="text" ml="s4">
+            {weather.pressure} hPa
+          </Text>
+        </Box>
+        <Box flexDirection="row" alignItems="center" flex={1} justifyContent="center">
+          <Icon name="visibility" size={16} color="primary" />
+          <Text preset="paragraphCaptionSmall" color="text" ml="s4">
+            {formatVisibility(weather.visibility)}
+          </Text>
+        </Box>
+        <Box flex={1} alignItems="flex-end">
+          <Text
+            preset="paragraphCaptionSmall"
+            color="textSecondary"
+            numberOfLines={1}>
+            {weather.description}
           </Text>
         </Box>
       </Box>

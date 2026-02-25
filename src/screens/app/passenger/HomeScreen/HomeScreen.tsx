@@ -8,7 +8,7 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget, WeatherAlertCard} from '@components';
 import {apiImageSource} from '@api/config';
 import {useAuthStore} from '@store';
 import {useToast} from '@hooks';
@@ -17,7 +17,7 @@ import {usePopularRoutes} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
 import {usePromotions} from '@domain';
 import {useSosAlert} from '@domain';
-import {Region} from '@domain';
+import {Region, useWeatherAlerts, AlertSeverity} from '@domain';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 import {formatBRL} from '@utils';
@@ -61,6 +61,7 @@ export function HomeScreen({navigation}: Props) {
   const {favorites, fetch: fetchFavorites} = useMyFavorites();
   const {promotions, fetch: fetchPromotions} = usePromotions();
   const {activeAlert, checkActiveAlert} = useSosAlert();
+  const {alerts: weatherAlerts, fetchRegionAlerts} = useWeatherAlerts();
 
   const weatherRegion = user?.city
     ? user.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -78,6 +79,7 @@ export function HomeScreen({navigation}: Props) {
       fetchFavorites(),
       fetchPromotions(),
       checkActiveAlert(),
+      fetchRegionAlerts(weatherRegion as Region),
     ]);
 
     if (results[0].status === 'rejected') {
@@ -598,8 +600,26 @@ export function HomeScreen({navigation}: Props) {
           </Box>
         </Box>
 
+        {/* Weather Alert Banner — apenas severe/extreme */}
+        {(() => {
+          const topAlert = weatherAlerts
+            .filter(
+              a =>
+                a.severity === AlertSeverity.SEVERE ||
+                a.severity === AlertSeverity.EXTREME,
+            )
+            .sort((a, b) =>
+              a.severity === AlertSeverity.EXTREME ? -1 : b.severity === AlertSeverity.EXTREME ? 1 : 0,
+            )[0];
+          return topAlert ? (
+            <Box paddingHorizontal="s24" mt="s16">
+              <WeatherAlertCard alert={topAlert} compact />
+            </Box>
+          ) : null;
+        })()}
+
         {/* Weather Widget */}
-        <Box paddingHorizontal="s24" mt="s24">
+        <Box paddingHorizontal="s24" mt="s16">
           <WeatherWidget
             region={weatherRegion as Region}
             onPress={() => navigation.navigate('WeatherScreen', {region: weatherRegion})}

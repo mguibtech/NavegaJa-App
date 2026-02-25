@@ -4,11 +4,13 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
-import {Box, Icon, Text, TouchableOpacityBox, WeatherWidget, RiverLevelsPanel, WeatherIcon} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, WeatherWidget, RiverLevelsPanel, WeatherIcon, WeatherAlertCard} from '@components';
 import {
   useWeatherForecast,
+  useWeatherAlerts,
   REGION_COORDINATES,
   Region,
+  AlertSeverity,
   formatTemperature,
   WeatherForecastDay,
 } from '@domain';
@@ -52,6 +54,9 @@ function ForecastCard({day}: {day: WeatherForecastDay}) {
       <Text preset="paragraphCaptionSmall" color="textSecondary">
         {formatTemperature(day.tempMin)}
       </Text>
+      <Text preset="paragraphCaptionSmall" color="textSecondary">
+        méd {formatTemperature(day.tempAvg)}
+      </Text>
 
       {day.precipitationProbability > 0 && (
         <Box flexDirection="row" alignItems="center" mt="s4">
@@ -60,6 +65,11 @@ function ForecastCard({day}: {day: WeatherForecastDay}) {
             {day.precipitationProbability}%
           </Text>
         </Box>
+      )}
+      {day.precipitation > 0 && (
+        <Text preset="paragraphCaptionSmall" color="textSecondary">
+          {day.precipitation.toFixed(1)} mm
+        </Text>
       )}
 
       <Box
@@ -84,17 +94,19 @@ export function WeatherScreen({route}: WeatherScreenProps) {
   const coords = REGION_COORDINATES[region];
 
   const {forecast, fetchRegion, isLoading: isForecastLoading} = useWeatherForecast();
+  const {alerts: weatherAlerts, fetchRegionAlerts} = useWeatherAlerts();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchRegion(region, 5).catch(() => {});
+    fetchRegionAlerts(region).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region]);
 
   async function onRefresh() {
     setRefreshing(true);
     try {
-      await fetchRegion(region, 5);
+      await Promise.all([fetchRegion(region, 5), fetchRegionAlerts(region)]);
     } catch {
       // ignore
     } finally {
@@ -145,6 +157,44 @@ export function WeatherScreen({route}: WeatherScreenProps) {
           Agora
         </Text>
         <WeatherWidget region={region as Region} />
+
+        {/* Alertas Ativos */}
+        {weatherAlerts.length > 0 && (
+          <Box mt="s24">
+            <Box flexDirection="row" alignItems="center" mb="s12">
+              <Icon name="warning" size={18} color={'#DC2626' as any} />
+              <Text preset="paragraphMedium" color="text" bold ml="s8">
+                Alertas Ativos
+              </Text>
+              <Box
+                ml="s8"
+                paddingHorizontal="s8"
+                paddingVertical="s4"
+                borderRadius="s8"
+                style={{backgroundColor: '#FEE2E2'}}>
+                <Text
+                  preset="paragraphCaptionSmall"
+                  bold
+                  style={{color: '#DC2626'}}>
+                  {weatherAlerts.length}
+                </Text>
+              </Box>
+            </Box>
+            {weatherAlerts
+              .sort((a, b) => {
+                const order: Record<string, number> = {
+                  extreme: 0,
+                  severe: 1,
+                  warning: 2,
+                  info: 3,
+                };
+                return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+              })
+              .map(alert => (
+                <WeatherAlertCard key={alert.id} alert={alert} />
+              ))}
+          </Box>
+        )}
 
         {/* Previsão 5 dias */}
         <Box mt="s24" mb="s12">
