@@ -1,22 +1,20 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {ValidateDeliveryResponse} from '../shipmentTypes';
 
+type ValidateDeliveryParams = {
+  trackingCode: string;
+  validationCode: string;
+  deliveryPhotoUri?: string;
+};
+
 export function useValidateDelivery() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function validate(
-    trackingCode: string,
-    validationCode: string,
-    deliveryPhotoUri?: string,
-  ): Promise<ValidateDeliveryResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Upload foto da entrega se fornecida
+  const mutation = useMutation<ValidateDeliveryResponse, Error, ValidateDeliveryParams>({
+    mutationFn: async ({trackingCode, validationCode, deliveryPhotoUri}) => {
       let deliveryPhoto: string | undefined;
       if (deliveryPhotoUri) {
         const photoData = {
@@ -27,24 +25,17 @@ export function useValidateDelivery() {
         const urls = await shipmentService.uploadPhotosToS3([photoData]);
         deliveryPhoto = urls[0];
       }
-
-      const result = await shipmentService.validateDelivery(trackingCode, {
-        validationCode,
-        deliveryPhoto,
-      });
-
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+      return shipmentService.validateDelivery(trackingCode, {validationCode, deliveryPhoto});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+    },
+  });
 
   return {
-    validate,
-    isLoading,
-    error,
+    validate: (trackingCode: string, validationCode: string, deliveryPhotoUri?: string) =>
+      mutation.mutateAsync({trackingCode, validationCode, deliveryPhotoUri}),
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

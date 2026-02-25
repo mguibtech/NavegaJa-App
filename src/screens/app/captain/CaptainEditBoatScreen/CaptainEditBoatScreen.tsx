@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {
   ScrollView,
   KeyboardAvoidingView,
@@ -7,148 +7,37 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} from '@components';
-import {useUpdateBoat, getBoatByIdUseCase} from '@domain';
-import {useToast} from '@hooks';
-import {api} from '@api';
-import {normalizeFileUrl} from '../../api/config';
 
-import {AppStackParamList} from '@routes';
+import {useCaptainEditBoat, BOAT_TYPES} from './useCaptainEditBoat';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainEditBoat'>;
-type PhotoItem = {uri: string; type: string; name: string};
-
-const BOAT_TYPES = [
-  'Lancha',
-  'Barco regional',
-  'Barco de linha',
-  'Canoa motorizada',
-  'Ferry',
-  'Outro',
-];
-
-export function CaptainEditBoatScreen({navigation, route}: Props) {
-  const {boatId} = route.params;
+export function CaptainEditBoatScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const {updateBoat, isLoading: isSaving} = useUpdateBoat();
-
-  const [isLoadingBoat, setIsLoadingBoat] = useState(true);
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [registrationNum, setRegistrationNum] = useState('');
-  const [showTypePicker, setShowTypePicker] = useState(false);
-
-  // Fotos da galeria (photos[]) — novos picks pelo usuário
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  // Documentos (documentPhotos[]) — novos picks pelo usuário
-  const [docPhotos, setDocPhotos] = useState<PhotoItem[]>([]);
-  // URLs já salvas no backend (exibição)
-  const [savedPhotos, setSavedPhotos] = useState<string[]>([]);
-  const [savedDocPhotos, setSavedDocPhotos] = useState<string[]>([]);
-
-  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
-  const [uploadLabel, setUploadLabel] = useState('');
-
-  useEffect(() => {
-    loadBoat();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boatId]);
-
-  async function loadBoat() {
-    setIsLoadingBoat(true);
-    try {
-      const boat = await getBoatByIdUseCase(boatId);
-      setName(boat.name);
-      setType(boat.type);
-      setCapacity(String(boat.capacity));
-      setRegistrationNum(boat.registrationNum ?? '');
-      setSavedPhotos(boat.photos ?? []);
-      setSavedDocPhotos(boat.documentPhotos ?? []);
-      setRejectionReason(boat.rejectionReason ?? null);
-    } catch {
-      toast.showError('Não foi possível carregar os dados da embarcação');
-      navigation.goBack();
-    } finally {
-      setIsLoadingBoat(false);
-    }
-  }
-
-  function validate(): string | null {
-    if (!name.trim()) {return 'Informe o nome da embarcação';}
-    if (!type.trim()) {return 'Selecione o tipo de embarcação';}
-    if (!capacity.trim() || isNaN(Number(capacity)) || Number(capacity) < 1) {
-      return 'Informe a capacidade de passageiros';
-    }
-    if (!registrationNum.trim()) {return 'Informe o número de registro';}
-    return null;
-  }
-
-  async function uploadImages(items: PhotoItem[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      setUploadLabel(`Enviando foto ${i + 1} de ${items.length}...`);
-      const photo = items[i];
-      const formData = new FormData();
-      formData.append('file', {
-        uri: photo.uri,
-        type: photo.type || 'image/jpeg',
-        name: photo.name || 'photo.jpg',
-      } as any);
-      const res = await api.upload<{url: string}>('/upload/image?folder=boats', formData);
-      urls.push(normalizeFileUrl(res.url));
-    }
-    return urls;
-  }
-
-  async function uploadDocuments(items: PhotoItem[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      setUploadLabel(`Enviando documento ${i + 1} de ${items.length}...`);
-      const doc = items[i];
-      const formData = new FormData();
-      formData.append('file', {
-        uri: doc.uri,
-        type: doc.type || 'image/jpeg',
-        name: doc.name || 'doc.jpg',
-      } as any);
-      const res = await api.upload<{url: string}>('/upload/document?folder=documents', formData);
-      urls.push(normalizeFileUrl(res.url));
-    }
-    return urls;
-  }
-
-  async function handleSubmit() {
-    const validationError = validate();
-    if (validationError) {
-      toast.showError(validationError);
-      return;
-    }
-
-    try {
-      const newPhotoUrls = photos.length > 0 ? await uploadImages(photos) : [];
-      const newDocUrls = docPhotos.length > 0 ? await uploadDocuments(docPhotos) : [];
-
-      setUploadLabel('Salvando alterações...');
-      await updateBoat(boatId, {
-        name: name.trim(),
-        type: type.trim(),
-        capacity: Number(capacity),
-        registrationNum: registrationNum.trim().toUpperCase(),
-        photos: [...savedPhotos, ...newPhotoUrls],
-        documentPhotos: [...savedDocPhotos, ...newDocUrls],
-      });
-
-      toast.showSuccess('Embarcação atualizada com sucesso!');
-      navigation.goBack();
-    } catch (err: any) {
-      setUploadLabel('');
-      toast.showError(err?.message || 'Erro ao atualizar embarcação');
-    }
-  }
+  const {
+    isLoadingBoat,
+    isSaving,
+    isBusy,
+    uploadLabel,
+    name,
+    setName,
+    type,
+    setType,
+    capacity,
+    setCapacity,
+    registrationNum,
+    setRegistrationNum,
+    showTypePicker,
+    setShowTypePicker,
+    photos,
+    setPhotos,
+    docPhotos,
+    setDocPhotos,
+    savedPhotos,
+    savedDocPhotos,
+    rejectionReason,
+    handleSubmit,
+    goBack,
+  } = useCaptainEditBoat();
 
   if (isLoadingBoat) {
     return (
@@ -184,7 +73,7 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={goBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
@@ -349,9 +238,9 @@ export function CaptainEditBoatScreen({navigation, route}: Props) {
           <Button
             title={uploadLabel || (isSaving ? 'Salvando...' : 'Salvar Alterações')}
             onPress={handleSubmit}
-            disabled={isSaving || !!uploadLabel}
+            disabled={isBusy}
           />
-          {(isSaving || !!uploadLabel) && (
+          {isBusy && (
             <Box alignItems="center" mt="s16">
               <ActivityIndicator size="small" color="#0a6fbd" />
             </Box>

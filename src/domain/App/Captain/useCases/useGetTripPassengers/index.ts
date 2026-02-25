@@ -1,0 +1,1 @@
+export {useGetTripPassengers} from './useGetTripPassengers';

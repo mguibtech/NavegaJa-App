@@ -1,10 +1,9 @@
-import {api} from '@api';
-
+import {shipmentService} from '../../shipmentService';
 import {ReportIncidentData} from '../../shipmentTypes';
 
 export async function reportIncidentUseCase(
   shipmentId: string,
   data: ReportIncidentData,
 ): Promise<void> {
-  await api.post(`/shipments/${shipmentId}/incident`, data);
+  await shipmentService.reportIncident(shipmentId, data);
 }

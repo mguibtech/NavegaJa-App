@@ -1,32 +1,22 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {OutForDeliveryResponse} from '../shipmentTypes';
 
 export function useOutForDelivery() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function markOutForDelivery(
-    shipmentId: string,
-  ): Promise<OutForDeliveryResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await shipmentService.outForDelivery(shipmentId);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const mutation = useMutation<OutForDeliveryResponse, Error, string>({
+    mutationFn: (shipmentId) => shipmentService.outForDelivery(shipmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+    },
+  });
 
   return {
-    markOutForDelivery,
-    isLoading,
-    error,
+    markOutForDelivery: (shipmentId: string) => mutation.mutateAsync(shipmentId),
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

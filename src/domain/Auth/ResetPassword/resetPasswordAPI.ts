@@ -5,14 +5,14 @@ import {
   ResetPasswordResponse,
 } from './resetPasswordTypes';
 
-class ResetPasswordAPI {
-  async execute(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
-    const response = await api.post<ResetPasswordResponse>(
-      '/auth/reset-password',
-      data,
-    );
-    return response;
-  }
+async function execute(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+  const response = await api.post<ResetPasswordResponse>(
+    '/auth/reset-password',
+    data,
+  );
+  return response;
 }
 
-export const resetPasswordAPI = new ResetPasswordAPI();
+export const resetPasswordAPI = {
+  execute,
+};

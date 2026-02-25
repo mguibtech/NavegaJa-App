@@ -37,3 +37,6 @@ export * from './Gamification';
 // TODO: Add more domains
 // export * from './Route';
 // export * from './User';
+
+// PaymentMethod
+export * from './PaymentMethod';

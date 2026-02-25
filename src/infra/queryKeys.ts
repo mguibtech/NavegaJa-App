@@ -1,0 +1,77 @@
+export const queryKeys = {
+  bookings: {
+    all: ['bookings'] as const,
+    my: () => [...queryKeys.bookings.all, 'my'] as const,
+    detail: (id: string) => [...queryKeys.bookings.all, id] as const,
+    tracking: (id: string) => [...queryKeys.bookings.all, 'tracking', id] as const,
+    paymentStatus: (id: string) => [...queryKeys.bookings.all, 'payment-status', id] as const,
+  },
+  trips: {
+    all: ['trips'] as const,
+    search: (params: object) => [...queryKeys.trips.all, 'search', params] as const,
+    detail: (id: string) => [...queryKeys.trips.all, id] as const,
+    popular: () => [...queryKeys.trips.all, 'popular'] as const,
+  },
+  captain: {
+    all: ['captain'] as const,
+    trips: () => [...queryKeys.captain.all, 'trips'] as const,
+    boats: () => [...queryKeys.captain.all, 'boats'] as const,
+    earnings: () => [...queryKeys.captain.all, 'earnings'] as const,
+    checklist: (tripId: string) => [...queryKeys.captain.all, 'checklist', tripId] as const,
+    passengers: (tripId: string) => [...queryKeys.captain.all, 'passengers', tripId] as const,
+    tripShipments: (tripId: string) => [...queryKeys.captain.all, 'trip-shipments', tripId] as const,
+    shipment: (id: string) => [...queryKeys.captain.all, 'shipment', id] as const,
+  },
+  shipments: {
+    all: ['shipments'] as const,
+    my: () => [...queryKeys.shipments.all, 'my'] as const,
+    detail: (id: string) => [...queryKeys.shipments.all, id] as const,
+    timeline: (id: string) => [...queryKeys.shipments.all, 'timeline', id] as const,
+  },
+  favorites: {
+    all: ['favorites'] as const,
+    my: () => [...queryKeys.favorites.all, 'my'] as const,
+  },
+  gamification: {
+    all: ['gamification'] as const,
+    stats: () => [...queryKeys.gamification.all, 'stats'] as const,
+    history: () => [...queryKeys.gamification.all, 'history'] as const,
+    leaderboard: () => [...queryKeys.gamification.all, 'leaderboard'] as const,
+  },
+  safety: {
+    all: ['safety'] as const,
+    contacts: () => [...queryKeys.safety.all, 'contacts'] as const,
+    sosAlerts: () => [...queryKeys.safety.all, 'sos'] as const,
+    checklist: (tripId: string) => [...queryKeys.safety.all, 'checklist', tripId] as const,
+  },
+  weather: {
+    all: ['weather'] as const,
+    region: () => [...queryKeys.weather.all, 'region'] as const,
+    forecast: () => [...queryKeys.weather.all, 'forecast'] as const,
+    safety: () => [...queryKeys.weather.all, 'safety'] as const,
+  },
+  promotions: {
+    all: ['promotions'] as const,
+    active: () => [...queryKeys.promotions.all, 'active'] as const,
+  },
+  reviews: {
+    all: ['reviews'] as const,
+    my: () => [...queryKeys.reviews.all, 'my'] as const,
+    byCaptain: (id: string) => [...queryKeys.reviews.all, 'captain', id] as const,
+    byBoat: (id: string) => [...queryKeys.reviews.all, 'boat', id] as const,
+    byTrip: (id: string) => [...queryKeys.reviews.all, 'trip', id] as const,
+    canReview: (tripId: string) => [...queryKeys.reviews.all, 'can-review', tripId] as const,
+  },
+  routes: {
+    all: ['routes'] as const,
+    popular: () => [...queryKeys.routes.all, 'popular'] as const,
+  },
+  boats: {
+    all: ['boats'] as const,
+    detail: (id: string) => [...queryKeys.boats.all, id] as const,
+  },
+  paymentMethods: {
+    all: ['paymentMethods'] as const,
+    my: () => [...queryKeys.paymentMethods.all, 'my'] as const,
+  },
+};

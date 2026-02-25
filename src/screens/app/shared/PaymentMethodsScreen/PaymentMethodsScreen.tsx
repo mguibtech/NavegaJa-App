@@ -1,118 +1,26 @@
-import React, {useState} from 'react';
-import {ScrollView} from 'react-native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import React from 'react';
+import {ScrollView, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
-import {useToast} from '@hooks';
+import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
 
-import {AppStackParamList} from '@routes';
+import {usePaymentMethodsScreen} from './usePaymentMethodsScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'PaymentMethods'>;
-
-interface PaymentCard {
-  id: string;
-  brand: 'visa' | 'mastercard' | 'elo';
-  lastFour: string;
-  holderName: string;
-  expiryMonth: string;
-  expiryYear: string;
-  isDefault: boolean;
-}
-
-// Mock data - em produção viria de API
-const MOCK_CARDS: PaymentCard[] = [
-  {
-    id: '1',
-    brand: 'visa',
-    lastFour: '4532',
-    holderName: 'João Silva',
-    expiryMonth: '12',
-    expiryYear: '25',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    brand: 'mastercard',
-    lastFour: '8765',
-    holderName: 'João Silva',
-    expiryMonth: '06',
-    expiryYear: '27',
-    isDefault: false,
-  },
-];
-
-export function PaymentMethodsScreen({navigation}: Props) {
+export function PaymentMethodsScreen() {
   const {top} = useSafeAreaInsets();
-  const [cards, setCards] = useState<PaymentCard[]>(MOCK_CARDS);
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
-  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const toast = useToast();
-
-  function getCardIcon(brand: string) {
-    switch (brand) {
-      case 'visa':
-        return 'credit-card';
-      case 'mastercard':
-        return 'credit-card';
-      case 'elo':
-        return 'credit-card';
-      default:
-        return 'credit-card';
-    }
-  }
-
-  function getCardColor(brand: string): 'primary' | 'secondary' | 'info' {
-    switch (brand) {
-      case 'visa':
-        return 'primary';
-      case 'mastercard':
-        return 'secondary';
-      case 'elo':
-        return 'info';
-      default:
-        return 'primary';
-    }
-  }
-
-  function handleSetDefault(cardId: string) {
-    setCards(prevCards =>
-      prevCards.map(card => ({
-        ...card,
-        isDefault: card.id === cardId,
-      })),
-    );
-    toast.showSuccess('Cartão definido como padrão');
-  }
-
-  function handleRemoveCard(cardId: string) {
-    setSelectedCardId(cardId);
-    setShowRemoveModal(true);
-  }
-
-  function confirmRemoveCard() {
-    if (!selectedCardId) return;
-
-    const cardToRemove = cards.find(c => c.id === selectedCardId);
-    if (cardToRemove?.isDefault && cards.length > 1) {
-      // Se remover o padrão, define o próximo como padrão
-      const remainingCards = cards.filter(c => c.id !== selectedCardId);
-      remainingCards[0].isDefault = true;
-      setCards(remainingCards);
-    } else {
-      setCards(cards.filter(c => c.id !== selectedCardId));
-    }
-
-    setShowRemoveModal(false);
-    setSelectedCardId(null);
-    toast.showSuccess('Cartão removido com sucesso');
-  }
-
-  function handleAddCard() {
-    setShowComingSoonModal(true);
-  }
+  const {
+    navigation,
+    cards,
+    isLoading,
+    isRemoving,
+    showRemoveModal, setShowRemoveModal,
+    getCardIcon,
+    getCardColor,
+    handleSetDefault,
+    handleRemoveCard,
+    confirmRemoveCard,
+    handleAddCard,
+  } = usePaymentMethodsScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -216,7 +124,11 @@ export function PaymentMethodsScreen({navigation}: Props) {
           </TouchableOpacityBox>
         </Box>
 
-        {cards.length === 0 ? (
+        {isLoading ? (
+          <Box alignItems="center" justifyContent="center" paddingVertical="s48">
+            <ActivityIndicator size="large" color="#0B5D8A" />
+          </Box>
+        ) : cards.length === 0 ? (
           <Box
             backgroundColor="surface"
             borderRadius="s12"
@@ -269,7 +181,7 @@ export function PaymentMethodsScreen({navigation}: Props) {
                   <Box flex={1}>
                     <Box flexDirection="row" alignItems="center" mb="s4">
                       <Text preset="paragraphMedium" color="text" bold>
-                        {card.brand.toUpperCase()} •••• {card.lastFour}
+                        {card.brand.toUpperCase()} •••• {card.last4}
                       </Text>
                       {card.isDefault && (
                         <Box
@@ -285,7 +197,7 @@ export function PaymentMethodsScreen({navigation}: Props) {
                       )}
                     </Box>
                     <Text preset="paragraphSmall" color="textSecondary">
-                      {card.holderName} • {card.expiryMonth}/{card.expiryYear}
+                      {card.holderName} • {String(card.expiryMonth).padStart(2, '0')}/{card.expiryYear}
                     </Text>
                   </Box>
                 </Box>
@@ -340,6 +252,7 @@ export function PaymentMethodsScreen({navigation}: Props) {
       {/* Remove Card Modal */}
       <ConfirmationModal
         visible={showRemoveModal}
+        isLoading={isRemoving}
         title="Remover Cartão"
         message="Tem certeza que deseja remover este cartão? Esta ação não pode ser desfeita."
         icon="delete"
@@ -350,20 +263,9 @@ export function PaymentMethodsScreen({navigation}: Props) {
         onConfirm={confirmRemoveCard}
         onCancel={() => {
           setShowRemoveModal(false);
-          setSelectedCardId(null);
         }}
       />
 
-      {/* Coming Soon Modal */}
-      <InfoModal
-        visible={showComingSoonModal}
-        title="Em Breve"
-        message="A funcionalidade de adicionar cartões estará disponível em breve. Por enquanto, você pode pagar com PIX!"
-        icon="construction"
-        iconColor="warning"
-        buttonText="Entendi"
-        onClose={() => setShowComingSoonModal(false)}
-      />
     </Box>
   );
 }

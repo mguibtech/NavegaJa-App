@@ -1,30 +1,16 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
-import {resetPasswordAPI} from './resetPasswordAPI';
+import {resetPasswordService} from './resetPasswordService';
 import {ResetPasswordRequest} from './resetPasswordTypes';
 
 export function useResetPassword() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function resetPassword(data: ResetPasswordRequest): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await resetPasswordAPI.execute(data);
-      setIsLoading(false);
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      setIsLoading(false);
-      throw error;
-    }
-  }
+  const mutation = useMutation<unknown, Error, ResetPasswordRequest>({
+    mutationFn: (data: ResetPasswordRequest) => resetPasswordService.execute(data),
+  });
 
   return {
-    resetPassword,
-    isLoading,
-    error,
+    resetPassword: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

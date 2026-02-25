@@ -1,0 +1,1 @@
+export {useGetWeatherSafety} from './useGetWeatherSafety';

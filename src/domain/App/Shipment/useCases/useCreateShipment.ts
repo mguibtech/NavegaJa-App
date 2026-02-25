@@ -1,33 +1,28 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {Shipment, CreateShipmentData} from '../shipmentTypes';
 
+type CreateShipmentParams = {
+  data: CreateShipmentData;
+  photos: Array<{uri: string; type: string; name: string}>;
+};
+
 export function useCreateShipment() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function create(
-    data: CreateShipmentData,
-    photos: Array<{uri: string; type: string; name: string}>,
-  ): Promise<Shipment> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const shipment = await shipmentService.createShipment(data, photos);
-      setIsLoading(false);
-      return shipment;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const mutation = useMutation<Shipment, Error, CreateShipmentParams>({
+    mutationFn: ({data, photos}) => shipmentService.createShipment(data, photos),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+    },
+  });
 
   return {
-    create,
-    isLoading,
-    error,
+    create: (data: CreateShipmentData, photos: Array<{uri: string; type: string; name: string}>) =>
+      mutation.mutateAsync({data, photos}),
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

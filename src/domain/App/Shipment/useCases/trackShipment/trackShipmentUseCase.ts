@@ -1,12 +1,8 @@
-import {api} from '@api';
-
-import {Shipment} from '../../shipmentTypes';
+import {shipmentService} from '../../shipmentService';
+import {TrackShipmentResponse} from '../../shipmentTypes';
 
 export async function trackShipmentUseCase(
   trackingCode: string,
-): Promise<Shipment> {
-  const response = await api.get<Shipment>(
-    `/shipments/track/${trackingCode}`,
-  );
-  return response;
+): Promise<TrackShipmentResponse> {
+  return shipmentService.trackShipment(trackingCode);
 }

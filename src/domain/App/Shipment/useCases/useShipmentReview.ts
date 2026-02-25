@@ -1,50 +1,21 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
-import {shipmentAPI} from '../shipmentAPI';
+import {shipmentService} from '../shipmentService';
 import {ShipmentReview, CreateShipmentReviewData} from '../shipmentTypes';
 
 export function useShipmentReview() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const createMutation = useMutation<ShipmentReview, Error, CreateShipmentReviewData>({
+    mutationFn: (data) => shipmentService.createReview(data),
+  });
 
-  async function createReview(
-    data: CreateShipmentReviewData,
-  ): Promise<ShipmentReview> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const review = await shipmentAPI.createReview(data);
-      setIsLoading(false);
-      return review;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  async function getReview(
-    shipmentId: string,
-  ): Promise<ShipmentReview | null> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const review = await shipmentAPI.getReviewByShipmentId(shipmentId);
-      setIsLoading(false);
-      return review;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const getReviewMutation = useMutation<ShipmentReview | null, Error, string>({
+    mutationFn: (shipmentId) => shipmentService.getReviewByShipmentId(shipmentId),
+  });
 
   return {
-    createReview,
-    getReview,
-    isLoading,
-    error,
+    createReview: (data: CreateShipmentReviewData) => createMutation.mutateAsync(data),
+    getReview: (shipmentId: string) => getReviewMutation.mutateAsync(shipmentId),
+    isLoading: createMutation.isPending || getReviewMutation.isPending,
+    error: createMutation.error ?? getReviewMutation.error,
   };
 }

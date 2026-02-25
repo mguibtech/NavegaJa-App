@@ -1,41 +1,18 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
 import {shipmentService} from '../shipmentService';
 import {TrackShipmentResponse} from '../shipmentTypes';
 
 export function useTrackShipment() {
-  const [trackingData, setTrackingData] = useState<TrackShipmentResponse | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function track(trackingCode: string): Promise<TrackShipmentResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await shipmentService.trackShipment(trackingCode);
-      setTrackingData(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  function reset() {
-    setTrackingData(null);
-    setError(null);
-  }
+  const mutation = useMutation<TrackShipmentResponse, Error, string>({
+    mutationFn: (trackingCode) => shipmentService.trackShipment(trackingCode),
+  });
 
   return {
-    trackingData,
-    track,
-    reset,
-    isLoading,
-    error,
+    trackingData: mutation.data ?? null,
+    track: (trackingCode: string) => mutation.mutateAsync(trackingCode),
+    reset: mutation.reset,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

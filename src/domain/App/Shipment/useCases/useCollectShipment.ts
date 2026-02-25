@@ -1,22 +1,20 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {CollectShipmentResponse} from '../shipmentTypes';
 
+type CollectParams = {
+  shipmentId: string;
+  validationCode?: string;
+  collectionPhotoUri?: string;
+};
+
 export function useCollectShipment() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function collect(
-    shipmentId: string,
-    validationCode?: string,
-    collectionPhotoUri?: string,
-  ): Promise<CollectShipmentResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Upload foto da coleta se fornecida
+  const mutation = useMutation<CollectShipmentResponse, Error, CollectParams>({
+    mutationFn: async ({shipmentId, validationCode, collectionPhotoUri}) => {
       let collectionPhoto: string | undefined;
       if (collectionPhotoUri) {
         const photoData = {
@@ -27,24 +25,17 @@ export function useCollectShipment() {
         const urls = await shipmentService.uploadPhotosToS3([photoData]);
         collectionPhoto = urls[0];
       }
-
-      const result = await shipmentService.collectShipment(shipmentId, {
-        validationCode,
-        collectionPhoto,
-      });
-
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+      return shipmentService.collectShipment(shipmentId, {validationCode, collectionPhoto});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+    },
+  });
 
   return {
-    collect,
-    isLoading,
-    error,
+    collect: (shipmentId: string, validationCode?: string, collectionPhotoUri?: string) =>
+      mutation.mutateAsync({shipmentId, validationCode, collectionPhotoUri}),
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

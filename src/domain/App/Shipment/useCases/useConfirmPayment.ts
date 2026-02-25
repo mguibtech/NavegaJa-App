@@ -1,21 +1,19 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {ConfirmPaymentResponse} from '../shipmentTypes';
 
+type ConfirmPaymentParams = {
+  shipmentId: string;
+  paymentProofUri?: string;
+};
+
 export function useConfirmPayment() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function confirm(
-    shipmentId: string,
-    paymentProofUri?: string,
-  ): Promise<ConfirmPaymentResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Upload foto do comprovante se fornecida
+  const mutation = useMutation<ConfirmPaymentResponse, Error, ConfirmPaymentParams>({
+    mutationFn: async ({shipmentId, paymentProofUri}) => {
       let paymentProof: string | undefined;
       if (paymentProofUri) {
         const photoData = {
@@ -26,23 +24,17 @@ export function useConfirmPayment() {
         const urls = await shipmentService.uploadPhotosToS3([photoData]);
         paymentProof = urls[0];
       }
-
-      const result = await shipmentService.confirmPayment(shipmentId, {
-        paymentProof,
-      });
-
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+      return shipmentService.confirmPayment(shipmentId, {paymentProof});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+    },
+  });
 
   return {
-    confirm,
-    isLoading,
-    error,
+    confirm: (shipmentId: string, paymentProofUri?: string) =>
+      mutation.mutateAsync({shipmentId, paymentProofUri}),
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

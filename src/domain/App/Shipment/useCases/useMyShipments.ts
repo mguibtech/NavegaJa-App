@@ -1,32 +1,19 @@
-import {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
 
+import {queryKeys} from '../../../../infra/queryKeys';
 import {shipmentService} from '../shipmentService';
 import {Shipment} from '../shipmentTypes';
 
 export function useMyShipments() {
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function fetch() {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await shipmentService.getMyShipments();
-      setShipments(data);
-      setIsLoading(false);
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const query = useQuery<Shipment[], Error>({
+    queryKey: queryKeys.shipments.my(),
+    queryFn: () => shipmentService.getMyShipments(),
+  });
 
   return {
-    shipments,
-    fetch,
-    isLoading,
-    error,
+    shipments: query.data ?? [],
+    fetch: query.refetch,
+    isLoading: query.isLoading,
+    error: query.error,
   };
 }

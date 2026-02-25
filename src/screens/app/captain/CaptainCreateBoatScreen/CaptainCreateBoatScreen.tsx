@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   ScrollView,
   KeyboardAvoidingView,
@@ -7,50 +7,39 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} from '@components';
-import {useCreateBoat, updateBoatUseCase} from '@domain';
-import {useToast} from '@hooks';
-import {useAuthStore} from '@store';
-import {api} from '@api';
-import {normalizeFileUrl} from '../../api/config';
 
-import {AppStackParamList} from '@routes';
+import {useCaptainCreateBoat, BOAT_TYPES} from './useCaptainCreateBoat';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainCreateBoat'>;
-type PhotoItem = {uri: string; type: string; name: string};
-
-const BOAT_TYPES = [
-  'Lancha',
-  'Barco regional',
-  'Barco de linha',
-  'Canoa motorizada',
-  'Ferry',
-  'Outro',
-];
-
-export function CaptainCreateBoatScreen({navigation}: Props) {
+export function CaptainCreateBoatScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const user = useAuthStore(s => s.user);
-  const {createBoat, isLoading} = useCreateBoat();
-
-  // Todos os hooks ANTES de qualquer return condicional (Rules of Hooks)
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [registrationNum, setRegistrationNum] = useState('');
-  const [showTypePicker, setShowTypePicker] = useState(false);
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [docPhotos, setDocPhotos] = useState<PhotoItem[]>([]);
-  const [uploadLabel, setUploadLabel] = useState('');
-
-  const canOperate = !user?.capabilities || user.capabilities.canOperate;
+  const {
+    canOperate,
+    isPending,
+    name,
+    setName,
+    type,
+    setType,
+    capacity,
+    setCapacity,
+    registrationNum,
+    setRegistrationNum,
+    showTypePicker,
+    setShowTypePicker,
+    photos,
+    setPhotos,
+    docPhotos,
+    setDocPhotos,
+    uploadLabel,
+    isLoading,
+    isBusy,
+    handleSubmit,
+    goBack,
+    navigateToEditProfile,
+  } = useCaptainCreateBoat();
 
   // Guard: bloqueia se capabilities existem e canOperate=false
   if (!canOperate) {
-    const isPending = user?.capabilities?.pendingVerification ?? false;
     return (
       <Box flex={1} backgroundColor="background">
         <Box
@@ -66,7 +55,7 @@ export function CaptainCreateBoatScreen({navigation}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={goBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
@@ -95,7 +84,7 @@ export function CaptainCreateBoatScreen({navigation}: Props) {
           {!isPending && (
             <Button
               title="Enviar documentos"
-              onPress={() => navigation.navigate('EditProfile')}
+              onPress={navigateToEditProfile}
               style={{marginTop: 32}}
             />
           )}
@@ -103,92 +92,6 @@ export function CaptainCreateBoatScreen({navigation}: Props) {
       </Box>
     );
   }
-
-  function validate(): string | null {
-    if (!name.trim()) {return 'Informe o nome da embarcação';}
-    if (!type.trim()) {return 'Selecione o tipo de embarcação';}
-    if (!capacity.trim() || isNaN(Number(capacity)) || Number(capacity) < 1) {
-      return 'Informe a capacidade de passageiros';
-    }
-    if (!registrationNum.trim()) {return 'Informe o número de registro';}
-    return null;
-  }
-
-  // Upload sequencial para não sobrecarregar o servidor
-  async function uploadImages(items: PhotoItem[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      setUploadLabel(`Enviando foto ${i + 1} de ${items.length}...`);
-      const photo = items[i];
-      const formData = new FormData();
-      formData.append('file', {
-        uri: photo.uri,
-        type: photo.type || 'image/jpeg',
-        name: photo.name || 'photo.jpg',
-      } as any);
-      const res = await api.upload<{url: string}>('/upload/image?folder=boats', formData);
-      urls.push(normalizeFileUrl(res.url));
-    }
-    return urls;
-  }
-
-  async function uploadDocuments(items: PhotoItem[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      setUploadLabel(`Enviando documento ${i + 1} de ${items.length}...`);
-      const doc = items[i];
-      const formData = new FormData();
-      formData.append('file', {
-        uri: doc.uri,
-        type: doc.type || 'image/jpeg',
-        name: doc.name || 'doc.jpg',
-      } as any);
-      const res = await api.upload<{url: string}>('/upload/document?folder=documents', formData);
-      urls.push(normalizeFileUrl(res.url));
-    }
-    return urls;
-  }
-
-  async function handleSubmit() {
-    const validationError = validate();
-    if (validationError) {
-      toast.showError(validationError);
-      return;
-    }
-
-    try {
-      const photoUrls = await uploadImages(photos);
-      const docUrls = await uploadDocuments(docPhotos);
-
-      // POST /boats não aceita documentPhotos — criar sem eles
-      setUploadLabel('Cadastrando embarcação...');
-      const boat = await createBoat({
-        name: name.trim(),
-        type: type.trim(),
-        capacity: Number(capacity),
-        registrationNum: registrationNum.trim().toUpperCase(),
-        photos: photoUrls.length > 0 ? photoUrls : undefined,
-      });
-
-      // Se há documentos, adicionar via PATCH separado
-      if (docUrls.length > 0) {
-        setUploadLabel('Salvando documentos...');
-        await updateBoatUseCase(boat.id, {documentPhotos: docUrls});
-      }
-
-      toast.showSuccess('Embarcação cadastrada com sucesso!');
-      navigation.goBack();
-    } catch (err: any) {
-      setUploadLabel('');
-      if (err?.statusCode === 403) {
-        toast.showError('Documentação em análise. Aguarde a aprovação para cadastrar embarcações.');
-      } else {
-        toast.showError(err?.message || 'Erro ao cadastrar embarcação');
-      }
-    }
-  }
-
-  const isBusy = isLoading || !!uploadLabel;
 
   return (
     <KeyboardAvoidingView
@@ -209,7 +112,7 @@ export function CaptainCreateBoatScreen({navigation}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={goBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
