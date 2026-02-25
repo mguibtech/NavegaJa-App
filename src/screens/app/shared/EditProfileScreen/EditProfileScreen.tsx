@@ -1,14 +1,17 @@
-import React from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '@shopify/restyle';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
+import {Box, Button, ConfirmationModal, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
 import {apiImageSource} from '@api/config';
+import {Theme} from '@theme';
 
 import {AM_CITIES, useEditProfileScreen} from './useEditProfileScreen';
 
 export function EditProfileScreen() {
   const {top} = useSafeAreaInsets();
+  const {colors} = useTheme<Theme>();
   const {
     navigation,
     user,
@@ -48,6 +51,46 @@ export function EditProfileScreen() {
     handleSuccessClose,
   } = useEditProfileScreen();
 
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const pendingNavAction = useRef<any>(null);
+
+  const hasUnsavedChanges =
+    name !== (user?.name ?? '') ||
+    email !== (user?.email ?? '') ||
+    city !== (user?.city ?? '') ||
+    currentPassword.length > 0 ||
+    newPassword.length > 0 ||
+    confirmNewPassword.length > 0;
+
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e: any) => {
+      if (!hasUnsavedChanges) {return;}
+      e.preventDefault();
+      pendingNavAction.current = e.data.action;
+      setShowDiscardModal(true);
+    });
+    return unsub;
+  }, [navigation, hasUnsavedChanges]);
+
+  function handleBack() {
+    if (hasUnsavedChanges) {
+      pendingNavAction.current = null;
+      setShowDiscardModal(true);
+    } else {
+      navigation.goBack();
+    }
+  }
+
+  function handleConfirmDiscard() {
+    setShowDiscardModal(false);
+    if (pendingNavAction.current) {
+      navigation.dispatch(pendingNavAction.current);
+      pendingNavAction.current = null;
+    } else {
+      navigation.goBack();
+    }
+  }
+
   return (
     <>
       <Box flex={1} backgroundColor="background">
@@ -72,7 +115,7 @@ export function EditProfileScreen() {
             borderRadius="s20"
             alignItems="center"
             justifyContent="center"
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             mr="s12">
             <Icon name="arrow-back" size={24} color="text" />
           </TouchableOpacityBox>
@@ -157,7 +200,7 @@ export function EditProfileScreen() {
                   value={user?.phone}
                   editable={false}
                   placeholder="Telefone"
-                  style={{backgroundColor: '#F5F5F5'}}
+                  style={{backgroundColor: colors.disabled}}
                 />
                 <Text
                   preset="paragraphCaptionSmall"
@@ -532,7 +575,7 @@ export function EditProfileScreen() {
               alignItems="center"
               justifyContent="center"
               mr="s16"
-              style={{backgroundColor: '#FEE2E2'}}>
+              style={{backgroundColor: colors.dangerBg}}>
               <Icon name="picture-as-pdf" size={22} color={'#DC2626' as any} />
             </Box>
             <Box flex={1}>
@@ -580,6 +623,18 @@ export function EditProfileScreen() {
         iconColor="danger"
         buttonText="Entendi"
         onClose={() => setShowErrorModal(false)}
+      />
+
+      <ConfirmationModal
+        visible={showDiscardModal}
+        title="Descartar alterações?"
+        message="Você tem alterações não salvas. Deseja descartá-las e sair?"
+        icon="warning"
+        iconColor="warning"
+        confirmText="Descartar"
+        cancelText="Continuar editando"
+        onConfirm={handleConfirmDiscard}
+        onCancel={() => setShowDiscardModal(false)}
       />
     </>
   );
@@ -635,7 +690,7 @@ function CaptainDocField({
             alignItems="center"
             justifyContent="center"
             overflow="hidden"
-            style={{borderWidth: 1, borderColor: '#D1D5DB'}}>
+            style={{borderWidth: 1, borderColor: colors.border}}>
             {isPdf ? (
               <>
                 <Icon name="picture-as-pdf" size={30} color={'#DC2626' as any} />
@@ -677,7 +732,7 @@ function CaptainDocField({
               paddingHorizontal="s12"
               flexDirection="row"
               alignItems="center"
-              style={{borderWidth: 1, borderColor: '#D1D5DB', backgroundColor: '#F9FAFB'}}>
+              style={{borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface}}>
               <Icon
                 name={isPdf ? 'open-in-new' : 'visibility'}
                 size={15}

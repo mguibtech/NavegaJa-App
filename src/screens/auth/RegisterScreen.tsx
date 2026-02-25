@@ -20,6 +20,22 @@ function formatCPF(value: string): string {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+function isValidCPF(cpf: string): boolean {
+  const clean = cpf.replace(/\D/g, '');
+  if (clean.length !== 11) {return false;}
+  if (/^(\d)\1{10}$/.test(clean)) {return false;}
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {sum += parseInt(clean[i], 10) * (10 - i);}
+  let d1 = 11 - (sum % 11);
+  if (d1 >= 10) {d1 = 0;}
+  if (parseInt(clean[9], 10) !== d1) {return false;}
+  sum = 0;
+  for (let i = 0; i < 10; i++) {sum += parseInt(clean[i], 10) * (11 - i);}
+  let d2 = 11 - (sum % 11);
+  if (d2 >= 10) {d2 = 0;}
+  return parseInt(clean[10], 10) === d2;
+}
+
 const AM_CITIES = [
   'Manaus',
   'Parintins',
@@ -54,7 +70,9 @@ export function RegisterScreen({navigation}: Props) {
   const [city, setCity] = useState('Manaus');
   const [cpf, setCpf] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
 
   async function handleRegister() {
@@ -72,6 +90,17 @@ export function RegisterScreen({navigation}: Props) {
 
     if (password.length < 6) {
       toast.showWarning('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.showWarning('As senhas não coincidem');
+      return;
+    }
+
+    const cleanCpf = cpf.replace(/\D/g, '');
+    if (cleanCpf.length > 0 && !isValidCPF(cpf)) {
+      toast.showWarning('CPF inválido. Verifique os dígitos');
       return;
     }
 
@@ -135,6 +164,8 @@ export function RegisterScreen({navigation}: Props) {
               alignItems="center"
               justifyContent="center"
               mb="s24"
+              accessibilityLabel="Voltar"
+              accessibilityRole="button"
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 2},
@@ -240,6 +271,8 @@ export function RegisterScreen({navigation}: Props) {
                   paddingVertical="s16"
                   flexDirection="row"
                   alignItems="center"
+                  accessibilityLabel={city ? `Cidade selecionada: ${city}. Toque para alterar` : 'Selecione sua cidade'}
+                  accessibilityRole="combobox"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: {width: 0, height: 1},
@@ -262,13 +295,32 @@ export function RegisterScreen({navigation}: Props) {
               <Box mt="s16">
                 <TextInput
                   label="Sua Senha"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                   leftIcon="lock"
                   rightIcon={showPassword ? 'visibility' : 'visibility-off'}
                   onRightIconPress={() => setShowPassword(!showPassword)}
+                  accessibilityLabel="Senha"
+                  accessibilityHint="Mínimo 6 caracteres"
+                />
+              </Box>
+
+              <Box mt="s16">
+                <TextInput
+                  label="Confirmar Senha"
+                  placeholder="Repita sua senha"
+                  secureTextEntry={!showConfirmPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  onSubmitEditing={handleRegister}
+                  returnKeyType="done"
+                  leftIcon="lock-outline"
+                  rightIcon={showConfirmPassword ? 'visibility' : 'visibility-off'}
+                  onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  accessibilityLabel="Confirmar senha"
+                  accessibilityHint="Digite a mesma senha novamente para confirmar"
                 />
               </Box>
 
@@ -278,7 +330,7 @@ export function RegisterScreen({navigation}: Props) {
                   loading={isLoading}
                   onPress={handleRegister}
                   rightIcon="arrow-forward"
-                  disabled={!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !city.trim()}
+                  disabled={!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim() || !city.trim()}
                 />
               </Box>
 
@@ -290,6 +342,7 @@ export function RegisterScreen({navigation}: Props) {
                     preset="paragraphSmall"
                     color="primary"
                     bold
+                    accessibilityRole="link"
                     onPress={() => Linking.openURL('https://navegaja.com/termos')}>
                     Termos de Uso
                   </Text>
@@ -298,6 +351,7 @@ export function RegisterScreen({navigation}: Props) {
                     preset="paragraphSmall"
                     color="primary"
                     bold
+                    accessibilityRole="link"
                     onPress={() => Linking.openURL('https://navegaja.com/privacidade')}>
                     Política de Privacidade
                   </Text>
@@ -313,6 +367,8 @@ export function RegisterScreen({navigation}: Props) {
                     preset="paragraphMedium"
                     color="primary"
                     bold
+                    accessibilityRole="link"
+                    accessibilityLabel="Fazer login"
                     onPress={() => navigation.navigate('Login')}>
                     Fazer Login
                   </Text>
@@ -351,7 +407,11 @@ export function RegisterScreen({navigation}: Props) {
             <Text preset="paragraphMedium" color="text" bold flex={1}>
               Selecione sua cidade
             </Text>
-            <TouchableOpacityBox onPress={() => setShowCityPicker(false)} padding="s4">
+            <TouchableOpacityBox
+              onPress={() => setShowCityPicker(false)}
+              padding="s4"
+              accessibilityLabel="Fechar seleção de cidade"
+              accessibilityRole="button">
               <Icon name="close" size={24} color="textSecondary" />
             </TouchableOpacityBox>
           </Box>
@@ -370,7 +430,10 @@ export function RegisterScreen({navigation}: Props) {
                 alignItems="center"
                 backgroundColor={city === item ? 'primaryBg' : 'surface'}
                 borderBottomWidth={1}
-                borderBottomColor="border">
+                borderBottomColor="border"
+                accessibilityLabel={`${item}${city === item ? ', selecionada' : ''}`}
+                accessibilityRole="radio"
+                accessibilityState={{checked: city === item}}>
                 <Text
                   preset="paragraphMedium"
                   color={city === item ? 'primary' : 'text'}

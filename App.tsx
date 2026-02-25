@@ -1,12 +1,13 @@
-import React from 'react';
-import {StatusBar} from 'react-native';
+import React, {useEffect} from 'react';
+import {StatusBar, useColorScheme} from 'react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '@shopify/restyle';
 
-import {theme} from '@theme';
+import {theme, darkTheme} from '@theme';
 import {Router} from '@routes';
 import {ToastContainer, PermissionsRequest} from '@components';
+import {useThemeStore} from '@store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,13 +23,25 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const colorScheme = useColorScheme();
+  const {themeMode, loadTheme} = useThemeStore();
+
+  useEffect(() => {
+    loadTheme();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isDark =
+    themeMode === 'dark' || (themeMode === 'system' && colorScheme === 'dark');
+  const activeTheme = isDark ? darkTheme : theme;
+
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={activeTheme}>
           <StatusBar
-            barStyle="dark-content"
-            backgroundColor={theme.colors.surface}
+            barStyle={isDark ? 'light-content' : 'dark-content'}
+            backgroundColor={activeTheme.colors.surface}
           />
           <Router />
           <ToastContainer />

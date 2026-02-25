@@ -1,9 +1,11 @@
 import React from 'react';
 import {FlatList, ActivityIndicator, TouchableOpacity, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '@shopify/restyle';
 
 import {Box, Icon, Text, TouchableOpacityBox, UserAvatar} from '@components';
 import {GamificationTransaction, LeaderboardEntry} from '@domain';
+import {Theme} from '@theme';
 
 import {
   useGamificationScreen,
@@ -14,6 +16,7 @@ import {
 
 export function GamificationScreen() {
   const {top} = useSafeAreaInsets();
+  const {colors} = useTheme<Theme>();
   const {
     navigation,
     user,
@@ -50,7 +53,7 @@ export function GamificationScreen() {
         alignItems="center"
         paddingHorizontal="s16"
         paddingVertical="s14"
-        style={{borderBottomWidth: 1, borderBottomColor: '#F0F0F0'}}>
+        style={{borderBottomWidth: 1, borderBottomColor: colors.border}}>
         <Box
           width={40}
           height={40}
@@ -79,7 +82,7 @@ export function GamificationScreen() {
         <Text
           preset="paragraphMedium"
           bold
-          style={{color: isEarned ? '#22C55E' : '#EF4444'}}>
+          color={isEarned ? 'success' : 'danger'}>
           {isEarned ? '+' : '-'}{item.points} pts
         </Text>
       </Box>
@@ -103,7 +106,7 @@ export function GamificationScreen() {
         paddingHorizontal="s16"
         paddingVertical="s14"
         backgroundColor={isCurrentUser ? 'primaryBg' : 'surface'}
-        style={{borderBottomWidth: 1, borderBottomColor: '#F0F0F0'}}>
+        style={{borderBottomWidth: 1, borderBottomColor: colors.border}}>
         {/* Rank */}
         <Box width={36} alignItems="center" mr="s12">
           {item.rank <= 3 ? (
@@ -214,7 +217,7 @@ export function GamificationScreen() {
                   </Box>
                 </Box>
 
-                <Box alignItems="flex-end" g="s6">
+                <Box alignItems="flex-end" style={{gap: 6}}>
                   <Box
                     backgroundColor="surface"
                     paddingHorizontal="s12"
@@ -279,7 +282,7 @@ export function GamificationScreen() {
 
               {/* Referral code */}
               {referralCode && (
-                <Box flexDirection="row" g="s8">
+                <Box flexDirection="row" style={{gap: 8}}>
                   <TouchableOpacity
                     onPress={handleCopyCode}
                     activeOpacity={0.7}
@@ -332,7 +335,7 @@ export function GamificationScreen() {
         backgroundColor="surface"
         paddingHorizontal="s16"
         paddingVertical="s8"
-        style={{borderBottomWidth: 1, borderBottomColor: '#F0F0F0'}}>
+        style={{borderBottomWidth: 1, borderBottomColor: colors.border}}>
         <TouchableOpacityBox
           flex={1}
           paddingVertical="s10"

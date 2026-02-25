@@ -22,8 +22,8 @@ export function CaptainTabBar({state, descriptors, navigation}: BottomTabBarProp
       style={[
         styles.container,
         {
-          paddingBottom: bottom > 0 ? bottom : 14,
-          paddingTop: 12,
+          paddingBottom: bottom > 0 ? bottom : 10,
+          paddingTop: 8,
           shadowColor: theme.colors.text,
         },
       ]}>
@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
   },
   activeBackground: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
   },
 });

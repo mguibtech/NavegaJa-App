@@ -21,14 +21,15 @@ export const LEVEL_THRESHOLDS: Record<string, number> = {
   Almirante: 1500,
 };
 
-export function getLevelColor(level: string): 'textSecondary' | 'primary' | 'secondary' | 'warning' {
+export function getLevelColor(level: string | undefined | null): 'textSecondary' | 'primary' | 'secondary' | 'warning' {
   if (level === 'Navegador') return 'primary';
   if (level === 'Capitão') return 'secondary';
   if (level === 'Almirante') return 'warning';
   return 'textSecondary';
 }
 
-export function getTransactionIcon(action: string): string {
+export function getTransactionIcon(action: string | undefined | null): string {
+  if (!action) return 'monetization-on';
   if (action.includes('trip') || action.includes('viagem')) return 'directions-boat';
   if (action.includes('review') || action.includes('avali')) return 'star';
   if (action.includes('shipment') || action.includes('entrega')) return 'local-shipping';
@@ -38,7 +39,8 @@ export function getTransactionIcon(action: string): string {
   return 'monetization-on';
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',

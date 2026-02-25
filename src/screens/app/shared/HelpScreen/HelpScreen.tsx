@@ -1,12 +1,14 @@
 import React from 'react';
 import {ScrollView} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Text, Icon, TouchableOpacityBox} from '@components';
+import {Box, Text, Icon, TouchableOpacityBox} from '@components';
 
 import {useHelpScreen} from './useHelpScreen';
 
 export function HelpScreen() {
   const {navigation, expandedIndex, toggleFAQ, faqItems, contactOptions} = useHelpScreen();
+  const {top} = useSafeAreaInsets();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -14,23 +16,25 @@ export function HelpScreen() {
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
-        paddingVertical="s16"
+        paddingBottom="s16"
         flexDirection="row"
         alignItems="center"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
+        borderBottomWidth={1}
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
+        <TouchableOpacityBox
+          width={40}
+          height={40}
+          borderRadius="s12"
+          alignItems="center"
+          justifyContent="center"
+          mr="s12"
           onPress={() => navigation.goBack()}
-        />
-        <Text preset="headingSmall" color="text" bold ml="s12">
+          accessibilityLabel="Voltar"
+          accessibilityRole="button">
+          <Icon name="arrow-back" size={22} color="text" />
+        </TouchableOpacityBox>
+        <Text preset="headingSmall" color="text" bold>
           Ajuda e Suporte
         </Text>
       </Box>

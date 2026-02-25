@@ -3,11 +3,9 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   TouchableWithoutFeedback,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -17,8 +15,6 @@ import {formatPhone, unformatPhone} from '@utils';
 import {useToast} from '@hooks';
 
 import {AuthStackParamList} from '@routes';
-
-const ONBOARDED_KEY = '@navegaja:onboarded';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -36,9 +32,15 @@ export function LoginScreen({navigation}: Props) {
       return;
     }
 
+    const rawPhone = unformatPhone(phone);
+    if (rawPhone.length < 10) {
+      toast.showWarning('Informe um número de celular válido');
+      return;
+    }
+
     try {
       await login({
-        phone: unformatPhone(phone),
+        phone: rawPhone,
         password,
       });
 
@@ -62,12 +64,6 @@ export function LoginScreen({navigation}: Props) {
     setPhone(formatted);
   }
 
-  // DEV ONLY: Reset onboarding
-  async function resetOnboarding() {
-    await AsyncStorage.removeItem(ONBOARDED_KEY);
-    toast.showInfo('Onboarding resetado! Feche e reabra o app');
-  }
-
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
@@ -78,15 +74,6 @@ export function LoginScreen({navigation}: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <Box flex={1} backgroundColor="background" justifyContent="center" paddingHorizontal="s24" paddingVertical="s32">
-            {/* DEV ONLY: Reset Onboarding Button */}
-            <Box position="absolute" top={40} right={16} zIndex={10}>
-              <Pressable onPress={resetOnboarding}>
-                <Text preset="paragraphCaptionSmall" color="danger" bold>
-                  [DEV] Reset
-                </Text>
-              </Pressable>
-            </Box>
-
             {/* Header with Logo */}
             <Box alignItems="center" mb="s48">
               <Box mb="s24">
@@ -111,6 +98,8 @@ export function LoginScreen({navigation}: Props) {
                 autoCapitalize="none"
                 leftIcon="phone"
                 maxLength={15}
+                accessibilityLabel="Número de celular"
+                accessibilityHint="Digite seu número com DDD"
               />
 
               <Box mt="s16">
@@ -126,7 +115,9 @@ export function LoginScreen({navigation}: Props) {
                     preset="paragraphSmall"
                     color="primary"
                     bold
-                    onPress={() => navigation.navigate('ForgotPassword')}>
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Esqueceu a senha? Recuperar acesso">
                     Esqueceu a senha?
                   </Text>
                 </Box>
@@ -140,6 +131,8 @@ export function LoginScreen({navigation}: Props) {
                   leftIcon="lock"
                   rightIcon={showPassword ? 'visibility' : 'visibility-off'}
                   onRightIconPress={() => setShowPassword(!showPassword)}
+                  accessibilityLabel="Senha"
+                  accessibilityHint={showPassword ? 'Toque no ícone para ocultar a senha' : 'Toque no ícone para mostrar a senha'}
                 />
               </Box>
 
@@ -160,7 +153,9 @@ export function LoginScreen({navigation}: Props) {
                     preset="paragraphMedium"
                     color="secondary"
                     bold
-                    onPress={() => navigation.navigate('Register')}>
+                    onPress={() => navigation.navigate('Register')}
+                    accessibilityRole="link"
+                    accessibilityLabel="Criar conta">
                     Criar conta
                   </Text>
                 </Text>

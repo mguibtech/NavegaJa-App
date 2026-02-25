@@ -136,5 +136,50 @@ export const $shadowProps: ViewStyle = {
   shadowOffset: {width: 0, height: -3},
 };
 
+// Tema escuro — "Rio Negro de Noite"
+export const darkTheme = {
+  ...theme,
+  colors: {
+    // Primárias — mais luminosas no fundo escuro
+    primary: '#3DA5D9',
+    primaryMid: '#5BBDE8',
+    primaryLight: '#A8D8F0',
+    primaryBg: '#0A2030',
+
+    // Verde — Floresta à noite
+    secondary: '#3CB56A',
+    secondaryDark: '#22874A',
+    secondaryLight: '#A8E4BC',
+    secondaryBg: '#0A1F12',
+
+    // Dourado — Pôr do Sol
+    accent: '#F0A42C',
+    accentLight: '#FACC5F',
+    accentBg: '#231602',
+
+    // Status
+    success: '#3CB56A',
+    successBg: '#0A1F12',
+    warning: '#F0A42C',
+    warningBg: '#231602',
+    danger: '#E05252',
+    dangerBg: '#230A0A',
+    info: '#3DA5D9',
+    infoBg: '#0A2030',
+
+    // Neutros — "Rio Negro de Noite"
+    text: '#E0EAF2',
+    textSecondary: '#8AA4B8',
+    textLight: '#5C7A8E',
+    border: '#1C3040',
+    background: '#090F18',
+    surface: '#0D1A28',
+
+    // Utilitários
+    disabled: '#1C3040',
+    disabledText: '#5C7A8E',
+  } as typeof theme.colors,
+};
+
 export type Theme = typeof theme;
 export type ThemeColors = keyof Theme['colors'];

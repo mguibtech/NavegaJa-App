@@ -9,6 +9,7 @@ import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {useToast, useRecentSearches} from '@hooks';
 
 import {AppStackParamList, TabsParamList} from '@routes';
 
@@ -26,6 +27,8 @@ const POPULAR_ROUTES = [
 
 export function SearchScreen({navigation, route}: Props) {
   const {top} = useSafeAreaInsets();
+  const toast = useToast();
+  const {recentSearches, addSearch, clearSearches} = useRecentSearches();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
@@ -35,14 +38,36 @@ export function SearchScreen({navigation, route}: Props) {
   // Pegar contexto (se veio de Shipments, context='shipment')
   const context = route.params?.context;
 
+  function handleClearDate() {
+    setSelectedDate(undefined);
+    setDate('');
+  }
+
+  function handleRestoreSearch(search: {origin: string; destination: string; displayDate?: string; dateForApi?: string}) {
+    setOrigin(search.origin);
+    setDestination(search.destination);
+    if (search.dateForApi && search.displayDate) {
+      const parts = search.dateForApi.split('-');
+      setSelectedDate(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+      setDate(search.displayDate);
+    }
+  }
+
   function handleSearch() {
-    if (!origin.trim() || !destination.trim()) {
-      // TODO: Show toast warning
+    if (!origin.trim()) {
+      toast.showWarning('Informe a cidade de origem');
+      return;
+    }
+    if (!destination.trim()) {
+      toast.showWarning('Informe a cidade de destino');
       return;
     }
 
     // Formata a data para API (yyyy-MM-dd) se selecionada
     const dateForApi = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined;
+    const displayDate = date || undefined;
+
+    addSearch({origin: origin.trim(), destination: destination.trim(), displayDate, dateForApi});
 
     navigation.navigate('SearchResults', {
       origin: origin.trim(),
@@ -146,6 +171,8 @@ export function SearchScreen({navigation, route}: Props) {
                 backgroundColor="primaryBg"
                 alignItems="center"
                 justifyContent="center"
+                accessibilityLabel="Inverter origem e destino"
+                accessibilityRole="button"
                 onPress={() => {
                   const temp = origin;
                   setOrigin(destination);
@@ -179,14 +206,26 @@ export function SearchScreen({navigation, route}: Props) {
                 borderColor="border"
                 flexDirection="row"
                 alignItems="center"
+                accessibilityLabel={date ? `Data selecionada: ${date}. Toque para alterar` : 'Selecionar data da viagem'}
+                accessibilityRole="button"
                 onPress={handleOpenDatePicker}>
                 <Icon name="event" size={20} color="textSecondary" />
                 <Text
                   preset="paragraphMedium"
                   color={date ? 'text' : 'textSecondary'}
-                  ml="s12">
+                  ml="s12"
+                  flex={1}>
                   {date || 'Quando você quer viajar?'}
                 </Text>
+                {selectedDate && (
+                  <TouchableOpacityBox
+                    onPress={handleClearDate}
+                    padding="s4"
+                    accessibilityLabel="Limpar data selecionada"
+                    accessibilityRole="button">
+                    <Icon name="close" size={18} color="textSecondary" />
+                  </TouchableOpacityBox>
+                )}
               </TouchableOpacityBox>
             </Box>
 
@@ -214,6 +253,9 @@ export function SearchScreen({navigation, route}: Props) {
                 padding="s16"
                 mb="s12"
                 onPress={() => handlePopularRoute(route)}
+                accessibilityLabel={`${route.origin} para ${route.destination}`}
+                accessibilityRole="button"
+                accessibilityHint="Toque para selecionar esta rota"
                 style={{
                   shadowColor: '#000',
                   shadowOffset: {width: 0, height: 1},
@@ -252,21 +294,66 @@ export function SearchScreen({navigation, route}: Props) {
               <Text preset="paragraphMedium" color="text" bold>
                 Buscas Recentes
               </Text>
-              <Text preset="paragraphSmall" color="primary" bold>
-                Limpar
-              </Text>
+              {recentSearches.length > 0 && (
+                <TouchableOpacityBox
+                  onPress={clearSearches}
+                  accessibilityLabel="Limpar buscas recentes"
+                  accessibilityRole="button">
+                  <Text preset="paragraphSmall" color="primary" bold>
+                    Limpar
+                  </Text>
+                </TouchableOpacityBox>
+              )}
             </Box>
 
-            <Box
-              backgroundColor="surface"
-              borderRadius="s12"
-              padding="s20"
-              alignItems="center">
-              <Icon name="history" size={48} color="border" />
-              <Text preset="paragraphMedium" color="textSecondary" mt="s12">
-                Nenhuma busca recente
-              </Text>
-            </Box>
+            {recentSearches.length === 0 ? (
+              <Box
+                backgroundColor="surface"
+                borderRadius="s12"
+                padding="s20"
+                alignItems="center">
+                <Icon name="history" size={48} color="border" />
+                <Text preset="paragraphMedium" color="textSecondary" mt="s12">
+                  Nenhuma busca recente
+                </Text>
+              </Box>
+            ) : (
+              recentSearches.map((search, index) => (
+                <TouchableOpacityBox
+                  key={index}
+                  flexDirection="row"
+                  alignItems="center"
+                  backgroundColor="surface"
+                  borderRadius="s12"
+                  padding="s16"
+                  mb="s8"
+                  accessibilityLabel={`Busca recente: ${search.origin} para ${search.destination}${search.displayDate ? ', ' + search.displayDate : ''}. Toque para preencher`}
+                  accessibilityRole="button"
+                  onPress={() => handleRestoreSearch(search)}
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 1,
+                  }}>
+                  <Box mr="s12">
+                    <Icon name="history" size={20} color="textSecondary" />
+                  </Box>
+                  <Box flex={1}>
+                    <Text preset="paragraphMedium" color="text" bold>
+                      {`${search.origin} → ${search.destination}`}
+                    </Text>
+                    {search.displayDate ? (
+                      <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                        {search.displayDate}
+                      </Text>
+                    ) : null}
+                  </Box>
+                  <Icon name="north-west" size={16} color="border" />
+                </TouchableOpacityBox>
+              ))
+            )}
           </Box>
         </ScrollView>
 

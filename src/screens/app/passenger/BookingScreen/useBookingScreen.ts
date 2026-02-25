@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -12,6 +13,8 @@ import {
   useCouponValidation,
 } from '@domain';
 import {AppStackParamList} from '@routes';
+
+const PAYMENT_PREF_KEY = '@navegaja:last-payment-method';
 
 // CPF utilities — kept here since they are pure business logic
 function isValidCPF(cpf: string): boolean {
@@ -74,15 +77,29 @@ export function useBookingScreen() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PaymentMethod.CREDIT_CARD,
   );
+
+  // Restaura a última forma de pagamento usada
+  useEffect(() => {
+    AsyncStorage.getItem(PAYMENT_PREF_KEY).then(saved => {
+      if (saved && Object.values(PaymentMethod).includes(saved as PaymentMethod)) {
+        setPaymentMethod(saved as PaymentMethod);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleSetPaymentMethod = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    AsyncStorage.setItem(PAYMENT_PREF_KEY, method).catch(() => {});
+  };
   const [priceBreakdown, setPriceBreakdown] =
     useState<PriceBreakdownType | null>(null);
 
   const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
-  const [showNameErrorModal, setShowNameErrorModal] = useState(false);
   const [showCpfErrorModal, setShowCpfErrorModal] = useState(false);
   const [cpfErrorMessage, setCpfErrorMessage] = useState('');
   const [showBookingErrorModal, setShowBookingErrorModal] = useState(false);
   const [bookingErrorMessage, setBookingErrorMessage] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const {calculate, isLoading: isCalculatingPrice} = useCalculatePrice();
   const couponValidation = useCouponValidation();
@@ -186,9 +203,16 @@ export function useBookingScreen() {
     return true;
   };
 
+  const handleNameChange = (text: string) => {
+    setPassengerName(text);
+    if (nameError) {
+      setNameError(null);
+    }
+  };
+
   const handleConfirmBooking = async () => {
     if (!passengerName.trim()) {
-      setShowNameErrorModal(true);
+      setNameError('Por favor, informe o nome do passageiro');
       return;
     }
 
@@ -269,17 +293,17 @@ export function useBookingScreen() {
     isLoadingTrip,
     passengers,
     passengerName,
-    setPassengerName,
+    nameError,
+    handleNameChange,
     passengerCPF,
     cpfError,
     paymentMethod,
-    setPaymentMethod,
+    setPaymentMethod: handleSetPaymentMethod,
     priceBreakdown,
     isCreatingBooking,
     isCalculatingPrice,
     couponValidation,
     showLoadErrorModal,
-    showNameErrorModal,
     showCpfErrorModal,
     cpfErrorMessage,
     showBookingErrorModal,
@@ -293,7 +317,6 @@ export function useBookingScreen() {
     handleRemoveCoupon,
     handleGoBack,
     handleCloseLoadErrorModal,
-    setShowNameErrorModal,
     setShowCpfErrorModal,
     setShowBookingErrorModal,
     formatTime,

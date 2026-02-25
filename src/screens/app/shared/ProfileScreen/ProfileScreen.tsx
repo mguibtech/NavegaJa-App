@@ -1,14 +1,21 @@
 import React from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, Switch, useColorScheme} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '@shopify/restyle';
 
 import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal, UserAvatar} from '@components';
 import {Review} from '@domain';
+import {useThemeStore} from '@store';
+import {Theme} from '@theme';
 
 import {useProfileScreen, MENU_ITEMS, MENU_GROUPS} from './useProfileScreen';
 
 export function ProfileScreen() {
   const {top} = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const {themeMode, setThemeMode} = useThemeStore();
+  const {colors} = useTheme<Theme>();
+  const isDark = themeMode === 'dark' || (themeMode === 'system' && colorScheme === 'dark');
   const {
     navigation,
     user,
@@ -36,6 +43,8 @@ export function ProfileScreen() {
           </Text>
           <TouchableOpacityBox
             onPress={() => navigation.navigate('EditProfile')}
+            accessibilityLabel="Editar perfil"
+            accessibilityRole="button"
             style={{
               backgroundColor: 'rgba(255,255,255,0.15)',
               borderRadius: 8,
@@ -56,6 +65,8 @@ export function ProfileScreen() {
           {/* Avatar com anel branco e badge de câmera */}
           <TouchableOpacityBox
             onPress={() => navigation.navigate('EditProfile')}
+            accessibilityLabel="Alterar foto do perfil"
+            accessibilityRole="button"
             style={{marginRight: 16}}>
             <Box
               style={{
@@ -132,25 +143,52 @@ export function ProfileScreen() {
           shadowOpacity: 0.08, shadowRadius: 6, elevation: 4,
         }}>
         {([
-          {icon: 'confirmation-number', label: 'Viagens', value: String(user?.totalTrips ?? 0), color: '#0B5D8A'},
-          {icon: 'star', label: 'Avaliação', value: String(ratingDisplay), color: '#F59E0B'},
-          {icon: 'military-tech', label: 'Nível', value: user?.level || 'Marujo', color: '#6366F1'},
-          {icon: 'stars', label: 'Pontos', value: String(user?.totalPoints ?? 0), color: '#10B981'},
+          {
+            icon: 'confirmation-number',
+            label: 'Viagens',
+            value: String(user?.totalTrips ?? 0),
+            color: '#0B5D8A',
+            onPress: () => isCaptain ? navigation.navigate('CaptainMyTrips') : navigation.navigate('Bookings'),
+          },
+          {
+            icon: 'star',
+            label: 'Avaliação',
+            value: String(ratingDisplay),
+            color: '#F59E0B',
+            onPress: () => navigation.navigate('MyReviews'),
+          },
+          {
+            icon: 'military-tech',
+            label: 'Nível',
+            value: user?.level || 'Marujo',
+            color: '#6366F1',
+            onPress: () => navigation.navigate('Gamification'),
+          },
+          {
+            icon: 'stars',
+            label: 'Pontos',
+            value: String(user?.totalPoints ?? 0),
+            color: '#10B981',
+            onPress: () => navigation.navigate('Gamification'),
+          },
         ] as const).map((stat, i) => (
-          <Box
+          <TouchableOpacityBox
             key={stat.label}
             flex={1}
             alignItems="center"
             paddingVertical="s14"
-            style={{borderRightWidth: i < 3 ? 1 : 0, borderRightColor: '#F0F0F0'}}>
+            onPress={stat.onPress}
+            accessibilityLabel={`${stat.label}: ${stat.value}. Toque para ver detalhes`}
+            accessibilityRole="button"
+            style={{borderRightWidth: i < 3 ? 1 : 0, borderRightColor: colors.border}}>
             <Icon name={stat.icon as any} size={18} color={stat.color as any} />
-            <Text preset="paragraphSmall" bold mt="s4" style={{color: '#1A1A2E'}} numberOfLines={1}>
+            <Text preset="paragraphSmall" bold mt="s4" color="text" numberOfLines={1}>
               {stat.value}
             </Text>
-            <Text preset="paragraphCaptionSmall" style={{color: '#9CA3AF'}}>
+            <Text preset="paragraphCaptionSmall" color="textSecondary">
               {stat.label}
             </Text>
-          </Box>
+          </TouchableOpacityBox>
         ))}
       </Box>
 
@@ -164,7 +202,7 @@ export function ProfileScreen() {
               <Text
                 preset="paragraphSmall"
                 bold
-                style={{color: '#9CA3AF', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8}}>
+                color="textSecondary" style={{letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8}}>
                 {group.title}
               </Text>
               <Box
@@ -183,7 +221,9 @@ export function ProfileScreen() {
                     paddingHorizontal="s16"
                     paddingVertical="s14"
                     onPress={() => handleMenuPress(item.id)}
-                    style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#F5F5F5'}}>
+                    accessibilityLabel={`${item.title}. ${item.subtitle}`}
+                    accessibilityRole="button"
+                    style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border}}>
                     <Box
                       width={38}
                       height={38}
@@ -206,13 +246,62 @@ export function ProfileScreen() {
           );
         })}
 
+        {/* Aparência */}
+        <Box mb="s20">
+          <Text
+            preset="paragraphSmall"
+            bold
+            color="textSecondary" style={{letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8}}>
+            Aparência
+          </Text>
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            overflow="hidden"
+            style={{
+              shadowColor: '#000', shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+            }}>
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              paddingHorizontal="s16"
+              paddingVertical="s14">
+              <Box
+                width={38}
+                height={38}
+                borderRadius="s8"
+                backgroundColor="primaryBg"
+                alignItems="center"
+                justifyContent="center"
+                mr="s14">
+                <Icon name={isDark ? 'dark-mode' : 'light-mode'} size={20} color="primary" />
+              </Box>
+              <Box flex={1}>
+                <Text preset="paragraphMedium" color="text" bold>Tema Escuro</Text>
+                <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                  {themeMode === 'system'
+                    ? 'Seguindo o sistema'
+                    : isDark ? 'Ativado manualmente' : 'Desativado manualmente'}
+                </Text>
+              </Box>
+              <Switch
+                value={isDark}
+                onValueChange={val => setThemeMode(val ? 'dark' : 'system')}
+                trackColor={{false: '#E2E8ED', true: '#0B5D8A'}}
+                thumbColor="#ffffff"
+              />
+            </Box>
+          </Box>
+        </Box>
+
         {/* Avaliações Recebidas */}
         {receivedReviews.length > 0 && (
           <Box mb="s20">
             <Text
               preset="paragraphSmall"
               bold
-              style={{color: '#9CA3AF', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8}}>
+              color="textSecondary" style={{letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8}}>
               Avaliações Recebidas
             </Text>
             <Box
@@ -231,7 +320,7 @@ export function ProfileScreen() {
                 return (
                   <Box
                     key={review.id}
-                    style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#F5F5F5'}}
+                    style={{borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border}}
                     pt={idx > 0 ? 's12' : undefined}
                     mt={idx > 0 ? 's12' : undefined}>
                     <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s4">
@@ -270,6 +359,8 @@ export function ProfileScreen() {
           alignItems="center"
           justifyContent="center"
           onPress={() => setShowLogoutModal(true)}
+          accessibilityLabel="Sair da conta"
+          accessibilityRole="button"
           mb="s16">
           <Icon name="logout" size={20} color="danger" />
           <Text preset="paragraphMedium" color="danger" bold ml="s8">Sair da Conta</Text>

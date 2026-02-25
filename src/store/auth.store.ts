@@ -14,7 +14,8 @@ interface AuthState {
   // Actions
   login: (credentials: {phone: string; password: string}) => Promise<void>;
   register: (data: RegisterDto) => Promise<void>;
-  logout: () => Promise<void>;
+  /** skipTokenRemoval=true quando chamado por token inválido — evita ciclo extra de 401 */
+  logout: (skipTokenRemoval?: boolean) => Promise<void>;
   loadStoredUser: () => Promise<void>;
   setUser: (user: User | null) => void;
   setLoading: (isLoading: boolean) => void;
@@ -101,9 +102,12 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
     }
   },
 
-  logout: async () => {
-    // Remove token FCM antes de limpar a sessão
-    await unregisterPushToken();
+  logout: async (skipTokenRemoval = false) => {
+    // Quando chamado por token inválido (401), NÃO tenta desregistrar o FCM
+    // pois a chamada de rede geraria outro 401 e criaria um ciclo infinito.
+    if (!skipTokenRemoval) {
+      await unregisterPushToken();
+    }
     await authStorage.clear();
     set({user: null, isLoggedIn: false});
   },

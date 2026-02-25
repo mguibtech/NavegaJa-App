@@ -1,8 +1,10 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {useTheme} from '@shopify/restyle';
 
 import {CaptainTabBar, Icon} from '@components';
+import {Theme} from '@theme';
 
 import {
   // Tabs
@@ -94,11 +96,12 @@ function CaptainTabs() {
 }
 
 export function CaptainStack() {
+  const {colors} = useTheme<Theme>();
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: {backgroundColor: '#F5F7F8'},
+        contentStyle: {backgroundColor: colors.background},
       }}>
       <Stack.Screen name="HomeTabs" component={CaptainTabs} />
 

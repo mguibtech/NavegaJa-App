@@ -1,9 +1,11 @@
 import React from 'react';
 import {FlatList, RefreshControl, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '@shopify/restyle';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import type {StoredNotification} from '@services';
+import {Theme} from '@theme';
 
 import {useNotificationsScreen} from './useNotificationsScreen';
 
@@ -62,6 +64,7 @@ function formatTimeAgo(dateStr: string): string {
 
 export function NotificationsScreen() {
   const {top} = useSafeAreaInsets();
+  const {colors} = useTheme<Theme>();
   const {
     navigation,
     notifications,
@@ -85,9 +88,9 @@ export function NotificationsScreen() {
           paddingVertical="s16"
           style={{
             borderBottomWidth: 1,
-            borderBottomColor: '#F0F0F0',
+            borderBottomColor: colors.border,
             borderLeftWidth: item.read ? 0 : 3,
-            borderLeftColor: '#0E7AFE',
+            borderLeftColor: colors.primary,
           }}>
           {/* Ícone */}
           <Box

@@ -3,9 +3,65 @@ import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {Trip} from '@domain';
+import {Trip, TripStatus} from '@domain';
 
 import {useCaptainMyTrips, FilterTab} from './useCaptainMyTrips';
+
+const PIPELINE_STEPS: {key: TripStatus; label: string}[] = [
+  {key: TripStatus.SCHEDULED,   label: 'Agendada'},
+  {key: TripStatus.IN_PROGRESS, label: 'Andamento'},
+  {key: TripStatus.COMPLETED,   label: 'Concluída'},
+];
+
+function TripStatusPipeline({status}: {status: TripStatus}) {
+  if (status === TripStatus.CANCELLED) {return null;}
+
+  const currentIndex = PIPELINE_STEPS.findIndex(s => s.key === status);
+
+  return (
+    <Box flexDirection="row" alignItems="flex-start" mt="s12">
+      {PIPELINE_STEPS.map((step, idx) => {
+        const isPast   = idx < currentIndex;
+        const isActive = idx === currentIndex;
+        const nodeBg   = isActive ? '#0B5D8A' : isPast ? '#22C55E' : '#E5E7EB';
+
+        return (
+          <React.Fragment key={step.key}>
+            <Box alignItems="center" style={{minWidth: 60}}>
+              <Box
+                width={20}
+                height={20}
+                borderRadius="s12"
+                alignItems="center"
+                justifyContent="center"
+                style={{backgroundColor: nodeBg, borderWidth: isActive || isPast ? 0 : 1.5, borderColor: '#D1D5DB'}}>
+                {isPast && <Icon name="check" size={12} color={'white' as any} />}
+                {isActive && (
+                  <Box width={8} height={8} borderRadius="s8" style={{backgroundColor: 'white'}} />
+                )}
+              </Box>
+              <Text
+                preset="paragraphCaptionSmall"
+                color={idx <= currentIndex ? 'text' : 'textSecondary'}
+                mt="s4"
+                textAlign="center">
+                {step.label}
+              </Text>
+            </Box>
+
+            {idx < PIPELINE_STEPS.length - 1 && (
+              <Box
+                flex={1}
+                height={2}
+                style={{backgroundColor: isPast ? '#22C55E' : '#E5E7EB', marginTop: 9}}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </Box>
+  );
+}
 
 export function CaptainMyTripsScreen() {
   const {top} = useSafeAreaInsets();
@@ -79,6 +135,9 @@ export function CaptainMyTripsScreen() {
             </Text>
           </Box>
         </Box>
+
+        {/* Status pipeline (não exibido para viagens canceladas) */}
+        <TripStatusPipeline status={trip.status} />
       </TouchableOpacityBox>
     );
   }

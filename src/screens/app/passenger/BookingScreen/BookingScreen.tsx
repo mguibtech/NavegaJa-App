@@ -25,7 +25,8 @@ export function BookingScreen() {
     isLoadingTrip,
     passengers,
     passengerName,
-    setPassengerName,
+    nameError,
+    handleNameChange,
     passengerCPF,
     cpfError,
     paymentMethod,
@@ -34,7 +35,6 @@ export function BookingScreen() {
     isCreatingBooking,
     couponValidation,
     showLoadErrorModal,
-    showNameErrorModal,
     showCpfErrorModal,
     cpfErrorMessage,
     showBookingErrorModal,
@@ -48,7 +48,6 @@ export function BookingScreen() {
     handleRemoveCoupon,
     handleGoBack,
     handleCloseLoadErrorModal,
-    setShowNameErrorModal,
     setShowCpfErrorModal,
     setShowBookingErrorModal,
     formatTime,
@@ -84,6 +83,8 @@ export function BookingScreen() {
             alignItems="center"
             justifyContent="center"
             marginRight="s16"
+            accessibilityLabel="Voltar"
+            accessibilityRole="button"
             onPress={handleGoBack}>
             <Icon name="arrow-back" size={22} color="text" />
           </TouchableOpacityBox>
@@ -166,7 +167,7 @@ export function BookingScreen() {
           <Box flexDirection="row" alignItems="center">
             <Icon name="directions-boat" size={18} color="secondary" />
             <Text preset="paragraphSmall" color="text" ml="s8">
-              {`Barco ${trip.boatId.slice(0, 8)} • Cap. ${trip.captainId.slice(0, 8)}`}
+              {`${(trip as any).boat?.name || `Barco ${trip.boatId.slice(0, 8)}`} • ${(trip as any).captain?.name || `Cap. ${trip.captainId.slice(0, 8)}`}`}
             </Text>
           </Box>
         </Box>
@@ -204,6 +205,9 @@ export function BookingScreen() {
                 backgroundColor={passengers <= 1 ? 'disabled' : 'primary'}
                 alignItems="center"
                 justifyContent="center"
+                accessibilityLabel="Diminuir número de passageiros"
+                accessibilityRole="button"
+                accessibilityState={{disabled: passengers <= 1}}
                 onPress={handleDecrement}
                 disabled={passengers <= 1}>
                 <Icon
@@ -213,7 +217,13 @@ export function BookingScreen() {
                 />
               </TouchableOpacityBox>
 
-              <Text preset="paragraphMedium" color="text" bold minWidth={32} textAlign="center">
+              <Text
+                preset="paragraphMedium"
+                color="text"
+                bold
+                minWidth={32}
+                textAlign="center"
+                accessibilityLabel={`${passengers} passageiro${passengers > 1 ? 's' : ''}`}>
                 {passengers}
               </Text>
 
@@ -224,6 +234,9 @@ export function BookingScreen() {
                 backgroundColor={passengers >= trip.availableSeats ? 'disabled' : 'primary'}
                 alignItems="center"
                 justifyContent="center"
+                accessibilityLabel="Aumentar número de passageiros"
+                accessibilityRole="button"
+                accessibilityState={{disabled: passengers >= trip.availableSeats}}
                 onPress={handleIncrement}
                 disabled={passengers >= trip.availableSeats}>
                 <Icon
@@ -258,8 +271,9 @@ export function BookingScreen() {
               label="Nome Completo"
               placeholder="Digite seu nome completo"
               value={passengerName}
-              onChangeText={setPassengerName}
+              onChangeText={handleNameChange}
               leftIcon="person"
+              errorMessage={nameError || undefined}
             />
           </Box>
 
@@ -330,6 +344,9 @@ export function BookingScreen() {
                 paymentMethod === method.value ? 'primary' : 'border'
               }
               mb="s12"
+              accessibilityLabel={method.label}
+              accessibilityRole="radio"
+              accessibilityState={{checked: paymentMethod === method.value}}
               onPress={() => setPaymentMethod(method.value)}>
               <Box
                 width={48}
@@ -461,16 +478,6 @@ export function BookingScreen() {
         iconColor="danger"
         buttonText="Entendi"
         onClose={handleCloseLoadErrorModal}
-      />
-
-      <InfoModal
-        visible={showNameErrorModal}
-        title="Atenção"
-        message="Por favor, informe o nome do passageiro"
-        icon="warning"
-        iconColor="warning"
-        buttonText="Entendi"
-        onClose={() => setShowNameErrorModal(false)}
       />
 
       <InfoModal

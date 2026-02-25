@@ -11,6 +11,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget} from '@components';
 import {apiImageSource} from '@api/config';
 import {useAuthStore} from '@store';
+import {useToast} from '@hooks';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
@@ -50,6 +51,7 @@ const POPULAR_ROUTES = [
 export function HomeScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
   const {user} = useAuthStore();
+  const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
 
@@ -59,31 +61,26 @@ export function HomeScreen({navigation}: Props) {
   const {promotions, fetch: fetchPromotions} = usePromotions();
   const {activeAlert, checkActiveAlert} = useSosAlert();
 
+  const weatherRegion = user?.city
+    ? user.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    : 'manaus';
+
   // Buscar dados ao carregar a tela
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    try {
-      await Promise.all([
-        fetchBookings(),
-        fetchPopular().catch(() => {
-          // Silently fail and use fallback mock data
-          console.log('Using fallback popular routes');
-        }),
-        fetchFavorites().catch(() => {
-          console.log('Error loading favorites');
-        }),
-        fetchPromotions().catch(() => {
-          console.log('Error loading promotions');
-        }),
-        checkActiveAlert().catch(() => {
-          console.log('Error checking SOS alert');
-        }),
-      ]);
-    } catch (_error) {
-      console.error('Error loading home data:', _error);
+    const results = await Promise.allSettled([
+      fetchBookings(),
+      fetchPopular(),
+      fetchFavorites(),
+      fetchPromotions(),
+      checkActiveAlert(),
+    ]);
+
+    if (results[0].status === 'rejected') {
+      toast.showError('Não foi possível carregar suas reservas. Puxe para atualizar.');
     }
   }
 
@@ -126,6 +123,8 @@ export function HomeScreen({navigation}: Props) {
             destination,
           });
         }}
+        accessibilityLabel={`${origin || 'Origem'} para ${destination || 'Destino'}. A partir de ${formatBRL(price)}`}
+        accessibilityRole="button"
         style={{
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 4},
@@ -238,6 +237,8 @@ export function HomeScreen({navigation}: Props) {
         borderRadius="s16"
         padding="s16"
         width={180}
+        accessibilityLabel={getTitle()}
+        accessibilityRole="button"
         onPress={() => {
           if (item.type === FavoriteType.DESTINATION) {
             navigation.navigate('SearchResults', {
@@ -317,6 +318,8 @@ export function HomeScreen({navigation}: Props) {
             navigation.navigate('Ticket', {bookingId: item.id});
           }
         }}
+        accessibilityLabel={`${origin} para ${destination}. ${formattedDate}. Status: ${statusText}`}
+        accessibilityRole="button"
         style={{
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 3},
@@ -395,6 +398,8 @@ export function HomeScreen({navigation}: Props) {
               justifyContent="center"
               marginRight="s12"
               onPress={() => navigation.navigate('Profile')}
+              accessibilityLabel={`Perfil de ${user?.name?.split(' ')[0] ?? 'usuário'}`}
+              accessibilityRole="button"
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 2},
@@ -426,6 +431,8 @@ export function HomeScreen({navigation}: Props) {
               alignItems="center"
               justifyContent="center"
               onPress={() => navigation.navigate('Notifications')}
+              accessibilityLabel="Notificações"
+              accessibilityRole="button"
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 1},
@@ -453,6 +460,8 @@ export function HomeScreen({navigation}: Props) {
               alignItems="center"
               justifyContent="center"
               onPress={() => navigation.navigate('Favorites')}
+              accessibilityLabel={favorites && favorites.length > 0 ? `Favoritos, ${favorites.length} ${favorites.length === 1 ? 'item' : 'itens'}` : 'Favoritos'}
+              accessibilityRole="button"
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 1},
@@ -497,6 +506,9 @@ export function HomeScreen({navigation}: Props) {
             flexDirection="row"
             alignItems="center"
             onPress={() => navigation.navigate('Search', {})}
+            accessibilityLabel="Buscar viagens"
+            accessibilityRole="button"
+            accessibilityHint="Toque para buscar sua próxima viagem fluvial"
             style={{
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 2},
@@ -587,7 +599,7 @@ export function HomeScreen({navigation}: Props) {
 
         {/* Weather Widget */}
         <Box paddingHorizontal="s24" mt="s24">
-          <WeatherWidget region="manaus" />
+          <WeatherWidget region={weatherRegion} />
         </Box>
 
         {/* Popular Routes */}
@@ -596,7 +608,10 @@ export function HomeScreen({navigation}: Props) {
             <Text preset="headingSmall" color="text" bold>
               Rotas Populares
             </Text>
-            <TouchableOpacityBox onPress={() => navigation.navigate('PopularRoutes')}>
+            <TouchableOpacityBox
+              onPress={() => navigation.navigate('PopularRoutes')}
+              accessibilityLabel="Ver todas as rotas populares"
+              accessibilityRole="button">
               <Text preset="paragraphMedium" color="primary" bold>
                 Ver todas
               </Text>
@@ -641,7 +656,10 @@ export function HomeScreen({navigation}: Props) {
               <Text preset="headingSmall" color="text" bold>
                 Meus Favoritos
               </Text>
-              <TouchableOpacityBox onPress={() => navigation.navigate('Favorites')}>
+              <TouchableOpacityBox
+                onPress={() => navigation.navigate('Favorites')}
+                accessibilityLabel="Ver todos os favoritos"
+                accessibilityRole="button">
                 <Text preset="paragraphMedium" color="primary" bold>
                   Ver todos
                 </Text>
@@ -665,7 +683,10 @@ export function HomeScreen({navigation}: Props) {
             <Text preset="headingSmall" color="text" bold>
               Minhas Próximas Viagens
             </Text>
-            <TouchableOpacityBox onPress={() => navigation.navigate('Bookings')}>
+            <TouchableOpacityBox
+              onPress={() => navigation.navigate('Bookings')}
+              accessibilityLabel="Ver todas as viagens"
+              accessibilityRole="button">
               <Text preset="paragraphMedium" color="primary" bold>
                 Ver todas
               </Text>
@@ -867,7 +888,9 @@ export function HomeScreen({navigation}: Props) {
                             paddingHorizontal="s20"
                             paddingVertical="s12"
                             borderRadius="s12"
-                            onPress={handlePromoAction}>
+                            onPress={handlePromoAction}
+                            accessibilityLabel={promo.ctaText}
+                            accessibilityRole="button">
                             <Text
                               preset="paragraphMedium"
                               color={buttonTextColor}

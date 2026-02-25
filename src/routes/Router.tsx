@@ -120,9 +120,12 @@ export function Router() {
     checkOnboarding();
     loadStoredUser();
 
-    // Registra callback para fazer logout quando token expirar
+    // Registra callback para fazer logout quando token expirar.
+    // skipTokenRemoval=true evita chamar unregisterPushToken() sem token válido
+    // (o que causaria um segundo 401 e um ciclo de refresh infinito).
     apiClient.setUnauthorizedHandler(() => {
-      logout();
+      showError('Sua sessão expirou. Faça login novamente.');
+      logout(true);
     });
 
     // Notificação recebida com app em background (usuário tocou na notificação)

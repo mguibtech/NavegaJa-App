@@ -55,7 +55,9 @@ export function useProfileScreen() {
 
   const isCaptain = user?.role === 'captain';
   const ratingDisplay =
-    typeof user?.rating === 'number' ? user.rating.toFixed(1) : user?.rating || '5.0';
+    typeof user?.rating === 'number' && user.rating > 0
+      ? user.rating.toFixed(1)
+      : '-';
   const receivedReviews: Review[] = myReviews?.received ?? [];
   const phoneDisplay = user?.phone ? formatPhone(user.phone) : '';
 

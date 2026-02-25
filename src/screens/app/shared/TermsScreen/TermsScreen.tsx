@@ -19,23 +19,20 @@ export function TermsScreen() {
         paddingBottom="s16"
         flexDirection="row"
         alignItems="center"
-        style={{
-          paddingTop: top + 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        borderBottomWidth={1}
+        borderBottomColor="border"
+        style={{paddingTop: top + 12}}>
         <TouchableOpacityBox
           width={40}
           height={40}
-          borderRadius="s20"
+          borderRadius="s12"
           alignItems="center"
           justifyContent="center"
+          mr="s12"
           onPress={() => navigation.goBack()}
-          mr="s12">
-          <Icon name="arrow-back" size={24} color="text" />
+          accessibilityLabel="Voltar"
+          accessibilityRole="button">
+          <Icon name="arrow-back" size={22} color="text" />
         </TouchableOpacityBox>
         <Text preset="headingSmall" color="text" bold>
           Termos de Uso
