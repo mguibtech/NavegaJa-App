@@ -1,30 +1,24 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {bookingService} from '../bookingService';
 import {Booking, CreateBookingData} from '../bookingTypes';
 
 export function useCreateBooking() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function create(data: CreateBookingData): Promise<Booking> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const booking = await bookingService.createBooking(data);
-      setIsLoading(false);
-      return booking;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const mutation = useMutation<Booking, Error, CreateBookingData>({
+    mutationFn: (data: CreateBookingData) => bookingService.createBooking(data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({queryKey: queryKeys.bookings.my()});
+      queryClient.invalidateQueries({queryKey: queryKeys.trips.detail(variables.tripId)});
+    },
+  });
 
   return {
-    create,
-    isLoading,
-    error,
+    create: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

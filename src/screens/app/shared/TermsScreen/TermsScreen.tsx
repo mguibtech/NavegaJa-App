@@ -1,17 +1,15 @@
 import React from 'react';
 import {ScrollView} from 'react-native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList} from '@routes';
+import {useTermsScreen} from './useTermsScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'Terms'>;
-
-export function TermsScreen({navigation}: Props) {
+export function TermsScreen() {
   const {top} = useSafeAreaInsets();
+  const {navigation} = useTermsScreen();
+
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}

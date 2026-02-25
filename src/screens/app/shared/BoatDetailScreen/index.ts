@@ -1,0 +1,1 @@
+export {BoatDetailScreen} from './BoatDetailScreen';

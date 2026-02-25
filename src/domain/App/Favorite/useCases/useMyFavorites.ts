@@ -1,49 +1,20 @@
-import {useState, useEffect} from 'react';
+import {useQuery} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {favoriteService} from '../favoriteService';
-import type {Favorite, FavoriteType, CheckFavoriteDto} from '../favoriteTypes';
+import type {CheckFavoriteDto, Favorite, FavoriteType} from '../favoriteTypes';
 
 export function useMyFavorites(type?: FavoriteType) {
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<Favorite[], Error>({
+    queryKey: [...queryKeys.favorites.my(), type ?? 'all'],
+    queryFn: () => favoriteService.getMyFavorites(type),
+    placeholderData: previousData => previousData,
+  });
 
-  // Carrega favoritos offline ao montar
-  useEffect(() => {
-    loadOfflineData();
-  }, [type]);
-
-  async function loadOfflineData() {
-    const offline = await favoriteService.loadOffline();
-    const filtered = type ? offline.filter(f => f.type === type) : offline;
-    setFavorites(filtered);
-  }
-
-  async function fetch(): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await favoriteService.getMyFavorites(type);
-      setFavorites(result);
-    } catch (err) {
-
-      // Ignora erros 401 (são tratados automaticamente pelo refresh token)
-      if ((err as any)?.statusCode !== 401) {
-        setError(err as Error);
-      }
-
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Helper: Verifica se um favorito existe localmente
   function isFavorited(data: CheckFavoriteDto): boolean {
-    return favorites.some(f => {
-      if (f.type !== data.type) return false;
-
+    return (query.data ?? []).some(f => {
+      if (f.type !== data.type) {return false;}
       switch (data.type) {
         case 'destination':
           return (
@@ -61,10 +32,10 @@ export function useMyFavorites(type?: FavoriteType) {
   }
 
   return {
-    favorites,
-    fetch,
+    favorites: query.data ?? [],
+    fetch: query.refetch,
     isFavorited,
-    isLoading,
-    error,
+    isLoading: query.isLoading,
+    error: query.error,
   };
 }

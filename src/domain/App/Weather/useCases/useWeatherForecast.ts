@@ -1,71 +1,26 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
 import {weatherService} from '../weatherService';
 import {WeatherForecast, Region} from '../weatherTypes';
 
 export function useWeatherForecast() {
-  const [forecast, setForecast] = useState<WeatherForecast | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const coordsMutation = useMutation<WeatherForecast, Error, {lat: number; lng: number; days?: number}>({
+    mutationFn: ({lat, lng, days = 5}) => weatherService.getForecast(lat, lng, days),
+  });
 
-  /**
-   * Busca previsão por coordenadas
-   */
-  async function fetch(
-    lat: number,
-    lng: number,
-    days: number = 5,
-  ): Promise<WeatherForecast> {
-    setIsLoading(true);
-    setError(null);
+  const regionMutation = useMutation<WeatherForecast, Error, {region: Region; days?: number}>({
+    mutationFn: ({region, days = 5}) => weatherService.getRegionForecast(region, days),
+  });
 
-    try {
-      const data = await weatherService.getForecast(lat, lng, days);
-      setForecast(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Busca previsão de uma região
-   */
-  async function fetchRegion(
-    region: Region,
-    days: number = 5,
-  ): Promise<WeatherForecast> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await weatherService.getRegionForecast(region, days);
-      setForecast(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Limpa previsão
-   */
-  function clearForecast() {
-    setForecast(null);
-    setError(null);
-  }
+  const forecast = coordsMutation.data ?? regionMutation.data ?? null;
+  const isLoading = coordsMutation.isPending || regionMutation.isPending;
+  const error = coordsMutation.error ?? regionMutation.error;
 
   return {
     forecast,
-    fetch,
-    fetchRegion,
-    clearForecast,
+    fetch: (lat: number, lng: number, days?: number) => coordsMutation.mutateAsync({lat, lng, days}),
+    fetchRegion: (region: Region, days?: number) => regionMutation.mutateAsync({region, days}),
+    clearForecast: () => { coordsMutation.reset(); regionMutation.reset(); },
     isLoading,
     error,
   };

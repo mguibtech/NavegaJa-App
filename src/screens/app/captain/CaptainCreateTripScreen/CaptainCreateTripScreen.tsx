@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {
   ScrollView,
   KeyboardAvoidingView,
@@ -9,82 +9,60 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {format} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
-import {useMyBoats, useCreateTrip, Boat} from '@domain';
-import {useToast} from '@hooks';
-import {useAuthStore} from '@store';
+import {Boat} from '@domain';
 
-import {AppStackParamList} from '@routes';
+import {
+  useCaptainCreateTrip,
+  AM_CITIES,
+  formatMoney,
+  onMoneyChange,
+} from './useCaptainCreateTrip';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainCreateTrip'>;
-type PickerTarget = 'departure' | 'arrival';
-type CityPickerTarget = 'origin' | 'destination';
-
-const AM_CITIES = [
-  'Manaus', 'Parintins', 'Itacoatiara', 'Tefé', 'Barreirinha', 'Coari',
-  'Maués', 'Tabatinga', 'Lábrea', 'Humaitá', 'Benjamin Constant',
-  'São Gabriel da Cachoeira', 'Borba', 'Autazes', 'Nova Olinda do Norte',
-  'Presidente Figueiredo', 'Iranduba', 'Manacapuru', 'Careiro', 'Anori',
-];
-
-// Máscara monetária: armazena apenas dígitos (centavos), exibe formatado
-function digitsToFloat(digits: string): number {
-  return parseInt(digits || '0', 10) / 100;
-}
-
-function formatMoney(digits: string): string {
-  if (!digits) {return '';}
-  const num = parseInt(digits, 10) / 100;
-  return num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
-function onMoneyChange(text: string, setter: (v: string) => void) {
-  const digits = text.replace(/\D/g, '');
-  setter(digits);
-}
-
-export function CaptainCreateTripScreen({navigation}: Props) {
+export function CaptainCreateTripScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const user = useAuthStore(s => s.user);
-
-  const {boats, fetchBoats} = useMyBoats();
-  const {createTrip, isLoading} = useCreateTrip();
-
-  // Todos os hooks ANTES de qualquer return condicional (Rules of Hooks)
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-  const [departureDate, setDepartureDate] = useState<Date | null>(null);
-  const [arrivalDate, setArrivalDate] = useState<Date | null>(null);
-  const [price, setPrice] = useState('');
-  const [cargoPriceKg, setCargoPriceKg] = useState('');
-  const [totalSeats, setTotalSeats] = useState('');
-  const [selectedBoatId, setSelectedBoatId] = useState<string | null>(null);
-  const [showBoatPicker, setShowBoatPicker] = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
-  const [cityPickerTarget, setCityPickerTarget] = useState<CityPickerTarget>('origin');
-
-  // Date/time picker state
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<PickerTarget>('departure');
-  const [tempDate, setTempDate] = useState(new Date());
-
-  const canCreateTrips = !user?.capabilities || user.capabilities.canCreateTrips;
-
-  useEffect(() => {
-    fetchBoats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const {
+    canCreateTrips,
+    isPending,
+    boats,
+    isLoading,
+    selectedBoat,
+    selectedBoatId,
+    origin,
+    destination,
+    currentCityValue,
+    cityPickerTarget,
+    showCityPicker,
+    setShowCityPicker,
+    departureDate,
+    arrivalDate,
+    showDatePicker,
+    showTimePicker,
+    tempDate,
+    price,
+    setPrice,
+    cargoPriceKg,
+    setCargoPriceKg,
+    totalSeats,
+    setTotalSeats,
+    showBoatPicker,
+    setShowBoatPicker,
+    setSelectedBoatId,
+    formatDateTime,
+    openDatePicker,
+    onDateChange,
+    onTimeChange,
+    openCityPicker,
+    selectCity,
+    handleSubmit,
+    goBack,
+    navigateToCreateBoat,
+    navigateToEditProfile,
+  } = useCaptainCreateTrip();
 
   // Guard: bloqueia se capabilities existem e canCreateTrips=false
   if (!canCreateTrips) {
-    const isPending = user?.capabilities?.pendingVerification ?? false;
     return (
       <Box flex={1} backgroundColor="background">
         <Box
@@ -96,7 +74,7 @@ export function CaptainCreateTripScreen({navigation}: Props) {
             <TouchableOpacityBox
               width={40} height={40} borderRadius="s20"
               alignItems="center" justifyContent="center"
-              onPress={() => navigation.goBack()} mr="s12">
+              onPress={goBack} mr="s12">
               <Icon name="arrow-back" size={24} color="text" />
             </TouchableOpacityBox>
             <Text preset="headingSmall" color="text" bold>Nova Viagem</Text>
@@ -120,7 +98,7 @@ export function CaptainCreateTripScreen({navigation}: Props) {
           {!isPending && (
             <Button
               title="Enviar documentos"
-              onPress={() => navigation.navigate('EditProfile')}
+              onPress={navigateToEditProfile}
               style={{marginTop: 32}}
             />
           )}
@@ -128,106 +106,6 @@ export function CaptainCreateTripScreen({navigation}: Props) {
       </Box>
     );
   }
-
-  const selectedBoat = boats.find(b => b.id === selectedBoatId);
-
-  function formatDateTime(date: Date | null): string {
-    if (!date) {return '';}
-    return format(date, "dd/MM/yyyy 'às' HH:mm", {locale: ptBR});
-  }
-
-  function openDatePicker(target: PickerTarget) {
-    const current =
-      target === 'departure'
-        ? departureDate ?? new Date()
-        : arrivalDate ?? new Date();
-    setPickerTarget(target);
-    setTempDate(current);
-    setShowDatePicker(true);
-  }
-
-  function onDateChange(_: any, selected?: Date) {
-    setShowDatePicker(false);
-    if (!selected) {return;}
-    setTempDate(selected);
-    setShowTimePicker(true);
-  }
-
-  function onTimeChange(_: any, selected?: Date) {
-    setShowTimePicker(false);
-    if (!selected) {return;}
-    const final = new Date(tempDate);
-    final.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
-    if (pickerTarget === 'departure') {
-      setDepartureDate(final);
-    } else {
-      setArrivalDate(final);
-    }
-  }
-
-  function openCityPicker(target: CityPickerTarget) {
-    setCityPickerTarget(target);
-    setShowCityPicker(true);
-  }
-
-  function selectCity(city: string) {
-    if (cityPickerTarget === 'origin') {
-      setOrigin(city);
-      if (destination === city) {setDestination('');}
-    } else {
-      setDestination(city);
-      if (origin === city) {setOrigin('');}
-    }
-    setShowCityPicker(false);
-  }
-
-  function validate(): string | null {
-    if (!origin.trim()) {return 'Informe a origem';}
-    if (!destination.trim()) {return 'Informe o destino';}
-    if (origin === destination) {return 'Origem e destino não podem ser iguais';}
-    if (!departureDate) {return 'Selecione a data/hora de partida';}
-    if (!arrivalDate) {return 'Selecione a data/hora de chegada prevista';}
-    if (arrivalDate <= departureDate) {return 'A chegada deve ser após a partida';}
-    if (!price || digitsToFloat(price) <= 0) {return 'Informe um preço válido';}
-    const seats = Number(totalSeats.trim());
-    if (!totalSeats.trim() || isNaN(seats) || seats < 1) {
-      return 'Informe o número de assentos';
-    }
-    if (!selectedBoatId) {return 'Selecione uma embarcação';}
-    const boat = boats.find(b => b.id === selectedBoatId);
-    if (boat && !boat.isVerified) {return 'Esta embarcação ainda não foi verificada';}
-    if (boat && seats > boat.capacity) {
-      return `Assentos não pode exceder a capacidade da embarcação (${boat.capacity} lugares)`;
-    }
-    return null;
-  }
-
-  async function handleSubmit() {
-    const validationError = validate();
-    if (validationError) {
-      toast.showError(validationError);
-      return;
-    }
-
-    try {
-      await createTrip({
-        origin: origin.trim(),
-        destination: destination.trim(),
-        departureTime: departureDate!.toISOString(),
-        arrivalTime: arrivalDate!.toISOString(),
-        price: digitsToFloat(price),
-        cargoPriceKg: cargoPriceKg ? digitsToFloat(cargoPriceKg) : undefined,
-        totalSeats: Number(totalSeats),
-        boatId: selectedBoatId!,
-      });
-      toast.showSuccess('Viagem criada com sucesso!');
-      navigation.goBack();
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao criar viagem');
-    }
-  }
-
-  const currentCityValue = cityPickerTarget === 'origin' ? origin : destination;
 
   return (
     <>
@@ -250,7 +128,7 @@ export function CaptainCreateTripScreen({navigation}: Props) {
                 alignItems="center"
                 justifyContent="center"
                 mr="s8"
-                onPress={() => navigation.goBack()}>
+                onPress={goBack}>
                 <Icon name="arrow-back" size={22} color="text" />
               </TouchableOpacityBox>
               <Box flex={1}>
@@ -420,7 +298,7 @@ export function CaptainCreateTripScreen({navigation}: Props) {
                   </Text>
                   <TouchableOpacityBox
                     mt="s8"
-                    onPress={() => navigation.navigate('CaptainCreateBoat')}>
+                    onPress={navigateToCreateBoat}>
                     <Text preset="paragraphSmall" color="secondary" bold>
                       Cadastrar embarcação →
                     </Text>
@@ -518,7 +396,7 @@ export function CaptainCreateTripScreen({navigation}: Props) {
                 )}
 
                 {/* Aviso quando nenhuma embarcação está verificada */}
-                {boats.every(b => !b.isVerified) && (
+                {boats.every((b: Boat) => !b.isVerified) && (
                   <Box
                     backgroundColor="warningBg"
                     padding="s12"

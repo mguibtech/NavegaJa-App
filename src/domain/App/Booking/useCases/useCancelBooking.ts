@@ -1,23 +1,24 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {bookingAPI} from '../bookingAPI';
+import {queryKeys} from '@infra';
+
+import {bookingService} from '../bookingService';
 
 export function useCancelBooking() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function cancel(bookingId: string, reason?: string): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await bookingAPI.cancel(bookingId, reason ? {reason} : undefined);
-    } catch (err) {
-      setError(err as Error);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const mutation = useMutation<void, Error, {bookingId: string; reason?: string}>({
+    mutationFn: ({bookingId, reason}) =>
+      bookingService.cancelBooking(bookingId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.bookings.my()});
+    },
+  });
 
-  return {cancel, isLoading, error};
+  return {
+    cancel: (bookingId: string, reason?: string) =>
+      mutation.mutateAsync({bookingId, reason}),
+    isLoading: mutation.isPending,
+    error: mutation.error,
+  };
 }

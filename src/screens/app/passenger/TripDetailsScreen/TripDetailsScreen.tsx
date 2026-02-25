@@ -1,191 +1,46 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, ConfirmationModal, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, NavigationSafetyAlert} from '@components';
-import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
 
-
-import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'TripDetails'>;
+import {useTripDetailsScreen} from './useTripDetailsScreen';
 
-export function TripDetailsScreen({navigation, route}: Props) {
-  const {tripId, promotion, context} = route.params;
+export function TripDetailsScreen() {
   const {top} = useSafeAreaInsets();
-  const {trip, getTripById, isLoading, error} = useTripDetails();
-
-  // Favorites hooks
-  const {isFavorited, fetch: fetchFavorites} = useMyFavorites();
-  const {toggle, isLoading: isTogglingFavorite} = useToggleFavorite();
-
-  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
-
-  // State local para controlar se está favoritado (atualiza em tempo real)
-  const [isFav, setIsFav] = useState(false);
-  const [isBoatFav, setIsBoatFav] = useState(false);
-  const [isCaptainFav, setIsCaptainFav] = useState(false);
-
-  useEffect(() => {
-    loadTripDetails();
-  }, [tripId]);
-
-  // Atualiza state local quando trip muda ou favoritos carregam
-  useEffect(() => {
-    if (trip) {
-      // Destino
-      const favoritedDestination = isFavorited({
-        type: FavoriteType.DESTINATION,
-        destination: trip.destination,
-        origin: trip.origin,
-      });
-      setIsFav(favoritedDestination);
-
-      // Barco
-      if (trip.boatId) {
-        const favoritedBoat = isFavorited({
-          type: FavoriteType.BOAT,
-          boatId: trip.boatId,
-        });
-        setIsBoatFav(favoritedBoat);
-      }
-
-      // Capitão
-      if (trip.captainId) {
-        const favoritedCaptain = isFavorited({
-          type: FavoriteType.CAPTAIN,
-          captainId: trip.captainId,
-        });
-        setIsCaptainFav(favoritedCaptain);
-      }
-    }
-  }, [trip, isFavorited]);
-
-  async function loadTripDetails() {
-    try {
-      await getTripById(tripId);
-    } catch {
-      setShowLoadErrorModal(true);
-    }
-  }
-
-  const handleBooking = () => {
-    if (trip) {
-      navigation.navigate('Booking', {tripId: trip.id});
-    }
-  };
-
-  const handleCreateShipment = () => {
-    if (trip) {
-      navigation.navigate('CreateShipment', {tripId: trip.id});
-    }
-  };
-
-  const handleToggleFavorite = async () => {
-    if (!trip || isTogglingFavorite) return;
-
-    try {
-      // Favorita o DESTINO (origem → destino)
-      const result = await toggle({
-        type: FavoriteType.DESTINATION,
-        destination: trip.destination,
-        origin: trip.origin,
-      });
-
-      // Atualiza o estado local para refletir a mudança imediatamente
-      setIsFav(result.action === 'added');
-
-      // Recarrega a lista de favoritos para manter sincronizado
-      await fetchFavorites();
-    } catch {
-      // Silenciosamente ignora erro (já funciona offline)
-      console.log('Favorito salvo localmente');
-    }
-  };
-
-  const handleToggleFavoriteBoat = async () => {
-    if (!trip || !trip.boatId || isTogglingFavorite) return;
-
-    try {
-      const result = await toggle({
-        type: FavoriteType.BOAT,
-        boatId: trip.boatId,
-      });
-
-      setIsBoatFav(result.action === 'added');
-
-      // Recarrega a lista de favoritos para manter sincronizado
-      await fetchFavorites();
-    } catch {
-      console.log('Favorito de barco salvo localmente');
-    }
-  };
-
-  const handleToggleFavoriteCaptain = async () => {
-    if (!trip || !trip.captainId || isTogglingFavorite) return;
-
-    try {
-      const result = await toggle({
-        type: FavoriteType.CAPTAIN,
-        captainId: trip.captainId,
-      });
-
-      setIsCaptainFav(result.action === 'added');
-
-      // Recarrega a lista de favoritos para manter sincronizado
-      await fetchFavorites();
-    } catch {
-      console.log('Favorito de capitão salvo localmente');
-    }
-  };
-
-  // Calculate data only when trip is available (to avoid breaking Rules of Hooks)
-  const price = trip && typeof trip.price === 'number'
-    ? trip.price
-    : trip && typeof trip.price === 'string'
-    ? parseFloat(trip.price)
-    : 0;
-
-  // Calculate discounted price if applicable
-  // Use Boolean() to avoid {0} rendering bug in React Native (0 renders as text node in Box)
-  const hasDiscount = Boolean(trip?.discount && trip.discount > 0);
-  let basePrice = trip?.basePrice ? Number(trip.basePrice) : price;
-  let discountedPrice = trip?.discountedPrice ? Number(trip.discountedPrice) : price;
-  let displayPrice = hasDiscount ? discountedPrice : price;
-  let finalHasDiscount = hasDiscount;
-  let discountPercent = trip?.discount || 0;
-
-  // Se vier de uma promoção, aplicar desconto da promoção
-  if (promotion && !hasDiscount) {
-    // Tenta extrair o percentual de desconto do título ou descrição da promoção
-    // Exemplo: "Carnaval 2026 🎉" com descrição "Desconto de 20%"
-    const promoText = `${promotion.title} ${promotion.description}`.toLowerCase();
-    const percentMatch = promoText.match(/(\d+)%/);
-
-    if (percentMatch) {
-      const promoDiscount = parseInt(percentMatch[1], 10);
-      basePrice = price;
-      discountedPrice = price * (1 - promoDiscount / 100);
-      displayPrice = discountedPrice;
-      finalHasDiscount = true;
-      discountPercent = promoDiscount;
-    }
-  }
-
-  // Get boat and captain names
-  const boatName = trip?.boat?.name || (trip ? `Barco ${trip.boatId.slice(0, 8)}` : 'Barco');
-  const captainName = trip?.captain?.name || (trip ? `Capitão ${trip.captainId.slice(0, 8)}` : 'Capitão');
-
-  // Cargo price per kg (0 means "A combinar")
-  const cargoPrice = trip
-    ? typeof trip.cargoPriceKg === 'number'
-      ? trip.cargoPriceKg
-      : parseFloat(String(trip.cargoPriceKg)) || 0
-    : 0;
-  const hasCargoPrice = cargoPrice > 0;
+  const {
+    trip,
+    isLoading,
+    error,
+    promotion,
+    context,
+    isFav,
+    isBoatFav,
+    isCaptainFav,
+    isTogglingFavorite,
+    showLoadErrorModal,
+    basePrice,
+    displayPrice,
+    finalHasDiscount,
+    discountPercent,
+    boatName,
+    captainName,
+    cargoPrice,
+    hasCargoPrice,
+    handleBooking,
+    handleCreateShipment,
+    handleToggleFavorite,
+    handleToggleFavoriteBoat,
+    handleToggleFavoriteCaptain,
+    handleNavigateToBoatDetail,
+    handleNavigateToCaptainProfile,
+    handleGoBack,
+    handleConfirmLoadError,
+    handleCancelLoadError,
+    loadTripDetails,
+  } = useTripDetailsScreen();
 
   // Loading state
   if (isLoading) {
@@ -205,7 +60,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
@@ -244,7 +99,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
             backgroundColor="primaryBg"
             alignItems="center"
             justifyContent="center"
-            onPress={() => navigation.goBack()}>
+            onPress={handleGoBack}>
             <Icon name="arrow-back" size={24} color="primary" />
           </TouchableOpacityBox>
         </Box>
@@ -265,7 +120,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
             <Box mt="s12">
               <Button
                 title="Voltar"
-                onPress={() => navigation.goBack()}
+                onPress={handleGoBack}
                 preset="outline"
               />
             </Box>
@@ -292,7 +147,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
@@ -449,21 +304,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
               flexDirection="row"
               alignItems="center"
               justifyContent="center"
-              onPress={() =>
-                navigation.navigate('BoatDetail', {
-                  boatId: trip.boatId,
-                  boatName: trip.boat?.name,
-                  boatType: trip.boat?.type,
-                  boatCapacity: trip.boat?.capacity,
-                  boatModel: trip.boat?.model,
-                  boatYear: trip.boat?.year,
-                  boatAmenities: trip.boat?.amenities,
-                  boatRegistrationNum: trip.boat?.registrationNum,
-                  boatIsVerified: trip.boat?.isVerified,
-                  boatPhotoUrl: trip.boat?.photoUrl,
-                  boatCreatedAt: trip.boat?.createdAt,
-                })
-              }>
+              onPress={handleNavigateToBoatDetail}>
               <Text preset="paragraphSmall" color="secondary" bold>
                 Ver embarcação completa
               </Text>
@@ -560,17 +401,7 @@ export function TripDetailsScreen({navigation, route}: Props) {
               flexDirection="row"
               alignItems="center"
               justifyContent="center"
-              onPress={() =>
-                navigation.navigate('CaptainProfile', {
-                  captainId: trip.captainId,
-                  captainName: trip.captain?.name,
-                  captainRating: trip.captain?.rating,
-                  captainTotalTrips: trip.captain?.totalTrips,
-                  captainLevel: trip.captain?.level,
-                  captainCreatedAt: trip.captain?.createdAt,
-                  captainAvatarUrl: trip.captain?.avatarUrl,
-                })
-              }>
+              onPress={handleNavigateToCaptainProfile}>
               <Text preset="paragraphSmall" color="primary" bold>
                 Ver perfil completo
               </Text>
@@ -673,8 +504,8 @@ export function TripDetailsScreen({navigation, route}: Props) {
         iconColor="danger"
         confirmText="Tentar novamente"
         cancelText="Voltar"
-        onConfirm={() => { loadTripDetails(); setShowLoadErrorModal(false); }}
-        onCancel={() => { setShowLoadErrorModal(false); navigation.goBack(); }}
+        onConfirm={handleConfirmLoadError}
+        onCancel={handleCancelLoadError}
       />
     </Box>
   );

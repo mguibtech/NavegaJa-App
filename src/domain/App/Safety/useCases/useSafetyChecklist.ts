@@ -1,4 +1,6 @@
-import {useState} from 'react';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {safetyService} from '../safetyService';
 import {
@@ -8,121 +10,37 @@ import {
   ChecklistStatusResponse,
 } from '../safetyTypes';
 
-export function useSafetyChecklist() {
-  const [checklist, setChecklist] = useState<SafetyChecklist | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export function useSafetyChecklist(tripId?: string) {
+  const queryClient = useQueryClient();
 
-  /**
-   * Criar checklist de segurança (capitão)
-   */
-  async function create(
-    data: CreateSafetyChecklistData,
-  ): Promise<SafetyChecklist> {
-    setIsLoading(true);
-    setError(null);
+  const checklistQuery = useQuery<SafetyChecklist | null, Error>({
+    queryKey: queryKeys.safety.checklist(tripId ?? ''),
+    queryFn: () => tripId ? safetyService.getChecklistByTripId(tripId) : null,
+    enabled: !!tripId,
+  });
 
-    try {
-      const result = await safetyService.createChecklist(data);
-      setChecklist(result);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const createMutation = useMutation<SafetyChecklist, Error, CreateSafetyChecklistData>({
+    mutationFn: (data: CreateSafetyChecklistData) => safetyService.createChecklist(data),
+    onSuccess: () => {
+      if (tripId) {queryClient.invalidateQueries({queryKey: queryKeys.safety.checklist(tripId)});}
+    },
+  });
 
-  /**
-   * Atualizar checklist
-   */
-  async function update(
-    id: string,
-    data: UpdateSafetyChecklistData,
-  ): Promise<SafetyChecklist> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await safetyService.updateChecklist(id, data);
-      setChecklist(result);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Verificar status do checklist para uma viagem
-   */
-  async function checkStatus(tripId: string): Promise<ChecklistStatusResponse> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const status = await safetyService.getChecklistStatus(tripId);
-      if (status.checklist) {
-        setChecklist(status.checklist);
-      }
-      setIsLoading(false);
-      return status;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Buscar checklist por ID de viagem
-   */
-  async function fetchByTripId(tripId: string): Promise<SafetyChecklist | null> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await safetyService.getChecklistByTripId(tripId);
-      setChecklist(result);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Buscar checklist por ID
-   */
-  async function fetchById(id: string): Promise<SafetyChecklist> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await safetyService.getChecklistById(id);
-      setChecklist(result);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const updateMutation = useMutation<SafetyChecklist, Error, {id: string; data: UpdateSafetyChecklistData}>({
+    mutationFn: ({id, data}) => safetyService.updateChecklist(id, data),
+    onSuccess: () => {
+      if (tripId) {queryClient.invalidateQueries({queryKey: queryKeys.safety.checklist(tripId)});}
+    },
+  });
 
   return {
-    checklist,
-    create,
-    update,
-    checkStatus,
-    fetchByTripId,
-    fetchById,
-    isLoading,
-    error,
+    checklist: checklistQuery.data ?? null,
+    create: createMutation.mutateAsync,
+    update: (id: string, data: UpdateSafetyChecklistData) => updateMutation.mutateAsync({id, data}),
+    checkStatus: (tId: string): Promise<ChecklistStatusResponse> => safetyService.getChecklistStatus(tId),
+    fetchByTripId: (tId: string) => safetyService.getChecklistByTripId(tId),
+    fetchById: (id: string) => safetyService.getChecklistById(id),
+    isLoading: checklistQuery.isLoading || createMutation.isPending || updateMutation.isPending,
+    error: checklistQuery.error ?? createMutation.error ?? updateMutation.error,
   };
 }

@@ -1,89 +1,26 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView, ActivityIndicator, TextInput as RNTextInput} from 'react-native';
+import React from 'react';
+import {ScrollView, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, Icon, Text, TextInput} from '@components';
-import {captainAPI, Shipment, ShipmentStatus} from '@domain';
-import {useToast} from '@hooks';
-import {useAuthStore} from '@store';
+import {ShipmentStatus} from '@domain';
 
-import {AppStackParamList} from '@routes';
+import {useCaptainShipmentCollect, STATUS_LABELS} from './useCaptainShipmentCollect';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainShipmentCollect'>;
-
-const STATUS_LABELS: Partial<Record<ShipmentStatus, string>> = {
-  [ShipmentStatus.PAID]: 'Pago — aguardando coleta',
-  [ShipmentStatus.COLLECTED]: 'Coletado',
-  [ShipmentStatus.IN_TRANSIT]: 'Em trânsito',
-  [ShipmentStatus.ARRIVED]: 'Chegou ao destino',
-  [ShipmentStatus.OUT_FOR_DELIVERY]: 'Saiu para entrega',
-  [ShipmentStatus.DELIVERED]: 'Entregue',
-};
-
-export function CaptainShipmentCollectScreen({navigation, route}: Props) {
-  const {shipmentId} = route.params;
+export function CaptainShipmentCollectScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const user = useAuthStore(s => s.user);
-
-  // Guard: bloqueia se capabilities existem e canManageShipments=false
-  const canManageShipments = !user?.capabilities || user.capabilities.canManageShipments;
-
-  const [shipment, setShipment] = useState<Shipment | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [validationCode, setValidationCode] = useState('');
-  const [isCollecting, setIsCollecting] = useState(false);
-  const [isMarkingDelivery, setIsMarkingDelivery] = useState(false);
-
-  useEffect(() => {
-    loadShipment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function loadShipment() {
-    setIsLoading(true);
-    try {
-      const result = await captainAPI.getShipmentById(shipmentId);
-      setShipment(result);
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao carregar encomenda');
-      navigation.goBack();
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleCollect() {
-    if (validationCode.trim().length < 4) {
-      toast.showError('Informe o código de validação (PIN)');
-      return;
-    }
-    setIsCollecting(true);
-    try {
-      await captainAPI.collectShipment(shipmentId, validationCode.trim());
-      toast.showSuccess('Encomenda coletada com sucesso!');
-      navigation.goBack();
-    } catch (err: any) {
-      toast.showError(err?.message || 'Código inválido. Verifique e tente novamente.');
-    } finally {
-      setIsCollecting(false);
-    }
-  }
-
-  async function handleOutForDelivery() {
-    setIsMarkingDelivery(true);
-    try {
-      await captainAPI.shipmentOutForDelivery(shipmentId);
-      toast.showSuccess('Encomenda marcada como "Saiu para entrega"!');
-      navigation.goBack();
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao atualizar status');
-    } finally {
-      setIsMarkingDelivery(false);
-    }
-  }
+  const {
+    shipment,
+    isLoading,
+    validationCode,
+    setValidationCode,
+    isCollecting,
+    isMarkingDelivery,
+    canManageShipments,
+    handleCollect,
+    handleOutForDelivery,
+    goBack,
+  } = useCaptainShipmentCollect();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -106,7 +43,7 @@ export function CaptainShipmentCollectScreen({navigation, route}: Props) {
           title=""
           preset="outline"
           leftIcon="arrow-back"
-          onPress={() => navigation.goBack()}
+          onPress={goBack}
         />
         <Box flex={1} ml="s12">
           <Text preset="headingSmall" color="text" bold>

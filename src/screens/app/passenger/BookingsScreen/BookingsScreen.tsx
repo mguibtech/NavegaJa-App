@@ -1,98 +1,31 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useFocusEffect} from '@react-navigation/native';
-
 import {Box, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
-import {useMyBookings, useCancelBooking, Booking} from '@domain';
-import {useToast} from '@hooks';
-
-import {AppStackParamList, TabsParamList} from '@routes';
+import {Booking} from '@domain';
 import {formatBRL} from '@utils';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabsParamList, 'Bookings'>,
-  NativeStackScreenProps<AppStackParamList>
->;
+import {useBookingsScreen} from './useBookingsScreen';
 
-type BookingStatus = 'active' | 'completed';
-
-export function BookingsScreen({navigation}: Props) {
+export function BookingsScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const [selectedTab, setSelectedTab] = useState<BookingStatus>('active');
-  const [refreshing, setRefreshing] = useState(false);
-  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
-  const {bookings, fetch: fetchBookings, error: bookingsError} = useMyBookings();
-  const {cancel, isLoading: isCancelling} = useCancelBooking();
-
-  // Re-buscar bookings sempre que a tela ganhar foco (ex: após criar uma reserva)
-  useFocusEffect(
-    useCallback(() => {
-      fetchBookings().catch(() => {});
-    }, []),
-  );
-
-  // Atualizar badge da tab com contagem de reservas ativas
-  useEffect(() => {
-    const activeCount = bookings.filter(
-      b =>
-        b.status === 'pending' ||
-        b.status === 'confirmed' ||
-        b.status === 'checked_in',
-    ).length;
-    navigation.setOptions({
-      tabBarBadge: activeCount > 0 ? activeCount : undefined,
-    });
-  }, [bookings, navigation]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await fetchBookings();
-    } catch (_error) {
-      console.error('Error refreshing bookings:', _error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  async function handleConfirmCancel() {
-    if (!bookingToCancel) return;
-    try {
-      await cancel(bookingToCancel.id);
-      setBookingToCancel(null);
-      toast.showSuccess('Reserva cancelada com sucesso.');
-      await fetchBookings();
-    } catch (_err) {
-      setBookingToCancel(null);
-      toast.showError('Não foi possível cancelar. Tente novamente.');
-    }
-  }
-
-  // Filtrar bookings por status
-  function getStatusBadge(status: string): {label: string; bg: string; textColor: string} {
-    switch (status) {
-      case 'pending':    return {label: 'Ag. Pagamento', bg: '#FEF3C7', textColor: '#92400E'};
-      case 'confirmed':  return {label: 'Confirmada',    bg: '#D1FAE5', textColor: '#065F46'};
-      case 'checked_in': return {label: 'Embarcado',     bg: '#DBEAFE', textColor: '#1E40AF'};
-      case 'completed':  return {label: 'Concluída',     bg: '#F3F4F6', textColor: '#6B7280'};
-      case 'cancelled':  return {label: 'Cancelada',     bg: '#FEE2E2', textColor: '#991B1B'};
-      default:           return {label: status,          bg: '#F3F4F6', textColor: '#6B7280'};
-    }
-  }
-
-  const filteredBookings = bookings.filter(booking => {
-    if (selectedTab === 'active') {
-      return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in';
-    } else {
-      return booking.status === 'completed' || booking.status === 'cancelled';
-    }
-  });
+  const {
+    selectedTab,
+    setSelectedTab,
+    refreshing,
+    bookingToCancel,
+    setBookingToCancel,
+    bookingsError,
+    fetchBookings,
+    isCancelling,
+    filteredBookings,
+    onRefresh,
+    handleConfirmCancel,
+    getStatusBadge,
+    navigateToTicket,
+    navigateToReview,
+  } = useBookingsScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -113,7 +46,6 @@ export function BookingsScreen({navigation}: Props) {
           Minhas Reservas
         </Text>
 
-        {/* Tabs */}
         <Box flexDirection="row" gap="s12">
           <TouchableOpacityBox
             flex={1}
@@ -147,7 +79,6 @@ export function BookingsScreen({navigation}: Props) {
         </Box>
       </Box>
 
-      {/* Error banner */}
       {bookingsError && (
         <Box
           flexDirection="row"
@@ -165,7 +96,6 @@ export function BookingsScreen({navigation}: Props) {
         </Box>
       )}
 
-      {/* Bookings List */}
       <FlatList
         data={filteredBookings}
         keyExtractor={item => item.id}
@@ -177,12 +107,12 @@ export function BookingsScreen({navigation}: Props) {
           const origin = item.trip?.origin || 'Origem desconhecida';
           const destination = item.trip?.destination || 'Destino desconhecido';
           const dateStr = item.trip?.departureAt;
-          const timeStr = dateStr ? new Date(dateStr).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) : '--:--';
+          const timeStr = dateStr
+            ? new Date(dateStr).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})
+            : '--:--';
           const boatName = item.trip?.boat?.name || `Barco ${item.trip?.boatId?.slice(0, 8) || 'N/A'}`;
           const seats = item.quantity;
-          // Normaliza para number (backend/AsyncStorage pode retornar string)
           const rawTotal = Number(item.totalPrice);
-          // totalPrice já é o valor total; fallback: trip.price × quantity
           const price =
             rawTotal > 0
               ? rawTotal
@@ -190,7 +120,6 @@ export function BookingsScreen({navigation}: Props) {
               ? Number(item.trip.price) * seats
               : 0;
 
-          // Format date
           let formattedDate = 'Data não disponível';
           if (dateStr) {
             try {
@@ -202,12 +131,16 @@ export function BookingsScreen({navigation}: Props) {
                   year: 'numeric',
                 });
               }
-            } catch (e) {
-              console.error('Error formatting date:', e);
+            } catch {
+              // ignore date format error
             }
           }
 
-          const isActive = item.status === 'pending' || item.status === 'confirmed' || item.status === 'checked_in';
+          const isActive =
+            item.status === 'pending' ||
+            item.status === 'confirmed' ||
+            item.status === 'checked_in';
+          const badge = getStatusBadge(item.status);
 
           return (
             <TouchableOpacityBox
@@ -215,7 +148,7 @@ export function BookingsScreen({navigation}: Props) {
               backgroundColor="surface"
               borderRadius="s16"
               padding="s20"
-              onPress={() => navigation.navigate('Ticket', {bookingId: item.id})}
+              onPress={() => navigateToTicket(item.id)}
               style={{
                 shadowColor: '#000',
                 shadowOffset: {width: 0, height: 2},
@@ -223,7 +156,6 @@ export function BookingsScreen({navigation}: Props) {
                 shadowRadius: 8,
                 elevation: 3,
               }}>
-              {/* Header: Código + Status Badge */}
               <Box
                 flexDirection="row"
                 alignItems="center"
@@ -232,36 +164,25 @@ export function BookingsScreen({navigation}: Props) {
                 <Text preset="paragraphCaptionSmall" color="textSecondary">
                   #{item.id?.slice(0, 8).toUpperCase() || 'N/A'}
                 </Text>
-                {(() => {
-                  const badge = getStatusBadge(item.status);
-                  return (
-                    <Box
-                      paddingHorizontal="s10"
-                      paddingVertical="s4"
-                      borderRadius="s8"
-                      style={{backgroundColor: badge.bg}}>
-                      <Text
-                        preset="paragraphCaptionSmall"
-                        bold
-                        style={{color: badge.textColor}}>
-                        {badge.label}
-                      </Text>
-                    </Box>
-                  );
-                })()}
-              </Box>
-
-              {/* Route Info */}
-              <Box flexDirection="row" alignItems="center" mb="s16">
-                <Box flex={1}>
-                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                    Origem
-                  </Text>
-                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
-                    {origin}
+                <Box
+                  paddingHorizontal="s10"
+                  paddingVertical="s4"
+                  borderRadius="s8"
+                  style={{backgroundColor: badge.bg}}>
+                  <Text
+                    preset="paragraphCaptionSmall"
+                    bold
+                    style={{color: badge.textColor}}>
+                    {badge.label}
                   </Text>
                 </Box>
+              </Box>
 
+              <Box flexDirection="row" alignItems="center" mb="s16">
+                <Box flex={1}>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">Origem</Text>
+                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>{origin}</Text>
+                </Box>
                 <Box
                   width={40}
                   height={40}
@@ -272,18 +193,12 @@ export function BookingsScreen({navigation}: Props) {
                   mx="s12">
                   <Icon name="arrow-forward" size={20} color="primary" />
                 </Box>
-
                 <Box flex={1}>
-                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                    Destino
-                  </Text>
-                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
-                    {destination}
-                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">Destino</Text>
+                  <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>{destination}</Text>
                 </Box>
               </Box>
 
-              {/* Date & Time */}
               <Box
                 flexDirection="row"
                 alignItems="center"
@@ -301,7 +216,6 @@ export function BookingsScreen({navigation}: Props) {
                 </Text>
               </Box>
 
-              {/* Boat */}
               <Box flexDirection="row" alignItems="center" mb="s16">
                 <Icon name="directions-boat" size={18} color="secondary" />
                 <Text preset="paragraphSmall" color="text" ml="s8" numberOfLines={1}>
@@ -309,7 +223,6 @@ export function BookingsScreen({navigation}: Props) {
                 </Text>
               </Box>
 
-              {/* Footer */}
               <Box
                 flexDirection="row"
                 alignItems="center"
@@ -318,14 +231,9 @@ export function BookingsScreen({navigation}: Props) {
                 borderTopWidth={1}
                 borderTopColor="border">
                 <Box>
-                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">
-                    Total pago
-                  </Text>
-                  <Text preset="headingSmall" color="primary" bold>
-                    {formatBRL(price)}
-                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary" mb="s4">Total pago</Text>
+                  <Text preset="headingSmall" color="primary" bold>{formatBRL(price)}</Text>
                 </Box>
-
                 <Box
                   flexDirection="row"
                   alignItems="center"
@@ -340,7 +248,6 @@ export function BookingsScreen({navigation}: Props) {
                 </Box>
               </Box>
 
-              {/* Actions — Ativas */}
               {isActive && (
                 <Box mt="s16" flexDirection="row" gap="s12">
                   <TouchableOpacityBox
@@ -351,7 +258,7 @@ export function BookingsScreen({navigation}: Props) {
                     alignItems="center"
                     flexDirection="row"
                     justifyContent="center"
-                    onPress={() => navigation.navigate('Ticket', {bookingId: item.id})}>
+                    onPress={() => navigateToTicket(item.id)}>
                     <Icon name="qr-code" size={20} color="surface" />
                     <Text preset="paragraphMedium" color="surface" bold ml="s8">
                       Ver QR Code
@@ -371,7 +278,6 @@ export function BookingsScreen({navigation}: Props) {
                 </Box>
               )}
 
-              {/* Actions — Concluídas */}
               {item.status === 'completed' && item.trip?.captainId && (
                 <Box mt="s16">
                   <TouchableOpacityBox
@@ -383,11 +289,11 @@ export function BookingsScreen({navigation}: Props) {
                     flexDirection="row"
                     justifyContent="center"
                     onPress={() =>
-                      navigation.navigate('TripReview', {
-                        tripId: item.tripId,
-                        captainName: item.trip?.captain?.name,
-                        boatName: item.trip?.boat?.name,
-                      })
+                      navigateToReview(
+                        item.tripId,
+                        item.trip?.captain?.name,
+                        item.trip?.boat?.name,
+                      )
                     }>
                     <Icon name="star" size={18} color="primary" />
                     <Text preset="paragraphMedium" color="primary" bold ml="s8">

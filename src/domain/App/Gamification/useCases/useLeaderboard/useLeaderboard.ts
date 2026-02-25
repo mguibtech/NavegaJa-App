@@ -1,25 +1,20 @@
-import {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
 
-import {gamificationAPI} from '../../gamificationAPI';
+import {queryKeys} from '@infra';
+
+import {gamificationService} from '../../gamificationService';
 import {LeaderboardEntry} from '../../gamificationTypes';
 
 export function useLeaderboard() {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<LeaderboardEntry[], Error>({
+    queryKey: queryKeys.gamification.leaderboard(),
+    queryFn: () => gamificationService.getLeaderboard(),
+  });
 
-  async function fetchLeaderboard(): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await gamificationAPI.getLeaderboard();
-      setLeaderboard(result);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return {leaderboard, isLoading, error, fetchLeaderboard};
+  return {
+    leaderboard: query.data ?? [],
+    fetchLeaderboard: query.refetch,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }

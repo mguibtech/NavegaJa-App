@@ -1,25 +1,20 @@
-import {useState} from 'react';
+﻿import {useQuery} from '@tanstack/react-query';
 
-import {captainAPI} from '../../captainAPI';
+import {queryKeys} from '@infra';
+
+import {captainService} from '../../captainService';
 import {Trip} from '../../../Trip/tripTypes';
 
 export function useCaptainTrips() {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<Trip[], Error>({
+    queryKey: queryKeys.captain.trips(),
+    queryFn: () => captainService.getMyTrips(),
+  });
 
-  async function fetchMyTrips() {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await captainAPI.getMyTrips();
-      setTrips(result);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return {trips, isLoading, error, fetchMyTrips};
+  return {
+    trips: query.data ?? [],
+    fetchMyTrips: query.refetch,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }

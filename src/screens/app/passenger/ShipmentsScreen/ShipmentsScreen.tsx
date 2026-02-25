@@ -1,72 +1,24 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Icon, Text, TouchableOpacityBox, ShipmentCard} from '@components';
-import {useMyShipments, Shipment, ShipmentStatus} from '@domain';
 
-import {AppStackParamList, TabsParamList} from '@routes';
+import {useShipmentsScreen} from './useShipmentsScreen';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabsParamList, 'Shipments'>,
-  NativeStackScreenProps<AppStackParamList>
->;
-
-export function ShipmentsScreen({navigation}: Props) {
+export function ShipmentsScreen() {
   const {top} = useSafeAreaInsets();
-  const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
-  const [refreshing, setRefreshing] = useState(false);
-  const {shipments, fetch: fetchShipments, error: shipmentsError} = useMyShipments();
-
-  // Buscar shipments ao montar a tela
-  useEffect(() => {
-    fetchShipments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await fetchShipments();
-    } catch (error) {
-      console.error('Error refreshing shipments:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // Filtrar shipments por status
-  const filteredShipments = shipments.filter((shipment: Shipment) => {
-    if (selectedTab === 'active') {
-      // Ativas: todos os estados antes de entregue/cancelado
-      return (
-        shipment.status === ShipmentStatus.PENDING ||
-        shipment.status === ShipmentStatus.PAID ||
-        shipment.status === ShipmentStatus.COLLECTED ||
-        shipment.status === ShipmentStatus.IN_TRANSIT ||
-        shipment.status === ShipmentStatus.ARRIVED ||
-        shipment.status === ShipmentStatus.OUT_FOR_DELIVERY
-      );
-    } else {
-      // Concluídas: delivered, cancelled
-      return (
-        shipment.status === ShipmentStatus.DELIVERED ||
-        shipment.status === ShipmentStatus.CANCELLED
-      );
-    }
-  });
-
-  function handleShipmentPress(shipment: Shipment) {
-    navigation.navigate('ShipmentDetails', {shipmentId: shipment.id});
-  }
-
-  function handleCreateShipment() {
-    navigation.navigate('Search', {context: 'shipment'}); // Navega para busca de viagens para encomenda
-  }
+  const {
+    selectedTab,
+    setSelectedTab,
+    refreshing,
+    filteredShipments,
+    shipmentsError,
+    fetchShipments,
+    onRefresh,
+    handleShipmentPress,
+    handleCreateShipment,
+  } = useShipmentsScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -87,7 +39,6 @@ export function ShipmentsScreen({navigation}: Props) {
           Minhas Encomendas
         </Text>
 
-        {/* Tabs */}
         <Box flexDirection="row" gap="s12">
           <TouchableOpacityBox
             flex={1}
@@ -121,7 +72,6 @@ export function ShipmentsScreen({navigation}: Props) {
         </Box>
       </Box>
 
-      {/* Error banner */}
       {shipmentsError && (
         <Box
           flexDirection="row"
@@ -139,7 +89,6 @@ export function ShipmentsScreen({navigation}: Props) {
         </Box>
       )}
 
-      {/* Lista de encomendas */}
       <FlatList
         data={filteredShipments}
         keyExtractor={item => item.id}
@@ -148,10 +97,7 @@ export function ShipmentsScreen({navigation}: Props) {
             <ShipmentCard shipment={item} onPress={handleShipmentPress} />
           </Box>
         )}
-        contentContainerStyle={{
-          paddingTop: 20,
-          paddingBottom: 100,
-        }}
+        contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -202,7 +148,6 @@ export function ShipmentsScreen({navigation}: Props) {
         }
       />
 
-      {/* FAB - Floating Action Button */}
       {filteredShipments.length > 0 && (
         <Box position="absolute" bottom={24} right={24}>
           <TouchableOpacityBox

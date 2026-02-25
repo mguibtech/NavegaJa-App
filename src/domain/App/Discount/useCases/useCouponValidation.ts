@@ -1,73 +1,32 @@
 import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
-import {discountAPI} from '../discountAPI';
+import {discountService} from '../discountService';
 import {CouponState, ValidateCouponRequest} from '../discountTypes';
 
-/**
- * Hook para validação de cupons com máquina de estados
- * Segue spec: docs/COUPON_VALIDATION_SPEC.md
- */
 export function useCouponValidation() {
   const [state, setState] = useState<CouponState>({status: 'NOT_VALIDATED'});
 
-  /**
-   * Valida um cupom
-   */
-  const validate = async (request: ValidateCouponRequest) => {
-    // Estado: VALIDATING
-    setState({status: 'VALIDATING'});
-
-    try {
-      const response = await discountAPI.validateCoupon(request);
-
+  const mutation = useMutation<void, Error, ValidateCouponRequest>({
+    mutationFn: async (request: ValidateCouponRequest) => {
+      setState({status: 'VALIDATING'});
+      const response = await discountService.validateCoupon(request);
       if (response.valid && response.data) {
-        // Estado: VALID
-        setState({
-          status: 'VALID',
-          data: response.data,
-        });
+        setState({status: 'VALID', data: response.data});
       } else {
-        // Estado: INVALID
-        setState({
-          status: 'INVALID',
-          error: response.message || 'Cupom inválido',
-        });
+        setState({status: 'INVALID', error: response.message || 'Cupom inválido'});
       }
-    } catch (error: any) {
-      // Estado: ERROR (erro de rede/servidor)
-      setState({
-        status: 'ERROR',
-        error: error.message || 'Erro ao validar cupom. Tente novamente.',
-      });
-    }
-  };
-
-  /**
-   * Remove cupom aplicado
-   */
-  const remove = () => {
-    setState({status: 'NOT_VALIDATED'});
-  };
-
-  /**
-   * Tenta validar novamente (após erro de rede)
-   */
-  const retry = () => {
-    setState({status: 'NOT_VALIDATED'});
-  };
-
-  /**
-   * Reseta o estado
-   */
-  const reset = () => {
-    setState({status: 'NOT_VALIDATED'});
-  };
+    },
+    onError: (error) => {
+      setState({status: 'ERROR', error: error.message || 'Erro ao validar cupom. Tente novamente.'});
+    },
+  });
 
   return {
     state,
-    validate,
-    remove,
-    retry,
-    reset,
+    validate: mutation.mutateAsync,
+    remove: () => setState({status: 'NOT_VALIDATED'}),
+    retry: () => setState({status: 'NOT_VALIDATED'}),
+    reset: () => setState({status: 'NOT_VALIDATED'}),
   };
 }

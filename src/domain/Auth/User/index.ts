@@ -1,4 +1,5 @@
 export * from './userTypes';
 export {userAPI} from './userAPI';
-export {useAuthUser} from './useAuthUser';
 export * from './useCases/updateProfile';
+export * from './useCases/updateAvatar';
+export * from './useCases/updatePassword';

@@ -1,22 +1,11 @@
-import React, {useState, useCallback} from 'react';
+import React from 'react';
 import {FlatList, RefreshControl, TouchableOpacity} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {
-  getNotificationHistory,
-  markNotificationRead,
-  markAllNotificationsRead,
-  clearNotificationHistory,
-} from '@services';
 import type {StoredNotification} from '@services';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'Notifications'>;
+import {useNotificationsScreen} from './useNotificationsScreen';
 
 type NotificationIconConfig = {
   icon: string;
@@ -71,87 +60,18 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString('pt-BR');
 }
 
-export function NotificationsScreen({navigation}: Props) {
+export function NotificationsScreen() {
   const {top} = useSafeAreaInsets();
-  const [notifications, setNotifications] = useState<StoredNotification[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadNotifications();
-    }, []),
-  );
-
-  async function loadNotifications() {
-    const history = await getNotificationHistory();
-    setNotifications(history);
-  }
-
-  async function onRefresh() {
-    setRefreshing(true);
-    await loadNotifications();
-    setRefreshing(false);
-  }
-
-  async function handleTap(notification: StoredNotification) {
-    await markNotificationRead(notification.id);
-    setNotifications(prev =>
-      prev.map(n => (n.id === notification.id ? {...n, read: true} : n)),
-    );
-
-    const {type, bookingId, tripId, shipmentId} = notification.data;
-
-    switch (type) {
-      case 'booking_confirmed':
-      case 'payment_confirmed':
-        if (bookingId) {
-          navigation.navigate('Ticket', {bookingId});
-        }
-        break;
-      case 'booking_cancelled':
-        navigation.navigate('HomeTabs', undefined);
-        break;
-      case 'trip_started':
-      case 'trip_cancelled':
-        if (bookingId) {
-          navigation.navigate('Tracking', {bookingId});
-        }
-        break;
-      case 'trip_completed':
-        if (tripId) {
-          navigation.navigate('TripReview', {tripId});
-        }
-        break;
-      case 'shipment_collected':
-      case 'shipment_in_transit':
-      case 'shipment_arrived':
-      case 'shipment_out_for_delivery':
-      case 'shipment_delivered':
-        if (shipmentId) {
-          navigation.navigate('ShipmentDetails', {shipmentId});
-        }
-        break;
-      case 'new_booking':
-        if (tripId) {
-          navigation.navigate('CaptainTripManage', {tripId});
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  async function handleMarkAllRead() {
-    await markAllNotificationsRead();
-    setNotifications(prev => prev.map(n => ({...n, read: true})));
-  }
-
-  async function handleClear() {
-    await clearNotificationHistory();
-    setNotifications([]);
-  }
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const {
+    navigation,
+    notifications,
+    refreshing,
+    unreadCount,
+    onRefresh,
+    handleTap,
+    handleMarkAllRead,
+    handleClear,
+  } = useNotificationsScreen();
 
   function renderItem({item}: {item: StoredNotification}) {
     const config = getNotificationConfig(item.type);

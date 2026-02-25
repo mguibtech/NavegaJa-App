@@ -1,18 +1,11 @@
-import React, {useState, useCallback} from 'react';
+import React from 'react';
 import {FlatList, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox, UserAvatar} from '@components';
-import {getMyReviewsUseCase, Review, ReviewType} from '@domain';
+import {Review, ReviewType} from '@domain';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'MyReviews'>;
-
-type ActiveTab = 'given' | 'received';
+import {useMyReviewsScreen, ActiveTab} from './useMyReviewsScreen';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -121,35 +114,19 @@ function ReviewCard({review, tab}: {review: Review; tab: ActiveTab}) {
   );
 }
 
-export function MyReviewsScreen({navigation}: Props) {
+export function MyReviewsScreen() {
   const {top} = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<ActiveTab>('received');
-  const [given, setGiven] = useState<Review[]>([]);
-  const [received, setReceived] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadReviews();
-    }, []),
-  );
-
-  async function loadReviews() {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await getMyReviewsUseCase();
-      setGiven(result.given ?? []);
-      setReceived(result.received ?? []);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const data = activeTab === 'given' ? given : received;
+  const {
+    navigation,
+    activeTab,
+    setActiveTab,
+    given,
+    received,
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useMyReviewsScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -238,7 +215,7 @@ export function MyReviewsScreen({navigation}: Props) {
                 <TouchableOpacityBox
                   mt="s16" paddingHorizontal="s24" paddingVertical="s12"
                   backgroundColor="primaryBg" borderRadius="s12"
-                  onPress={loadReviews}>
+                  onPress={() => refetch()}>
                   <Text preset="paragraphMedium" color="primary" bold>Tentar novamente</Text>
                 </TouchableOpacityBox>
               </Box>

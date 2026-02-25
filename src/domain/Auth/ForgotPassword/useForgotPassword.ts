@@ -1,29 +1,15 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
-import {forgotPasswordAPI} from './forgotPasswordAPI';
+import {forgotPasswordService} from './forgotPasswordService';
 
 export function useForgotPassword() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function forgotPassword(email: string): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await forgotPasswordAPI.execute({email});
-      setIsLoading(false);
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      setIsLoading(false);
-      throw error;
-    }
-  }
+  const mutation = useMutation<unknown, Error, string>({
+    mutationFn: (email: string) => forgotPasswordService.execute(email),
+  });
 
   return {
-    forgotPassword,
-    isLoading,
-    error,
+    forgotPassword: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

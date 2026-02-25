@@ -1,128 +1,45 @@
-import React, {useState, useCallback} from 'react';
-import {FlatList, ActivityIndicator, Clipboard, Share, TouchableOpacity, RefreshControl} from 'react-native';
+import React from 'react';
+import {FlatList, ActivityIndicator, TouchableOpacity, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox, UserAvatar} from '@components';
+import {GamificationTransaction, LeaderboardEntry} from '@domain';
+
 import {
-  useGamificationStats,
-  useGamificationHistory,
-  useLeaderboard,
-  GamificationTransaction,
-  LeaderboardEntry,
-} from '@domain';
-import {useAuthStore} from '@store';
+  useGamificationScreen,
+  getLevelColor,
+  getTransactionIcon,
+  formatDate,
+} from './useGamificationScreen';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'Gamification'>;
-
-type ActiveTab = 'history' | 'leaderboard';
-
-// Limiares de pontos por nível (conforme backend)
-const LEVEL_THRESHOLDS: Record<string, number> = {
-  Marinheiro: 0,
-  Navegador: 100,
-  Capitão: 500,
-  Almirante: 1500,
-};
-
-function getLevelColor(level: string): 'textSecondary' | 'primary' | 'secondary' | 'warning' {
-  if (level === 'Navegador') return 'primary';
-  if (level === 'Capitão') return 'secondary';
-  if (level === 'Almirante') return 'warning';
-  return 'textSecondary';
-}
-
-function getTransactionIcon(action: string): string {
-  if (action.includes('trip') || action.includes('viagem')) return 'directions-boat';
-  if (action.includes('review') || action.includes('avali')) return 'star';
-  if (action.includes('shipment') || action.includes('entrega')) return 'local-shipping';
-  if (action.includes('referral') || action.includes('indica')) return 'person-add';
-  if (action.includes('bonus') || action.includes('promo')) return 'card-giftcard';
-  if (action.includes('spent') || action.includes('usado')) return 'remove-circle';
-  return 'monetization-on';
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function calcProgressPercent(totalPoints: number, level: string, pointsNeeded: number): number {
-  const currentThreshold = LEVEL_THRESHOLDS[level] ?? 0;
-  const nextThreshold = totalPoints + pointsNeeded;
-  const range = nextThreshold - currentThreshold;
-  if (range <= 0) return 100;
-  return Math.min(((totalPoints - currentThreshold) / range) * 100, 100);
-}
-
-export function GamificationScreen({navigation}: Props) {
+export function GamificationScreen() {
   const {top} = useSafeAreaInsets();
-  const {user} = useAuthStore();
-  const [activeTab, setActiveTab] = useState<ActiveTab>('history');
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const {stats, isLoading: statsLoading, fetchStats} = useGamificationStats();
   const {
-    history, isLoading: historyLoading, isLoadingMore, error: historyError,
-    hasMore, fetchHistory, fetchMoreHistory,
-  } = useGamificationHistory();
-  const {leaderboard, isLoading: leaderboardLoading, fetchLeaderboard} = useLeaderboard();
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchStats().catch(() => {});
-      fetchHistory().catch(() => {});
-      fetchLeaderboard().catch(() => {});
-    }, []),
-  );
-
-  async function onRefresh() {
-    setRefreshing(true);
-    await Promise.all([
-      fetchStats().catch(() => {}),
-      fetchHistory().catch(() => {}),
-      fetchLeaderboard().catch(() => {}),
-    ]);
-    setRefreshing(false);
-  }
-
-  const points = stats?.totalPoints ?? user?.totalPoints ?? 0;
-  const level = stats?.level ?? user?.level ?? 'Marinheiro';
-  const discount = stats?.discount ?? 0;
-  const referralCode = stats?.referralCode ?? null;
-  const nextLevel = stats?.nextLevel ?? null;
-
-  const progressPercent = nextLevel
-    ? calcProgressPercent(points, level, nextLevel.pointsNeeded)
-    : 100;
-
-  function handleCopyCode() {
-    if (referralCode) {
-      Clipboard.setString(referralCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    }
-  }
-
-  async function handleShareCode() {
-    if (!referralCode) return;
-    try {
-      await Share.share({
-        message: `Use meu código de indicação no NavegaJá e ganhe pontos! Código: ${referralCode}`,
-        title: 'Indicação NavegaJá',
-      });
-    } catch {
-      // user cancelled or error — ignore
-    }
-  }
+    navigation,
+    user,
+    activeTab,
+    setActiveTab,
+    copiedCode,
+    refreshing,
+    statsLoading,
+    historyLoading,
+    isLoadingMore,
+    historyError,
+    leaderboardLoading,
+    history,
+    leaderboard,
+    points,
+    level,
+    discount,
+    referralCode,
+    nextLevel,
+    progressPercent,
+    onRefresh,
+    handleCopyCode,
+    handleShareCode,
+    fetchHistory,
+    fetchMoreHistory,
+  } = useGamificationScreen();
 
   function renderTransaction({item}: {item: GamificationTransaction}) {
     const isEarned = item.type === 'earned';
@@ -461,7 +378,7 @@ export function GamificationScreen({navigation}: Props) {
             renderItem={renderTransaction}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 24, flexGrow: 1}}
-            onEndReached={fetchMoreHistory}
+            onEndReached={() => fetchMoreHistory()}
             onEndReachedThreshold={0.3}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />

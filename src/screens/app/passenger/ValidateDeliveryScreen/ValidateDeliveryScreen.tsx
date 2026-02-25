@@ -1,66 +1,39 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, InfoModal, Text, TextInput} from '@components';
-import {useValidateDelivery} from '@domain';
 
-import {AppStackParamList} from '@routes';
+import {useValidateDeliveryScreen} from './useValidateDeliveryScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'ValidateDelivery'>;
-
-export function ValidateDeliveryScreen({navigation, route}: Props) {
-  const trackingCodeParam = route.params?.trackingCode || '';
-  const pinParam = route.params?.pin || '';
-
-  const [trackingCode, setTrackingCode] = useState(trackingCodeParam);
-  const [pin, setPin] = useState(pinParam);
-
-  const [showTrackingCodeErrorModal, setShowTrackingCodeErrorModal] = useState(false);
-  const [showPinErrorModal, setShowPinErrorModal] = useState(false);
-  const [showPinLengthErrorModal, setShowPinLengthErrorModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const {validate, isLoading} = useValidateDelivery();
-
-  async function handleValidate() {
-    // Validações
-    if (!trackingCode.trim()) {
-      setShowTrackingCodeErrorModal(true);
-      return;
-    }
-
-    if (!pin.trim()) {
-      setShowPinErrorModal(true);
-      return;
-    }
-
-    if (pin.length !== 6) {
-      setShowPinLengthErrorModal(true);
-      return;
-    }
-
-    try {
-      const result = await validate(trackingCode.trim(), pin.trim());
-
-      // Mostrar sucesso com NavegaCoins
-      const message = result.navegaCoinsEarned
-        ? `${result.message}\n\nO remetente ganhou ${result.navegaCoinsEarned} NavegaCoins!`
-        : result.message;
-
-      setSuccessMessage(message);
-      setShowSuccessModal(true);
-    } catch (error: any) {
-      setErrorMessage(
-        error?.message || 'Não foi possível validar a entrega. Verifique o código de rastreamento e o PIN.',
-      );
-      setShowErrorModal(true);
-    }
-  }
+export function ValidateDeliveryScreen() {
+  const {
+    // Params (for editable logic)
+    trackingCodeParam,
+    pinParam,
+    // Form fields
+    trackingCode,
+    setTrackingCode,
+    pin,
+    handlePinChange,
+    // State
+    isLoading,
+    // Handlers
+    handleValidate,
+    handleNavigateToShipments,
+    // Modal states
+    showTrackingCodeErrorModal,
+    setShowTrackingCodeErrorModal,
+    showPinErrorModal,
+    setShowPinErrorModal,
+    showPinLengthErrorModal,
+    setShowPinLengthErrorModal,
+    showSuccessModal,
+    successMessage,
+    handleSuccessModalClose,
+    showErrorModal,
+    setShowErrorModal,
+    errorMessage,
+  } = useValidateDeliveryScreen();
 
   return (
     <KeyboardAvoidingView
@@ -141,11 +114,7 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
                 <TextInput
                   placeholder="000000"
                   value={pin}
-                  onChangeText={text => {
-                    // Apenas números
-                    const numbersOnly = text.replace(/[^0-9]/g, '');
-                    setPin(numbersOnly);
-                  }}
+                  onChangeText={handlePinChange}
                   keyboardType="number-pad"
                   maxLength={6}
                   editable={!pinParam} // Se vier de deep link, não permite editar
@@ -200,7 +169,7 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
                 title="Rastrear Encomenda"
                 preset="outline"
                 leftIcon="search"
-                onPress={() => navigation.navigate('Shipments')}
+                onPress={handleNavigateToShipments}
               />
             </Box>
           </Box>
@@ -244,10 +213,7 @@ export function ValidateDeliveryScreen({navigation, route}: Props) {
         icon="check-circle"
         iconColor="success"
         buttonText="OK"
-        onClose={() => {
-          setShowSuccessModal(false);
-          navigation.navigate('Shipments');
-        }}
+        onClose={handleSuccessModalClose}
       />
 
       <InfoModal

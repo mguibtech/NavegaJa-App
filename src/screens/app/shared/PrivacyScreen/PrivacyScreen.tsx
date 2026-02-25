@@ -1,17 +1,15 @@
 import React from 'react';
 import {ScrollView} from 'react-native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList} from '@routes';
+import {usePrivacyScreen} from './usePrivacyScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'Privacy'>;
-
-export function PrivacyScreen({navigation}: Props) {
+export function PrivacyScreen() {
   const {top} = useSafeAreaInsets();
+  const {navigation} = usePrivacyScreen();
+
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}

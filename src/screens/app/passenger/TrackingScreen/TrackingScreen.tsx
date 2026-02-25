@@ -1,9 +1,7 @@
-import React, {useState, useEffect, useRef} from 'react';
-import {ScrollView, Linking, StyleSheet, ActivityIndicator} from 'react-native';
+import React from 'react';
+import {ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {
   Box,
@@ -20,12 +18,9 @@ import {
   InfoModal,
   ConfirmationModal,
 } from '@components';
-import {SosAlert, SosType, SosStatus, SafetyLevel, useTrackBooking, TrackingStatus, safetyAPI} from '@domain';
+import {SafetyLevel} from '@domain';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'Tracking'>;
-
+import {useTrackingScreen} from './useTrackingScreen';
 
 // Zonas de perigo estáticas — dados geográficos reais do Rio Amazonas
 const DANGER_ZONES: DangerZoneData[] = [
@@ -53,153 +48,53 @@ const DANGER_ZONES: DangerZoneData[] = [
   },
 ];
 
-// Coordenadas padrão (Manaus → Parintins) - fallback quando API não tem coordenadas
-const MANAUS_COORDS = {latitude: -3.119, longitude: -60.0217};
-const PARINTINS_COORDS = {latitude: -2.6283, longitude: -56.7358};
-
-export function TrackingScreen({navigation, route}: Props) {
-  const {bookingId} = route.params;
+export function TrackingScreen() {
   const {top} = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
-
-  const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
-
-  const [mySosAlerts, setMySosAlerts] = useState<SosAlert[]>([]);
-  const [showSosAlerts, setShowSosAlerts] = useState(true);
-  const [showDangerZones, setShowDangerZones] = useState(true);
-
-  useEffect(() => {
-    safetyAPI.getMySosAlerts().then(alerts => {
-      setMySosAlerts(alerts.filter(a => a.status === SosStatus.ACTIVE));
-    }).catch(() => {});
-  }, []);
-
-  // Modal state
-  const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
-  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [showSosDetailModal, setShowSosDetailModal] = useState(false);
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [selectedSosAlert, setSelectedSosAlert] = useState<SosAlert | null>(null);
-
-  useEffect(() => {
-    if (error) {
-      setShowErrorModal(true);
-    }
-  }, [error]);
-
-  const trip = trackingInfo?.booking.trip;
-  const booking = trackingInfo?.booking;
-
-  // Resolve origin/destination coordinates
-  // Trip doesn't have explicit lat/lng for origin/destination from the API
-  // We use the current lat/lng from trip, or interpolate
-  const originCoords = MANAUS_COORDS;   // TODO: geocode trip.origin
-  const destinationCoords = PARINTINS_COORDS; // TODO: geocode trip.destination
-
-  // Boat position: prefer real GPS from trip, otherwise interpolate from progress
-  const progress = trackingInfo?.progressPercent ?? 0;
-  const currentPosition =
-    trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
-      ? {latitude: trackingInfo.currentLat, longitude: trackingInfo.currentLng}
-      : {
-          latitude:
-            originCoords.latitude +
-            (destinationCoords.latitude - originCoords.latitude) *
-              (progress / 100),
-          longitude:
-            originCoords.longitude +
-            (destinationCoords.longitude - originCoords.longitude) *
-              (progress / 100),
-        };
-
-  const routeCoordinates = [originCoords, currentPosition, destinationCoords];
-
-  const handleRefresh = () => {
-    refetch();
-  };
-
-  const handleCallCaptain = () => {
-    setShowCallCaptainModal(true);
-  };
-
-  const handleEmergency = () => {
-    setShowEmergencyModal(true);
-  };
-
-  const handleSosPress = () => {
-    navigation.navigate('SosAlert', {tripId: bookingId});
-  };
-
-  const handleSosMarkerPress = (alert: SosAlert) => {
-    setSelectedSosAlert(alert);
-    setShowSosDetailModal(true);
-  };
-
-  const handleSafetyOverlayPress = () => {
-    setShowSafetyModal(true);
-  };
-
-  const calculateNearbyAlerts = () => {
-    return mySosAlerts.length;
-  };
-
-  const getStatusLabel = (status: TrackingStatus): string => {
-    switch (status) {
-      case 'scheduled':
-        return 'Aguardando Partida';
-      case 'boarding':
-        return 'Embarque em Andamento';
-      case 'in_transit':
-        return 'Em Trânsito';
-      case 'approaching':
-        return 'Chegando ao Destino';
-      case 'arrived':
-        return 'Chegou ao Destino';
-      case 'cancelled':
-        return 'Viagem Cancelada';
-    }
-  };
-
-  const getStatusColor = (status: TrackingStatus): 'success' | 'warning' | 'danger' | 'primary' => {
-    switch (status) {
-      case 'scheduled':
-        return 'primary';
-      case 'boarding':
-        return 'warning';
-      case 'in_transit':
-        return 'success';
-      case 'approaching':
-        return 'success';
-      case 'arrived':
-        return 'success';
-      case 'cancelled':
-        return 'danger';
-    }
-  };
-
-  const getStatusBgColor = (status: TrackingStatus): 'primaryBg' | 'warningBg' | 'dangerBg' | 'successBg' => {
-    switch (status) {
-      case 'scheduled':
-        return 'primaryBg';
-      case 'boarding':
-        return 'warningBg';
-      case 'in_transit':
-        return 'successBg';
-      case 'approaching':
-        return 'successBg';
-      case 'arrived':
-        return 'successBg';
-      case 'cancelled':
-        return 'dangerBg';
-    }
-  };
-
-  const captainName = trip?.captain?.name ?? 'Capitão';
-  const captainPhone = trip?.captain?.phone ?? '';
-  const boatName = trip?.boat?.name ?? '';
-  const boatSpeed = trip?.boat?.type ?? '—';
-  const trackingStatus = trackingInfo?.trackingStatus ?? 'scheduled';
+  const {
+    mapRef,
+    trip,
+    booking,
+    trackingInfo,
+    isLoading,
+    mySosAlerts,
+    showSosAlerts,
+    setShowSosAlerts,
+    showDangerZones,
+    setShowDangerZones,
+    showCallCaptainModal,
+    showEmergencyModal,
+    showSosDetailModal,
+    showSafetyModal,
+    setShowSafetyModal,
+    showErrorModal,
+    setShowErrorModal,
+    selectedSosAlert,
+    currentPosition,
+    routeCoordinates,
+    originCoords,
+    destinationCoords,
+    progress,
+    captainName,
+    captainPhone,
+    boatName,
+    trackingStatus,
+    handleRefresh,
+    handleCallCaptain,
+    handleEmergency,
+    handleSosPress,
+    handleSosMarkerPress,
+    handleSafetyOverlayPress,
+    calculateNearbyAlerts,
+    getStatusLabel,
+    getStatusColor,
+    getStatusBgColor,
+    handleGoBack,
+    handleConfirmCallCaptain,
+    handleCancelCallCaptain,
+    handleConfirmEmergency,
+    handleCancelEmergency,
+    handleCloseSosDetail,
+  } = useTrackingScreen();
 
   if (isLoading && !trackingInfo) {
     return (
@@ -232,7 +127,7 @@ export function TrackingScreen({navigation, route}: Props) {
             title=""
             preset="outline"
             leftIcon="arrow-back"
-            onPress={() => navigation.goBack()}
+            onPress={handleGoBack}
           />
 
           <Box flex={1} ml="s12">
@@ -637,11 +532,8 @@ export function TrackingScreen({navigation, route}: Props) {
         confirmText="Ligar"
         cancelText="Cancelar"
         confirmPreset="primary"
-        onConfirm={() => {
-          Linking.openURL(`tel:${captainPhone}`);
-          setShowCallCaptainModal(false);
-        }}
-        onCancel={() => setShowCallCaptainModal(false)}
+        onConfirm={handleConfirmCallCaptain}
+        onCancel={handleCancelCallCaptain}
       />
 
       {/* Emergency Modal */}
@@ -654,11 +546,8 @@ export function TrackingScreen({navigation, route}: Props) {
         confirmText="Chamar Emergência"
         cancelText="Cancelar"
         confirmPreset="primary"
-        onConfirm={() => {
-          Linking.openURL('tel:190');
-          setShowEmergencyModal(false);
-        }}
-        onCancel={() => setShowEmergencyModal(false)}
+        onConfirm={handleConfirmEmergency}
+        onCancel={handleCancelEmergency}
       />
 
       {/* SOS Detail Modal */}
@@ -669,10 +558,7 @@ export function TrackingScreen({navigation, route}: Props) {
         icon="crisis-alert"
         iconColor="danger"
         buttonText="Fechar"
-        onClose={() => {
-          setShowSosDetailModal(false);
-          setSelectedSosAlert(null);
-        }}
+        onClose={handleCloseSosDetail}
       />
 
       {/* Safety Info Modal */}

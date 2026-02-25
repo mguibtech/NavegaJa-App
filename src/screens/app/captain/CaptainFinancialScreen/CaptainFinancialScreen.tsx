@@ -1,75 +1,29 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {format} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text} from '@components';
-import {useCaptainTrips, TripStatus} from '@domain';
-import {useAuthStore} from '@store';
-import {formatBRL} from '@utils';
 
-import {AppStackParamList, CaptainTabsParamList} from '@routes';
+import {useCaptainFinancial} from './useCaptainFinancial';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<CaptainTabsParamList, 'Financial'>,
-  NativeStackScreenProps<AppStackParamList>
->;
-
-export function CaptainFinancialScreen(_: Props) {
+export function CaptainFinancialScreen() {
   const {top} = useSafeAreaInsets();
-  const user = useAuthStore(s => s.user);
-  const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
-
-  useEffect(() => {
-    fetchMyTrips();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const completedTrips = trips.filter(t => t.status === TripStatus.COMPLETED);
-
-  const now = new Date();
-
-  const monthTrips = completedTrips.filter(t => {
-    try {
-      const d = new Date(t.departureAt);
-      return (
-        d.getMonth() === now.getMonth() &&
-        d.getFullYear() === now.getFullYear()
-      );
-    } catch {
-      return false;
-    }
-  });
-
-  // Earnings = price × seats used (totalSeats - availableSeats)
-  function tripEarnings(t: (typeof trips)[number]): number {
-    const seatsUsed = (t.totalSeats ?? 0) - (t.availableSeats ?? 0);
-    return Number(t.price) * Math.max(0, seatsUsed);
-  }
-
-  const totalEarnings = completedTrips.reduce((sum, t) => sum + tripEarnings(t), 0);
-  const monthEarnings = monthTrips.reduce((sum, t) => sum + tripEarnings(t), 0);
-  const totalPassengers = completedTrips.reduce(
-    (sum, t) => sum + Math.max(0, (t.totalSeats ?? 0) - (t.availableSeats ?? 0)),
-    0,
-  );
-
-  function formatDeparture(dateStr: string) {
-    try {
-      return format(new Date(dateStr), 'dd/MM/yy', {locale: ptBR});
-    } catch {
-      return '';
-    }
-  }
-
-  function formatMonthYear(date: Date) {
-    return format(date, "MMMM 'de' yyyy", {locale: ptBR});
-  }
+  const {
+    user,
+    trips,
+    isLoading,
+    completedTrips,
+    monthTrips,
+    now,
+    totalEarnings,
+    monthEarnings,
+    totalPassengers,
+    tripEarnings,
+    formatDeparture,
+    formatMonthYear,
+    formatBRL,
+    fetchMyTrips,
+  } = useCaptainFinancial();
 
   return (
     <Box flex={1} backgroundColor="background">

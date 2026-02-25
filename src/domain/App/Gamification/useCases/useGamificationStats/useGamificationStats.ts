@@ -1,25 +1,20 @@
-import {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
 
-import {gamificationAPI} from '../../gamificationAPI';
+import {queryKeys} from '@infra';
+
+import {gamificationService} from '../../gamificationService';
 import {GamificationStats} from '../../gamificationTypes';
 
 export function useGamificationStats() {
-  const [stats, setStats] = useState<GamificationStats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<GamificationStats, Error>({
+    queryKey: queryKeys.gamification.stats(),
+    queryFn: () => gamificationService.getStats(),
+  });
 
-  async function fetchStats(): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await gamificationAPI.getStats();
-      setStats(result);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return {stats, isLoading, error, fetchStats};
+  return {
+    stats: query.data ?? null,
+    fetchStats: query.refetch,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }

@@ -1,8 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {
   Box,
@@ -15,160 +13,47 @@ import {
   CouponInputV2,
   PriceBreakdown,
 } from '@components';
-import {
-  Trip,
-  tripAPI,
-  PaymentMethod,
-  useCreateBooking,
-  useCalculatePrice,
-  PriceBreakdown as PriceBreakdownType,
-  useCouponValidation,
-} from '@domain';
 
-import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
 
-// Funções de validação de CPF
-function isValidCPF(cpf: string): boolean {
-  const cleanCPF = cpf.replace(/\D/g, '');
-  if (cleanCPF.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+import {useBookingScreen} from './useBookingScreen';
 
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
-  }
-  let digit1 = 11 - (sum % 11);
-  if (digit1 >= 10) digit1 = 0;
-  if (parseInt(cleanCPF.charAt(9)) !== digit1) return false;
-
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
-  }
-  let digit2 = 11 - (sum % 11);
-  if (digit2 >= 10) digit2 = 0;
-  if (parseInt(cleanCPF.charAt(10)) !== digit2) return false;
-
-  return true;
-}
-
-function formatCPFUtil(value: string): string {
-  const numbers = value.replace(/\D/g, '').slice(0, 11);
-  let formatted = numbers;
-  if (numbers.length > 3) {
-    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-  }
-  if (numbers.length > 6) {
-    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-  }
-  if (numbers.length > 9) {
-    formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
-  }
-  return formatted;
-}
-
-function isCPFComplete(cpf: string): boolean {
-  return cpf.replace(/\D/g, '').length === 11;
-}
-
-type Props = NativeStackScreenProps<AppStackParamList, 'Booking'>;
-
-export function BookingScreen({navigation, route}: Props) {
+export function BookingScreen() {
   const {top} = useSafeAreaInsets();
-  const {tripId} = route.params;
-  const {create: createBooking, isLoading: isCreatingBooking} = useCreateBooking();
-
-  const [trip, setTrip] = useState<Trip | null>(null);
-  const [isLoadingTrip, setIsLoadingTrip] = useState(true);
-  const [passengers, setPassengers] = useState(1);
-  const [passengerName, setPassengerName] = useState('');
-  const [passengerCPF, setPassengerCPF] = useState('');
-  const [cpfError, setCpfError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
-  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
-
-  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
-  const [showNameErrorModal, setShowNameErrorModal] = useState(false);
-  const [showCpfErrorModal, setShowCpfErrorModal] = useState(false);
-  const [cpfErrorMessage, setCpfErrorMessage] = useState('');
-  const [showBookingErrorModal, setShowBookingErrorModal] = useState(false);
-  const [bookingErrorMessage, setBookingErrorMessage] = useState('');
-
-  const {calculate, isLoading: isCalculatingPrice} = useCalculatePrice();
-  const couponValidation = useCouponValidation();
-
-  // Load trip data
-  useEffect(() => {
-    loadTrip();
-  }, [tripId]);
-
-  // Calculate price whenever trip, passengers, or coupon changes
-  useEffect(() => {
-    if (trip) {
-      calculatePrice();
-    }
-  }, [trip, passengers, couponValidation.state]);
-
-  async function loadTrip() {
-    setIsLoadingTrip(true);
-    try {
-      const tripData = await tripAPI.getById(tripId);
-      setTrip(tripData);
-    } catch (_error) {
-      console.error('Failed to load trip:', _error);
-      setShowLoadErrorModal(true);
-    } finally {
-      setIsLoadingTrip(false);
-    }
-  }
-
-  async function calculatePrice() {
-    if (!trip) return;
-
-    try {
-      // Pega código do cupom se estiver validado
-      const couponCode = couponValidation.state.status === 'VALID'
-        ? couponValidation.state.data.code
-        : undefined;
-
-      const breakdown = await calculate({
-        tripId: trip.id,
-        quantity: passengers,
-        couponCode,
-      });
-      setPriceBreakdown(breakdown);
-    } catch (_error) {
-      console.error('Failed to calculate price:', _error);
-      // Se falhar, cria um breakdown simples sem descontos
-      const basePrice = Number(trip.price) * passengers;
-      setPriceBreakdown({
-        basePrice,
-        totalDiscount: 0,
-        finalPrice: basePrice,
-        discountsApplied: [],
-        quantity: passengers,
-      });
-    }
-  }
-
-  async function handleApplyCoupon(code: string) {
-    if (!trip) return;
-
-    // Valida cupom usando hook
-    await couponValidation.validate({
-      code,
-      tripId: trip.id,
-      quantity: passengers,
-    });
-
-    // Recalcula preço (será chamado pelo useEffect quando state mudar)
-  }
-
-  function handleRemoveCoupon() {
-    couponValidation.remove();
-    // Recalcula preço (será chamado pelo useEffect quando state mudar)
-  }
+  const {
+    trip,
+    isLoadingTrip,
+    passengers,
+    passengerName,
+    setPassengerName,
+    passengerCPF,
+    cpfError,
+    paymentMethod,
+    setPaymentMethod,
+    priceBreakdown,
+    isCreatingBooking,
+    couponValidation,
+    showLoadErrorModal,
+    showNameErrorModal,
+    showCpfErrorModal,
+    cpfErrorMessage,
+    showBookingErrorModal,
+    bookingErrorMessage,
+    paymentMethods,
+    handleIncrement,
+    handleDecrement,
+    handleCPFChange,
+    handleConfirmBooking,
+    handleApplyCoupon,
+    handleRemoveCoupon,
+    handleGoBack,
+    handleCloseLoadErrorModal,
+    setShowNameErrorModal,
+    setShowCpfErrorModal,
+    setShowBookingErrorModal,
+    formatTime,
+    formatDate,
+  } = useBookingScreen();
 
   // Show loading state while fetching trip
   if (isLoadingTrip || !trip) {
@@ -181,124 +66,6 @@ export function BookingScreen({navigation, route}: Props) {
       </Box>
     );
   }
-
-  const handleIncrement = () => {
-    if (passengers < trip.availableSeats) {
-      setPassengers(passengers + 1);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (passengers > 1) setPassengers(passengers - 1);
-  };
-
-  const handleCPFChange = (value: string) => {
-    const formatted = formatCPFUtil(value);
-    setPassengerCPF(formatted);
-
-    // Limpa erro quando usuário começa a digitar
-    if (cpfError) {
-      setCpfError(null);
-    }
-
-    // Valida CPF quando completo (11 dígitos)
-    if (isCPFComplete(formatted)) {
-      if (!isValidCPF(formatted)) {
-        setCpfError('CPF inválido');
-      }
-    }
-  };
-
-  const validateCPF = (): boolean => {
-    if (!passengerCPF.trim()) {
-      setCpfError('CPF é obrigatório');
-      return false;
-    }
-
-    if (!isCPFComplete(passengerCPF)) {
-      setCpfError('CPF incompleto');
-      return false;
-    }
-
-    if (!isValidCPF(passengerCPF)) {
-      setCpfError('CPF inválido');
-      return false;
-    }
-
-    setCpfError(null);
-    return true;
-  };
-
-  const handleConfirmBooking = async () => {
-    // Validações
-    if (!passengerName.trim()) {
-      setShowNameErrorModal(true);
-      return;
-    }
-
-    // Valida CPF completo (com dígitos verificadores)
-    if (!validateCPF()) {
-      setCpfErrorMessage(cpfError || 'Por favor, informe um CPF válido');
-      setShowCpfErrorModal(true);
-      return;
-    }
-
-    try {
-      // Pega código do cupom se estiver validado
-      const couponCode = couponValidation.state.status === 'VALID'
-        ? couponValidation.state.data.code
-        : undefined;
-
-      const booking = await createBooking({
-        tripId: trip.id,
-        quantity: passengers,
-        paymentMethod,
-        couponCode,
-      });
-
-      // Navegar para tela de pagamento
-      navigation.replace('Payment', {
-        bookingId: booking.id,
-        amount: priceBreakdown?.finalPrice || 0,
-        paymentMethod,
-      });
-    } catch (_error: any) {
-      setBookingErrorMessage(_error.message || 'Não foi possível processar sua reserva. Tente novamente.');
-      setShowBookingErrorModal(true);
-    }
-  };
-
-  const paymentMethods = [
-    {
-      value: PaymentMethod.CREDIT_CARD,
-      label: 'Cartão de Crédito',
-      icon: 'credit-card',
-    },
-    {
-      value: PaymentMethod.DEBIT_CARD,
-      label: 'Cartão de Débito',
-      icon: 'credit-card',
-    },
-    {value: PaymentMethod.PIX, label: 'PIX', icon: 'qr-code'},
-    {value: PaymentMethod.CASH, label: 'Dinheiro', icon: 'payments'},
-  ];
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -317,7 +84,7 @@ export function BookingScreen({navigation, route}: Props) {
             alignItems="center"
             justifyContent="center"
             marginRight="s16"
-            onPress={() => navigation.goBack()}>
+            onPress={handleGoBack}>
             <Icon name="arrow-back" size={22} color="text" />
           </TouchableOpacityBox>
 
@@ -693,7 +460,7 @@ export function BookingScreen({navigation, route}: Props) {
         icon="error"
         iconColor="danger"
         buttonText="Entendi"
-        onClose={() => { setShowLoadErrorModal(false); navigation.goBack(); }}
+        onClose={handleCloseLoadErrorModal}
       />
 
       <InfoModal

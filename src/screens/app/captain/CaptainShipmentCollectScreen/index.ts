@@ -1,0 +1,1 @@
+export {CaptainShipmentCollectScreen} from './CaptainShipmentCollectScreen';

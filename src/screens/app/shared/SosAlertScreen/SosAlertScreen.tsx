@@ -1,8 +1,6 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTheme} from '@shopify/restyle';
 
 import {
@@ -14,105 +12,36 @@ import {
   TouchableOpacityBox,
   TextInput,
 } from '@components';
-import {
-  useSosAlert,
-  SosType,
-  SOS_TYPE_CONFIGS,
-  SosTypeConfig,
-} from '@domain';
-import {useToast} from '@hooks';
+import {SOS_TYPE_CONFIGS} from '@domain';
 import {formatPhone} from '@utils';
-import {AppStackParamList} from '@routes';
 import {Theme} from '@theme';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'SosAlert'>;
+import {useSosAlertScreen} from './useSosAlertScreen';
 
-export function SosAlertScreen({navigation, route}: Props) {
-  const {tripId} = route.params || {};
-  const {createAlert, cancelAlert, checkActiveAlert, activeAlert, isLoading} =
-    useSosAlert();
-  const toast = useToast();
+export function SosAlertScreen() {
   const {top} = useSafeAreaInsets();
   const theme = useTheme<Theme>();
-
-  const [selectedType, setSelectedType] = useState<SosType | null>(null);
-  const [description, setDescription] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [showConfirmSosModal, setShowConfirmSosModal] = useState(false);
-  const [showCancelSosModal, setShowCancelSosModal] = useState(false);
-
-  useEffect(() => {
-    checkActiveAlert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleSelectType = (type: SosType) => {
-    if (activeAlert) {
-      toast.showError('Você já possui um alerta SOS ativo');
-      return;
-    }
-    setSelectedType(type);
-  };
-
-  const handleCreateAlert = async () => {
-    if (!selectedType) {
-      toast.showError('Selecione o tipo de emergência');
-      return;
-    }
-
-    setShowConfirmSosModal(true);
-  };
-
-  const handleConfirmSos = async () => {
-    setShowConfirmSosModal(false);
-    setIsCreating(true);
-
-    try {
-      const alert = await createAlert(selectedType!, {
-        tripId,
-        description: description.trim() || undefined,
-        contactNumber: contactNumber.trim() || undefined,
-      });
-
-      toast.showSuccess(
-        `SOS acionado com sucesso! Código: ${alert.id.slice(0, 8).toUpperCase()}`,
-      );
-
-      // Resetar formulário
-      setSelectedType(null);
-      setDescription('');
-      setContactNumber('');
-
-      // Navegar para tela de emergência ativa (opcional)
-      // navigation.replace('ActiveSos', {alertId: alert.id});
-    } catch (error: any) {
-      toast.showError(
-        error?.message || 'Não foi possível acionar SOS. Tente novamente.',
-      );
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleCancelAlert = async () => {
-    if (!activeAlert) return;
-    setShowCancelSosModal(true);
-  };
-
-  const handleConfirmCancelSos = async () => {
-    setShowCancelSosModal(false);
-    try {
-      await cancelAlert(activeAlert!.id);
-      toast.showSuccess('Alerta SOS cancelado com sucesso');
-    } catch (error: any) {
-      toast.showError(
-        error?.message || 'Não foi possível cancelar o SOS.',
-      );
-    }
-  };
-
-  const sosTypes: SosTypeConfig[] = Object.values(SOS_TYPE_CONFIGS);
+  const {
+    navigation,
+    activeAlert,
+    isLoading,
+    selectedType,
+    description,
+    setDescription,
+    contactNumber,
+    setContactNumber,
+    isCreating,
+    showConfirmSosModal,
+    setShowConfirmSosModal,
+    showCancelSosModal,
+    setShowCancelSosModal,
+    sosTypes,
+    handleSelectType,
+    handleCreateAlert,
+    handleConfirmSos,
+    handleCancelAlert,
+    handleConfirmCancelSos,
+  } = useSosAlertScreen();
 
   if (isLoading) {
     return (
@@ -326,142 +255,142 @@ export function SosAlertScreen({navigation, route}: Props) {
             </Text>
           </Box>
         </Box>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <Box style={{padding: 20, paddingTop: 20}}>
-          {/* Subtítulo */}
-          <Box mb="s24">
-            <Text preset="paragraphMedium" color="textSecondary">
-              Selecione o tipo de emergência. Sua localização será compartilhada
-              com as autoridades.
-            </Text>
-          </Box>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <Box style={{padding: 20, paddingTop: 20}}>
+            {/* Subtítulo */}
+            <Box mb="s24">
+              <Text preset="paragraphMedium" color="textSecondary">
+                Selecione o tipo de emergência. Sua localização será compartilhada
+                com as autoridades.
+              </Text>
+            </Box>
 
-          {/* Tipos de Emergência */}
-          <Box mb="s24">
-            <Text preset="paragraphMedium" color="text" bold mb="s16">
-              Tipo de Emergência
-            </Text>
+            {/* Tipos de Emergência */}
+            <Box mb="s24">
+              <Text preset="paragraphMedium" color="text" bold mb="s16">
+                Tipo de Emergência
+              </Text>
 
-            {sosTypes.map(config => {
-              const isSelected = selectedType === config.type;
-              return (
-                <TouchableOpacityBox
-                  key={config.type}
-                  mb="s12"
-                  borderRadius="s12"
-                  padding="s16"
-                  onPress={() => handleSelectType(config.type)}
-                  style={{
-                    backgroundColor: isSelected ? config.bgColor : theme.colors.surface,
-                    borderWidth: isSelected ? 2 : 1,
-                    borderColor: isSelected ? config.color : theme.colors.border,
-                  }}>
-                  <Box flexDirection="row" alignItems="center">
-                    <Icon
-                      name={config.icon as any}
-                      size={28}
-                      color={isSelected ? (config.color as any) : 'textSecondary'}
-                    />
-                    <Box ml="s12" flex={1}>
-                      <Text
-                        preset="paragraphMedium"
-                        bold
-                        color={isSelected ? undefined : 'text'}
-                        style={isSelected ? {color: config.color} : undefined}>
-                        {config.label}
-                      </Text>
-                      <Text
-                        preset="paragraphCaptionSmall"
-                        mt="s4"
-                        color={isSelected ? undefined : 'textSecondary'}
-                        style={isSelected ? {color: config.color} : undefined}>
-                        {config.description}
-                      </Text>
-                    </Box>
-
-                    {isSelected && (
+              {sosTypes.map(config => {
+                const isSelected = selectedType === config.type;
+                return (
+                  <TouchableOpacityBox
+                    key={config.type}
+                    mb="s12"
+                    borderRadius="s12"
+                    padding="s16"
+                    onPress={() => handleSelectType(config.type)}
+                    style={{
+                      backgroundColor: isSelected ? config.bgColor : theme.colors.surface,
+                      borderWidth: isSelected ? 2 : 1,
+                      borderColor: isSelected ? config.color : theme.colors.border,
+                    }}>
+                    <Box flexDirection="row" alignItems="center">
                       <Icon
-                        name="check-circle"
-                        size={24}
-                        color={config.color as any}
+                        name={config.icon as any}
+                        size={28}
+                        color={isSelected ? (config.color as any) : 'textSecondary'}
                       />
-                    )}
-                  </Box>
-                </TouchableOpacityBox>
-              );
-            })}
-          </Box>
+                      <Box ml="s12" flex={1}>
+                        <Text
+                          preset="paragraphMedium"
+                          bold
+                          color={isSelected ? undefined : 'text'}
+                          style={isSelected ? {color: config.color} : undefined}>
+                          {config.label}
+                        </Text>
+                        <Text
+                          preset="paragraphCaptionSmall"
+                          mt="s4"
+                          color={isSelected ? undefined : 'textSecondary'}
+                          style={isSelected ? {color: config.color} : undefined}>
+                          {config.description}
+                        </Text>
+                      </Box>
 
-          {/* Descrição (opcional) */}
-          <Box mb="s16">
-            <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-              Descrição (opcional)
-            </Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Descreva a situação..."
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
+                      {isSelected && (
+                        <Icon
+                          name="check-circle"
+                          size={24}
+                          color={config.color as any}
+                        />
+                      )}
+                    </Box>
+                  </TouchableOpacityBox>
+                );
+              })}
+            </Box>
+
+            {/* Descrição (opcional) */}
+            <Box mb="s16">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+                Descrição (opcional)
+              </Text>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Descreva a situação..."
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </Box>
+
+            {/* Número de Contato (opcional) */}
+            <Box mb="s24">
+              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+                Número de Contato (opcional)
+              </Text>
+              <TextInput
+                value={contactNumber}
+                onChangeText={text => setContactNumber(formatPhone(text))}
+                placeholder="(00) 00000-0000"
+                keyboardType="phone-pad"
+                maxLength={15}
+              />
+            </Box>
+
+            {/* Botão Acionar SOS */}
+            <Button
+              title="ACIONAR SOS"
+              preset="primary"
+              onPress={handleCreateAlert}
+              loading={isCreating}
+              disabled={!selectedType || isCreating}
             />
+
+            {/* Link para Contatos de Emergência */}
+            <TouchableOpacityBox
+              mt="s16"
+              padding="s16"
+              backgroundColor="surface"
+              borderRadius="s12"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => navigation.navigate('EmergencyContacts')}>
+              <Icon name="contact-phone" size={20} color="primary" />
+              <Text preset="paragraphMedium" color="primary" ml="s8">
+                Ver Contatos de Emergência
+              </Text>
+            </TouchableOpacityBox>
           </Box>
+        </ScrollView>
 
-          {/* Número de Contato (opcional) */}
-          <Box mb="s24">
-            <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-              Número de Contato (opcional)
-            </Text>
-            <TextInput
-              value={contactNumber}
-              onChangeText={text => setContactNumber(formatPhone(text))}
-              placeholder="(00) 00000-0000"
-              keyboardType="phone-pad"
-              maxLength={15}
-            />
-          </Box>
-
-          {/* Botão Acionar SOS */}
-          <Button
-            title="ACIONAR SOS"
-            preset="primary"
-            onPress={handleCreateAlert}
-            loading={isCreating}
-            disabled={!selectedType || isCreating}
-          />
-
-          {/* Link para Contatos de Emergência */}
-          <TouchableOpacityBox
-            mt="s16"
-            padding="s16"
-            backgroundColor="surface"
-            borderRadius="s12"
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="center"
-            onPress={() => navigation.navigate('EmergencyContacts')}>
-            <Icon name="contact-phone" size={20} color="primary" />
-            <Text preset="paragraphMedium" color="primary" ml="s8">
-              Ver Contatos de Emergência
-            </Text>
-          </TouchableOpacityBox>
-        </Box>
-      </ScrollView>
-
-      <ConfirmationModal
-        visible={showConfirmSosModal}
-        title="Confirmar Emergência"
-        message="Você está prestes a acionar um alerta SOS. As autoridades serão notificadas da sua localização. Deseja continuar?"
-        icon="sos"
-        iconColor="danger"
-        confirmText="Acionar SOS"
-        cancelText="Cancelar"
-        onConfirm={handleConfirmSos}
-        onCancel={() => setShowConfirmSosModal(false)}
-      />
-    </Box>
+        <ConfirmationModal
+          visible={showConfirmSosModal}
+          title="Confirmar Emergência"
+          message="Você está prestes a acionar um alerta SOS. As autoridades serão notificadas da sua localização. Deseja continuar?"
+          icon="sos"
+          iconColor="danger"
+          confirmText="Acionar SOS"
+          cancelText="Cancelar"
+          onConfirm={handleConfirmSos}
+          onCancel={() => setShowConfirmSosModal(false)}
+        />
+      </Box>
     </KeyboardAvoidingView>
   );
 }

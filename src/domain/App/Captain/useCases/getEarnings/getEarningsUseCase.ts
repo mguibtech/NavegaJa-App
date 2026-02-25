@@ -1,6 +1,6 @@
-import {captainAPI} from '../../captainAPI';
+﻿import {captainService} from '../../captainService';
 import {EarningsResponse} from '../../captainTypes';
 
 export async function getEarningsUseCase(): Promise<EarningsResponse> {
-  return captainAPI.getEarnings();
+  return captainService.getEarnings();
 }

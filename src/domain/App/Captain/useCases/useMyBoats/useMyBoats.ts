@@ -1,25 +1,20 @@
-import {useState} from 'react';
+﻿import {useQuery} from '@tanstack/react-query';
 
-import {captainAPI} from '../../captainAPI';
+import {queryKeys} from '@infra';
+
+import {captainService} from '../../captainService';
 import {Boat} from '../../../Boat/boatTypes';
 
 export function useMyBoats() {
-  const [boats, setBoats] = useState<Boat[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<Boat[], Error>({
+    queryKey: queryKeys.captain.boats(),
+    queryFn: () => captainService.getMyBoats(),
+  });
 
-  async function fetchBoats() {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await captainAPI.getMyBoats();
-      setBoats(result);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return {boats, isLoading, error, fetchBoats};
+  return {
+    boats: query.data ?? [],
+    fetchBoats: query.refetch,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }

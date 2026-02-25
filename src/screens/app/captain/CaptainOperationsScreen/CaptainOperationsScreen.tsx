@@ -1,49 +1,23 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {ScrollView, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {format} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useCaptainTrips, useMyBoats, TripStatus} from '@domain';
 
-import {AppStackParamList, CaptainTabsParamList} from '@routes';
+import {useCaptainOperations} from './useCaptainOperations';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<CaptainTabsParamList, 'Operations'>,
-  NativeStackScreenProps<AppStackParamList>
->;
-
-const STATUS_CONFIG = {
-  [TripStatus.SCHEDULED]: {label: 'Agendada', color: 'warning' as const, bg: 'warningBg' as const},
-  [TripStatus.IN_PROGRESS]: {label: 'Em andamento', color: 'info' as const, bg: 'infoBg' as const},
-  [TripStatus.COMPLETED]: {label: 'Concluída', color: 'success' as const, bg: 'successBg' as const},
-  [TripStatus.CANCELLED]: {label: 'Cancelada', color: 'danger' as const, bg: 'dangerBg' as const},
-};
-
-export function CaptainOperationsScreen({navigation}: Props) {
+export function CaptainOperationsScreen() {
   const {top} = useSafeAreaInsets();
-  const {trips, isLoading: tripsLoading, fetchMyTrips} = useCaptainTrips();
-  const {boats, isLoading: boatsLoading, fetchBoats} = useMyBoats();
-
-  const isLoading = tripsLoading || boatsLoading;
-
-  useEffect(() => {
-    fetchMyTrips();
-    fetchBoats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function onRefresh() {
-    fetchMyTrips();
-    fetchBoats();
-  }
-
-  const recentTrips = trips.slice(0, 3);
+  const {
+    navigation,
+    trips,
+    boats,
+    isLoading,
+    recentTrips,
+    onRefresh,
+    formatDepartureStr,
+    STATUS_CONFIG,
+  } = useCaptainOperations();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -105,16 +79,7 @@ export function CaptainOperationsScreen({navigation}: Props) {
           <Box mb="s24">
             {recentTrips.map(trip => {
               const cfg = STATUS_CONFIG[trip.status];
-              let departureStr = '';
-              try {
-                departureStr = format(
-                  new Date(trip.departureAt),
-                  "dd/MM/yy 'às' HH:mm",
-                  {locale: ptBR},
-                );
-              } catch {
-                departureStr = trip.departureAt;
-              }
+              const departureStr = formatDepartureStr(trip.departureAt);
               return (
                 <TouchableOpacityBox
                   key={trip.id}

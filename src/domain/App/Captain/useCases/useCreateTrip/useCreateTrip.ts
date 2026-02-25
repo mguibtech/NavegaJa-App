@@ -1,25 +1,23 @@
-import {useState} from 'react';
+﻿import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {captainAPI} from '../../captainAPI';
+import {queryKeys} from '@infra';
+
+import {captainService} from '../../captainService';
 import {CreateTripData, Trip} from '../../../Trip/tripTypes';
 
 export function useCreateTrip() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function createTrip(data: CreateTripData): Promise<Trip> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await captainAPI.createTrip(data);
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const mutation = useMutation<Trip, Error, CreateTripData>({
+    mutationFn: (data: CreateTripData) => captainService.createTrip(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.captain.trips()});
+    },
+  });
 
-  return {createTrip, isLoading, error};
+  return {
+    createTrip: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
+  };
 }

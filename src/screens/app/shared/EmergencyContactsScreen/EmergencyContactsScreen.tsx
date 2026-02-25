@@ -1,33 +1,23 @@
-import React, {useState} from 'react';
-import {FlatList, Linking} from 'react-native';
+import React from 'react';
+import {FlatList} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, ConfirmationModal, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
-import {useEmergencyContacts} from '@domain';
-import {AppStackParamList} from '@routes';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'EmergencyContacts'>;
+import {useEmergencyContactsScreen} from './useEmergencyContactsScreen';
 
-export function EmergencyContactsScreen({}: Props) {
+export function EmergencyContactsScreen() {
   const {top} = useSafeAreaInsets();
-  const {contacts, isLoading} = useEmergencyContacts();
-
-  const [selectedContact, setSelectedContact] = useState<{name: string; number: string} | null>(null);
-  const [showDialerErrorModal, setShowDialerErrorModal] = useState(false);
-
-  const handleCallContact = async (name: string, number: string) => {
-    const url = `tel:${number}`;
-
-    const canOpen = await Linking.canOpenURL(url);
-
-    if (canOpen) {
-      setSelectedContact({name, number});
-    } else {
-      setShowDialerErrorModal(true);
-    }
-  };
+  const {
+    contacts,
+    isLoading,
+    selectedContact,
+    showDialerErrorModal,
+    setShowDialerErrorModal,
+    handleCallContact,
+    handleConfirmCall,
+    handleCancelCall,
+  } = useEmergencyContactsScreen();
 
   if (isLoading) {
     return (
@@ -149,13 +139,8 @@ export function EmergencyContactsScreen({}: Props) {
         iconColor="primary"
         confirmText="Ligar"
         cancelText="Cancelar"
-        onConfirm={() => {
-          if (selectedContact) {
-            Linking.openURL(`tel:${selectedContact.number}`);
-          }
-          setSelectedContact(null);
-        }}
-        onCancel={() => setSelectedContact(null)}
+        onConfirm={handleConfirmCall}
+        onCancel={handleCancelCall}
       />
 
       <InfoModal

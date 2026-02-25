@@ -1,3 +1,15 @@
 export {Router} from './Router';
-export type {AuthStackParamList} from './AuthStack';
-export type {AppStackParamList, TabsParamList, CaptainTabsParamList} from './AppStack';
+export type {
+  AuthStackParamList,
+  AppStackParamList,
+  PassengerStackParamList,
+  CaptainStackParamList,
+  TabsParamList,
+  CaptainTabsParamList,
+  AuthScreenProps,
+  AppScreenProps,
+  PassengerScreenProps,
+  CaptainScreenProps,
+  AppTabScreenProps,
+  CaptainTabScreenProps,
+} from './navigationTypes';

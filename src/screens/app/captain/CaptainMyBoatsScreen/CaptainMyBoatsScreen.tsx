@@ -1,56 +1,25 @@
-import React, {useCallback, useState} from 'react';
+import React from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useFocusEffect} from '@react-navigation/native';
-
 import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
-import {useMyBoats, useDeleteBoat, Boat} from '@domain';
-import {useToast} from '@hooks';
+import {Boat} from '@domain';
 
-import {AppStackParamList} from '@routes';
+import {useCaptainMyBoats} from './useCaptainMyBoats';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainMyBoats'>;
-
-export function CaptainMyBoatsScreen({navigation}: Props) {
+export function CaptainMyBoatsScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-
-  const {boats, isLoading, fetchBoats} = useMyBoats();
-  const {deleteBoat, isLoading: deleteLoading} = useDeleteBoat();
-
-  const [refreshing, setRefreshing] = useState(false);
-  const [boatToDelete, setBoatToDelete] = useState<Boat | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchBoats();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
-  );
-
-  async function onRefresh() {
-    setRefreshing(true);
-    try {
-      await fetchBoats();
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!boatToDelete) return;
-    try {
-      await deleteBoat(boatToDelete.id);
-      toast.showSuccess(`${boatToDelete.name} removida com sucesso`);
-      setBoatToDelete(null);
-      fetchBoats();
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao remover embarcação');
-      setBoatToDelete(null);
-    }
-  }
+  const {
+    navigation,
+    boats,
+    isLoading,
+    deleteLoading,
+    refreshing,
+    boatToDelete,
+    setBoatToDelete,
+    onRefresh,
+    handleDelete,
+  } = useCaptainMyBoats();
 
   function renderBoat({item: boat}: {item: Boat}) {
     const isRejected = !boat.isVerified && !!boat.rejectionReason;

@@ -1,318 +1,52 @@
-import React, {useState} from 'react';
-import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, ActionSheetIOS, Linking, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import React from 'react';
+import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
-import {useAuthStore} from '@store';
-import {useUpdateProfile, userAPI} from '@domain';
-import {useToast} from '@hooks';
-import {api} from '@api';
-import {apiImageSource, normalizeFileUrl} from '../../api/config';
-import {pickDocument, isDocumentPickerCancelled} from '../../native/documentPicker';
+import {apiImageSource} from '@api/config';
 
-import {AppStackParamList} from '@routes';
+import {AM_CITIES, useEditProfileScreen} from './useEditProfileScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'EditProfile'>;
-
-function formatCPF(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 3) {return digits;}
-  if (digits.length <= 6) {return `${digits.slice(0, 3)}.${digits.slice(3)}`;}
-  if (digits.length <= 9) {return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;}
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
-
-const AM_CITIES = [
-  'Manaus', 'Parintins', 'Itacoatiara', 'Tefé', 'Barreirinha', 'Coari',
-  'Maués', 'Tabatinga', 'Lábrea', 'Humaitá', 'Benjamin Constant',
-  'São Gabriel da Cachoeira', 'Borba', 'Autazes', 'Nova Olinda do Norte',
-  'Presidente Figueiredo', 'Iranduba', 'Manacapuru', 'Careiro', 'Anori',
-];
-
-export function EditProfileScreen({navigation}: Props) {
+export function EditProfileScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-  const {user, updateUser} = useAuthStore();
-  const {updateProfile, isLoading} = useUpdateProfile();
-
-  const isCaptain = user?.role === 'captain';
-
-  // Rastreia se documentos do capitão foram alterados (para aviso de re-aprovação)
-  const originalLicenseUrl = user?.licensePhotoUrl ?? null;
-  const originalCertificateUrl = user?.certificatePhotoUrl ?? null;
-
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [cpf, setCpf] = useState(formatCPF(user?.cpf || ''));
-  const [city, setCity] = useState(user?.city || 'Manaus');
-  const [showCityPicker, setShowCityPicker] = useState(false);
-
-  const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(
-    normalizeFileUrl(user?.licensePhotoUrl) || null,
-  );
-  const [licensePhotoType, setLicensePhotoType] = useState<'image' | 'pdf'>(
-    user?.licensePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
-  );
-  const [certificatePhotoUrl, setCertificatePhotoUrl] = useState<string | null>(
-    normalizeFileUrl(user?.certificatePhotoUrl) || null,
-  );
-  const [certificatePhotoType, setCertificatePhotoType] = useState<'image' | 'pdf'>(
-    user?.certificatePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
-  );
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
-  const [isUploadingLicense, setIsUploadingLicense] = useState(false);
-  const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
-
-  // Alterar senha
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showPasswordSection, setShowPasswordSection] = useState(false);
-
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const [showDocPicker, setShowDocPicker] = useState(false);
-  const [docPickerField, setDocPickerField] = useState<'license' | 'certificate' | null>(null);
-
-  function handleCpfChange(value: string) {
-    setCpf(formatCPF(value));
-  }
-
-  async function handleChangeAvatar() {
-    const options = ['Tirar foto', 'Escolher da galeria', 'Cancelar'];
-    const cancelIdx = 2;
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions({options, cancelButtonIndex: cancelIdx}, idx => {
-        if (idx === 0) pickAvatarFrom('camera');
-        if (idx === 1) pickAvatarFrom('gallery');
-      });
-    } else {
-      Alert.alert('Alterar foto', 'Escolha uma opção', [
-        {text: 'Tirar foto', onPress: () => pickAvatarFrom('camera')},
-        {text: 'Galeria', onPress: () => pickAvatarFrom('gallery')},
-        {text: 'Cancelar', style: 'cancel'},
-      ]);
-    }
-  }
-
-  async function pickAvatarFrom(source: 'camera' | 'gallery') {
-    setIsUploadingAvatar(true);
-    try {
-      const opts = {mediaType: 'photo' as const, quality: 0.8 as const, maxWidth: 512, maxHeight: 512};
-      const result = source === 'camera'
-        ? await launchCamera(opts)
-        : await launchImageLibrary(opts);
-
-      if (result.didCancel || !result.assets?.[0]) return;
-
-      const asset = result.assets[0];
-      const formData = new FormData();
-      formData.append('file', {uri: asset.uri ?? '', type: asset.type ?? 'image/jpeg', name: asset.fileName ?? 'avatar.jpg'} as any);
-
-      const response = await api.upload<{url: string}>('/upload/image?folder=avatars', formData);
-      const url = normalizeFileUrl(response.url);
-
-      await userAPI.updateAvatar(url);
-      setAvatarUrl(url);
-      updateUser({...user!, avatarUrl: url});
-      toast.showSuccess('Foto atualizada!');
-    } catch {
-      toast.showError('Não foi possível atualizar a foto.');
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  }
-
-  async function handleSaveDiceBearAvatar(dicebearUrl: string) {
-    setShowAvatarEditor(false);
-    setIsUploadingAvatar(true);
-    try {
-      await userAPI.updateAvatar(dicebearUrl);
-      setAvatarUrl(dicebearUrl);
-      updateUser({...user!, avatarUrl: dicebearUrl});
-      toast.showSuccess('Avatar atualizado!');
-    } catch {
-      toast.showError('Não foi possível salvar o avatar.');
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  }
-
-  function uploadCaptainDoc(field: 'license' | 'certificate') {
-    setDocPickerField(field);
-    setShowDocPicker(true);
-  }
-
-  function handleDocPickerOption(option: 'camera' | 'gallery' | 'pdf') {
-    const field = docPickerField;
-    setShowDocPicker(false);
-    setDocPickerField(null);
-    if (!field) return;
-    const setter = field === 'license' ? setIsUploadingLicense : setIsUploadingCertificate;
-    if (option === 'pdf') {
-      pickCaptainDocFromPdf(field, setter);
-    } else {
-      pickCaptainDocFrom(option, field, setter);
-    }
-  }
-
-  async function pickCaptainDocFromPdf(
-    field: 'license' | 'certificate',
-    setter: (v: boolean) => void,
-  ) {
-    setter(true);
-    try {
-      const doc = await pickDocument(['application/pdf']);
-      const formData = new FormData();
-      formData.append('file', {
-        uri: doc.uri,
-        type: doc.type || 'application/pdf',
-        name: doc.name || 'document.pdf',
-      } as any);
-
-      const response = await api.upload<{url: string}>(
-        '/upload/document?folder=documents',
-        formData,
-      );
-      const url = normalizeFileUrl(response.url);
-
-      if (field === 'license') {
-        setLicensePhotoUrl(url);
-        setLicensePhotoType('pdf');
-      } else {
-        setCertificatePhotoUrl(url);
-        setCertificatePhotoType('pdf');
-      }
-    } catch (error: any) {
-      if (!isDocumentPickerCancelled(error)) {
-        const msg = error?.message ?? 'Não foi possível fazer o upload do PDF';
-        toast.showError(msg);
-      }
-    } finally {
-      setter(false);
-    }
-  }
-
-  async function pickCaptainDocFrom(
-    source: 'camera' | 'gallery',
-    field: 'license' | 'certificate',
-    setter: (v: boolean) => void,
-  ) {
-    setter(true);
-    try {
-      const opts = {mediaType: 'photo' as const, quality: 0.8 as const, maxWidth: 1920, maxHeight: 1920};
-      const result = source === 'camera'
-        ? await launchCamera(opts)
-        : await launchImageLibrary(opts);
-      if (result.didCancel || !result.assets?.[0]) return;
-
-      const asset = result.assets[0];
-      const formData = new FormData();
-      formData.append('file', {
-        uri: asset.uri || '',
-        type: asset.type || 'image/jpeg',
-        name: asset.fileName || 'doc.jpg',
-      } as any);
-
-      const response = await api.upload<{url: string}>(
-        '/upload/document?folder=documents',
-        formData,
-      );
-      const url = normalizeFileUrl(response.url);
-
-      if (field === 'license') {
-        setLicensePhotoUrl(url);
-        setLicensePhotoType('image');
-      } else {
-        setCertificatePhotoUrl(url);
-        setCertificatePhotoType('image');
-      }
-    } catch {
-      Alert.alert('Erro', 'Não foi possível fazer o upload do documento');
-    } finally {
-      setter(false);
-    }
-  }
-
-  async function handleChangePassword() {
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-      toast.showError('Preencha todos os campos de senha.');
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.showError('A nova senha deve ter ao menos 6 caracteres.');
-      return;
-    }
-    if (newPassword !== confirmNewPassword) {
-      toast.showError('As senhas não conferem.');
-      return;
-    }
-    setIsChangingPassword(true);
-    try {
-      await userAPI.updatePassword({currentPassword, newPassword});
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
-      setShowPasswordSection(false);
-      toast.showSuccess('Senha alterada com sucesso!');
-    } catch (err: any) {
-      toast.showError(err?.message ?? 'Senha atual incorreta.');
-    } finally {
-      setIsChangingPassword(false);
-    }
-  }
-
-  const docsChanged = isCaptain && (
-    licensePhotoUrl !== originalLicenseUrl ||
-    certificatePhotoUrl !== originalCertificateUrl
-  );
-
-  async function handleSave() {
-    try {
-      const updatedUser = await updateProfile({
-        name: name.trim(),
-        email: email.trim() || undefined,
-        cpf: cpf.replace(/\D/g, '') || undefined,
-        city: city.trim() || undefined,
-        state: 'AM',
-        licensePhotoUrl: licensePhotoUrl ?? undefined,
-        certificatePhotoUrl: certificatePhotoUrl ?? undefined,
-      });
-
-      // PATCH /users/profile não retorna capabilities nem rejectionReason.
-      // Fazer merge explícito para não apagar esses campos do store.
-      updateUser({
-        ...user!,
-        ...updatedUser,
-        capabilities: updatedUser.capabilities !== undefined
-          ? updatedUser.capabilities
-          : (user?.capabilities ?? null),
-        rejectionReason: updatedUser.rejectionReason !== undefined
-          ? updatedUser.rejectionReason
-          : (user?.rejectionReason ?? null),
-      });
-      setShowSuccessModal(true);
-    } catch (err: any) {
-      setErrorMessage(
-        err?.message ||
-          'Não foi possível atualizar o perfil. Tente novamente.',
-      );
-      setShowErrorModal(true);
-    }
-  }
-
-  function handleSuccessClose() {
-    setShowSuccessModal(false);
-    navigation.goBack();
-  }
+  const {
+    navigation,
+    user,
+    isCaptain,
+    name, setName,
+    email, setEmail,
+    cpf,
+    city, setCity,
+    showCityPicker, setShowCityPicker,
+    licensePhotoUrl, setLicensePhotoUrl,
+    licensePhotoType, setLicensePhotoType,
+    certificatePhotoUrl, setCertificatePhotoUrl,
+    certificatePhotoType, setCertificatePhotoType,
+    avatarUrl,
+    isUploadingAvatar,
+    showAvatarEditor, setShowAvatarEditor,
+    isUploadingLicense,
+    isUploadingCertificate,
+    currentPassword, setCurrentPassword,
+    newPassword, setNewPassword,
+    confirmNewPassword, setConfirmNewPassword,
+    isChangingPassword,
+    showPasswordSection, setShowPasswordSection,
+    showSuccessModal,
+    showErrorModal, setShowErrorModal,
+    errorMessage,
+    showDocPicker, setShowDocPicker,
+    docsChanged,
+    isLoading,
+    handleCpfChange,
+    handleChangeAvatar,
+    handleSaveDiceBearAvatar,
+    uploadCaptainDoc,
+    handleDocPickerOption,
+    handleChangePassword,
+    handleSave,
+    handleSuccessClose,
+  } = useEditProfileScreen();
 
   return (
     <>
@@ -866,13 +600,14 @@ function CaptainDocField({
   onPress: () => void;
   onRemove: () => void;
 }) {
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewLoading, setPreviewLoading] = useState(true);
-  const [previewError, setPreviewError] = useState(false);
+  const [showPreview, setShowPreview] = React.useState(false);
+  const [previewLoading, setPreviewLoading] = React.useState(true);
+  const [previewError, setPreviewError] = React.useState(false);
 
   function handlePreview() {
     if (!photoUrl) {return;}
     if (isPdf) {
+      const {Linking} = require('react-native');
       Linking.openURL(photoUrl).catch(() =>
         Alert.alert('Erro', 'Não foi possível abrir o documento'),
       );

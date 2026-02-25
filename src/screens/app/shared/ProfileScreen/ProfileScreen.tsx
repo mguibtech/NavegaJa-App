@@ -1,71 +1,26 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal, UserAvatar} from '@components';
-import {getMyReviewsUseCase, MyReviewsResponse, Review} from '@domain';
-import {useAuthStore} from '@store';
-import {formatPhone} from '@utils';
+import {Review} from '@domain';
 
-import {AppStackParamList, TabsParamList} from '@routes';
+import {useProfileScreen, MENU_ITEMS, MENU_GROUPS} from './useProfileScreen';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabsParamList, 'Profile'>,
-  NativeStackScreenProps<AppStackParamList>
->;
-
-const MENU_ITEMS = [
-  {id: 'edit-profile', icon: 'edit', title: 'Editar Perfil', subtitle: 'Nome, email, cidade e senha', color: 'primary' as const},
-  {id: 'gamification', icon: 'stars', title: 'NavegaCoins', subtitle: 'Pontos, nível e ranking', color: 'primary' as const},
-  {id: 'my-reviews', icon: 'star-rate', title: 'Minhas Avaliações', subtitle: 'Avaliações enviadas e recebidas', color: 'secondary' as const},
-  {id: 'payment', icon: 'credit-card', title: 'Formas de Pagamento', subtitle: 'Gerencie seus métodos de pagamento', color: 'secondary' as const},
-  {id: 'notifications', icon: 'notifications', title: 'Notificações', subtitle: 'Preferências de notificação', color: 'primary' as const},
-  {id: 'help', icon: 'help-outline', title: 'Ajuda e Suporte', subtitle: 'Tire suas dúvidas', color: 'secondary' as const},
-  {id: 'terms', icon: 'description', title: 'Termos de Uso', subtitle: 'Leia nossos termos', color: 'primary' as const},
-  {id: 'privacy', icon: 'lock-outline', title: 'Política de Privacidade', subtitle: 'Entenda como usamos seus dados', color: 'secondary' as const},
-];
-
-const MENU_GROUPS = [
-  {title: 'Conta', items: ['edit-profile', 'gamification', 'my-reviews', 'payment', 'notifications']},
-  {title: 'Informações', items: ['help', 'terms', 'privacy']},
-];
-
-export function ProfileScreen({navigation}: Props) {
+export function ProfileScreen() {
   const {top} = useSafeAreaInsets();
-  const {user, logout} = useAuthStore();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [myReviews, setMyReviews] = useState<MyReviewsResponse | null>(null);
-
-  useEffect(() => {
-    getMyReviewsUseCase().then(setMyReviews).catch(() => {});
-  }, []);
-
-  function confirmLogout() {
-    setShowLogoutModal(false);
-    logout();
-  }
-
-  function handleMenuPress(itemId: string) {
-    switch (itemId) {
-      case 'edit-profile': navigation.navigate('EditProfile'); break;
-      case 'gamification': navigation.navigate('Gamification'); break;
-      case 'my-reviews': navigation.navigate('MyReviews'); break;
-      case 'payment': navigation.navigate('PaymentMethods'); break;
-      case 'notifications': navigation.navigate('Notifications'); break;
-      case 'help': navigation.navigate('Help'); break;
-      case 'terms': navigation.navigate('Terms'); break;
-      case 'privacy': navigation.navigate('Privacy'); break;
-    }
-  }
-
-  const isCaptain = user?.role === 'captain';
-  const ratingDisplay =
-    typeof user?.rating === 'number' ? user.rating.toFixed(1) : user?.rating || '5.0';
-  const receivedReviews = myReviews?.received ?? [];
+  const {
+    navigation,
+    user,
+    showLogoutModal,
+    setShowLogoutModal,
+    isCaptain,
+    ratingDisplay,
+    receivedReviews,
+    phoneDisplay,
+    confirmLogout,
+    handleMenuPress,
+  } = useProfileScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -136,7 +91,7 @@ export function ProfileScreen({navigation}: Props) {
               {user?.name}
             </Text>
             <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.8)'}} mt="s4">
-              {user?.phone ? formatPhone(user.phone) : ''}
+              {phoneDisplay}
             </Text>
             {!!user?.email && (
               <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)'}} mt="s4" numberOfLines={1}>

@@ -1,100 +1,39 @@
-import React, {useState, useEffect} from 'react';
-import {StyleSheet, Linking} from 'react-native';
+import React from 'react';
+import {StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Camera, useCameraDevice, useCodeScanner} from 'react-native-vision-camera';
+import {Camera} from 'react-native-vision-camera';
 
 import {Box, Button, Text, Icon, ConfirmationModal, InfoModal} from '@components';
-import {useCollectShipment} from '@domain';
-import {useToast} from '@hooks';
 
-import {AppStackParamList} from '@routes';
+import {useScanShipmentQRScreen} from './useScanShipmentQRScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'ScanShipmentQR'>;
-
-export function ScanShipmentQRScreen({navigation}: Props) {
+export function ScanShipmentQRScreen() {
   const {top} = useSafeAreaInsets();
-  const [hasPermission, setHasPermission] = useState(false);
-  const [isScanning, setIsScanning] = useState(true);
-  const [scannedData, setScannedData] = useState<{shipmentId: string; trackingCode?: string; validationCode?: string} | null>(null);
-
-  // Modal states
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [showInvalidQRModal, setShowInvalidQRModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const {collect, isLoading} = useCollectShipment();
-  const toast = useToast();
-
-  const device = useCameraDevice('back');
-
-  useEffect(() => {
-    checkCameraPermission();
-  }, []);
-
-  async function checkCameraPermission() {
-    const status = await Camera.requestCameraPermission();
-    setHasPermission(status === 'granted');
-
-    if (status === 'denied') {
-      setShowPermissionModal(true);
-    }
-  }
-
-  const codeScanner = useCodeScanner({
-    codeTypes: ['qr'],
-    onCodeScanned: codes => {
-      if (!isScanning || codes.length === 0) return;
-
-      const code = codes[0];
-      if (code?.value) {
-        setIsScanning(false);
-        handleQRCodeScanned(code.value);
-      }
-    },
-  });
-
-  async function handleQRCodeScanned(qrData: string) {
-    try {
-      // QR Code format: {"shipmentId": "uuid", "trackingCode": "NJ2024000123"}
-      const data = JSON.parse(qrData);
-
-      if (!data.shipmentId) {
-        setShowInvalidQRModal(true);
-        setIsScanning(true);
-        return;
-      }
-
-      setScannedData(data);
-      setShowConfirmModal(true);
-    } catch {
-      setShowInvalidQRModal(true);
-      setIsScanning(true);
-    }
-  }
-
-  async function confirmCollection() {
-    if (!scannedData) return;
-
-    setShowConfirmModal(false);
-
-    try {
-      // TODO: Implementar captura de foto opcional
-      const result = await collect(scannedData.shipmentId, scannedData.validationCode);
-
-      toast.showSuccess(result.message);
-
-      // Navegar para detalhes da encomenda
-      navigation.replace('ShipmentDetails', {shipmentId: scannedData.shipmentId});
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível coletar a encomenda');
-      setShowErrorModal(true);
-      setIsScanning(true);
-    }
-  }
+  const {
+    // Camera
+    device,
+    hasPermission,
+    isScanning,
+    codeScanner,
+    // State
+    scannedData,
+    isLoading,
+    // Handlers
+    handleGoBack,
+    confirmCollection,
+    handlePermissionConfirm,
+    handlePermissionCancel,
+    handleInvalidQRClose,
+    handleConfirmCancel,
+    handleErrorModalClose,
+    // Modal states
+    showPermissionModal,
+    showInvalidQRModal,
+    showConfirmModal,
+    showErrorModal,
+    errorMessage,
+  } = useScanShipmentQRScreen();
 
   if (!device || !hasPermission) {
     return (
@@ -119,7 +58,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
               title=""
               preset="outline"
               leftIcon="arrow-back"
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
             />
             <Text preset="headingSmall" color="text" bold ml="s12">
               Escanear QR Code
@@ -143,14 +82,8 @@ export function ScanShipmentQRScreen({navigation}: Props) {
           iconColor="warning"
           confirmText="Abrir Configurações"
           cancelText="Voltar"
-          onConfirm={() => {
-            setShowPermissionModal(false);
-            Linking.openSettings();
-          }}
-          onCancel={() => {
-            setShowPermissionModal(false);
-            navigation.goBack();
-          }}
+          onConfirm={handlePermissionConfirm}
+          onCancel={handlePermissionCancel}
         />
       </>
     );
@@ -183,7 +116,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
             title=""
             preset="outline"
             leftIcon="arrow-back"
-            onPress={() => navigation.goBack()}
+            onPress={handleGoBack}
           />
           <Text preset="headingSmall" color="text" bold ml="s12">
             Escanear QR Code
@@ -263,10 +196,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
         icon="qr-code-scanner"
         iconColor="danger"
         buttonText="Tentar Novamente"
-        onClose={() => {
-          setShowInvalidQRModal(false);
-          setIsScanning(true);
-        }}
+        onClose={handleInvalidQRClose}
       />
 
       {/* Confirm Collection Modal */}
@@ -280,11 +210,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
         cancelText="Cancelar"
         confirmPreset="primary"
         onConfirm={confirmCollection}
-        onCancel={() => {
-          setShowConfirmModal(false);
-          setScannedData(null);
-          setIsScanning(true);
-        }}
+        onCancel={handleConfirmCancel}
         isLoading={isLoading}
       />
 
@@ -296,10 +222,7 @@ export function ScanShipmentQRScreen({navigation}: Props) {
         icon="error-outline"
         iconColor="danger"
         buttonText="Entendi"
-        onClose={() => {
-          setShowErrorModal(false);
-          setErrorMessage('');
-        }}
+        onClose={handleErrorModalClose}
       />
     </>
   );

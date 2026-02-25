@@ -1,137 +1,63 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
   StyleSheet,
-  PermissionsAndroid,
-  Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import MapView, {
   Marker,
   Polyline,
   Circle,
   PROVIDER_GOOGLE,
-  MapType,
 } from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {
-  captainAPI,
-  weatherAPI,
-  REGION_COORDINATES,
-  Region,
-  NavigationSafetyAssessment,
-  WeatherAlert,
-  SafetyLevel,
-  AlertSeverity,
-  SAFETY_LEVEL_CONFIGS,
-} from '@domain';
-import {AppStackParamList} from '@routes';
+import {SAFETY_LEVEL_CONFIGS} from '@domain';
 
 import {
-  useFluvialNavigation,
   NavigationHUD,
-  Coordinate,
   AMAZON_DANGER_ZONES,
   DANGER_ZONE_FILL,
   DANGER_ZONE_STROKE,
   DANGER_ZONE_COLOR,
   DANGER_ZONE_ICON,
-} from './navigation';
+} from '../../navigation';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainTripLive'>;
+import {
+  useCaptainTripLive,
+  SAFETY_CIRCLE_COLORS,
+  ALERT_SEVERITY_COLORS,
+} from './useCaptainTripLive';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const DEFAULT_POSITION: Coordinate = {latitude: -3.119, longitude: -60.0217};
-const LOCATION_UPDATE_INTERVAL_MS = 30_000;
-
-const SAFETY_CIRCLE_COLORS: Record<SafetyLevel, {fill: string; stroke: string}> = {
-  [SafetyLevel.SAFE]: {fill: 'rgba(16,185,129,0.07)', stroke: 'rgba(16,185,129,0.25)'},
-  [SafetyLevel.CAUTION]: {fill: 'rgba(245,158,11,0.07)', stroke: 'rgba(245,158,11,0.25)'},
-  [SafetyLevel.WARNING]: {fill: 'rgba(239,68,68,0.09)', stroke: 'rgba(239,68,68,0.30)'},
-  [SafetyLevel.DANGER]: {fill: 'rgba(220,38,38,0.13)', stroke: 'rgba(220,38,38,0.45)'},
-};
-
-const ALERT_SEVERITY_COLORS: Record<AlertSeverity, string> = {
-  [AlertSeverity.INFO]: '#3B82F6',
-  [AlertSeverity.WARNING]: '#F59E0B',
-  [AlertSeverity.SEVERE]: '#EF4444',
-  [AlertSeverity.EXTREME]: '#7C3AED',
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function lookupCityCoords(cityName: string): Coordinate | null {
-  const normalized = cityName
-    .toLowerCase()
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-');
-  const entry = REGION_COORDINATES[normalized as Region];
-  return entry ? {latitude: entry.lat, longitude: entry.lng} : null;
-}
-
-/**
- * Build a simple river route between two cities.
- * Uses REGION_COORDINATES for endpoints.
- * In production, the backend would supply real river waypoints.
- */
-function buildRoute(origin: string, destination: string): Coordinate[] {
-  const a = lookupCityCoords(origin);
-  const b = lookupCityCoords(destination);
-  if (!a || !b) {return [];}
-  // Mid-point (in real app: river waypoints from backend)
-  const mid: Coordinate = {
-    latitude: (a.latitude + b.latitude) / 2,
-    longitude: (a.longitude + b.longitude) / 2,
-  };
-  return [a, mid, b];
-}
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
-export function CaptainTripLiveScreen({navigation, route}: Props) {
-  const {tripId, origin, destination} = route.params;
+export function CaptainTripLiveScreen() {
   const {top, bottom} = useSafeAreaInsets();
-
-  // Route polyline (derived from city coords)
-  const tripRoute = useMemo(() => buildRoute(origin, destination), [origin, destination]);
-  const originCoords = lookupCityCoords(origin);
-  const destCoords = lookupCityCoords(destination);
-
-  // Navigation state from hook
-  const {navState, updatePosition} = useFluvialNavigation(tripRoute);
-
-  // Map refs & controls
   const mapRef = useRef<MapView>(null);
-  const watchIdRef = useRef<number | null>(null);
-  const updateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const rawPositionRef = useRef<Coordinate | null>(null);
 
-  const [locationReady, setLocationReady] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [mapType, setMapType] = useState<MapType>('standard');
-  const [isCameraLocked, setIsCameraLocked] = useState(true);
-  const [isCompletingTrip, setIsCompletingTrip] = useState(false);
+  const {
+    origin,
+    destination,
+    tripRoute,
+    originCoords,
+    destCoords,
+    boatPosition,
+    navState,
+    locationReady,
+    lastUpdate,
+    mapType,
+    isCameraLocked,
+    setIsCameraLocked,
+    isCompletingTrip,
+    safetyAssessment,
+    weatherAlertMarkers,
+    safetyColors,
+    recenter,
+    toggleMapMode,
+    handleSOS,
+    handleCompleteTrip,
+    goBack,
+  } = useCaptainTripLive();
 
-  // Weather overlay
-  const [safetyAssessment, setSafetyAssessment] =
-    useState<NavigationSafetyAssessment | null>(null);
-  const [weatherAlerts, setWeatherAlerts] = useState<WeatherAlert[]>([]);
-
-  // Previous zone count for vibration alert
-  const prevZoneCountRef = useRef<number>(0);
-
-  // ── Effects ──────────────────────────────────────────────────────────────
-  useEffect(() => {
-    startTracking();
-    return () => stopTracking();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Camera follow with heading when locked
+  // Camera follow with heading when locked — needs mapRef from screen
   useEffect(() => {
     if (navState.smoothedPosition && isCameraLocked) {
       mapRef.current?.animateCamera(
@@ -140,203 +66,13 @@ export function CaptainTripLiveScreen({navigation, route}: Props) {
           heading: navState.heading,
           pitch: 25,
           zoom: 14,
-          altitude: 4000, // iOS
+          altitude: 4000,
         },
         {duration: 700},
       );
     }
   }, [navState.smoothedPosition, navState.heading, isCameraLocked]);
 
-  // Track zone count changes (vibration removed — needs VIBRATE permission + rebuild)
-  useEffect(() => {
-    prevZoneCountRef.current = navState.nearbyZones.length;
-  }, [navState.nearbyZones.length]);
-
-  // ── Location ──────────────────────────────────────────────────────────────
-  async function requestLocationPermission(): Promise<boolean> {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true;
-  }
-
-  async function startTracking() {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) {
-      const fallback = DEFAULT_POSITION;
-      rawPositionRef.current = fallback;
-      updatePosition(fallback);
-      setLocationReady(true);
-      loadWeatherData(fallback.latitude, fallback.longitude);
-      return;
-    }
-
-    Geolocation.getCurrentPosition(
-      pos => {
-        const coords: Coordinate = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        };
-        rawPositionRef.current = coords;
-        updatePosition(coords);
-        setLocationReady(true);
-        sendLocationUpdate(coords);
-        loadWeatherData(coords.latitude, coords.longitude);
-      },
-      () => {
-        rawPositionRef.current = DEFAULT_POSITION;
-        updatePosition(DEFAULT_POSITION);
-        setLocationReady(true);
-        loadWeatherData(DEFAULT_POSITION.latitude, DEFAULT_POSITION.longitude);
-      },
-      {enableHighAccuracy: false, timeout: 8000, maximumAge: 10000},
-    );
-
-    watchIdRef.current = Geolocation.watchPosition(
-      pos => {
-        const coords: Coordinate = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        };
-        rawPositionRef.current = coords;
-        updatePosition(coords);
-      },
-      () => {},
-      {enableHighAccuracy: true, distanceFilter: 20},
-    );
-
-    updateTimerRef.current = setInterval(() => {
-      if (rawPositionRef.current) {
-        sendLocationUpdate(rawPositionRef.current);
-      }
-    }, LOCATION_UPDATE_INTERVAL_MS);
-  }
-
-  function stopTracking() {
-    if (watchIdRef.current !== null) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    if (updateTimerRef.current) {
-      clearInterval(updateTimerRef.current);
-      updateTimerRef.current = null;
-    }
-  }
-
-  async function sendLocationUpdate(coords: Coordinate) {
-    try {
-      await captainAPI.updateTripLocation(tripId, coords.latitude, coords.longitude);
-      setLastUpdate(new Date());
-    } catch {
-      // silently retry on next interval
-    }
-  }
-
-  async function loadWeatherData(lat: number, lng: number) {
-    try {
-      const [safety, alerts] = await Promise.all([
-        weatherAPI.getNavigationSafety(lat, lng),
-        weatherAPI.getAlerts(lat, lng),
-      ]);
-      setSafetyAssessment(safety);
-      setWeatherAlerts(Array.isArray(alerts) ? alerts : []);
-    } catch {
-      // weather overlay is optional
-    }
-  }
-
-  // ── Map controls ──────────────────────────────────────────────────────────
-  function recenter() {
-    const pos = navState.smoothedPosition ?? rawPositionRef.current;
-    if (!pos) {return;}
-    setIsCameraLocked(true);
-    mapRef.current?.animateCamera(
-      {center: pos, heading: navState.heading, pitch: 25, zoom: 14, altitude: 4000},
-      {duration: 500},
-    );
-  }
-
-  function toggleMapMode() {
-    setMapType(prev => (prev === 'standard' ? 'satellite' : 'standard'));
-  }
-
-  function handleSOS() {
-    Alert.alert(
-      'Alerta SOS',
-      'Confirma envio de alerta de emergência?',
-      [
-        {text: 'Cancelar', style: 'cancel'},
-        {
-          text: 'Enviar SOS',
-          style: 'destructive',
-          onPress: () => navigation.navigate('SosAlert', {tripId}),
-        },
-      ],
-    );
-  }
-
-  function handleCompleteTrip() {
-    const label =
-      navState.progress >= 0.8 ? 'Confirmar Chegada' : 'Encerrar Viagem';
-    const message =
-      navState.progress >= 0.8
-        ? `Chegou em ${destination}? Confirme o encerramento da viagem.`
-        : 'Deseja encerrar a viagem antes de chegar ao destino?';
-
-    Alert.alert(label, message, [
-      {text: 'Cancelar', style: 'cancel'},
-      {
-        text: navState.progress >= 0.8 ? 'Confirmar Chegada' : 'Encerrar',
-        style: 'default',
-        onPress: async () => {
-          setIsCompletingTrip(true);
-          try {
-            await captainAPI.updateTripStatus(tripId, 'completed');
-            stopTracking();
-            Alert.alert('Viagem encerrada!', `Chegada em ${destination} registrada com sucesso.`, [
-              {text: 'OK', onPress: () => navigation.pop(1)},
-            ]);
-          } catch (err: any) {
-            Alert.alert(
-              'Erro',
-              err?.message || 'Não foi possível encerrar a viagem. Tente novamente.',
-            );
-            setIsCompletingTrip(false);
-          }
-        },
-      },
-    ]);
-  }
-
-  // ── Alert markers from weather API ───────────────────────────────────────
-  const weatherAlertMarkers: {
-    key: string;
-    coord: Coordinate;
-    severity: AlertSeverity;
-    event: string;
-  }[] = [];
-  const seenAlertCoords = new Set<string>();
-  for (const alert of weatherAlerts) {
-    for (const region of alert.regions) {
-      const c = lookupCityCoords(region);
-      if (!c) {continue;}
-      const key = `${c.latitude.toFixed(2)},${c.longitude.toFixed(2)}`;
-      if (seenAlertCoords.has(key)) {continue;}
-      seenAlertCoords.add(key);
-      weatherAlertMarkers.push({key: `${alert.id}-${region}`, coord: c, severity: alert.severity, event: alert.event});
-    }
-  }
-
-  const safetyColors = safetyAssessment
-    ? SAFETY_CIRCLE_COLORS[safetyAssessment.level]
-    : null;
-
-  const boatPosition = navState.smoothedPosition ?? rawPositionRef.current ?? DEFAULT_POSITION;
-
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Box flex={1}>
 
@@ -521,7 +257,7 @@ export function CaptainTripLiveScreen({navigation, route}: Props) {
           alignItems="center"
           justifyContent="center"
           mr="s12"
-          onPress={() => navigation.goBack()}>
+          onPress={goBack}>
           <Icon name="arrow-back" size={22} color="text" />
         </TouchableOpacityBox>
 
@@ -581,12 +317,12 @@ export function CaptainTripLiveScreen({navigation, route}: Props) {
           bottom={bottom}
           onSOS={handleSOS}
           onCompleteTrip={handleCompleteTrip}
-          onRecenter={recenter}
+          onRecenter={() => recenter(mapRef)}
           onToggleMapMode={toggleMapMode}
           onToggleCameraLock={() => {
             const next = !isCameraLocked;
             setIsCameraLocked(next);
-            if (next) {recenter();}
+            if (next) {recenter(mapRef);}
           }}
         />
       )}

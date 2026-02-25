@@ -1,0 +1,1 @@
+export {MyReviewsScreen} from './MyReviewsScreen';

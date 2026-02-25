@@ -1,39 +1,22 @@
-import {useState} from 'react';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {tripService} from '../tripService';
 import {PopularDestinationsResponse} from '../popularRoutesTypes';
 
 export function usePopularRoutes() {
-  const [data, setData] = useState<PopularDestinationsResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function fetch(): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await tripService.getPopular();
-      setData(result);
-      setIsLoading(false);
-    } catch (err) {
-      setError(err as Error);
-      setData(null);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  function clear() {
-    setData(null);
-    setError(null);
-  }
+  const queryClient = useQueryClient();
+  const query = useQuery<PopularDestinationsResponse, Error>({
+    queryKey: queryKeys.trips.popular(),
+    queryFn: () => tripService.getPopular(),
+  });
 
   return {
-    data,
-    fetch,
-    clear,
-    isLoading,
-    error,
+    data: query.data ?? null,
+    fetch: query.refetch,
+    clear: () => queryClient.removeQueries({queryKey: queryKeys.trips.popular()}),
+    isLoading: query.isLoading,
+    error: query.error,
   };
 }

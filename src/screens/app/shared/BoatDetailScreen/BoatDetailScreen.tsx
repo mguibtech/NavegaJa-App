@@ -1,16 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {ScrollView, ActivityIndicator, Image, FlatList} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {getReviewsByBoatUseCase, Review} from '@domain';
-import {API_BASE_URL, apiImageSource} from '../../api/config';
+import {Review} from '@domain';
+import {apiImageSource} from '@api/config';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'BoatDetail'>;
+import {useBoatDetailScreen} from './useBoatDetailScreen';
 
 const shadowCard = {
   shadowColor: '#000',
@@ -40,71 +36,29 @@ function RatingBar({label, value}: {label: string; value: number}) {
   );
 }
 
-export function BoatDetailScreen({navigation, route}: Props) {
+export function BoatDetailScreen() {
+  const {top} = useSafeAreaInsets();
   const {
-    boatId,
+    navigation,
     boatName,
     boatType,
     boatCapacity,
     boatModel,
     boatYear,
-    boatAmenities,
     boatRegistrationNum,
     boatIsVerified,
-    boatPhotoUrl,
-    boatCreatedAt,
-  } = route.params;
-  const {top} = useSafeAreaInsets();
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [photoError, setPhotoError] = useState(false);
-
-  useEffect(() => {
-    getReviewsByBoatUseCase(boatId)
-      .then(setReviews)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [boatId]);
-
-  const overallAvg =
-    reviews.length > 0
-      ? reviews
-          .filter(r => (r.boatRating ?? 0) > 0)
-          .reduce((sum, r) => sum + (r.boatRating ?? 0), 0) /
-        reviews.filter(r => (r.boatRating ?? 0) > 0).length
-      : 0;
-
-  const avgCleanliness = (() => {
-    const vals = reviews
-      .map(r => r.cleanlinessRating)
-      .filter((v): v is number => v != null && v > 0);
-    return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  })();
-
-  const avgComfort = (() => {
-    const vals = reviews
-      .map(r => r.comfortRating)
-      .filter((v): v is number => v != null && v > 0);
-    return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  })();
-
-  const addedSince = boatCreatedAt
-    ? new Date(boatCreatedAt).toLocaleDateString('pt-BR', {
-        month: 'long',
-        year: 'numeric',
-      })
-    : null;
-
-  const photoUri = boatPhotoUrl
-    ? boatPhotoUrl.startsWith('http')
-      ? boatPhotoUrl
-          .replace(/http:\/\/localhost(:\d+)?/, API_BASE_URL)
-          .replace(/http:\/\/127\.0\.0\.1(:\d+)?/, API_BASE_URL)
-      : `${API_BASE_URL}${boatPhotoUrl}`
-    : null;
-  const showPhoto = photoUri != null && !photoError;
-
-  const amenities = boatAmenities ?? [];
+    reviews,
+    loading,
+    photoError,
+    setPhotoError,
+    overallAvg,
+    avgCleanliness,
+    avgComfort,
+    addedSince,
+    photoUri,
+    showPhoto,
+    amenities,
+  } = useBoatDetailScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -152,7 +106,7 @@ export function BoatDetailScreen({navigation, route}: Props) {
               }}>
               {showPhoto ? (
                 <Image
-                  source={apiImageSource(photoUri)}
+                  source={apiImageSource(photoUri!)}
                   style={{width: 96, height: 96}}
                   onError={() => setPhotoError(true)}
                 />
@@ -389,7 +343,7 @@ export function BoatDetailScreen({navigation, route}: Props) {
                 </Text>
               </Box>
             ) : (
-              reviews.map((review, index) => {
+              reviews.map((review: Review, index: number) => {
                 const rating = review.boatRating ?? 0;
                 const reviewerName =
                   review.reviewer?.name?.split(' ')[0] ?? 'Passageiro';

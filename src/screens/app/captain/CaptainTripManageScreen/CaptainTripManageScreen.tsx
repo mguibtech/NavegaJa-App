@@ -1,114 +1,39 @@
-import React, {useCallback, useState} from 'react';
+import React from 'react';
 import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {format} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-
-import {useFocusEffect} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
-import {
-  useTripDetails,
-  useCompleteTrip,
-  TripStatus,
-  TripPassenger,
-  Shipment,
-  ShipmentStatus,
-  captainAPI,
-} from '@domain';
-import {useToast} from '@hooks';
+import {TripStatus, ShipmentStatus} from '@domain';
 import {formatBRL} from '@utils';
 
-import {AppStackParamList} from '@routes';
+import {
+  useCaptainTripManage,
+  STATUS_CONFIG,
+  SHIPMENT_STATUS_LABELS,
+} from './useCaptainTripManage';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainTripManage'>;
-
-const STATUS_CONFIG = {
-  [TripStatus.SCHEDULED]: {label: 'Agendada', color: 'warning' as const, bg: 'warningBg' as const},
-  [TripStatus.IN_PROGRESS]: {label: 'Em andamento', color: 'info' as const, bg: 'infoBg' as const},
-  [TripStatus.COMPLETED]: {label: 'Concluída', color: 'success' as const, bg: 'successBg' as const},
-  [TripStatus.CANCELLED]: {label: 'Cancelada', color: 'danger' as const, bg: 'dangerBg' as const},
-};
-
-const SHIPMENT_STATUS_LABELS: Record<string, string> = {
-  [ShipmentStatus.PENDING]: 'Pendente',
-  [ShipmentStatus.PAID]: 'Pago',
-  [ShipmentStatus.COLLECTED]: 'Coletado',
-  [ShipmentStatus.IN_TRANSIT]: 'Em trânsito',
-  [ShipmentStatus.ARRIVED]: 'Chegou',
-  [ShipmentStatus.OUT_FOR_DELIVERY]: 'Saiu p/ entrega',
-  [ShipmentStatus.DELIVERED]: 'Entregue',
-  [ShipmentStatus.CANCELLED]: 'Cancelado',
-};
-
-export function CaptainTripManageScreen({navigation, route}: Props) {
-  const {tripId} = route.params;
+export function CaptainTripManageScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-
-  const {trip, isLoading: tripLoading, getTripById: fetchTrip} = useTripDetails();
-  const {completeTrip, isLoading: completeLoading} = useCompleteTrip();
-
-  const [passengers, setPassengers] = useState<TripPassenger[]>([]);
-  const [passengersLoading, setPassengersLoading] = useState(false);
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [shipmentsLoading, setShipmentsLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadAll();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tripId]),
-  );
-
-  async function loadAll() {
-    fetchTrip(tripId);
-
-    setPassengersLoading(true);
-    captainAPI.getPassengers(tripId)
-      .then(r => setPassengers(r))
-      .catch(() => {})
-      .finally(() => setPassengersLoading(false));
-
-    setShipmentsLoading(true);
-    captainAPI.getTripShipments(tripId)
-      .then(r => setShipments(r))
-      .catch(() => {})
-      .finally(() => setShipmentsLoading(false));
-  }
-
-  async function onRefresh() {
-    setRefreshing(true);
-    try {
-      await loadAll();
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  async function handleCompleteTrip() {
-    setShowCompleteModal(false);
-    try {
-      await completeTrip(tripId);
-      toast.showSuccess('Viagem concluída!');
-      fetchTrip(tripId);
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao concluir viagem');
-    }
-  }
-
-  const isActionLoading = completeLoading;
-
-  function formatDate(dateStr: string) {
-    try {
-      return format(new Date(dateStr), "dd 'de' MMM 'às' HH:mm", {locale: ptBR});
-    } catch {
-      return dateStr;
-    }
-  }
+  const {
+    trip,
+    tripLoading,
+    passengers,
+    passengersLoading,
+    shipments,
+    shipmentsLoading,
+    refreshing,
+    completeLoading,
+    isActionLoading,
+    showCompleteModal,
+    setShowCompleteModal,
+    onRefresh,
+    handleCompleteTrip,
+    formatDate,
+    goBack,
+    navigateToChecklist,
+    navigateToShipmentCollect,
+    navigateToTripLive,
+  } = useCaptainTripManage();
 
   return (
     <>
@@ -127,7 +52,7 @@ export function CaptainTripManageScreen({navigation, route}: Props) {
               height={40}
               alignItems="center"
               justifyContent="center"
-              onPress={() => navigation.goBack()}
+              onPress={goBack}
               style={{position: 'absolute', left: 0}}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
@@ -324,9 +249,7 @@ export function CaptainTripManageScreen({navigation, route}: Props) {
                         mb="s8"
                         flexDirection="row"
                         alignItems="center"
-                        onPress={() =>
-                          navigation.navigate('CaptainShipmentCollect', {shipmentId: shipment.id})
-                        }>
+                        onPress={() => navigateToShipmentCollect(shipment.id)}>
                         <Icon name="inventory-2" size={20} color="primary" />
                         <Box flex={1} mx="s12">
                           <Text preset="paragraphSmall" color="text" bold>
@@ -360,7 +283,7 @@ export function CaptainTripManageScreen({navigation, route}: Props) {
             {trip.status === TripStatus.SCHEDULED && (
               <Button
                 title="Iniciar Viagem"
-                onPress={() => navigation.navigate('CaptainChecklist', {tripId})}
+                onPress={navigateToChecklist}
                 disabled={isActionLoading}
               />
             )}
@@ -368,13 +291,7 @@ export function CaptainTripManageScreen({navigation, route}: Props) {
               <>
                 <Button
                   title="Ver no Mapa"
-                  onPress={() =>
-                    navigation.navigate('CaptainTripLive', {
-                      tripId: trip.id,
-                      origin: trip.origin,
-                      destination: trip.destination,
-                    })
-                  }
+                  onPress={navigateToTripLive}
                   disabled={isActionLoading}
                   mb="s12"
                 />

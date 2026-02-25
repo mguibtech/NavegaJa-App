@@ -5,16 +5,13 @@
 import React from 'react';
 import {render, waitFor, act} from '@testing-library/react-native';
 import {ThemeProvider} from '@shopify/restyle';
-import {PaymentScreen} from '../../src/screens/app/PaymentScreen';
+import {PaymentScreen} from '../../src/screens/app/passenger/PaymentScreen/PaymentScreen';
 import {bookingAPI} from '../../src/domain/App/Booking/bookingAPI';
 import {PaymentMethod, PaymentStatus, BookingStatus} from '../../src/domain';
 import {theme} from '../../src/theme';
 
 // Mock dependencies
 jest.mock('../../src/domain/App/Booking/bookingAPI');
-jest.mock('@react-navigation/native-stack', () => ({
-  ...jest.requireActual('@react-navigation/native-stack'),
-}));
 
 const mockNavigation = {
   navigate: jest.fn(),
@@ -23,12 +20,20 @@ const mockNavigation = {
 } as any;
 
 const mockRoute = {
+  key: 'Payment',
+  name: 'Payment',
   params: {
     bookingId: 'booking-123',
     amount: 100,
     paymentMethod: PaymentMethod.PIX,
   },
 } as any;
+
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => mockNavigation,
+  useRoute: () => mockRoute,
+}));
 
 const mockToast = {
   showSuccess: jest.fn(),
@@ -77,7 +82,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 
       const {getByText} = renderWithTheme(
-        <PaymentScreen navigation={mockNavigation} route={mockRoute} />,
+        <PaymentScreen />,
       );
 
       await waitFor(() => {
@@ -110,7 +115,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 
       const {getByText} = renderWithTheme(
-        <PaymentScreen navigation={mockNavigation} route={mockRoute} />,
+        <PaymentScreen />,
       );
 
       await waitFor(() => {
@@ -144,7 +149,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
       (bookingAPI.getPaymentStatus as jest.Mock).mockResolvedValue(mockPaymentStatus);
 
-      renderWithTheme(<PaymentScreen navigation={mockNavigation} route={mockRoute} />);
+      renderWithTheme(<PaymentScreen />);
 
       // Aguardar o booking ser carregado e o polling iniciar
       await waitFor(() => {
@@ -197,7 +202,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getPaymentStatus as jest.Mock).mockResolvedValue(mockPaymentStatusPaid);
 
       const {getByText} = renderWithTheme(
-        <PaymentScreen navigation={mockNavigation} route={mockRoute} />,
+        <PaymentScreen />,
       );
 
       // Aguardar o booking ser carregado
@@ -230,7 +235,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 
       const {getByText} = renderWithTheme(
-        <PaymentScreen navigation={mockNavigation} route={mockRoute} />,
+        <PaymentScreen />,
       );
 
       // Aguardar o booking ser carregado
@@ -260,6 +265,8 @@ describe('PaymentScreen', () => {
       } as any;
 
       const routeCash = {
+        key: 'Payment',
+        name: 'Payment',
         params: {
           bookingId: 'booking-123',
           amount: 100,
@@ -267,9 +274,12 @@ describe('PaymentScreen', () => {
         },
       } as any;
 
+      // Override useRoute mock for this test to use CASH route params
+      jest.spyOn(require('@react-navigation/native'), 'useRoute').mockReturnValueOnce(routeCash);
+
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 
-      renderWithTheme(<PaymentScreen navigation={mockNavigation} route={routeCash} />);
+      renderWithTheme(<PaymentScreen />);
 
       await waitFor(() => {
         expect(mockNavigation.replace).toHaveBeenCalledWith('Ticket', {
@@ -283,7 +293,7 @@ describe('PaymentScreen', () => {
     it('should show error and go back when booking fails to load', async () => {
       (bookingAPI.getById as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      renderWithTheme(<PaymentScreen navigation={mockNavigation} route={mockRoute} />);
+      renderWithTheme(<PaymentScreen />);
 
       await waitFor(() => {
         expect(mockToast.showError).toHaveBeenCalledWith('Erro ao carregar dados de pagamento');
@@ -305,7 +315,7 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
       (bookingAPI.getPaymentStatus as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      renderWithTheme(<PaymentScreen navigation={mockNavigation} route={mockRoute} />);
+      renderWithTheme(<PaymentScreen />);
 
       // Aguardar o booking ser carregado
       await waitFor(() => {

@@ -1,90 +1,12 @@
-import React, {useState} from 'react';
-import {ScrollView, Linking} from 'react-native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import React from 'react';
+import {ScrollView} from 'react-native';
 
 import {Box, Button, Text, Icon, TouchableOpacityBox} from '@components';
 
-import {AppStackParamList} from '@routes';
+import {useHelpScreen} from './useHelpScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'Help'>;
-
-const FAQ_ITEMS = [
-  {
-    question: 'Como faço uma reserva?',
-    answer:
-      'Acesse a aba "Buscar", insira origem e destino, selecione a viagem desejada e clique em "Reservar Assentos". Escolha os assentos, forma de pagamento e finalize.',
-  },
-  {
-    question: 'Posso cancelar minha reserva?',
-    answer:
-      'Sim! Acesse "Minhas Reservas", selecione a viagem e clique em "Cancelar Reserva". Consulte nossa política de reembolso nos Termos de Uso.',
-  },
-  {
-    question: 'Como enviar uma encomenda?',
-    answer:
-      'Acesse a aba "Encomendas", clique em "+" para criar nova encomenda. Busque a viagem, preencha os dados do destinatário e detalhes da carga.',
-  },
-  {
-    question: 'Como rastreio minha encomenda?',
-    answer:
-      'Em "Encomendas", clique na encomenda desejada. Você verá o código de rastreamento e pode acompanhar o status em tempo real.',
-  },
-  {
-    question: 'Quais formas de pagamento aceitas?',
-    answer:
-      'Aceitamos PIX e cartões de crédito. O pagamento via PIX é instantâneo. Para cartão, o processamento pode levar alguns minutos.',
-  },
-  {
-    question: 'Como aplicar um cupom de desconto?',
-    answer:
-      'Durante a reserva ou criação de encomenda, você verá o campo "Cupom de Desconto". Digite o código e clique em "Aplicar" para ver o desconto.',
-  },
-  {
-    question: 'Não recebi meu QR Code',
-    answer:
-      'Verifique sua conexão com internet e acesse "Minhas Reservas" ou "Encomendas". Se o problema persistir, entre em contato com o suporte.',
-  },
-  {
-    question: 'Como avaliar minha viagem?',
-    answer:
-      'Após a viagem, acesse "Minhas Reservas", selecione a viagem concluída e clique em "Avaliar Viagem". Sua opinião é muito importante!',
-  },
-];
-
-const CONTACT_OPTIONS = [
-  {
-    id: 'whatsapp',
-    icon: 'whatsapp',
-    title: 'WhatsApp',
-    subtitle: '(92) 99999-9999',
-    color: 'success' as const,
-    action: () => Linking.openURL('https://wa.me/5592999999999'),
-  },
-  {
-    id: 'email',
-    icon: 'email',
-    title: 'Email',
-    subtitle: 'contato@navegaja.com.br',
-    color: 'primary' as const,
-    action: () => Linking.openURL('mailto:contato@navegaja.com.br'),
-  },
-  {
-    id: 'instagram',
-    icon: 'camera-alt',
-    title: 'Instagram',
-    subtitle: '@navegaja',
-    color: 'secondary' as const,
-    action: () => Linking.openURL('https://instagram.com/navegaja'),
-  },
-];
-
-export function HelpScreen({navigation}: Props) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
-  function toggleFAQ(index: number) {
-    setExpandedIndex(expandedIndex === index ? null : index);
-  }
+export function HelpScreen() {
+  const {navigation, expandedIndex, toggleFAQ, faqItems, contactOptions} = useHelpScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -123,7 +45,7 @@ export function HelpScreen({navigation}: Props) {
             Perguntas Frequentes
           </Text>
 
-          {FAQ_ITEMS.map((item, index) => (
+          {faqItems.map((item, index) => (
             <TouchableOpacityBox
               key={index}
               backgroundColor="surface"
@@ -168,7 +90,7 @@ export function HelpScreen({navigation}: Props) {
             Entre em Contato
           </Text>
 
-          {CONTACT_OPTIONS.map(option => (
+          {contactOptions.map(option => (
             <TouchableOpacityBox
               key={option.id}
               flexDirection="row"

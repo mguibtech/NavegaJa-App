@@ -6,12 +6,9 @@ import {RegisterScreen} from '../screens/auth/RegisterScreen';
 import {ForgotPasswordScreen} from '../screens/auth/ForgotPasswordScreen';
 import {ResetPasswordScreen} from '../screens/auth/ResetPasswordScreen';
 
-export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  ForgotPassword: undefined;
-  ResetPassword: {email: string};
-};
+import type {AuthStackParamList} from './navigationTypes';
+
+export type {AuthStackParamList} from './navigationTypes';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 

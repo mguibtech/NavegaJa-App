@@ -5,9 +5,8 @@
 import React from 'react';
 import {render, waitFor} from '@testing-library/react-native';
 import {ThemeProvider} from '@shopify/restyle';
-import {NavigationContainer} from '@react-navigation/native';
 
-import {CreateShipmentScreen} from '../../src/screens/app/CreateShipmentScreen';
+import {CreateShipmentScreen} from '../../src/screens/app/passenger/CreateShipmentScreen/CreateShipmentScreen';
 import {tripAPI} from '../../src/domain';
 import {theme} from '../../src/theme';
 
@@ -39,6 +38,12 @@ const mockRoute = {
   params: {tripId: 'trip-1'},
   path: undefined,
 };
+
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => mockNavigation,
+  useRoute: () => mockRoute,
+}));
 
 // Mock tripAPI
 jest.mock('../../src/domain/App/Trip/tripAPI');
@@ -80,9 +85,7 @@ jest.mock('../../src/domain/App/Discount/useCases/useCouponValidation', () => ({
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <NavigationContainer>
-      <ThemeProvider theme={theme}>{component}</ThemeProvider>
-    </NavigationContainer>,
+    <ThemeProvider theme={theme}>{component}</ThemeProvider>,
   );
 };
 
@@ -113,10 +116,7 @@ describe('CreateShipmentScreen', () => {
     );
 
     const {getByText} = renderWithProviders(
-      <CreateShipmentScreen
-        navigation={mockNavigation as any}
-        route={mockRoute}
-      />,
+      <CreateShipmentScreen />,
     );
 
     expect(getByText('Carregando...')).toBeTruthy();
@@ -126,10 +126,7 @@ describe('CreateShipmentScreen', () => {
     (tripAPI.getById as jest.Mock).mockRejectedValue(new Error('Trip not found'));
 
     const {queryByText} = renderWithProviders(
-      <CreateShipmentScreen
-        navigation={mockNavigation as any}
-        route={mockRoute}
-      />,
+      <CreateShipmentScreen />,
     );
 
     await waitFor(() => {
@@ -145,10 +142,7 @@ describe('CreateShipmentScreen', () => {
     (tripAPI.getById as jest.Mock).mockResolvedValue(mockTrip);
 
     renderWithProviders(
-      <CreateShipmentScreen
-        navigation={mockNavigation as any}
-        route={mockRoute}
-      />,
+      <CreateShipmentScreen />,
     );
 
     await waitFor(() => {

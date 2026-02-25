@@ -1,67 +1,26 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
 import {weatherService} from '../weatherService';
 import {CurrentWeather, Region} from '../weatherTypes';
 
 export function useWeather() {
-  const [weather, setWeather] = useState<CurrentWeather | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const regionMutation = useMutation<CurrentWeather, Error, Region>({
+    mutationFn: (region: Region) => weatherService.getRegionWeather(region),
+  });
 
-  /**
-   * Busca clima de uma região
-   */
-  async function fetchRegionWeather(region: Region): Promise<CurrentWeather> {
-    setIsLoading(true);
-    setError(null);
+  const coordsMutation = useMutation<CurrentWeather, Error, {lat: number; lng: number}>({
+    mutationFn: ({lat, lng}) => weatherService.getCurrentWeather(lat, lng),
+  });
 
-    try {
-      const data = await weatherService.getRegionWeather(region);
-      setWeather(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Busca clima por coordenadas
-   */
-  async function fetchCurrentWeather(
-    lat: number,
-    lng: number,
-  ): Promise<CurrentWeather> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await weatherService.getCurrentWeather(lat, lng);
-      setWeather(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Limpa dados do clima
-   */
-  function clearWeather() {
-    setWeather(null);
-    setError(null);
-  }
+  const weather = regionMutation.data ?? coordsMutation.data ?? null;
+  const isLoading = regionMutation.isPending || coordsMutation.isPending;
+  const error = regionMutation.error ?? coordsMutation.error;
 
   return {
     weather,
-    fetchRegionWeather,
-    fetchCurrentWeather,
-    clearWeather,
+    fetchRegionWeather: regionMutation.mutateAsync,
+    fetchCurrentWeather: (lat: number, lng: number) => coordsMutation.mutateAsync({lat, lng}),
+    clearWeather: () => { regionMutation.reset(); coordsMutation.reset(); },
     isLoading,
     error,
   };

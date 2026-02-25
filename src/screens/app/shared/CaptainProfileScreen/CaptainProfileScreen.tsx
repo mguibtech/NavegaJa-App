@@ -1,16 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {ScrollView, ActivityIndicator, Image} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {getReviewsByCaptainUseCase, Review} from '@domain';
-import {API_BASE_URL, apiImageSource} from '../../api/config';
+import {Review} from '@domain';
+import {apiImageSource} from '@api/config';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainProfile'>;
+import {useCaptainProfileScreen} from './useCaptainProfileScreen';
 
 const shadowCard = {
   shadowColor: '#000',
@@ -40,67 +36,26 @@ function RatingBar({label, value}: {label: string; value: number}) {
   );
 }
 
-export function CaptainProfileScreen({navigation, route}: Props) {
+export function CaptainProfileScreen() {
+  const {top} = useSafeAreaInsets();
   const {
-    captainId,
+    navigation,
     captainName,
-    captainRating,
     captainTotalTrips,
     captainLevel,
-    captainCreatedAt,
-    captainAvatarUrl,
     captainIsVerified,
     captainHasLicensePhoto,
-  } = route.params;
-  const {top} = useSafeAreaInsets();
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [avatarError, setAvatarError] = useState(false);
-
-  useEffect(() => {
-    getReviewsByCaptainUseCase(captainId)
-      .then(setReviews)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [captainId]);
-
-  const overallAvg =
-    reviews.length > 0
-      ? reviews.reduce((sum, r) => sum + (r.captainRating ?? r.passengerRating ?? 0), 0) /
-        reviews.length
-      : captainRating
-      ? Number(captainRating)
-      : 0;
-
-  const avgPunctuality = (() => {
-    const vals = reviews
-      .map(r => r.punctualityRating)
-      .filter((v): v is number => v != null && v > 0);
-    return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  })();
-
-  const avgCommunication = (() => {
-    const vals = reviews
-      .map(r => r.communicationRating)
-      .filter((v): v is number => v != null && v > 0);
-    return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  })();
-
-  const memberSince = captainCreatedAt
-    ? new Date(captainCreatedAt).toLocaleDateString('pt-BR', {
-        month: 'long',
-        year: 'numeric',
-      })
-    : null;
-
-  const avatarUri = captainAvatarUrl
-    ? captainAvatarUrl.startsWith('http')
-      ? captainAvatarUrl
-          .replace(/http:\/\/localhost(:\d+)?/, API_BASE_URL)
-          .replace(/http:\/\/127\.0\.0\.1(:\d+)?/, API_BASE_URL)
-      : `${API_BASE_URL}${captainAvatarUrl}`
-    : null;
-  const showAvatar = avatarUri != null && !avatarError;
+    reviews,
+    loading,
+    avatarError,
+    setAvatarError,
+    overallAvg,
+    avgPunctuality,
+    avgCommunication,
+    memberSince,
+    avatarUri,
+    showAvatar,
+  } = useCaptainProfileScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -148,7 +103,7 @@ export function CaptainProfileScreen({navigation, route}: Props) {
               }}>
               {showAvatar ? (
                 <Image
-                  source={apiImageSource(avatarUri)}
+                  source={apiImageSource(avatarUri!)}
                   style={{width: 88, height: 88}}
                   onError={() => setAvatarError(true)}
                 />
@@ -182,7 +137,6 @@ export function CaptainProfileScreen({navigation, route}: Props) {
 
             {/* Chips */}
             <Box flexDirection="row" flexWrap="wrap" justifyContent="center" gap="s8">
-              {/* Badge de verificação */}
               {captainIsVerified && (
                 <Box
                   backgroundColor="successBg"
@@ -341,7 +295,7 @@ export function CaptainProfileScreen({navigation, route}: Props) {
                 </Text>
               </Box>
             ) : (
-              reviews.map((review, index) => {
+              reviews.map((review: Review, index: number) => {
                 const rating = review.captainRating ?? 0;
                 const comment = review.captainComment ?? review.passengerComment;
                 const reviewerName =

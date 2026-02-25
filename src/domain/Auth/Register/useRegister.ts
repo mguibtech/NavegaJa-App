@@ -1,43 +1,17 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
-import {authStorage} from '@services';
-
-import {registerAPI} from './registerAPI';
-import {registerAdapter} from './registerAdapter';
+import {registerService} from './registerService';
 import {RegisterRequest} from './registerTypes';
 import {User} from '../User/userTypes';
 
 export function useRegister() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  async function register(data: RegisterRequest): Promise<User> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await registerAPI.execute(data);
-
-      const user = registerAdapter.toUser(response);
-      const {token, refreshToken} = registerAdapter.toTokens(response);
-
-      await authStorage.saveToken(token);
-      await authStorage.saveRefreshToken(refreshToken);
-      await authStorage.saveUser(user);
-
-      setIsLoading(false);
-      return user;
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      setIsLoading(false);
-      throw error;
-    }
-  }
+  const mutation = useMutation<User, Error, RegisterRequest>({
+    mutationFn: (data: RegisterRequest) => registerService.execute(data),
+  });
 
   return {
-    register,
-    isLoading,
-    error,
+    register: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

@@ -1,68 +1,29 @@
-import React, {useCallback, useState} from 'react';
+import React from 'react';
 import {FlatList, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {format} from 'date-fns';
-import {ptBR} from 'date-fns/locale';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useFocusEffect} from '@react-navigation/native';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {useCaptainTrips, Trip, TripStatus} from '@domain';
+import {Trip} from '@domain';
 
-import {AppStackParamList} from '@routes';
+import {useCaptainMyTrips, FilterTab} from './useCaptainMyTrips';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainMyTrips'>;
-
-const STATUS_CONFIG = {
-  [TripStatus.SCHEDULED]: {label: 'Agendada', color: 'warning' as const, bg: 'warningBg' as const, icon: 'schedule' as const},
-  [TripStatus.IN_PROGRESS]: {label: 'Em andamento', color: 'info' as const, bg: 'infoBg' as const, icon: 'directions-boat' as const},
-  [TripStatus.COMPLETED]: {label: 'Concluída', color: 'success' as const, bg: 'successBg' as const, icon: 'check-circle' as const},
-  [TripStatus.CANCELLED]: {label: 'Cancelada', color: 'danger' as const, bg: 'dangerBg' as const, icon: 'cancel' as const},
-};
-
-type FilterTab = 'all' | 'active' | 'completed';
-
-export function CaptainMyTripsScreen({navigation}: Props) {
+export function CaptainMyTripsScreen() {
   const {top} = useSafeAreaInsets();
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
-  const [refreshing, setRefreshing] = useState(false);
-  const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchMyTrips();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
-  );
-
-  async function onRefresh() {
-    setRefreshing(true);
-    try {
-      await fetchMyTrips();
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  const filteredTrips = trips.filter(trip => {
-    if (filterTab === 'active') {
-      return trip.status === TripStatus.SCHEDULED || trip.status === TripStatus.IN_PROGRESS;
-    }
-    if (filterTab === 'completed') {
-      return trip.status === TripStatus.COMPLETED || trip.status === TripStatus.CANCELLED;
-    }
-    return true;
-  });
+  const {
+    navigation,
+    filterTab,
+    setFilterTab,
+    refreshing,
+    isLoading,
+    filteredTrips,
+    onRefresh,
+    formatDepartureStr,
+    STATUS_CONFIG,
+  } = useCaptainMyTrips();
 
   function renderTrip({item: trip}: {item: Trip}) {
     const cfg = STATUS_CONFIG[trip.status];
-    let departureStr = '';
-    try {
-      departureStr = format(new Date(trip.departureAt), "dd 'de' MMM, HH:mm", {locale: ptBR});
-    } catch {
-      departureStr = trip.departureAt;
-    }
+    const departureStr = formatDepartureStr(trip);
 
     return (
       <TouchableOpacityBox

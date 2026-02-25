@@ -9,7 +9,7 @@ import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget} from '@components';
-import {apiImageSource} from '../../api/config';
+import {apiImageSource} from '@api/config';
 import {useAuthStore} from '@store';
 import {useMyBookings} from '@domain';
 import {usePopularRoutes} from '@domain';

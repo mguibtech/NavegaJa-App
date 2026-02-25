@@ -1,69 +1,26 @@
-import {useState} from 'react';
+import {useMutation} from '@tanstack/react-query';
 
 import {weatherService} from '../weatherService';
 import {NavigationSafetyAssessment, Region} from '../weatherTypes';
 
 export function useNavigationSafety() {
-  const [safety, setSafety] = useState<NavigationSafetyAssessment | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const coordsMutation = useMutation<NavigationSafetyAssessment, Error, {lat: number; lng: number}>({
+    mutationFn: ({lat, lng}) => weatherService.getNavigationSafety(lat, lng),
+  });
 
-  /**
-   * Avalia segurança por coordenadas
-   */
-  async function assess(
-    lat: number,
-    lng: number,
-  ): Promise<NavigationSafetyAssessment> {
-    setIsLoading(true);
-    setError(null);
+  const regionMutation = useMutation<NavigationSafetyAssessment, Error, Region>({
+    mutationFn: (region: Region) => weatherService.getRegionNavigationSafety(region),
+  });
 
-    try {
-      const data = await weatherService.getNavigationSafety(lat, lng);
-      setSafety(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Avalia segurança de uma região
-   */
-  async function assessRegion(
-    region: Region,
-  ): Promise<NavigationSafetyAssessment> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await weatherService.getRegionNavigationSafety(region);
-      setSafety(data);
-      setIsLoading(false);
-      return data;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
-
-  /**
-   * Limpa avaliação de segurança
-   */
-  function clearSafety() {
-    setSafety(null);
-    setError(null);
-  }
+  const safety = coordsMutation.data ?? regionMutation.data ?? null;
+  const isLoading = coordsMutation.isPending || regionMutation.isPending;
+  const error = coordsMutation.error ?? regionMutation.error;
 
   return {
     safety,
-    assess,
-    assessRegion,
-    clearSafety,
+    assess: (lat: number, lng: number) => coordsMutation.mutateAsync({lat, lng}),
+    assessRegion: regionMutation.mutateAsync,
+    clearSafety: () => { coordsMutation.reset(); regionMutation.reset(); },
     isLoading,
     error,
   };

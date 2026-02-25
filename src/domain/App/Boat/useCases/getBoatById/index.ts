@@ -1,1 +1,1 @@
-export {getBoatByIdUseCase} from './getBoatByIdUseCase';
+export {getBoatByIdUseCase, useGetBoatById} from './getBoatByIdUseCase';

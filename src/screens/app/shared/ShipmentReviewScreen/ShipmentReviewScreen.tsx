@@ -1,15 +1,9 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal} from '@components';
-import {useShipmentReview} from '@domain';
-import {useToast} from '@hooks';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'ShipmentReview'>;
+import {useShipmentReviewScreen} from './useShipmentReviewScreen';
 
 function StarRating({
   value,
@@ -43,59 +37,21 @@ function StarRating({
   );
 }
 
-export function ShipmentReviewScreen({navigation, route}: Props) {
-  const {shipmentId} = route.params;
-  const {createReview, isLoading} = useShipmentReview();
-  const toast = useToast();
-
-  const [rating, setRating] = useState(0);
-  const [deliveryQuality, setDeliveryQuality] = useState(0);
-  const [timeliness, setTimeliness] = useState(0);
-  const [comment, setComment] = useState('');
-
-  // Modal states
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [showDeliveryQualityModal, setShowDeliveryQualityModal] = useState(false);
-  const [showTimelinessModal, setShowTimelinessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  function validate(): boolean {
-    if (rating === 0) {
-      setShowRatingModal(true);
-      return false;
-    }
-    if (deliveryQuality === 0) {
-      setShowDeliveryQualityModal(true);
-      return false;
-    }
-    if (timeliness === 0) {
-      setShowTimelinessModal(true);
-      return false;
-    }
-    return true;
-  }
-
-  async function handleSubmit() {
-    if (!validate()) return;
-
-    try {
-      await createReview({
-        shipmentId,
-        rating,
-        deliveryQuality,
-        timeliness,
-        comment: comment.trim() || undefined,
-      });
-
-      toast.showSuccess('Avaliação enviada! Obrigado pelo seu feedback');
-
-      navigation.goBack();
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível enviar a avaliação');
-      setShowErrorModal(true);
-    }
-  }
+export function ShipmentReviewScreen() {
+  const {
+    navigation,
+    isLoading,
+    rating, setRating,
+    deliveryQuality, setDeliveryQuality,
+    timeliness, setTimeliness,
+    comment, setComment,
+    showRatingModal, setShowRatingModal,
+    showDeliveryQualityModal, setShowDeliveryQualityModal,
+    showTimelinessModal, setShowTimelinessModal,
+    showErrorModal, setShowErrorModal,
+    errorMessage, setErrorMessage,
+    handleSubmit,
+  } = useShipmentReviewScreen();
 
   return (
     <>

@@ -1,277 +1,60 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView, Share, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform} from 'react-native';
-
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import React from 'react';
+import {ScrollView, Image, Modal, KeyboardAvoidingView, Platform, ActivityIndicator} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import {API_BASE_URL} from '../../api/config';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
 import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox} from '@components';
-import {
-  Shipment,
-  shipmentAPI,
-  ShipmentStatus,
-  ShipmentTimelineEvent,
-  PaymentMethod,
-  useConfirmPayment,
-  useCollectShipment,
-  useOutForDelivery,
-} from '@domain';
-import {useToast} from '@hooks';
-import {useAuthStore} from '@store';
+import {ShipmentStatus} from '@domain';
 
-import {AppStackParamList} from '@routes';
-import {formatBRL} from '@utils';
+import {useShipmentDetailsScreen} from './useShipmentDetailsScreen';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'ShipmentDetails'>;
+export function ShipmentDetailsScreen() {
+  const {
+    navigation,
+    shipment,
+    timeline,
+    isLoading,
+    showLoadErrorModal, setShowLoadErrorModal,
+    showCancelModal, setShowCancelModal,
+    showCancelErrorModal, setShowCancelErrorModal,
+    showConfirmPaymentModal, setShowConfirmPaymentModal,
+    showPaymentErrorModal, setShowPaymentErrorModal,
+    showCollectPinModal, setShowCollectPinModal,
+    collectPin, setCollectPin,
+    showCollectModal, setShowCollectModal,
+    showCollectErrorModal, setShowCollectErrorModal,
+    showOutForDeliveryModal, setShowOutForDeliveryModal,
+    showOutForDeliveryErrorModal, setShowOutForDeliveryErrorModal,
+    errorMessage, setErrorMessage,
+    isConfirmingPayment,
+    isCollecting,
+    isMarkingOutForDelivery,
+    statusConfig,
+    canConfirmPayment,
+    canCollect,
+    canOutForDelivery,
+    showValidationPIN,
+    pinIsForDelivery,
+    canCancel,
+    canReview,
+    getPaymentMethodLabel,
+    resolvePhotoUri,
+    handleShare,
+    handleCancel,
+    confirmCancel,
+    handleReview,
+    handleConfirmPayment,
+    confirmPaymentAction,
+    handleCollect,
+    confirmCollect,
+    executeCollect,
+    handleOutForDelivery,
+    confirmOutForDelivery,
+  } = useShipmentDetailsScreen();
 
-export function ShipmentDetailsScreen({navigation, route}: Props) {
-  const {shipmentId} = route.params;
-  const toast = useToast();
-  const user = useAuthStore(state => state.user);
-  const isCaptain = user?.role === 'captain';
-
-  const [shipment, setShipment] = useState<Shipment | null>(null);
-  const [timeline, setTimeline] = useState<ShipmentTimelineEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Modal states
-  const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showCancelErrorModal, setShowCancelErrorModal] = useState(false);
-  const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
-  const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
-  const [showCollectPinModal, setShowCollectPinModal] = useState(false);
-  const [collectPin, setCollectPin] = useState('');
-  const [showCollectModal, setShowCollectModal] = useState(false);
-  const [showCollectErrorModal, setShowCollectErrorModal] = useState(false);
-  const [showOutForDeliveryModal, setShowOutForDeliveryModal] = useState(false);
-  const [showOutForDeliveryErrorModal, setShowOutForDeliveryErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  // v2.0 hooks
-  const {confirm: confirmPayment, isLoading: isConfirmingPayment} = useConfirmPayment();
-  const {collect: collectShipment, isLoading: isCollecting} = useCollectShipment();
-  const {markOutForDelivery, isLoading: isMarkingOutForDelivery} = useOutForDelivery();
-
-  useEffect(() => {
-    loadShipmentData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shipmentId]);
-
-  async function loadShipmentData() {
-    setIsLoading(true);
-    try {
-      const shipmentData = await shipmentAPI.getById(shipmentId);
-      setShipment(shipmentData);
-
-      // Load timeline
-      const timelineData = await shipmentAPI.getTimeline(shipmentId);
-      setTimeline(timelineData);
-    } catch (error) {
-      console.error('Failed to load shipment:', error);
-      setShowLoadErrorModal(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const getStatusConfig = (status: ShipmentStatus) => {
-    switch (status) {
-      case ShipmentStatus.PENDING:
-        return {
-          label: 'Aguardando Pagamento',
-          color: 'warning' as const,
-          bg: 'warningBg' as const,
-          icon: 'schedule' as const,
-        };
-      case ShipmentStatus.PAID:
-        return {
-          label: 'Pagamento Confirmado',
-          color: 'success' as const,
-          bg: 'successBg' as const,
-          icon: 'check-circle' as const,
-        };
-      case ShipmentStatus.COLLECTED:
-        return {
-          label: 'Coletada pelo Capitão',
-          color: 'info' as const,
-          bg: 'infoBg' as const,
-          icon: 'inventory-2' as const,
-        };
-      case ShipmentStatus.IN_TRANSIT:
-        return {
-          label: 'Em Trânsito',
-          color: 'info' as const,
-          bg: 'infoBg' as const,
-          icon: 'local-shipping' as const,
-        };
-      case ShipmentStatus.ARRIVED:
-        return {
-          label: 'Chegou ao Destino',
-          color: 'info' as const,
-          bg: 'infoBg' as const,
-          icon: 'place' as const,
-        };
-      case ShipmentStatus.OUT_FOR_DELIVERY:
-        return {
-          label: 'Saiu para Entrega',
-          color: 'primary' as const,
-          bg: 'primaryBg' as const,
-          icon: 'delivery-dining' as const,
-        };
-      case ShipmentStatus.DELIVERED:
-        return {
-          label: 'Entregue',
-          color: 'success' as const,
-          bg: 'successBg' as const,
-          icon: 'check-circle' as const,
-        };
-      case ShipmentStatus.CANCELLED:
-        return {
-          label: 'Cancelada',
-          color: 'danger' as const,
-          bg: 'dangerBg' as const,
-          icon: 'cancel' as const,
-        };
-      default:
-        return {
-          label: 'Desconhecido',
-          color: 'textSecondary' as const,
-          bg: 'background' as const,
-          icon: 'help-outline' as const,
-        };
-    }
-  };
-
-  const getPaymentMethodLabel = (method: PaymentMethod): string => {
-    switch (method) {
-      case PaymentMethod.PIX:
-        return 'PIX';
-      case PaymentMethod.CASH:
-        return 'Dinheiro';
-      case PaymentMethod.CREDIT_CARD:
-        return 'Cartão de Crédito';
-      case PaymentMethod.DEBIT_CARD:
-        return 'Cartão de Débito';
-      default:
-        return method;
-    }
-  };
-
-  async function handleShare() {
-    if (!shipment) return;
-
-    try {
-      await Share.share({
-        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: ${formatBRL(shipment.price)}`,
-        title: 'Compartilhar Encomenda',
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  }
-
-  async function handleCancel() {
-    if (!shipment) return;
-    setShowCancelModal(true);
-  }
-
-  async function confirmCancel() {
-    if (!shipment) return;
-
-    setShowCancelModal(false);
-
-    try {
-      await shipmentAPI.cancel(shipment.id);
-      toast.showSuccess('Encomenda cancelada! Sua encomenda foi cancelada com sucesso');
-      navigation.goBack();
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível cancelar a encomenda');
-      setShowCancelErrorModal(true);
-    }
-  }
-
-  function handleReview() {
-    if (!shipment) return;
-    navigation.navigate('ShipmentReview', {shipmentId: shipment.id});
-  }
-
-  // v2.0 - Confirmar pagamento (PENDING → PAID)
-  async function handleConfirmPayment() {
-    if (!shipment) return;
-    setShowConfirmPaymentModal(true);
-  }
-
-  async function confirmPaymentAction() {
-    if (!shipment) return;
-
-    setShowConfirmPaymentModal(false);
-
-    try {
-      const result = await confirmPayment(shipment.id);
-      toast.showSuccess(result.message);
-      loadShipmentData(); // Recarregar dados
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível confirmar o pagamento');
-      setShowPaymentErrorModal(true);
-    }
-  }
-
-  // v2.0 - Coletar encomenda (PAID → COLLECTED)
-  function handleCollect() {
-    if (!shipment) return;
-    setCollectPin('');
-    setShowCollectPinModal(true);
-  }
-
-  async function confirmCollect() {
-    if (!shipment) return;
-
-    setShowCollectPinModal(false);
-    setShowCollectModal(true);
-  }
-
-  async function executeCollect() {
-    if (!shipment) return;
-
-    setShowCollectModal(false);
-
-    try {
-      const result = await collectShipment(shipment.id, collectPin.trim() || undefined);
-      toast.showSuccess(result.message);
-      setCollectPin('');
-      loadShipmentData();
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Não foi possível coletar a encomenda');
-      setShowCollectErrorModal(true);
-    }
-  }
-
-  // v2.0 - Marcar como saiu para entrega (ARRIVED → OUT_FOR_DELIVERY)
-  async function handleOutForDelivery() {
-    if (!shipment) return;
-    setShowOutForDeliveryModal(true);
-  }
-
-  async function confirmOutForDelivery() {
-    if (!shipment) return;
-
-    setShowOutForDeliveryModal(false);
-
-    try {
-      const result = await markOutForDelivery(shipment.id);
-      toast.showSuccess(result.message);
-      loadShipmentData(); // Recarregar dados
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível atualizar o status');
-      setShowOutForDeliveryErrorModal(true);
-    }
-  }
-
-  if (isLoading || !shipment) {
+  if (isLoading || !shipment || !statusConfig) {
     return (
       <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center">
         <ActivityIndicator size="large" color="#007BFF" />
@@ -281,23 +64,6 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
       </Box>
     );
   }
-
-  const statusConfig = getStatusConfig(shipment.status);
-
-  // v2.0 - Permissões baseadas em status
-  const canConfirmPayment = shipment.status === ShipmentStatus.PENDING;
-  const canCollect = isCaptain && shipment.status === ShipmentStatus.PAID;
-  const canOutForDelivery = isCaptain && shipment.status === ShipmentStatus.ARRIVED;
-  // Mostrar PIN nos status ativos para que remetente possa compartilhar com capitão/destinatário
-  const showValidationPIN =
-    shipment.validationCode != null &&
-    shipment.status !== ShipmentStatus.DELIVERED &&
-    shipment.status !== ShipmentStatus.CANCELLED;
-  const pinIsForDelivery = shipment.status === ShipmentStatus.OUT_FOR_DELIVERY;
-  const canCancel =
-    shipment.status === ShipmentStatus.PENDING ||
-    shipment.status === ShipmentStatus.PAID;
-  const canReview = shipment.status === ShipmentStatus.DELIVERED;
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -539,7 +305,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
                 Total
               </Text>
               <Text preset="headingSmall" color="primary" bold>
-                {formatBRL(shipment.price)}
+                {shipment.price}
               </Text>
             </Box>
           </Box>
@@ -656,11 +422,7 @@ export function ShipmentDetailsScreen({navigation, route}: Props) {
               </Text>
               <Box flexDirection="row" flexWrap="wrap" gap="s12">
                 {shipment.photos.map((photoUrl, index) => {
-                  const uri = photoUrl.startsWith('http')
-                    ? photoUrl
-                        .replace(/http:\/\/localhost(:\d+)?/, API_BASE_URL)
-                        .replace(/http:\/\/127\.0\.0\.1(:\d+)?/, API_BASE_URL)
-                    : `${API_BASE_URL}${photoUrl}`;
+                  const uri = resolvePhotoUri(photoUrl);
                   return (
                     <Box
                       key={index}

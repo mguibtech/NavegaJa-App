@@ -1,7 +1,8 @@
-import {useState, useEffect, useCallback} from 'react';
+import {useQuery} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {bookingService} from '../bookingService';
-import {Booking} from '../bookingTypes';
 import {TripStatus} from '../../Trip/tripTypes';
 
 export type TrackingStatus =
@@ -13,7 +14,7 @@ export type TrackingStatus =
   | 'cancelled';
 
 export interface TrackingInfo {
-  booking: Booking;
+  booking: import('../bookingTypes').Booking;
   trackingStatus: TrackingStatus;
   progressPercent: number;
   estimatedArrival: string | null;
@@ -25,12 +26,8 @@ function calcProgress(departureAt: string, estimatedArrivalAt: string): number {
   const now = Date.now();
   const dep = new Date(departureAt).getTime();
   const arr = new Date(estimatedArrivalAt).getTime();
-  if (now <= dep) {
-    return 0;
-  }
-  if (now >= arr) {
-    return 100;
-  }
+  if (now <= dep) {return 0;}
+  if (now >= arr) {return 100;}
   return Math.round(((now - dep) / (arr - dep)) * 100);
 }
 
@@ -39,20 +36,13 @@ function formatHHMM(isoString: string): string {
   return d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
 }
 
-function mapTripStatus(
-  tripStatus: TripStatus,
-  progress: number,
-): TrackingStatus {
+function mapTripStatus(tripStatus: TripStatus, progress: number): TrackingStatus {
   switch (tripStatus) {
     case TripStatus.SCHEDULED:
       return 'scheduled';
     case TripStatus.IN_PROGRESS:
-      if (progress >= 90) {
-        return 'approaching';
-      }
-      if (progress <= 5) {
-        return 'boarding';
-      }
+      if (progress >= 90) {return 'approaching';}
+      if (progress <= 5) {return 'boarding';}
       return 'in_transit';
     case TripStatus.COMPLETED:
       return 'arrived';
@@ -61,63 +51,50 @@ function mapTripStatus(
   }
 }
 
+async function buildTrackingInfo(bookingId: string): Promise<TrackingInfo> {
+  const booking = await bookingService.getById(bookingId);
+  const trip = booking.trip;
+
+  if (!trip) {
+    return {
+      booking,
+      trackingStatus: 'scheduled',
+      progressPercent: 0,
+      estimatedArrival: null,
+      currentLat: null,
+      currentLng: null,
+    };
+  }
+
+  const progress =
+    trip.status === TripStatus.COMPLETED
+      ? 100
+      : trip.status === TripStatus.IN_PROGRESS
+      ? calcProgress(trip.departureAt, trip.estimatedArrivalAt)
+      : 0;
+
+  return {
+    booking,
+    trackingStatus: mapTripStatus(trip.status, progress),
+    progressPercent: progress,
+    estimatedArrival: trip.estimatedArrivalAt ? formatHHMM(trip.estimatedArrivalAt) : null,
+    currentLat: trip.currentLat != null ? parseFloat(trip.currentLat) : null,
+    currentLng: trip.currentLng != null ? parseFloat(trip.currentLng) : null,
+  };
+}
+
 export function useTrackBooking(bookingId: string) {
-  const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery<TrackingInfo, Error>({
+    queryKey: queryKeys.bookings.tracking(bookingId),
+    queryFn: () => buildTrackingInfo(bookingId),
+    refetchInterval: 30_000,
+    enabled: !!bookingId,
+  });
 
-  const fetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const booking = await bookingService.getById(bookingId);
-      const trip = booking.trip;
-
-      if (!trip) {
-        setTrackingInfo({
-          booking,
-          trackingStatus: 'scheduled',
-          progressPercent: 0,
-          estimatedArrival: null,
-          currentLat: null,
-          currentLng: null,
-        });
-        return;
-      }
-
-      const progress =
-        trip.status === TripStatus.COMPLETED
-          ? 100
-          : trip.status === TripStatus.IN_PROGRESS
-          ? calcProgress(trip.departureAt, trip.estimatedArrivalAt)
-          : 0;
-
-      const trackingStatus = mapTripStatus(trip.status, progress);
-
-      setTrackingInfo({
-        booking,
-        trackingStatus,
-        progressPercent: progress,
-        estimatedArrival: trip.estimatedArrivalAt
-          ? formatHHMM(trip.estimatedArrivalAt)
-          : null,
-        currentLat:
-          trip.currentLat != null ? parseFloat(trip.currentLat) : null,
-        currentLng:
-          trip.currentLng != null ? parseFloat(trip.currentLng) : null,
-      });
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [bookingId]);
-
-  useEffect(() => {
-    fetch();
-    const interval = setInterval(fetch, 30000);
-    return () => clearInterval(interval);
-  }, [fetch]);
-
-  return {trackingInfo, isLoading, error, refetch: fetch};
+  return {
+    trackingInfo: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
 }

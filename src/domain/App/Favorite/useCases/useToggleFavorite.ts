@@ -1,32 +1,23 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+
+import {queryKeys} from '@infra';
 
 import {favoriteService} from '../favoriteService';
 import type {CreateFavoriteDto} from '../favoriteTypes';
 
 export function useToggleFavorite() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function toggle(data: CreateFavoriteDto): Promise<{
-    action: 'added' | 'removed';
-  }> {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await favoriteService.toggleFavorite(data);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const mutation = useMutation<{action: 'added' | 'removed'}, Error, CreateFavoriteDto>({
+    mutationFn: (data: CreateFavoriteDto) => favoriteService.toggleFavorite(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.favorites.my()});
+    },
+  });
 
   return {
-    toggle,
-    isLoading,
-    error,
+    toggle: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
   };
 }

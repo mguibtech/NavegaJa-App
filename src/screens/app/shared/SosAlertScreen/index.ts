@@ -1,0 +1,1 @@
+export {SosAlertScreen} from './SosAlertScreen';

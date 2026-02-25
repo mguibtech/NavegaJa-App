@@ -1,86 +1,27 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {ScrollView, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {Box, Button, Icon, Text} from '@components';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
-import {captainAPI, useStartTrip, WeatherSafetyResponse} from '@domain';
-import {useToast} from '@hooks';
+import {
+  useCaptainStartTrip,
+  getScoreLabel,
+  getScoreIcon,
+} from './useCaptainStartTrip';
 
-import {AppStackParamList} from '@routes';
-
-type Props = NativeStackScreenProps<AppStackParamList, 'CaptainStartTrip'>;
-
-// Coordenadas padrão de Manaus (AM)
-const DEFAULT_LAT = -3.119;
-const DEFAULT_LNG = -60.0217;
-
-function getScoreColor(score: number): string {
-  if (score >= 70) return '#16a34a';
-  if (score >= 50) return '#d97706';
-  return '#dc2626';
-}
-
-function getScoreBg(score: number): string {
-  if (score >= 70) return '#f0fdf4';
-  if (score >= 50) return '#fffbeb';
-  return '#fef2f2';
-}
-
-function getScoreLabel(score: number): string {
-  if (score >= 70) return 'Condições seguras';
-  if (score >= 50) return 'Condições moderadas';
-  return 'Condições desfavoráveis';
-}
-
-function getScoreIcon(score: number): string {
-  if (score >= 70) return 'check-circle';
-  if (score >= 50) return 'warning';
-  return 'dangerous';
-}
-
-export function CaptainStartTripScreen({navigation, route}: Props) {
-  const {tripId} = route.params;
+export function CaptainStartTripScreen() {
   const {top} = useSafeAreaInsets();
-  const toast = useToast();
-
-  const [weather, setWeather] = useState<WeatherSafetyResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const {startTrip, isLoading: startLoading} = useStartTrip();
-
-  useEffect(() => {
-    loadWeather();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function loadWeather() {
-    setIsLoading(true);
-    try {
-      const result = await captainAPI.getWeatherSafety(DEFAULT_LAT, DEFAULT_LNG);
-      setWeather(result);
-    } catch {
-      // Falha silenciosa — exibe opção de iniciar mesmo assim
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleConfirmStart() {
-    try {
-      await startTrip(tripId);
-      toast.showSuccess('Viagem iniciada com sucesso!');
-      // Volta 2 telas: CaptainStartTrip + CaptainChecklist → TripManage
-      navigation.pop(2);
-    } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao iniciar viagem');
-    }
-  }
-
-  const score = weather?.safetyScore ?? 0;
-  const scoreColor = getScoreColor(score);
-  const scoreBg = getScoreBg(score);
+  const {
+    weather,
+    isLoading,
+    startLoading,
+    score,
+    scoreColor,
+    scoreBg,
+    handleConfirmStart,
+    goBack,
+  } = useCaptainStartTrip();
 
   return (
     <Box flex={1} backgroundColor="background">
@@ -103,7 +44,7 @@ export function CaptainStartTripScreen({navigation, route}: Props) {
           title=""
           preset="outline"
           leftIcon="arrow-back"
-          onPress={() => navigation.goBack()}
+          onPress={goBack}
         />
         <Box flex={1} ml="s12">
           <Text preset="headingSmall" color="text" bold>

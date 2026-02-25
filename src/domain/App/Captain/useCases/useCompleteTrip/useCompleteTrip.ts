@@ -1,25 +1,25 @@
-import {useState} from 'react';
+﻿import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {captainAPI} from '../../captainAPI';
+import {queryKeys} from '@infra';
+
+import {captainService} from '../../captainService';
 import {Trip} from '../../../Trip/tripTypes';
 
 export function useCompleteTrip() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  async function completeTrip(tripId: string): Promise<Trip> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await captainAPI.updateTripStatus(tripId, 'completed');
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
-      throw err;
-    }
-  }
+  const mutation = useMutation<Trip, Error, string>({
+    mutationFn: (tripId: string) => captainService.updateTripStatus(tripId, 'completed'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.captain.trips()});
+      queryClient.invalidateQueries({queryKey: queryKeys.bookings.all});
+      queryClient.invalidateQueries({queryKey: queryKeys.gamification.stats()});
+    },
+  });
 
-  return {completeTrip, isLoading, error};
+  return {
+    completeTrip: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error,
+  };
 }

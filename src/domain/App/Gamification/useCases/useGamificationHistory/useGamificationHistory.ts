@@ -1,48 +1,32 @@
-import {useState} from 'react';
+import {useInfiniteQuery} from '@tanstack/react-query';
 
-import {gamificationAPI} from '../../gamificationAPI';
+import {queryKeys} from '@infra';
+
+import {gamificationService} from '../../gamificationService';
 import {GamificationTransaction} from '../../gamificationTypes';
 
 const PAGE_SIZE = 20;
 
 export function useGamificationHistory() {
-  const [history, setHistory] = useState<GamificationTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const query = useInfiniteQuery<GamificationTransaction[], Error>({
+    queryKey: queryKeys.gamification.history(),
+    queryFn: ({pageParam}) => gamificationService.getHistory(pageParam as number, PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      (lastPage as GamificationTransaction[]).length === PAGE_SIZE
+        ? (lastPageParam as number) + 1
+        : undefined,
+  });
 
-  async function fetchHistory(): Promise<void> {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await gamificationAPI.getHistory(1, PAGE_SIZE);
-      setHistory(result);
-      setPage(1);
-      setHasMore(result.length === PAGE_SIZE);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const history = query.data?.pages.flat() ?? [];
 
-  async function fetchMoreHistory(): Promise<void> {
-    if (isLoadingMore || !hasMore) {return;}
-    setIsLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const result = await gamificationAPI.getHistory(nextPage, PAGE_SIZE);
-      setHistory(prev => [...prev, ...result]);
-      setPage(nextPage);
-      setHasMore(result.length === PAGE_SIZE);
-    } catch {
-      // silently ignore load-more errors
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }
-
-  return {history, isLoading, isLoadingMore, error, hasMore, fetchHistory, fetchMoreHistory};
+  return {
+    history,
+    isLoading: query.isLoading,
+    isLoadingMore: query.isFetchingNextPage,
+    error: query.error,
+    hasMore: query.hasNextPage,
+    fetchHistory: query.refetch,
+    fetchMoreHistory: query.fetchNextPage,
+  };
 }

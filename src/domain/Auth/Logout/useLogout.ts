@@ -1,28 +1,19 @@
-import {useState} from 'react';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {authStorage} from '@services';
-
-import {logoutAPI} from './logoutAPI';
+import {logoutService} from './logoutService';
 
 export function useLogout() {
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  async function logout(): Promise<void> {
-    setIsLoading(true);
-
-    try {
-      await logoutAPI.execute();
-    } catch {
-      // Ignore API error
-    } finally {
-      // Always clear local storage
-      await authStorage.clear();
-      setIsLoading(false);
-    }
-  }
+  const mutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      await logoutService.execute();
+      queryClient.clear();
+    },
+  });
 
   return {
-    logout,
-    isLoading,
+    logout: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
 }

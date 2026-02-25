@@ -1,9 +1,9 @@
 import {api} from '@api';
 
-class LogoutAPI {
-  async execute(): Promise<void> {
-    await api.post('/auth/logout');
-  }
+async function execute(): Promise<void> {
+  await api.post('/auth/logout');
 }
 
-export const logoutAPI = new LogoutAPI();
+export const logoutAPI = {
+  execute,
+};
