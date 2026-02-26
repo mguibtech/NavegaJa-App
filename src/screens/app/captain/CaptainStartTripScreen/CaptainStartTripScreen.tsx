@@ -1,8 +1,7 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text} from '@components';
+import {Box, Button, Icon, Text, ScreenHeader} from '@components';
 
 import {
   useCaptainStartTrip,
@@ -11,7 +10,6 @@ import {
 } from './useCaptainStartTrip';
 
 export function CaptainStartTripScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     weather,
     isLoading,
@@ -25,36 +23,7 @@ export function CaptainStartTripScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        flexDirection="row"
-        alignItems="center"
-        style={{
-          paddingTop: top + 12,
-          paddingBottom: 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
-          onPress={goBack}
-        />
-        <Box flex={1} ml="s12">
-          <Text preset="headingSmall" color="text" bold>
-            Condições Climáticas
-          </Text>
-          <Text preset="paragraphCaptionSmall" color="textSecondary">
-            Passo 2 de 2 — Verificação antes do início
-          </Text>
-        </Box>
-      </Box>
+      <ScreenHeader title="Condições Climáticas" subtitle="Passo 2 de 2 — Verificação antes do início" onBack={goBack} />
 
       <ScrollView contentContainerStyle={{padding: 20, paddingBottom: 120}}>
         {isLoading ? (

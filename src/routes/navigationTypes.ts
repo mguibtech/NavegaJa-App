@@ -2,7 +2,7 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {PaymentMethod} from '@domain';
+import {PaymentMethod, TripBoat} from '@domain';
 import {Promotion} from '../domain/App/Promotion/promotionTypes';
 
 // ─── Param Lists ─────────────────────────────────────────────────────────────
@@ -19,6 +19,11 @@ type SharedParamList = {
   ShipmentDetails: {shipmentId: string};
   ShipmentReview: {shipmentId: string};
   EditProfile: undefined;
+  Chat: {bookingId: string; otherName?: string};
+  Conversations: undefined;
+  Referrals: undefined;
+  StopReviewCreate: {locationName?: string; tripId?: string; lat?: number; lng?: number} | undefined;
+  StopReviewsList: {location: string};
   CaptainProfile: {
     captainId: string;
     captainName?: string;
@@ -32,16 +37,7 @@ type SharedParamList = {
   };
   BoatDetail: {
     boatId: string;
-    boatName?: string;
-    boatType?: string;
-    boatCapacity?: number;
-    boatModel?: string | null;
-    boatYear?: number | null;
-    boatAmenities?: string[];
-    boatRegistrationNum?: string;
-    boatIsVerified?: boolean;
-    boatPhotoUrl?: string | null;
-    boatCreatedAt?: string;
+    boat?: TripBoat;
   };
   PaymentMethods: undefined;
   AddCard: undefined;
@@ -106,6 +102,9 @@ export type CaptainStackParamList = {
   CaptainStartTrip: {tripId: string};
   CaptainShipmentCollect: {shipmentId: string};
   CaptainTripLive: {tripId: string; origin: string; destination: string};
+  KycSubmit: {rejected?: boolean; reason?: string} | undefined;
+  KycStatus: undefined;
+  CaptainAnalytics: undefined;
 } & SharedParamList;
 
 // Lista completa para o navigationRef (FCM navigation)

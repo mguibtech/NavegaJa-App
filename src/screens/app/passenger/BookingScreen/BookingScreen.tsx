@@ -1,12 +1,12 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Switch} from 'react-native';
 
 import {
   Box,
   Button,
   Icon,
   InfoModal,
+  ScreenHeader,
   Text,
   TextInput,
   TouchableOpacityBox,
@@ -19,7 +19,6 @@ import {formatBRL} from '@utils';
 import {useBookingScreen} from './useBookingScreen';
 
 export function BookingScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     trip,
     isLoadingTrip,
@@ -34,6 +33,9 @@ export function BookingScreen() {
     priceBreakdown,
     isCreatingBooking,
     couponValidation,
+    kmStats,
+    redeemKm,
+    setRedeemKm,
     showLoadErrorModal,
     showCpfErrorModal,
     cpfErrorMessage,
@@ -68,34 +70,7 @@ export function BookingScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        paddingHorizontal="s24"
-        paddingBottom="s12"
-        backgroundColor="surface"
-        borderBottomWidth={1}
-        borderBottomColor="border"
-        style={{paddingTop: top + 12}}>
-        <Box flexDirection="row" alignItems="center">
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            alignItems="center"
-            justifyContent="center"
-            marginRight="s16"
-            accessibilityLabel="Voltar"
-            accessibilityRole="button"
-            onPress={handleGoBack}>
-            <Icon name="arrow-back" size={22} color="text" />
-          </TouchableOpacityBox>
-
-          <Box flex={1}>
-            <Text preset="headingSmall" color="text" bold>
-              Confirmar Reserva
-            </Text>
-          </Box>
-        </Box>
-      </Box>
+      <ScreenHeader title="Confirmar Reserva" onBack={handleGoBack} />
 
       <KeyboardAvoidingView
         style={{flex: 1}}
@@ -310,6 +285,68 @@ export function BookingScreen() {
           onRemove={handleRemoveCoupon}
           onRetry={couponValidation.retry}
         />
+
+        {/* Braças — só exibe se usuário tem saldo */}
+        {kmStats && kmStats.redeemableKm > 0 && (
+          <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 3,
+            }}>
+            <Box flexDirection="row" alignItems="center" mb="s12">
+              <Icon name="waves" size={20} color={'#0B5D8A' as any} />
+              <Text preset="paragraphMedium" color="text" bold ml="s8">
+                Braças
+              </Text>
+            </Box>
+
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
+              paddingVertical="s12"
+              paddingHorizontal="s16"
+              backgroundColor="background"
+              borderRadius="s12">
+              <Box>
+                <Text preset="paragraphSmall" color="textSecondary">
+                  Saldo disponível
+                </Text>
+                <Text preset="paragraphMedium" color="text" bold>
+                  {kmStats.redeemableKm} braças
+                </Text>
+              </Box>
+              <Switch
+                value={redeemKm}
+                onValueChange={setRedeemKm}
+                trackColor={{false: '#D1D5DB', true: '#0B5D8A'}}
+                thumbColor={redeemKm ? '#FFFFFF' : '#9CA3AF'}
+              />
+            </Box>
+
+            {redeemKm && (
+              <Box
+                mt="s12"
+                backgroundColor="infoBg"
+                borderRadius="s8"
+                padding="s12"
+                flexDirection="row"
+                alignItems="center">
+                <Icon name="info" size={16} color="info" />
+                <Text preset="paragraphSmall" color="info" ml="s8" flex={1}>
+                  Desconto de braças será aplicado no valor final
+                </Text>
+              </Box>
+            )}
+          </Box>
+        )}
 
         {/* Payment Method */}
         <Box

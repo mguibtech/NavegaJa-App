@@ -1,9 +1,8 @@
 import React from 'react';
 import {FlatList, RefreshControl, TouchableOpacity} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '@shopify/restyle';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, ScreenHeader} from '@components';
 import type {StoredNotification} from '@services';
 import {Theme} from '@theme';
 
@@ -63,7 +62,6 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 export function NotificationsScreen() {
-  const {top} = useSafeAreaInsets();
   const {colors} = useTheme<Theme>();
   const {
     navigation,
@@ -146,47 +144,12 @@ export function NotificationsScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        style={{
-          paddingTop: top + 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Box
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="space-between">
-          <Box flexDirection="row" alignItems="center">
-            <TouchableOpacityBox
-              width={40}
-              height={40}
-              borderRadius="s20"
-              alignItems="center"
-              justifyContent="center"
-              onPress={() => navigation.goBack()}
-              mr="s12">
-              <Icon name="arrow-back" size={24} color="text" />
-            </TouchableOpacityBox>
-            <Box>
-              <Text preset="headingSmall" color="text" bold>
-                Notificações
-              </Text>
-              {unreadCount > 0 && (
-                <Text preset="paragraphSmall" color="textSecondary">
-                  {unreadCount} não {unreadCount === 1 ? 'lida' : 'lidas'}
-                </Text>
-              )}
-            </Box>
-          </Box>
-
-          {notifications.length > 0 && (
+      <ScreenHeader
+        title="Notificações"
+        subtitle={unreadCount > 0 ? `${unreadCount} não ${unreadCount === 1 ? 'lida' : 'lidas'}` : undefined}
+        onBack={() => navigation.goBack()}
+        rightElement={
+          notifications.length > 0 ? (
             <Box flexDirection="row" gap="s8">
               {unreadCount > 0 && (
                 <TouchableOpacityBox
@@ -206,14 +169,14 @@ export function NotificationsScreen() {
                 borderRadius="s8"
                 backgroundColor="background"
                 onPress={handleClear}>
-                <Text preset="paragraphSmall" color="textSecondary">
+                <Text preset="paragraphSmall" color="textSecondary" bold>
                   Limpar
                 </Text>
               </TouchableOpacityBox>
             </Box>
-          )}
-        </Box>
-      </Box>
+          ) : undefined
+        }
+      />
 
       {/* Lista */}
       <FlatList

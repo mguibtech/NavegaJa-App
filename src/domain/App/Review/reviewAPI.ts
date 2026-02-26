@@ -8,6 +8,18 @@ import {
   Review,
 } from './reviewTypes';
 
+// Backend pode retornar array direto OU { reviews: Review[]; stats: {...} }
+function extractReviews(data: unknown): Review[] {
+  if (Array.isArray(data)) {
+    return data as Review[];
+  }
+  if (data && typeof data === 'object' && 'reviews' in data) {
+    const arr = (data as {reviews: unknown}).reviews;
+    return Array.isArray(arr) ? (arr as Review[]) : [];
+  }
+  return [];
+}
+
 const PATH = '/reviews';
 
 async function create(data: CreatePassengerReviewData): Promise<Review> {
@@ -27,15 +39,18 @@ async function getMyReviews(): Promise<MyReviewsResponse> {
 }
 
 async function getByBoat(boatId: string): Promise<Review[]> {
-  return api.get<Review[]>(`${PATH}/boat/${boatId}`);
+  const data = await api.get<unknown>(`${PATH}/boat/${boatId}`);
+  return extractReviews(data);
 }
 
 async function getByCaptain(captainId: string): Promise<Review[]> {
-  return api.get<Review[]>(`${PATH}/captain/${captainId}`);
+  const data = await api.get<unknown>(`${PATH}/captain/${captainId}`);
+  return extractReviews(data);
 }
 
 async function getByTrip(tripId: string): Promise<Review[]> {
-  return api.get<Review[]>(`${PATH}/trip/${tripId}`);
+  const data = await api.get<unknown>(`${PATH}/trip/${tripId}`);
+  return extractReviews(data);
 }
 
 export const reviewAPI = {

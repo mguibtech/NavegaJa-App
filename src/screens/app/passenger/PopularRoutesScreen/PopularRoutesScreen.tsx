@@ -3,7 +3,7 @@ import {FlatList, RefreshControl} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, ScreenHeader, Text, TouchableOpacityBox} from '@components';
 import {usePopularRoutes, PopularRoute} from '@domain';
 
 import {AppStackParamList} from '@routes';
@@ -135,30 +135,7 @@ export function PopularRoutesScreen({navigation}: Props) {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingVertical="s16"
-        flexDirection="row"
-        alignItems="center"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
-          onPress={() => navigation.goBack()}
-        />
-        <Text preset="headingSmall" color="text" bold ml="s12">
-          Rotas Populares
-        </Text>
-      </Box>
+      <ScreenHeader title="Rotas Populares" onBack={() => navigation.goBack()} />
 
       {/* Routes List */}
       <FlatList

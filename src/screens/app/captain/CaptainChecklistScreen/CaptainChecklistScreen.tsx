@@ -1,13 +1,11 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader} from '@components';
 
 import {useCaptainChecklist, CHECKLIST_LABELS} from './useCaptainChecklist';
 
 export function CaptainChecklistScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     isLoading,
     isSaving,
@@ -30,34 +28,7 @@ export function CaptainChecklistScreen() {
       style={{flex: 1}}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
-        {/* Header */}
-        <Box
-          backgroundColor="surface"
-          paddingHorizontal="s24"
-          paddingBottom="s12"
-          borderBottomWidth={1}
-          borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
-          <Box flexDirection="row" alignItems="center" justifyContent="center">
-            <TouchableOpacityBox
-              width={40}
-              height={40}
-              alignItems="center"
-              justifyContent="center"
-              onPress={goBack}
-              style={{position: 'absolute', left: 0}}>
-              <Icon name="arrow-back" size={22} color="text" />
-            </TouchableOpacityBox>
-            <Box alignItems="center">
-              <Text preset="headingSmall" color="text" bold>
-                Checklist de Segurança
-              </Text>
-              <Text preset="paragraphCaptionSmall" color="textSecondary">
-                Passo 1 de 2 — Confirme os itens antes de iniciar
-              </Text>
-            </Box>
-          </Box>
-        </Box>
+        <ScreenHeader title="Checklist de Segurança" subtitle="Passo 1 de 2 — Confirme os itens antes de iniciar" onBack={goBack} />
 
         {isLoading ? (
           <Box flex={1} alignItems="center" justifyContent="center">

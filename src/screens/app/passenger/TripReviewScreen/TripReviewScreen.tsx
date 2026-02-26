@@ -1,8 +1,7 @@
 import React from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, PhotoPicker} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, PhotoPicker, ScreenHeader} from '@components';
 
 import {useTripReviewScreen} from './useTripReviewScreen';
 
@@ -84,7 +83,6 @@ function DetailRating({
 }
 
 export function TripReviewScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     // Route params
     captainName,
@@ -136,12 +134,7 @@ export function TripReviewScreen() {
   if (alreadyReviewed) {
     return (
       <Box flex={1} backgroundColor="background">
-        <Box paddingHorizontal="s20" paddingBottom="s16" backgroundColor="surface" style={{paddingTop: top + 16}}>
-          <TouchableOpacityBox onPress={handleGoBack} mb="s16">
-            <Icon name="arrow-back" size={24} color="text" />
-          </TouchableOpacityBox>
-          <Text preset="headingMedium" color="text" bold>Avaliar Viagem</Text>
-        </Box>
+        <ScreenHeader title="Avaliar Viagem" onBack={handleGoBack} />
         <Box flex={1} justifyContent="center" alignItems="center" padding="s32">
           <Icon name="check-circle" size={72} color="success" />
           <Text preset="headingMedium" color="text" bold mt="s24" textAlign="center">Já avaliado!</Text>
@@ -157,12 +150,7 @@ export function TripReviewScreen() {
   if (!canReview) {
     return (
       <Box flex={1} backgroundColor="background">
-        <Box paddingHorizontal="s20" paddingBottom="s16" backgroundColor="surface" style={{paddingTop: top + 16}}>
-          <TouchableOpacityBox onPress={handleGoBack} mb="s16">
-            <Icon name="arrow-back" size={24} color="text" />
-          </TouchableOpacityBox>
-          <Text preset="headingMedium" color="text" bold>Avaliar Viagem</Text>
-        </Box>
+        <ScreenHeader title="Avaliar Viagem" onBack={handleGoBack} />
         <Box flex={1} justifyContent="center" alignItems="center" padding="s32">
           <Icon name="info" size={72} color="info" />
           <Text preset="headingMedium" color="text" bold mt="s24" textAlign="center">Não disponível</Text>
@@ -179,27 +167,11 @@ export function TripReviewScreen() {
     <>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Box flex={1} backgroundColor="background">
-          {/* Header */}
-          <Box
-            paddingHorizontal="s20"
-            paddingBottom="s16"
-            backgroundColor="surface"
-            style={{
-              paddingTop: top + 16,
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
-            <TouchableOpacityBox onPress={handleGoBack} mb="s16">
-              <Icon name="arrow-back" size={24} color="text" />
-            </TouchableOpacityBox>
-            <Text preset="headingMedium" color="text" bold>Avaliar Viagem</Text>
-            <Text preset="paragraphMedium" color="textSecondary" mt="s4">
-              Sua opinião melhora o serviço para todos
-            </Text>
-          </Box>
+          <ScreenHeader
+            title="Avaliar Viagem"
+            subtitle="Sua opinião melhora o serviço para todos"
+            onBack={handleGoBack}
+          />
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Box padding="s20">

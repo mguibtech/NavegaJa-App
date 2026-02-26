@@ -62,10 +62,6 @@ export function FavoritesScreen({navigation}: Props) {
     } else if (favorite.type === FavoriteType.BOAT && favorite.boatId) {
       navigation.navigate('BoatDetail', {
         boatId: favorite.boatId,
-        boatName: favorite.boat?.name,
-        boatType: favorite.boat?.type,
-        boatCapacity: favorite.boat?.capacity,
-        boatPhotoUrl: favorite.boat?.photoUrl,
       });
     } else if (favorite.type === FavoriteType.CAPTAIN && favorite.captainId) {
       navigation.navigate('CaptainProfile', {

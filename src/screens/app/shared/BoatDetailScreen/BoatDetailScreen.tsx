@@ -1,8 +1,7 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, Image, FlatList} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, ScreenHeader} from '@components';
 import {Review} from '@domain';
 import {apiImageSource} from '@api/config';
 
@@ -37,43 +36,34 @@ function RatingBar({label, value}: {label: string; value: number}) {
 }
 
 export function BoatDetailScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     navigation,
-    boatName,
-    boatType,
-    boatCapacity,
-    boatModel,
-    boatYear,
-    boatRegistrationNum,
-    boatIsVerified,
+    boat,
+    boatLoading,
     reviews,
     loading,
-    setPhotoError,
     overallAvg,
     avgCleanliness,
     avgComfort,
     addedSince,
-    photoUri,
-    showPhoto,
+    galleryPhotos,
     amenities,
   } = useBoatDetailScreen();
 
+  if (boatLoading) {
+    return (
+      <Box flex={1} backgroundColor="background">
+        <ScreenHeader title="Embarcação" onBack={() => navigation.goBack()} />
+        <Box flex={1} alignItems="center" justifyContent="center">
+          <ActivityIndicator size="large" color="#0a6fbd" />
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        backgroundColor="surface"
-        style={{paddingTop: top + 16, ...shadowCard}}>
-        <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
-          <Icon name="arrow-back" size={24} color="text" />
-        </TouchableOpacityBox>
-        <Text preset="headingMedium" color="text" bold>
-          Embarcação
-        </Text>
-      </Box>
+      <ScreenHeader title="Embarcação" onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Box padding="s20">
@@ -82,109 +72,108 @@ export function BoatDetailScreen() {
           <Box
             backgroundColor="surface"
             borderRadius="s20"
-            padding="s24"
             mb="s16"
-            alignItems="center"
+            overflow="hidden"
             style={shadowCard}>
-            {/* Photo / Icon */}
-            <Box
-              width={96}
-              height={96}
-              borderRadius="s20"
-              backgroundColor="secondaryBg"
-              alignItems="center"
-              justifyContent="center"
-              mb="s16"
-              overflow="hidden"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.12,
-                shadowRadius: 6,
-                elevation: 4,
-              }}>
-              {showPhoto ? (
-                <Image
-                  source={apiImageSource(photoUri!)}
-                  style={{width: 96, height: 96}}
-                  onError={() => setPhotoError(true)}
-                />
-              ) : (
-                <Icon name="directions-boat" size={48} color="secondary" />
-              )}
-            </Box>
-
-            {/* Name + verified */}
-            <Box flexDirection="row" alignItems="center" gap="s8" mb="s4">
-              <Text preset="headingMedium" color="text" bold>
-                {boatName || 'Embarcação'}
-              </Text>
-              {boatIsVerified && (
-                <Icon name="verified" size={20} color="primary" />
-              )}
-            </Box>
-
-            {addedSince && (
-              <Text preset="paragraphSmall" color="textSecondary" mb="s12">
-                Cadastrada em {addedSince}
-              </Text>
-            )}
-
-            {/* Rating */}
-            {overallAvg > 0 && (
-              <Box flexDirection="row" alignItems="center" gap="s6" mb="s16">
-                <Icon name="star" size={20} color="warning" />
-                <Text preset="headingSmall" color="text" bold>
-                  {overallAvg.toFixed(1)}
-                </Text>
-                <Text preset="paragraphSmall" color="textSecondary">
-                  ({reviews.length}{' '}
-                  {reviews.length === 1 ? 'avaliação' : 'avaliações'})
-                </Text>
+            {/* Galeria de fotos ou ícone */}
+            {galleryPhotos.length > 0 ? (
+              <FlatList
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                data={galleryPhotos}
+                keyExtractor={(item, i) => `gallery-${i}`}
+                renderItem={({item: photoUrl}) => (
+                  <Image
+                    source={apiImageSource(photoUrl)}
+                    style={{width: 327, height: 220}}
+                    resizeMode="cover"
+                  />
+                )}
+              />
+            ) : (
+              <Box
+                height={160}
+                backgroundColor="secondaryBg"
+                alignItems="center"
+                justifyContent="center">
+                <Icon name="directions-boat" size={64} color="secondary" />
               </Box>
             )}
 
-            {/* Type + Capacity chips */}
-            <Box flexDirection="row" flexWrap="wrap" justifyContent="center" gap="s8">
-              {boatType && (
-                <Box
-                  backgroundColor="secondaryBg"
-                  paddingHorizontal="s12"
-                  paddingVertical="s6"
-                  borderRadius="s12">
-                  <Text preset="paragraphSmall" color="secondary" bold>
-                    {boatType}
+            <Box padding="s24" alignItems="center">
+              {/* Name + verified */}
+              <Box flexDirection="row" alignItems="center" gap="s8" mb="s4">
+                <Text preset="headingMedium" color="text" bold>
+                  {boat?.name || 'Embarcação'}
+                </Text>
+                {boat?.isVerified && (
+                  <Icon name="verified" size={20} color="primary" />
+                )}
+              </Box>
+
+              {addedSince && (
+                <Text preset="paragraphSmall" color="textSecondary" mb="s12">
+                  Cadastrada em {addedSince}
+                </Text>
+              )}
+
+              {/* Rating */}
+              {overallAvg > 0 && (
+                <Box flexDirection="row" alignItems="center" gap="s6" mb="s16">
+                  <Icon name="star" size={20} color="warning" />
+                  <Text preset="headingSmall" color="text" bold>
+                    {overallAvg.toFixed(1)}
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary">
+                    ({reviews.length}{' '}
+                    {reviews.length === 1 ? 'avaliação' : 'avaliações'})
                   </Text>
                 </Box>
               )}
-              {boatCapacity != null && (
-                <Box
-                  backgroundColor="primaryBg"
-                  paddingHorizontal="s12"
-                  paddingVertical="s6"
-                  borderRadius="s12">
-                  <Text preset="paragraphSmall" color="primary" bold>
-                    {boatCapacity}{' '}
-                    {boatCapacity === 1 ? 'lugar' : 'lugares'}
-                  </Text>
-                </Box>
-              )}
-              {boatIsVerified && (
-                <Box
-                  backgroundColor="successBg"
-                  paddingHorizontal="s12"
-                  paddingVertical="s6"
-                  borderRadius="s12">
-                  <Text preset="paragraphSmall" color="success" bold>
-                    ✓ Verificada
-                  </Text>
-                </Box>
-              )}
+
+              {/* Type + Capacity chips */}
+              <Box flexDirection="row" flexWrap="wrap" justifyContent="center" gap="s8">
+                {boat?.type && (
+                  <Box
+                    backgroundColor="secondaryBg"
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s12">
+                    <Text preset="paragraphSmall" color="secondary" bold>
+                      {boat.type}
+                    </Text>
+                  </Box>
+                )}
+                {boat?.capacity != null && (
+                  <Box
+                    backgroundColor="primaryBg"
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s12">
+                    <Text preset="paragraphSmall" color="primary" bold>
+                      {boat.capacity}{' '}
+                      {boat.capacity === 1 ? 'lugar' : 'lugares'}
+                    </Text>
+                  </Box>
+                )}
+                {boat?.isVerified && (
+                  <Box
+                    backgroundColor="successBg"
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s12">
+                    <Text preset="paragraphSmall" color="success" bold>
+                      ✓ Verificada
+                    </Text>
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
 
           {/* Specs Card */}
-          {(boatModel || boatYear || boatRegistrationNum || boatCapacity != null) && (
+          {(boat?.model || boat?.year || boat?.registrationNum || boat?.capacity != null) && (
             <Box
               backgroundColor="surface"
               borderRadius="s16"
@@ -197,59 +186,28 @@ export function BoatDetailScreen() {
                   Especificações
                 </Text>
               </Box>
-              {boatModel && (
-                <Box
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb="s12">
-                  <Text preset="paragraphSmall" color="textSecondary">
-                    Modelo
-                  </Text>
-                  <Text preset="paragraphSmall" color="text" bold>
-                    {boatModel}
-                  </Text>
+              {boat?.model && (
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s12">
+                  <Text preset="paragraphSmall" color="textSecondary">Modelo</Text>
+                  <Text preset="paragraphSmall" color="text" bold>{boat.model}</Text>
                 </Box>
               )}
-              {boatYear != null && (
-                <Box
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb="s12">
-                  <Text preset="paragraphSmall" color="textSecondary">
-                    Ano
-                  </Text>
-                  <Text preset="paragraphSmall" color="text" bold>
-                    {boatYear}
-                  </Text>
+              {boat?.year != null && (
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s12">
+                  <Text preset="paragraphSmall" color="textSecondary">Ano</Text>
+                  <Text preset="paragraphSmall" color="text" bold>{boat.year}</Text>
                 </Box>
               )}
-              {boatCapacity != null && (
-                <Box
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb="s12">
-                  <Text preset="paragraphSmall" color="textSecondary">
-                    Capacidade
-                  </Text>
-                  <Text preset="paragraphSmall" color="text" bold>
-                    {boatCapacity} lugares
-                  </Text>
+              {boat?.capacity != null && (
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s12">
+                  <Text preset="paragraphSmall" color="textSecondary">Capacidade</Text>
+                  <Text preset="paragraphSmall" color="text" bold>{boat.capacity} lugares</Text>
                 </Box>
               )}
-              {boatRegistrationNum && (
-                <Box
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center">
-                  <Text preset="paragraphSmall" color="textSecondary">
-                    Registro
-                  </Text>
-                  <Text preset="paragraphSmall" color="text" bold>
-                    {boatRegistrationNum}
-                  </Text>
+              {boat?.registrationNum && (
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center">
+                  <Text preset="paragraphSmall" color="textSecondary">Registro</Text>
+                  <Text preset="paragraphSmall" color="text" bold>{boat.registrationNum}</Text>
                 </Box>
               )}
             </Box>
@@ -333,19 +291,14 @@ export function BoatDetailScreen() {
             ) : reviews.length === 0 ? (
               <Box alignItems="center" padding="s24">
                 <Icon name="star-outline" size={40} color="border" />
-                <Text
-                  preset="paragraphSmall"
-                  color="textSecondary"
-                  mt="s12"
-                  textAlign="center">
+                <Text preset="paragraphSmall" color="textSecondary" mt="s12" textAlign="center">
                   Nenhuma avaliação ainda
                 </Text>
               </Box>
             ) : (
               reviews.map((review: Review, index: number) => {
                 const rating = review.boatRating ?? 0;
-                const reviewerName =
-                  review.reviewer?.name?.split(' ')[0] ?? 'Passageiro';
+                const reviewerName = review.reviewer?.name?.split(' ')[0] ?? 'Passageiro';
                 const dateStr = new Date(review.createdAt).toLocaleDateString(
                   'pt-BR',
                   {day: '2-digit', month: 'short', year: 'numeric'},
@@ -357,11 +310,7 @@ export function BoatDetailScreen() {
                     borderTopColor="border"
                     pt={index > 0 ? 's16' : undefined}
                     mb="s16">
-                    <Box
-                      flexDirection="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      mb="s6">
+                    <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s6">
                       <Text preset="paragraphSmall" color="text" bold>
                         {reviewerName}
                       </Text>
@@ -377,10 +326,7 @@ export function BoatDetailScreen() {
                       </Box>
                     </Box>
                     {review.boatComment ? (
-                      <Text
-                        preset="paragraphSmall"
-                        color="textSecondary"
-                        mb="s6">
+                      <Text preset="paragraphSmall" color="textSecondary" mb="s6">
                         "{review.boatComment}"
                       </Text>
                     ) : null}
@@ -394,12 +340,7 @@ export function BoatDetailScreen() {
                         renderItem={({item: photoUrl}) => (
                           <Image
                             source={apiImageSource(photoUrl)}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              borderRadius: 8,
-                              marginRight: 8,
-                            }}
+                            style={{width: 80, height: 80, borderRadius: 8, marginRight: 8}}
                             resizeMode="cover"
                           />
                         )}
@@ -407,33 +348,19 @@ export function BoatDetailScreen() {
                       />
                     ) : null}
                     {(review.cleanlinessRating || review.comfortRating) ? (
-                      <Box
-                        flexDirection="row"
-                        flexWrap="wrap"
-                        gap="s12"
-                        mb="s4">
+                      <Box flexDirection="row" flexWrap="wrap" gap="s12" mb="s4">
                         {review.cleanlinessRating ? (
-                          <Text
-                            preset="paragraphCaptionSmall"
-                            color="textSecondary">
+                          <Text preset="paragraphCaptionSmall" color="textSecondary">
                             Limpeza{' '}
-                            <Text
-                              preset="paragraphCaptionSmall"
-                              color="text"
-                              bold>
+                            <Text preset="paragraphCaptionSmall" color="text" bold>
                               {review.cleanlinessRating}/5
                             </Text>
                           </Text>
                         ) : null}
                         {review.comfortRating ? (
-                          <Text
-                            preset="paragraphCaptionSmall"
-                            color="textSecondary">
+                          <Text preset="paragraphCaptionSmall" color="textSecondary">
                             Conforto{' '}
-                            <Text
-                              preset="paragraphCaptionSmall"
-                              color="text"
-                              bold>
+                            <Text preset="paragraphCaptionSmall" color="text" bold>
                               {review.comfortRating}/5
                             </Text>
                           </Text>

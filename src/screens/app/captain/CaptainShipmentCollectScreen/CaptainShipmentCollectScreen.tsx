@@ -1,14 +1,12 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput} from '@components';
+import {Box, Button, Icon, Text, TextInput, ScreenHeader} from '@components';
 import {ShipmentStatus} from '@domain';
 
 import {useCaptainShipmentCollect, STATUS_LABELS} from './useCaptainShipmentCollect';
 
 export function CaptainShipmentCollectScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     shipment,
     isLoading,
@@ -24,38 +22,7 @@ export function CaptainShipmentCollectScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        flexDirection="row"
-        alignItems="center"
-        style={{
-          paddingTop: top + 12,
-          paddingBottom: 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Button
-          title=""
-          preset="outline"
-          leftIcon="arrow-back"
-          onPress={goBack}
-        />
-        <Box flex={1} ml="s12">
-          <Text preset="headingSmall" color="text" bold>
-            Coleta de Encomenda
-          </Text>
-          {shipment && (
-            <Text preset="paragraphCaptionSmall" color="textSecondary">
-              {shipment.trackingCode}
-            </Text>
-          )}
-        </Box>
-      </Box>
+      <ScreenHeader title="Coleta de Encomenda" subtitle={shipment?.trackingCode} onBack={goBack} />
 
       {isLoading ? (
         <Box flex={1} alignItems="center" justifyContent="center">

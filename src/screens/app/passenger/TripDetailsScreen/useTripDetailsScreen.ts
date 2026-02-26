@@ -12,7 +12,7 @@ export function useTripDetailsScreen() {
   const route = useRoute<RouteProp<AppStackParamList, 'TripDetails'>>();
   const {tripId, promotion, context} = route.params;
 
-  const {trip, getTripById, isLoading, error} = useTripDetails();
+  const {trip, getTripById, isLoading, error} = useTripDetails(tripId);
 
   // Favorites hooks
   const {isFavorited, fetch: fetchFavorites} = useMyFavorites();
@@ -137,16 +137,7 @@ export function useTripDetailsScreen() {
     if (!trip) return;
     navigation.navigate('BoatDetail', {
       boatId: trip.boatId,
-      boatName: trip.boat?.name,
-      boatType: trip.boat?.type,
-      boatCapacity: trip.boat?.capacity,
-      boatModel: trip.boat?.model,
-      boatYear: trip.boat?.year,
-      boatAmenities: trip.boat?.amenities,
-      boatRegistrationNum: trip.boat?.registrationNum,
-      boatIsVerified: trip.boat?.isVerified,
-      boatPhotoUrl: trip.boat?.photoUrl,
-      boatCreatedAt: trip.boat?.createdAt,
+      boat: trip.boat,
     });
   };
 

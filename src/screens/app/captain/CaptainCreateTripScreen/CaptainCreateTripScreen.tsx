@@ -7,10 +7,9 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader} from '@components';
 import {Boat} from '@domain';
 
 import {
@@ -20,7 +19,6 @@ import {
 } from './useCaptainCreateTrip';
 
 export function CaptainCreateTripScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     canCreateTrips,
     isPending,
@@ -65,21 +63,7 @@ export function CaptainCreateTripScreen() {
   if (!canCreateTrips) {
     return (
       <Box flex={1} backgroundColor="background">
-        <Box
-          paddingHorizontal="s20"
-          paddingBottom="s16"
-          backgroundColor="surface"
-          style={{paddingTop: top + 12, elevation: 3}}>
-          <Box flexDirection="row" alignItems="center">
-            <TouchableOpacityBox
-              width={40} height={40} borderRadius="s20"
-              alignItems="center" justifyContent="center"
-              onPress={goBack} mr="s12">
-              <Icon name="arrow-back" size={24} color="text" />
-            </TouchableOpacityBox>
-            <Text preset="headingSmall" color="text" bold>Nova Viagem</Text>
-          </Box>
-        </Box>
+        <ScreenHeader title="Nova Viagem" onBack={goBack} />
         <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s32">
           <Box
             width={80} height={80} borderRadius="s48"
@@ -113,31 +97,7 @@ export function CaptainCreateTripScreen() {
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Box flex={1} backgroundColor="background">
-          {/* Header */}
-          <Box
-            backgroundColor="surface"
-            paddingHorizontal="s24"
-            paddingBottom="s12"
-            borderBottomWidth={1}
-            borderBottomColor="border"
-            style={{paddingTop: top + 12}}>
-            <Box flexDirection="row" alignItems="center">
-              <TouchableOpacityBox
-                width={40}
-                height={40}
-                alignItems="center"
-                justifyContent="center"
-                mr="s8"
-                onPress={goBack}>
-                <Icon name="arrow-back" size={22} color="text" />
-              </TouchableOpacityBox>
-              <Box flex={1}>
-                <Text preset="headingSmall" color="text" bold>
-                  Nova Viagem
-                </Text>
-              </Box>
-            </Box>
-          </Box>
+          <ScreenHeader title="Nova Viagem" onBack={goBack} />
 
           <ScrollView
             contentContainerStyle={{padding: 20, paddingBottom: 120}}

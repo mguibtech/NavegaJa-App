@@ -1,13 +1,11 @@
 import React from 'react';
 import {ScrollView, Switch, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader} from '@components';
 
 import {useAddCardScreen} from './useAddCardScreen';
 
 export function AddCardScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     navigation,
     cardNumber,
@@ -30,35 +28,7 @@ export function AddCardScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        flexDirection="row"
-        alignItems="center"
-        style={{
-          paddingTop: top + 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <TouchableOpacityBox
-          width={40}
-          height={40}
-          borderRadius="s20"
-          alignItems="center"
-          justifyContent="center"
-          onPress={() => navigation.goBack()}
-          mr="s12">
-          <Icon name="arrow-back" size={24} color="text" />
-        </TouchableOpacityBox>
-        <Text preset="headingSmall" color="text" bold>
-          Adicionar Cartão
-        </Text>
-      </Box>
+      <ScreenHeader title="Adicionar Cartão" onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{padding: 24, paddingBottom: 40}}

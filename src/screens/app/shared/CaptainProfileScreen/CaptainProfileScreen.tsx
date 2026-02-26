@@ -1,8 +1,7 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, Image} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, ScreenHeader} from '@components';
 import {Review} from '@domain';
 import {apiImageSource} from '@api/config';
 
@@ -37,7 +36,6 @@ function RatingBar({label, value}: {label: string; value: number}) {
 }
 
 export function CaptainProfileScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     navigation,
     captainName,
@@ -58,19 +56,7 @@ export function CaptainProfileScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        backgroundColor="surface"
-        style={{paddingTop: top + 16, ...shadowCard}}>
-        <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
-          <Icon name="arrow-back" size={24} color="text" />
-        </TouchableOpacityBox>
-        <Text preset="headingMedium" color="text" bold>
-          Perfil do Capitão
-        </Text>
-      </Box>
+      <ScreenHeader title="Perfil do Capitão" onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Box padding="s20">

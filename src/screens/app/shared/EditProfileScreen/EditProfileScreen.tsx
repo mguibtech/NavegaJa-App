@@ -1,16 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '@shopify/restyle';
 
-import {Box, Button, ConfirmationModal, Icon, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
+import {Box, Button, ConfirmationModal, Icon, ScreenHeader, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
 import {apiImageSource} from '@api/config';
 import {Theme} from '@theme';
 
 import {AM_CITIES, useEditProfileScreen} from './useEditProfileScreen';
 
 export function EditProfileScreen() {
-  const {top} = useSafeAreaInsets();
   const {colors} = useTheme<Theme>();
   const {
     navigation,
@@ -94,35 +92,7 @@ export function EditProfileScreen() {
   return (
     <>
       <Box flex={1} backgroundColor="background">
-        {/* Header */}
-        <Box
-          backgroundColor="surface"
-          paddingHorizontal="s20"
-          paddingBottom="s16"
-          flexDirection="row"
-          alignItems="center"
-          style={{
-            paddingTop: top + 12,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}>
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            borderRadius="s20"
-            alignItems="center"
-            justifyContent="center"
-            onPress={handleBack}
-            mr="s12">
-            <Icon name="arrow-back" size={24} color="text" />
-          </TouchableOpacityBox>
-          <Text preset="headingSmall" color="text" bold>
-            Editar Perfil
-          </Text>
-        </Box>
+        <ScreenHeader title="Editar Perfil" onBack={handleBack} />
 
         <KeyboardAvoidingView
           style={{flex: 1}}

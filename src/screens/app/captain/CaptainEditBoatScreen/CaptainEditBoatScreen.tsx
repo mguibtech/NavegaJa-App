@@ -5,14 +5,12 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader} from '@components';
 
 import {useCaptainEditBoat, BOAT_TYPES} from './useCaptainEditBoat';
 
 export function CaptainEditBoatScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     isLoadingBoat,
     isSaving,
@@ -56,32 +54,7 @@ export function CaptainEditBoatScreen() {
       style={{flex: 1}}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
-        {/* Header */}
-        <Box
-          backgroundColor="surface"
-          paddingHorizontal="s24"
-          paddingBottom="s12"
-          borderBottomWidth={1}
-          borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
-          <Box
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="center">
-            <TouchableOpacityBox
-              width={40}
-              height={40}
-              alignItems="center"
-              justifyContent="center"
-              onPress={goBack}
-              style={{position: 'absolute', left: 0}}>
-              <Icon name="arrow-back" size={22} color="text" />
-            </TouchableOpacityBox>
-            <Text preset="headingSmall" color="text" bold>
-              Editar Embarcação
-            </Text>
-          </Box>
-        </Box>
+        <ScreenHeader title="Editar Embarcação" onBack={goBack} />
 
         <ScrollView
           contentContainerStyle={{padding: 20, paddingBottom: 120}}

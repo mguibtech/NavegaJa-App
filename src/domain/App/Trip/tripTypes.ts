@@ -43,6 +43,9 @@ export interface TripBoat {
   isVerified: boolean;
   createdAt: string;
   currentLocation?: {lat: number; lng: number};
+  // Campos extras retornados pelo GET /trips/:id
+  rating?: string | number;
+  reviewCount?: number;
 }
 
 export interface Trip {

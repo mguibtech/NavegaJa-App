@@ -5,14 +5,12 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader} from '@components';
 
 import {useCaptainCreateBoat, BOAT_TYPES} from './useCaptainCreateBoat';
 
 export function CaptainCreateBoatScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     canOperate,
     isPending,
@@ -42,26 +40,7 @@ export function CaptainCreateBoatScreen() {
   if (!canOperate) {
     return (
       <Box flex={1} backgroundColor="background">
-        <Box
-          backgroundColor="surface"
-          paddingHorizontal="s24"
-          paddingBottom="s12"
-          borderBottomWidth={1}
-          borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
-          <Box flexDirection="row" alignItems="center" justifyContent="center">
-            <TouchableOpacityBox
-              width={40}
-              height={40}
-              alignItems="center"
-              justifyContent="center"
-              onPress={goBack}
-              style={{position: 'absolute', left: 0}}>
-              <Icon name="arrow-back" size={22} color="text" />
-            </TouchableOpacityBox>
-            <Text preset="headingSmall" color="text" bold>Nova Embarcação</Text>
-          </Box>
-        </Box>
+        <ScreenHeader title="Nova Embarcação" onBack={goBack} />
         <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s32">
           <Box
             width={80}
@@ -98,29 +77,7 @@ export function CaptainCreateBoatScreen() {
       style={{flex: 1}}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
-        {/* Header */}
-        <Box
-          backgroundColor="surface"
-          paddingHorizontal="s24"
-          paddingBottom="s12"
-          borderBottomWidth={1}
-          borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
-          <Box flexDirection="row" alignItems="center" justifyContent="center">
-            <TouchableOpacityBox
-              width={40}
-              height={40}
-              alignItems="center"
-              justifyContent="center"
-              onPress={goBack}
-              style={{position: 'absolute', left: 0}}>
-              <Icon name="arrow-back" size={22} color="text" />
-            </TouchableOpacityBox>
-            <Text preset="headingSmall" color="text" bold>
-              Nova Embarcação
-            </Text>
-          </Box>
-        </Box>
+        <ScreenHeader title="Nova Embarcação" onBack={goBack} />
 
         <ScrollView
           contentContainerStyle={{padding: 20, paddingBottom: 120}}

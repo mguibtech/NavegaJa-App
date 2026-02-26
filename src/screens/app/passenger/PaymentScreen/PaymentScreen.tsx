@@ -1,15 +1,13 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, Image} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Text, Icon, TouchableOpacityBox, InfoModal} from '@components';
+import {Box, Button, ScreenHeader, Text, Icon, TouchableOpacityBox, InfoModal} from '@components';
 import {PaymentMethod} from '@domain';
 import {formatBRL} from '@utils';
 
 import {usePaymentScreen} from './usePaymentScreen';
 
 export function PaymentScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     amount,
     paymentMethod,
@@ -40,37 +38,11 @@ export function PaymentScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        style={{
-          paddingTop: top + 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Box flexDirection="row" alignItems="center">
-          <TouchableOpacityBox
-            width={40}
-            height={40}
-            borderRadius="s12"
-            backgroundColor="background"
-            borderWidth={1}
-            borderColor="border"
-            alignItems="center"
-            justifyContent="center"
-            onPress={goBack}>
-            <Icon name="arrow-back" size={22} color="text" />
-          </TouchableOpacityBox>
-
-          <Text preset="headingSmall" color="text" bold ml="s12" flex={1}>
-            Pagamento
-          </Text>
-
-          {paymentMethod === PaymentMethod.PIX && booking?.pixQrCode && (
+      <ScreenHeader
+        title="Pagamento"
+        onBack={goBack}
+        rightElement={
+          paymentMethod === PaymentMethod.PIX && booking?.pixQrCode ? (
             <TouchableOpacityBox
               width={40}
               height={40}
@@ -81,9 +53,9 @@ export function PaymentScreen() {
               onPress={handleSharePixCode}>
               <Icon name="share" size={20} color="primary" />
             </TouchableOpacityBox>
-          )}
-        </Box>
-      </Box>
+          ) : undefined
+        }
+      />
 
       <ScrollView contentContainerStyle={{padding: 24}} showsVerticalScrollIndicator={false}>
         {paymentMethod === PaymentMethod.PIX && booking && (

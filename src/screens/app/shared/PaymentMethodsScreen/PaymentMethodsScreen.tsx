@@ -1,13 +1,11 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
+import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal, ScreenHeader} from '@components';
 
 import {usePaymentMethodsScreen} from './usePaymentMethodsScreen';
 
 export function PaymentMethodsScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     navigation,
     cards,
@@ -24,35 +22,7 @@ export function PaymentMethodsScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        flexDirection="row"
-        alignItems="center"
-        style={{
-          paddingTop: top + 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <TouchableOpacityBox
-          width={40}
-          height={40}
-          borderRadius="s20"
-          alignItems="center"
-          justifyContent="center"
-          onPress={() => navigation.goBack()}
-          mr="s12">
-          <Icon name="arrow-back" size={24} color="text" />
-        </TouchableOpacityBox>
-        <Text preset="headingSmall" color="text" bold>
-          Formas de Pagamento
-        </Text>
-      </Box>
+      <ScreenHeader title="Formas de Pagamento" onBack={() => navigation.goBack()} />
 
       {/* Content */}
       <ScrollView

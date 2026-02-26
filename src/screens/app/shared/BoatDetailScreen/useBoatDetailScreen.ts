@@ -4,8 +4,8 @@ import {useNavigation} from '@react-navigation/native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {getReviewsByBoatUseCase, Review} from '@domain';
-import {API_BASE_URL} from '@api/config';
+import {getReviewsByBoatUseCase, Review, useGetBoatById} from '@domain';
+import {normalizeFileUrl} from '@api/config';
 
 import {AppStackParamList} from '@routes';
 
@@ -13,29 +13,25 @@ export function useBoatDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'BoatDetail'>>();
 
-  const {
-    boatId,
-    boatName,
-    boatType,
-    boatCapacity,
-    boatModel,
-    boatYear,
-    boatAmenities,
-    boatRegistrationNum,
-    boatIsVerified,
-    boatPhotoUrl,
-    boatCreatedAt,
-  } = route.params;
+  const {boatId, boat: boatFromParams} = route.params;
+
+  // Se boat foi passado via params (vindo de TripDetailsScreen), não faz chamada extra.
+  // Caso contrário (ex: FavoritesScreen), busca por ID.
+  const {data: boatFromAPI, isLoading: boatAPILoading} = useGetBoatById(
+    boatFromParams ? '' : boatId,
+  );
+
+  const boat = boatFromParams ?? boatFromAPI;
+  const boatLoading = boatFromParams ? false : boatAPILoading;
 
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [photoError, setPhotoError] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   useEffect(() => {
     getReviewsByBoatUseCase(boatId)
-      .then(setReviews)
+      .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setReviewsLoading(false));
   }, [boatId]);
 
   const overallAvg =
@@ -43,7 +39,7 @@ export function useBoatDetailScreen() {
       ? reviews
           .filter(r => (r.boatRating ?? 0) > 0)
           .reduce((sum, r) => sum + (r.boatRating ?? 0), 0) /
-        reviews.filter(r => (r.boatRating ?? 0) > 0).length
+        (reviews.filter(r => (r.boatRating ?? 0) > 0).length || 1)
       : 0;
 
   const avgCleanliness = (() => {
@@ -60,43 +56,40 @@ export function useBoatDetailScreen() {
     return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   })();
 
-  const addedSince = boatCreatedAt
-    ? new Date(boatCreatedAt).toLocaleDateString('pt-BR', {
+  const addedSince = boat?.createdAt
+    ? new Date(boat.createdAt).toLocaleDateString('pt-BR', {
         month: 'long',
         year: 'numeric',
       })
     : null;
 
-  const photoUri = boatPhotoUrl
-    ? boatPhotoUrl.startsWith('http')
-      ? boatPhotoUrl
-          .replace(/http:\/\/localhost(:\d+)?/, API_BASE_URL)
-          .replace(/http:\/\/127\.0\.0\.1(:\d+)?/, API_BASE_URL)
-      : `${API_BASE_URL}${boatPhotoUrl}`
-    : null;
-  const showPhoto = photoUri != null && !photoError;
+  // Galeria: todas as fotos do barco sem duplicatas
+  const galleryPhotos: string[] = (() => {
+    const seen = new Set<string>();
+    const all: string[] = [];
+    (boat?.photos ?? []).forEach(p => {
+      const normalized = normalizeFileUrl(p);
+      if (normalized && !seen.has(normalized)) {
+        seen.add(normalized);
+        all.push(normalized);
+      }
+    });
+    return all;
+  })();
 
-  const amenities = boatAmenities ?? [];
+  const amenities = boat?.amenities ?? [];
 
   return {
     navigation,
-    boatName,
-    boatType,
-    boatCapacity,
-    boatModel,
-    boatYear,
-    boatRegistrationNum,
-    boatIsVerified,
+    boat,
+    boatLoading,
     reviews,
-    loading,
-    photoError,
-    setPhotoError,
+    loading: reviewsLoading,
     overallAvg,
     avgCleanliness,
     avgComfort,
     addedSince,
-    photoUri,
-    showPhoto,
+    galleryPhotos,
     amenities,
   };
 }
