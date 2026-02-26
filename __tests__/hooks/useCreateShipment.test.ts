@@ -2,7 +2,9 @@
  * @format
  */
 
+import React from 'react';
 import {renderHook, act, waitFor} from '@testing-library/react-native';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 
 import {useCreateShipment} from '../../src/domain/App/Shipment/useCases/useCreateShipment';
 import {shipmentService} from '../../src/domain/App/Shipment/shipmentService';
@@ -10,6 +12,17 @@ import {Shipment, ShipmentStatus, PaymentMethod} from '../../src/domain';
 
 // Mock shipmentService
 jest.mock('../../src/domain/App/Shipment/shipmentService');
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {retry: false},
+      mutations: {retry: false},
+    },
+  });
+  return ({children}: {children: React.ReactNode}) =>
+    React.createElement(QueryClientProvider, {client: queryClient}, children);
+};
 
 describe('useCreateShipment', () => {
   const mockShipmentData = {
@@ -51,7 +64,7 @@ describe('useCreateShipment', () => {
   });
 
   it('should start with initial state', () => {
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
@@ -62,7 +75,7 @@ describe('useCreateShipment', () => {
       mockCreatedShipment,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     let createdShipment: Shipment | undefined;
 
@@ -84,7 +97,7 @@ describe('useCreateShipment', () => {
       mockCreatedShipment,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     let createdShipment: Shipment | undefined;
 
@@ -114,7 +127,7 @@ describe('useCreateShipment', () => {
       mockCreatedShipment,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     await act(async () => {
       await result.current.create(dataWithCoupon, []);
@@ -136,7 +149,7 @@ describe('useCreateShipment', () => {
       mockCreatedShipment,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     await act(async () => {
       await result.current.create(dataWithDimensions, []);
@@ -156,7 +169,7 @@ describe('useCreateShipment', () => {
         ),
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     act(() => {
       result.current.create(mockShipmentData, []);
@@ -173,7 +186,7 @@ describe('useCreateShipment', () => {
     const mockError = new Error('Upload failed');
     (shipmentService.createShipment as jest.Mock).mockRejectedValue(mockError);
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     await act(async () => {
       try {
@@ -191,7 +204,7 @@ describe('useCreateShipment', () => {
     const mockError = new Error('Network error');
     (shipmentService.createShipment as jest.Mock).mockRejectedValue(mockError);
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     await expect(
       act(async () => {
@@ -206,7 +219,7 @@ describe('useCreateShipment', () => {
       mockError,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     // First attempt fails
     await act(async () => {
@@ -244,7 +257,7 @@ describe('useCreateShipment', () => {
       mockCreatedShipment,
     );
 
-    const {result} = renderHook(() => useCreateShipment());
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
 
     await act(async () => {
       await result.current.create(mockShipmentData, manyPhotos);

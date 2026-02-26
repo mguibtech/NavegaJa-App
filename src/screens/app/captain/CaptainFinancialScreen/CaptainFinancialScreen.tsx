@@ -1,13 +1,17 @@
 import React from 'react';
 import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text} from '@components';
+import {Box, Button, Icon, Text} from '@components';
+import {AppStackParamList} from '@routes';
 
 import {useCaptainFinancial} from './useCaptainFinancial';
 
 export function CaptainFinancialScreen() {
   const {top} = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const {
     user,
     trips,
@@ -54,6 +58,15 @@ export function CaptainFinancialScreen() {
               onRefresh={fetchMyTrips}
             />
           }>
+          {/* Analytics Button */}
+          <Button
+            title="Ver Analytics detalhado"
+            onPress={() => navigation.navigate('CaptainAnalytics')}
+            preset="outline"
+            leftIcon="analytics"
+            mb="s16"
+          />
+
           {/* Earnings Summary Cards */}
           <Box flexDirection="row" gap="s12" mb="s16">
             <Box

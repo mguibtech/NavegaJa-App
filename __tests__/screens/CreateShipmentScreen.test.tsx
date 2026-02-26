@@ -5,6 +5,7 @@
 import React from 'react';
 import {render, waitFor} from '@testing-library/react-native';
 import {ThemeProvider} from '@shopify/restyle';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 
 import {CreateShipmentScreen} from '../../src/screens/app/passenger/CreateShipmentScreen/CreateShipmentScreen';
 import {tripAPI} from '../../src/domain';
@@ -83,9 +84,13 @@ jest.mock('../../src/domain/App/Discount/useCases/useCouponValidation', () => ({
   }),
 }));
 
+let queryClient: QueryClient;
+
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <ThemeProvider theme={theme}>{component}</ThemeProvider>,
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>{component}</ThemeProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -107,6 +112,9 @@ const mockTrip = {
 
 describe('CreateShipmentScreen', () => {
   beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {queries: {retry: false}, mutations: {retry: false}},
+    });
     jest.clearAllMocks();
   });
 
@@ -119,7 +127,7 @@ describe('CreateShipmentScreen', () => {
       <CreateShipmentScreen />,
     );
 
-    expect(getByText('Carregando...')).toBeTruthy();
+    expect(getByText('Carregando viagem...')).toBeTruthy();
   });
 
   it('should show error when trip fails to load', async () => {

@@ -4,7 +4,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '@shopify/restyle';
 
 import {Box, Icon, Text, TouchableOpacityBox, UserAvatar} from '@components';
-import {GamificationTransaction, LeaderboardEntry} from '@domain';
+import {GamificationTransaction, LeaderboardEntry, useKmStats} from '@domain';
 import {Theme} from '@theme';
 
 import {
@@ -49,6 +49,8 @@ export function GamificationScreen() {
     fetchHistory,
     fetchMoreHistory,
   } = useGamificationScreen();
+
+  const {kmStats} = useKmStats();
 
   function renderTransaction({item}: {item: GamificationTransaction}) {
     const isEarned = item.type === 'earned';
@@ -285,6 +287,39 @@ export function GamificationScreen() {
                   </Text>
                 </Box>
               )}
+
+              {/* Braças */}
+              <Box
+                mt="s12"
+                pt="s12"
+                mb="s12"
+                style={{borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)'}}>
+                <Box flexDirection="row" alignItems="center" mb="s8">
+                  <Icon name="waves" size={14} color={'rgba(255,255,255,0.7)' as any} />
+                  <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)', marginLeft: 4}}>
+                    Braças
+                  </Text>
+                </Box>
+                <Box flexDirection="row">
+                  <Box flex={1} alignItems="center">
+                    <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.6)'}}>
+                      Km percorridos
+                    </Text>
+                    <Text preset="paragraphMedium" bold style={{color: '#fff'}}>
+                      {(kmStats?.totalKmTraveled ?? 0).toLocaleString('pt-BR')} km
+                    </Text>
+                  </Box>
+                  <Box width={1} style={{backgroundColor: 'rgba(255,255,255,0.2)'}} />
+                  <Box flex={1} alignItems="center">
+                    <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.6)'}}>
+                      Disponíveis
+                    </Text>
+                    <Text preset="paragraphMedium" bold style={{color: '#fff'}}>
+                      {(kmStats?.redeemableKm ?? 0).toLocaleString('pt-BR')} braças
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
 
               {/* Referral code */}
               {referralCode && (

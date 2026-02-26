@@ -118,6 +118,28 @@ async function getChecklistByTripId(tripId: string): Promise<SafetyChecklist | n
 
 // ========== SOS ALERTS ==========
 
+/**
+ * Normaliza o campo `location` retornado pela API.
+ * O backend pode retornar 3 formatos distintos:
+ *   1. {latitude, longitude}       ← formato canônico (sem mudança)
+ *   2. {lat, lng}                  ← alias curto
+ *   3. GeoJSON Point: {type:'Point', coordinates:[lng, lat]}  ← PostGIS/TypeORM
+ */
+function normalizeLocation(loc: any): SosLocation | undefined {
+  if (!loc) {return undefined;}
+  if (loc.latitude != null) {
+    return {latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy, timestamp: loc.timestamp};
+  }
+  if (loc.lat != null) {
+    return {latitude: loc.lat, longitude: loc.lng, accuracy: loc.accuracy, timestamp: loc.timestamp};
+  }
+  if (loc.type === 'Point' && Array.isArray(loc.coordinates) && loc.coordinates.length >= 2) {
+    // GeoJSON: coordinates = [longitude, latitude]
+    return {latitude: loc.coordinates[1], longitude: loc.coordinates[0], accuracy: loc.accuracy, timestamp: loc.timestamp};
+  }
+  return undefined;
+}
+
 // private helper - NOT added to exported object
 async function saveLastKnownLocation(location: SosLocation): Promise<void> {
   try {
@@ -237,14 +259,10 @@ async function createSosAlert(data: CreateSosAlertData): Promise<SosAlert> {
 
   console.log('[SOS] Created alert from API:', JSON.stringify(alert));
 
-  // Normaliza formato de localização
-  const loc = alert.location as any;
-  if (loc && loc.lat != null && alert.location?.latitude == null) {
-    alert.location = {
-      ...loc,
-      latitude: loc.lat,
-      longitude: loc.lng,
-    };
+  // Normaliza formato de localização (lat/lng, GeoJSON Point, etc.)
+  const normalizedLoc = normalizeLocation(alert.location as any);
+  if (normalizedLoc) {
+    alert.location = normalizedLoc;
   }
 
   // Salvar offline
@@ -270,15 +288,11 @@ async function getMySosAlerts(): Promise<SosAlert[]> {
 
     console.log('[SOS] Alerts from API:', JSON.stringify(alerts));
 
-    // Normaliza formato de localização (backend pode retornar lat/lng ou latitude/longitude)
+    // Normaliza formato de localização (lat/lng, GeoJSON Point, etc.)
     const normalized = alerts.map(alert => {
-      const loc = alert.location as any;
-      if (loc && loc.lat != null && alert.location?.latitude == null) {
-        alert.location = {
-          ...loc,
-          latitude: loc.lat,
-          longitude: loc.lng,
-        };
+      const normalizedLoc = normalizeLocation(alert.location as any);
+      if (normalizedLoc) {
+        alert.location = normalizedLoc;
       }
       return alert;
     });

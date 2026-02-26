@@ -49,7 +49,7 @@ describe('ShipmentCard', () => {
     expect(getByText('(92) 99999-9999')).toBeTruthy();
     expect(getByText('NJ2024000001')).toBeTruthy();
     expect(getByText('2.5kg')).toBeTruthy();
-    expect(getByText('R$ 25.00')).toBeTruthy();
+    expect(getByText('R$ 25,00')).toBeTruthy();
   });
 
   it('should call onPress when card is pressed', () => {
@@ -139,7 +139,7 @@ describe('ShipmentCard', () => {
       <ShipmentCard shipment={shipmentWithPrice} onPress={mockOnPress} />,
     );
 
-    expect(getByText('R$ 10.50')).toBeTruthy();
+    expect(getByText('R$ 10,50')).toBeTruthy();
   });
 
   it('should display weight correctly', () => {

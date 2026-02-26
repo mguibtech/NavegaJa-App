@@ -1,11 +1,17 @@
-import React, {useEffect} from 'react';
-import {ActivityIndicator} from 'react-native';
+import React, {useEffect, useState} from 'react';
 
-import {Box, Icon, Text} from '@components';
-import {useRiverLevels, RIVER_LEVEL_STATUS_CONFIGS, RiverLevelStatus} from '@domain';
+import {Box, Icon, Text, RiverLevelsSkeleton, TouchableOpacityBox, RiverDetailModal} from '@components';
+import {useRiverLevels, RIVER_LEVEL_STATUS_CONFIGS, RiverLevelStatus, RiverLevel} from '@domain';
 
 export function RiverLevelsPanel() {
   const {riverLevels, fetch, isLoading} = useRiverLevels();
+  const [selectedRiver, setSelectedRiver] = useState<RiverLevel | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  function handleRowPress(item: RiverLevel) {
+    setSelectedRiver(item);
+    setModalVisible(true);
+  }
 
   useEffect(() => {
     fetch().catch(() => {});
@@ -13,19 +19,7 @@ export function RiverLevelsPanel() {
   }, []);
 
   if (isLoading) {
-    return (
-      <Box
-        backgroundColor="surface"
-        borderRadius="s16"
-        padding="s20"
-        alignItems="center"
-        style={{elevation: 2}}>
-        <ActivityIndicator size="small" color="#0B5D8A" />
-        <Text preset="paragraphSmall" color="textSecondary" mt="s8">
-          Carregando nível dos rios...
-        </Text>
-      </Box>
-    );
+    return <RiverLevelsSkeleton count={3} />;
   }
 
   if (riverLevels.length === 0) {
@@ -63,7 +57,10 @@ export function RiverLevelsPanel() {
           RIVER_LEVEL_STATUS_CONFIGS.unknown;
 
         return (
-          <Box key={item.stationCode ?? index}>
+          <TouchableOpacityBox
+            key={item.stationCode ?? index}
+            onPress={() => handleRowPress(item)}
+            activeOpacity={0.7}>
             {index > 0 && (
               <Box height={1} backgroundColor="border" my="s12" />
             )}
@@ -86,18 +83,21 @@ export function RiverLevelsPanel() {
                 </Text>
               )}
 
-              {/* Badge de status */}
-              <Box
-                paddingHorizontal="s10"
-                paddingVertical="s4"
-                borderRadius="s8"
-                style={{backgroundColor: cfg.bgColor}}>
-                <Text
-                  preset="paragraphCaptionSmall"
-                  bold
-                  style={{color: cfg.color}}>
-                  {cfg.label}
-                </Text>
+              {/* Badge de status + chevron */}
+              <Box flexDirection="row" alignItems="center" gap="s8">
+                <Box
+                  paddingHorizontal="s10"
+                  paddingVertical="s4"
+                  borderRadius="s8"
+                  style={{backgroundColor: cfg.bgColor}}>
+                  <Text
+                    preset="paragraphCaptionSmall"
+                    bold
+                    style={{color: cfg.color}}>
+                    {cfg.label}
+                  </Text>
+                </Box>
+                <Icon name="chevron-right" size={14} color="textSecondary" />
               </Box>
             </Box>
 
@@ -114,9 +114,15 @@ export function RiverLevelsPanel() {
                 />
               </Box>
             )}
-          </Box>
+          </TouchableOpacityBox>
         );
       })}
+
+      <RiverDetailModal
+        visible={modalVisible}
+        riverLevel={selectedRiver}
+        onClose={() => setModalVisible(false)}
+      />
     </Box>
   );
 }

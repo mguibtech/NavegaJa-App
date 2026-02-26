@@ -5,6 +5,7 @@
 import React from 'react';
 import {render, waitFor, act} from '@testing-library/react-native';
 import {ThemeProvider} from '@shopify/restyle';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {PaymentScreen} from '../../src/screens/app/passenger/PaymentScreen/PaymentScreen';
 import {bookingAPI} from '../../src/domain/App/Booking/bookingAPI';
 import {PaymentMethod, PaymentStatus, BookingStatus} from '../../src/domain';
@@ -45,9 +46,16 @@ jest.mock('../../src/hooks', () => ({
   useToast: () => mockToast,
 }));
 
-// Helper to render with theme
+// Helper to render with theme + QueryClient
 const renderWithTheme = (component: React.ReactElement) => {
-  return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>);
+  const queryClient = new QueryClient({
+    defaultOptions: {queries: {retry: false}, mutations: {retry: false}},
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>{component}</ThemeProvider>
+    </QueryClientProvider>,
+  );
 };
 
 describe('PaymentScreen', () => {
@@ -59,6 +67,7 @@ describe('PaymentScreen', () => {
   afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   describe('PIX Payment Flow', () => {
@@ -91,10 +100,10 @@ describe('PaymentScreen', () => {
 
       await waitFor(() => {
         expect(getByText('Valor a pagar')).toBeTruthy();
-        expect(getByText('R$ 100.00')).toBeTruthy();
+        expect(getByText('R$ 100,00')).toBeTruthy();
         expect(getByText('Escaneie o QR Code')).toBeTruthy();
         expect(getByText('PIX Copia e Cola')).toBeTruthy();
-        expect(getByText('Copiar Código')).toBeTruthy();
+        expect(getByText('Copiar')).toBeTruthy();
       });
 
       expect(bookingAPI.getById).toHaveBeenCalledWith('booking-123');
@@ -275,7 +284,7 @@ describe('PaymentScreen', () => {
       } as any;
 
       // Override useRoute mock for this test to use CASH route params
-      jest.spyOn(require('@react-navigation/native'), 'useRoute').mockReturnValueOnce(routeCash);
+      jest.spyOn(require('@react-navigation/native'), 'useRoute').mockReturnValue(routeCash);
 
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
 

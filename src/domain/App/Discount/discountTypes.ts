@@ -42,6 +42,8 @@ export interface PriceBreakdown {
   loyaltyDiscount?: number;
   loyaltyDiscountPercent?: number;
   loyaltyLevel?: string;
+  kmDiscount?: number;
+  kmRedeemed?: number;
   totalDiscount: number;
   finalPrice: number;
   quantity?: number;
@@ -52,6 +54,7 @@ export interface CalculatePriceRequest {
   tripId: string;
   quantity: number;
   couponCode?: string;
+  redeemKm?: boolean;
 }
 
 export interface CalculatePriceResponse extends PriceBreakdown {}

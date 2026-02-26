@@ -114,6 +114,10 @@ export function useCaptainTripManage() {
     });
   }
 
+  function navigateToChat(bookingId: string, passengerName?: string) {
+    navigation.navigate('Chat', {bookingId, otherName: passengerName});
+  }
+
   const isActionLoading = completeLoading;
 
   return {
@@ -137,5 +141,6 @@ export function useCaptainTripManage() {
     navigateToChecklist,
     navigateToShipmentCollect,
     navigateToTripLive,
+    navigateToChat,
   };
 }

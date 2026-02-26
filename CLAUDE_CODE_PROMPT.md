@@ -320,32 +320,34 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 
 ## 📱 APP MOBILE — STATUS ATUAL
 
-### Telas implementadas (46 telas)
+### Telas implementadas (52 telas)
 
 | Área | Telas | Status |
 |------|-------|--------|
 | Auth | Login, Register, ForgotPassword, ResetPassword | ✅ 100% |
 | Onboarding | Onboarding, Splash (animado) | ✅ 100% |
 | Home & Busca | Home, Search, SearchResults, PopularRoutes | ✅ 100% |
-| Reservas | Booking, Bookings (lista), Payment, PaymentMethods, Ticket, Tracking | ✅ 100% |
-| Encomendas | CreateShipment, Shipments, ShipmentDetails, ShipmentReview, ScanQR, ValidateDelivery | ✅ 100% |
-| Perfil & Segurança | Profile, EditProfile, Favorites, EmergencyContacts, SOS, Notifications, Help | ✅ 100% |
+| Reservas | Booking, Bookings (lista), Payment, Ticket, Tracking (GPS + label) | ✅ 100% |
+| Pagamento | PaymentMethods (lista), AddCard (cadastro de cartão) | ✅ 100% |
+| Encomendas | CreateShipment (CEP autocomplete), Shipments, ShipmentDetails (timeline 7 estados), ShipmentReview, ScanQR, ValidateDelivery | ✅ 100% |
+| Clima | WeatherScreen (alertas, previsão 7 dias, chuva mm, tempAvg) | ✅ 100% |
+| Perfil & Segurança | Profile, EditProfile (DiceBear avatar), Favorites, EmergencyContacts, SOS, Notifications, Help | ✅ 100% |
 | Legal | Terms, Privacy | ✅ 100% |
-| Capitão — Viagens | Dashboard, MyTrips, CreateTrip, StartTrip, TripManage, TripLive (Google Maps) | ✅ 100% |
+| Capitão — Viagens | Dashboard, MyTrips, CreateTrip (cidades via API), StartTrip, TripManage, TripLive (Google Maps) | ✅ 100% |
 | Capitão — Checklist | CaptainChecklist (8 itens pré-partida) | ✅ 100% |
 | Capitão — Embarcações | MyBoats, CreateBoat, EditBoat | ✅ 100% |
-| Capitão — Financeiro | Financial (ganhos), Operations, ShipmentCollect (QR) | ✅ 100% |
-| Reviews de Viagem | TripReviewScreen, botão "Avaliar" no BookingsScreen | ✅ 100% |
+| Capitão — Financeiro | Financial (ganhos reais, filtro mensal, adiantamento), Operations, ShipmentCollect (QR) | ✅ 100% |
+| Reviews | TripReviewScreen (formulário progressivo), ShipmentReviewScreen, MyReviewsScreen | ✅ 100% |
 | Visualização de Reviews | TripDetailsScreen (capitão + barco), ProfileScreen (recebidas) | ✅ 100% |
 | Perfil do Capitão | CaptainProfileScreen — hero, stats, breakdown Pontualidade/Comunicação, todas as reviews | ✅ 100% |
 | Detalhe da Embarcação | BoatDetailScreen — specs, comodidades, breakdown Limpeza/Conforto, todas as reviews | ✅ 100% |
-| Gamificação | GamificationScreen — pontos, nível, barra de progresso, histórico, ranking | ✅ 100% |
+| Gamificação | GamificationScreen — pontos, nível, barra de progresso, histórico, ranking com UserAvatar | ✅ 100% |
 
-### Domínios implementados (14 módulos)
+### Domínios implementados (16 módulos)
 
 | Domínio | Status | Observação |
 |---------|--------|------------|
-| Auth (login, register, refresh, forgot/reset) | ✅ 100% | |
+| Auth (login, register, refresh, forgot/reset) | ✅ 100% | JWT via Keychain (seguro) |
 | Trip (search, details, popular routes) | ✅ 100% | |
 | Booking (create, list, track, check-in, cancel) | ✅ 100% | PIX com QR code |
 | Shipment (8 estados, QR, tracking, foto, reviews) | ✅ 100% | Presigned S3 URLs |
@@ -353,12 +355,15 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 | Boat (CRUD completo) | ✅ 100% | |
 | Route (search, popular) | ✅ 100% | |
 | Safety (SOS 7 tipos, checklist, contatos emergência) | ✅ 100% | Geolocation com fallback |
-| Weather (clima, previsão, safety assessment) | ✅ 100% | 12 regiões amazônicas |
-| Review (criar, listar por capitão/viagem/barco, canReview, getMyReviews, captainReviewPassenger) | ✅ 100% | exibidas em TripDetailsScreen + ProfileScreen |
+| Weather (clima, previsão, alertas, UV, pressão, visibilidade, nível de rios) | ✅ 100% | 12 regiões amazônicas |
+| Flood Hub (Google Flood Forecasting API) | ⏳ estrutura pronta | Aguardando aprovação Google + backend |
+| Review (criar, listar por capitão/viagem/barco, canReview, getMyReviews, captainReviewPassenger) | ✅ 100% | Exibidas em TripDetailsScreen + ProfileScreen |
 | Favorite (toggle, listar) | ✅ 100% | tipos: destination/boat/captain |
 | Discount (cupom, cálculo de preço, loyalty) | ✅ 100% | |
 | Promotion (banners, CTA, deep-link) | ✅ 100% | |
 | Gamification (NavegaCoins, histórico, leaderboard) | ✅ 100% | GamificationScreen com tabs |
+| PaymentMethod (listar, adicionar, deletar, setar padrão) | ✅ 100% | PaymentMethodsScreen + AddCardScreen |
+| Location (CEP lookup, cidades por UF, label de localização reversa) | ✅ 100% | Cache 24h (cidades) / 30min (label) |
 
 ### Infraestrutura do app
 
@@ -368,15 +373,20 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 | Tema/Design System (Restyle 2.4.5) | ✅ |
 | Estado global (Zustand 5.x) — auth, trip, booking, shipment, toast | ✅ |
 | HTTP Client (Axios + interceptors JWT + refresh automático + conta bloqueada) | ✅ |
+| Armazenamento seguro de tokens (react-native-keychain) | ✅ |
 | Google Maps (react-native-maps) — rotas, marcadores, danger zones | ✅ |
 | QR Code Scanning (Vision Camera 4.x) | ✅ |
 | Upload de fotos (Image Picker + presigned S3) | ✅ |
 | Geolocalização com estratégia de fallback (network → GPS → cache) | ✅ |
 | Safe Area + Keyboard Avoiding em todos as telas | ✅ |
 | Toast notifications (global) | ✅ |
-| Formatação BRL (`formatBRL.ts`) | ✅ |
+| Skeleton loading em todas as telas (incluindo WeatherWidget, ForecastCards, RiverLevels, AlertCards) | ✅ |
+| Formatação BRL (`formatBRL.ts`) + formatação de temperatura/visibilidade | ✅ |
 | Validação CPF + máscara telefone/email | ✅ |
-| Push Notifications (FCM — @react-native-firebase/messaging) | ✅ Implementado |
+| Push Notifications (FCM — @react-native-firebase/messaging) | ✅ |
+| Histórico local de notificações (AsyncStorage, 100 itens) | ✅ |
+| Normalização de URLs de imagem (localhost → API_BASE_URL, ngrok header) | ✅ |
+| Avatar DiceBear (12 estilos, geração local via SVG, sem network) | ✅ |
 | **Analytics / Crash reporting** | ❌ **Não implementado** |
 
 ### Tipo `User` — campos relevantes
@@ -419,7 +429,222 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 - `TripDetailsScreen`: botões "Ver perfil completo →" no card do capitão e "Ver embarcação completa →" no card do barco; "+ X avaliações" também navega para a tela respectiva
 - Parâmetros passados via route.params (dados do `TripCaptain`/`TripBoat` da viagem) + reviews carregadas via `getReviewsByCaptainUseCase` / `getReviewsByBoatUseCase`
 
-### Interceptor HTTP — comportamento de 401
+### Sistema de Braças (Km-based rewards)
+
+- Separado dos NavegaCoins (gamificação); baseado em km percorridos
+- Labels UI: **"Braças"** (era "Milhas Fluviais" — renomeado)
+- Campos internos inalterados: `KmStats`, `kmStats`, `redeemableKm`, `redeemKm`
+- `GamificationScreen`: seção "Braças" separada (km percorridos + braças disponíveis)
+- `BookingScreen`: toggle "Usar Braças" — aparece só se `kmStats.redeemableKm > 0`
+- `bookingTypes.ts`: `redeemKm?: boolean` — enviado no POST de criação de reserva
+
+---
+
+### Google Flood Hub — Integração (aguardando aprovação da API)
+
+#### Status da integração
+- **Estrutura frontend**: ✅ completa — pronta para receber dados reais
+- **Aprovação Google**: ⏳ pendente (waitlist preenchida; projeto: `navegajaapp-cf361`)
+- **Backend**: ⏳ deve implementar endpoints quando aprovação chegar
+
+#### Tipos (`src/domain/App/Weather/floodHubTypes.ts`)
+```typescript
+type FloodSeverity = 'NO_FLOODING' | 'ABOVE_NORMAL' | 'SEVERE' | 'EXTREME';
+type FloodTrend    = 'RISING' | 'FALLING' | 'STEADY';
+type FloodSource   = 'flood_hub' | 'mock';
+
+interface FloodForecastData {
+  statuses: FloodStatus[];
+  gauges: FloodGauge[];
+  lastUpdated: string;
+  source: FloodSource;   // 'mock' = dados estimados; 'flood_hub' = dados reais
+}
+
+interface FloodGaugeModel {
+  gaugeId: string;
+  thresholds: {
+    warningLevel: number | null;        // metros
+    dangerLevel: number | null;
+    extremeDangerLevel: number | null;
+    valueUnit: 'METERS' | 'CUBIC_METERS_PER_SECOND';
+  };
+  source: FloodSource;
+}
+```
+
+#### Endpoints que o backend deve implementar (todos `@Public()`)
+```
+GET /weather/flood/status?lat=X&lng=Y&radiusKm=50   → FloodForecastData
+GET /weather/flood/gauge/:gaugeId/model              → FloodGaugeModel
+GET /weather/flood/gauge/:gaugeId/forecast?days=7   → FloodGaugeForecast (Fase 2)
+GET /weather/flood/events?lat=X&lng=Y&radiusKm=500  → FloodEvent[] (Fase 2)
+GET /weather/flood/inundation?lat=X&lng=Y&radiusKm=50 → InundationPolygons (Fase 3)
+```
+Enquanto `source === 'mock'` → frontend exibe badge "Dados estimados — API pendente".
+Quando `source === 'flood_hub'` → badge some, dados reais exibidos.
+
+#### NavigationSafetyAssessment — campos novos (opcionais)
+```typescript
+// GET /weather/navigation-safety já retorna esses campos quando Flood Hub ativo
+floodSeverity?: 'NO_FLOODING' | 'ABOVE_NORMAL' | 'SEVERE' | 'EXTREME';
+hasFloodRisk?: boolean;
+```
+
+#### Tipos de Inundação (`floodHubTypes.ts`)
+```typescript
+type FloodRiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+interface FloodInundationPolygon {
+  id: string;
+  risk: FloodRiskLevel;
+  coordinates: {latitude: number; longitude: number}[];
+}
+
+interface FloodInundationData {
+  polygons: FloodInundationPolygon[];
+  source: FloodSource;
+  lastUpdated: string;
+}
+
+const RISK_FILL: Record<FloodRiskLevel, string>   // rgba por risco
+const RISK_STROKE: Record<FloodRiskLevel, string> // rgba por risco
+```
+
+#### Hook `useFloodInundation(lat, lng)`
+- `useQuery` com `refetchInterval: 30min`, `staleTime: 25min`
+- Coords arredondadas para ~1 km — evita refetch em cada pulso GPS
+- Retorna `{inundation: FloodInundationData | null}`
+
+#### Roadmap de implementação frontend
+| Fase | Feature | Status |
+|------|---------|--------|
+| 1 | `FloodForecastPanel` na WeatherScreen | ✅ implementado |
+| 1 | Tipos reais (`NO_FLOODING/ABOVE_NORMAL/SEVERE/EXTREME`) | ✅ implementado |
+| 1 | `floodSeverity/hasFloodRisk` no NavigationSafetyAssessment | ✅ tipado |
+| 2 | `Alert` de cheia pós-reserva na BookingScreen | ✅ implementado |
+| 2 | Bloqueio 403 por cheia extrema no CaptainCreateTripScreen | ✅ implementado |
+| 2 | Gráfico 7 dias no RiverDetailModal | ⏳ aguarda backend Fase 2 |
+| 2 | Card de eventos graves na SafetyScreen | ⏳ aguarda backend Fase 2 |
+| 3 | `useFloodInundation` — `GET /weather/flood/inundation` | ✅ implementado |
+| 3 | `<Polygon>` no TrackingScreen (passageiro) | ✅ implementado |
+| 3 | `<Polygon>` no CaptainTripLiveScreen (capitão) | ✅ implementado |
+
+> **Nota Fase 3:** polígonos gateados em `source === 'flood_hub'` — zero impacto visual enquanto API Key não aprovada (backend retorna array vazio com `source: 'mock'`)
+
+---
+
+### Sistema de Clima — Funcionalidades completas (v5.9+)
+
+#### WeatherWidget (HomeScreen + TrackingScreen)
+- Temperatura atual, sensação térmica, condição, ícone
+- Grid de detalhes: umidade, vento, nebulosidade
+- **Linha adicional**: pressão atmosférica (hPa) + visibilidade (`formatVisibility`) + descrição
+- **Linha nascer/pôr do sol**: incluindo **UV Index** colorido (`UV_LEVEL_CONFIGS[getUvLevel(uvIndex)]`)
+- `uvIndex: number | null` — null em planos gratuitos da OpenWeatherMap
+
+#### TripWeatherWidget (TripDetailsScreen / TripLive)
+- Header: origem → destino + data/hora de partida
+- Cards de resumo por trecho (clima atual + previsão de chegada)
+- RiverLevelsPanel: nível atual, variação, tendência para rios amazônicos
+
+#### WeatherAlertCard (`src/components/WeatherAlertCard/`)
+- **Prop `compact`**: banner compacto com ícone + evento + headline (HomeScreen)
+- **Variant completo**: evento, badge de severidade, headline, descrição, período
+- 4 severidades com cores: info(azul) / warning(amarelo) / severe(laranja) / extreme(vermelho)
+
+#### WeatherScreen
+- Alertas ativos ordenados por severidade (extreme → info)
+- Previsão de 7 dias: `tempMin`/`tempMax`/`tempAvg` + `precipitation` (mm) + probabilidade (%)
+- Pull-to-refresh atualiza clima + alertas da região
+- Dados do `WeatherForecastDay`: `tempAvg`, `precipitation`, `precipitationProbability`
+
+#### HomeScreen — Banner de alerta
+- Mostra apenas alertas `severe` ou `extreme` (não polui o feed com alertas menores)
+- Ordenados por severidade: extreme aparece antes de severe
+- `useWeatherAlerts` + `fetchRegionAlerts(region)` carregado no `loadData()`
+
+#### Tipos de UV (`UvLevel` + `UV_LEVEL_CONFIGS` em `weatherTypes.ts`)
+```typescript
+export type UvLevel = 'low' | 'moderate' | 'high' | 'very_high' | 'extreme';
+export function getUvLevel(index: number): UvLevel { ... }
+export const UV_LEVEL_CONFIGS: Record<UvLevel, { label, emoji, color }> = { ... };
+```
+
+### Domínio Location (`src/domain/App/Location/`)
+
+#### Estrutura de arquivos
+```
+Location/
+  locationTypes.ts   — CepResult, City, LocationLabel, ReverseGeocode, AM_CITIES_FALLBACK
+  locationAPI.ts     — getCep, getCities, getLocationLabel, getReverseGeocode
+  locationService.ts — cache: cidades 24h, label 30min por coords
+  useCases/
+    useCepLookup.ts      — lookup(cep: string) → auto-fill endereço
+    useCities.ts         — API + fallback estático; retorna cityNames: string[]
+    useLocationLabel.ts  — fetchLabel(lat, lng) → string de label humanizado
+    index.ts
+  index.ts
+```
+
+#### Uso dos hooks
+```typescript
+// useCities — cidades do AM via API com fallback
+const {cityNames, isLoading} = useCities();
+// cityNames: string[] — nomes das cidades (para dropdowns)
+
+// useCepLookup — autocomplete de endereço por CEP
+const {result: cepResult, lookupCep, isLoading: isCepLoading} = useCepLookup();
+// Chama lookupCep(cep) quando cep.length === 8 → preenche logradouro, bairro, cidade
+
+// useLocationLabel — label humano para coordenadas GPS
+const {label: locationLabel, fetchLabel} = useLocationLabel();
+// fetchLabel(lat, lng) → locationLabel como "Rio Negro - Manaus, AM"
+```
+
+#### Endpoints da API (backend)
+```
+GET /locations/cep/:cep            — lookup de CEP (8 dígitos)
+GET /locations/cities              — cidades do AM (default)
+GET /locations/cities/:uf          — cidades de outro estado
+GET /locations/location-label?lat=&lng=   — label humanizado
+GET /locations/reverse-geocode?lat=&lng=  — geocodificação reversa completa
+```
+
+#### Integração nas telas
+- **CreateShipmentScreen**: campo CEP antes do endereço; ícone muda (loading → check → pin); auto-preenche `recipientAddress`
+- **CaptainCreateTripScreen**: dropdown de cidades usa API com fallback a lista estática `AM_CITIES`
+- **TrackingScreen**: `useLocationLabel` exibe posição atual do barco em texto ("Rio Solimões - Parintins, AM")
+
+### Sistema de Notificações Push (FCM)
+
+#### 17 tipos de notificação tratados em `Router.tsx`:
+| Tipo | Ação |
+|------|------|
+| `booking_confirmed` | navega para Ticket |
+| `trip_started` | navega para Tracking |
+| `trip_completed` | navega para TripReview |
+| `check_in_available` | navega para Ticket |
+| `booking_cancelled` | navega para Bookings |
+| `shipment_created` | navega para ShipmentDetails |
+| `shipment_collected` | navega para ShipmentDetails |
+| `shipment_in_transit` | navega para ShipmentDetails |
+| `shipment_arrived` | navega para ShipmentDetails |
+| `shipment_out_for_delivery` | navega para ShipmentDetails |
+| `shipment_delivered` | navega para ShipmentReview |
+| `payment_confirmed` | navega para Ticket |
+| `sos_alert` | navega para SosAlert |
+| `weather_alert` | navega para WeatherScreen |
+| `gamification_level_up` | navega para Gamification |
+| `gamification_coins_earned` | navega para Gamification |
+| `captain_verified` | navega para CaptainDashboard |
+
+#### NotificationsScreen
+- Lê histórico de AsyncStorage (máx 100 notificações)
+- Badge de não-lidas em tempo real
+- Tap em notificação → navega para tela correta + marca como lida
+- `notificationsService.ts`: `registerPushToken()` / `unregisterPushToken()`
+
+### Sistema de Reviews — Fluxo completo (padrão Uber)
 - **"Conta bloqueada ou não encontrada"** → limpa tokens + toast de erro (6s) + logout imediato. Não tenta refresh.
 - **Qualquer outro 401** → tenta refresh automático. Se falhar → logout silencioso.
 - Fonte: `src/api/apiClient.ts` linhas 87–103.
@@ -488,45 +713,41 @@ Garantir que `arrivalTime > departureTime` em todas as validações.
 
 ### 📱 APP MOBILE — O QUE FALTA
 
-#### 🔴 CRÍTICO — Mobile Priority 1
-
 #### ~~M1. Gamificação~~ ✅ IMPLEMENTADO
 `src/domain/App/Gamification/` completo: `gamificationAPI.ts`, `gamificationTypes.ts`, 3 hooks (`useGamificationStats`, `useGamificationHistory`, `useLeaderboard`). `GamificationScreen.tsx` com card de pontos/nível/progress bar e tabs Histórico/Ranking. Acesso via "NavegaCoins" no ProfileScreen.
 
 #### ~~M2. Push Notifications (FCM)~~ ✅ IMPLEMENTADO
-`@react-native-firebase/messaging` instalado. `google-services.json` em `android/app/`. Gradle configurado. `src/services/notificationsService.ts` com `registerPushToken()` / `unregisterPushToken()`. Histórico local em AsyncStorage. `NotificationsScreen.tsx` exibe notificações reais com navegação por tipo. Listeners em `Router.tsx`. **Rebuild necessário**: `cd android && ./gradlew clean && npx react-native run-android`.
+`@react-native-firebase/messaging` instalado. `google-services.json` em `android/app/`. Gradle configurado. `src/services/notificationsService.ts` com `registerPushToken()` / `unregisterPushToken()`. Histórico local em AsyncStorage (100 itens). `NotificationsScreen.tsx` exibe notificações reais com navegação por tipo. 17 tipos tratados em `Router.tsx`. **Rebuild necessário**: `cd android && ./gradlew clean && npx react-native run-android`.
 
-#### 🟠 IMPORTANTE — Mobile Priority 2
+#### ~~M3. Reviews pós-viagem~~ ✅ IMPLEMENTADO
+`TripReviewScreen.tsx`: formulário progressivo (nota geral → detalhes: Pontualidade, Comunicação, Limpeza, Conforto). `ShipmentReviewScreen.tsx`: avalia entrega geral + pontualidade + comunicação. `MyReviewsScreen.tsx`: tabs "Dadas" / "Recebidas". Botão "Avaliar" no `BookingsScreen`.
 
-#### M3. `src/api/config.ts` — Sincronizar endpoints faltantes
-Faltam no arquivo `config.ts` (os domínios usam caminhos hardcoded nas classes `*API.ts`):
-```typescript
-// Adicionar:
-CAPTAIN_TRIPS: '/trips/captain/my-trips',
-TRIP_PASSENGERS: (id: string) => `/trips/${id}/passengers`,
-MY_SHIPMENTS: '/shipments/my-shipments',
-SHIPMENT_BY_ID: (id: string) => `/shipments/${id}`,
-FAVORITES: '/favorites',
-COUPONS_VALIDATE: '/coupons/validate',
-PROMOTIONS: '/promotions',
-SAFETY_SOS: '/safety/sos',
-SAFETY_CHECKLISTS: '/safety/checklists',
-WEATHER_CURRENT: '/weather/current',
-WEATHER_SAFETY: '/safety/weather-safety',
-```
+#### ~~M4. Pagamento~~ ✅ IMPLEMENTADO
+`PaymentMethodsScreen.tsx` + `AddCardScreen.tsx`. Domínio `PaymentMethod` com `paymentMethodAPI.ts` + 4 hooks: `usePaymentMethods`, `useAddPaymentMethod`, `useDeletePaymentMethod`, `useSetDefaultPaymentMethod`.
 
-#### ~~M4. Tela de reviews pós-viagem~~ ✅ IMPLEMENTADO
-`TripReviewScreen.tsx` criado com formulário progressivo: nota geral (obrigatória) → detalhes opcionais (Pontualidade, Comunicação, Limpeza, Conforto) revelados após nota geral. Botão "Avaliar Viagem" no `BookingsScreen`. `TripDetailsScreen` exibe breakdown de ratings (barra de progresso) + labels por review.
+#### ~~M5. Sistema de Clima completo~~ ✅ IMPLEMENTADO
+`WeatherScreen.tsx`, `WeatherAlertCard`, alertas na HomeScreen (severe/extreme), UV index, pressão, visibilidade, `RiverLevelsPanel`, `TripWeatherWidget` com origem→destino.
 
-#### 🟡 DESEJÁVEL — Mobile Priority 3
+#### ~~M6. Domínio Location~~ ✅ IMPLEMENTADO
+`useCepLookup` (autocomplete em CreateShipmentScreen), `useCities` (dropdown em CaptainCreateTripScreen com fallback), `useLocationLabel` (posição do barco em texto no TrackingScreen).
 
-#### M5. Filtros avançados de busca
+#### ~~M7. Armazenamento seguro de tokens~~ ✅ IMPLEMENTADO
+`react-native-keychain` — JWT armazenado no Keychain/Keystore do dispositivo (não em AsyncStorage).
+
+#### 🟠 DESEJÁVEL — Mobile Priority 1
+
+#### M8. Filtros avançados de busca
 `SearchScreen.tsx` / `SearchResultsScreen.tsx` — busca básica por origem/destino. Faltam filtros: data, faixa de preço, tipo de embarcação, amenidades.
 
-#### M6. Analytics / Crash Reporting
+#### M9. `src/api/config.ts` — Sincronizar endpoints faltantes
+Os domínios usam caminhos hardcoded nas classes `*API.ts`. `config.ts` está desatualizado — mas não bloqueia nada pois cada domínio define sua própria URL.
+
+#### 🟡 DESEJÁVEL — Mobile Priority 2
+
+#### M10. Analytics / Crash Reporting
 Sem Sentry (crash reports) nem Firebase Analytics (eventos de usuário).
 
-#### M7. Compressão de imagens
+#### M11. Compressão de imagens
 `PhotoPicker.tsx` usa Image Picker mas sem compressão antes do upload S3. Fotos grandes podem causar timeouts.
 
 ---
@@ -596,6 +817,9 @@ PORT=3000
 NODE_ENV=development
 
 OPENWEATHER_API_KEY=sua-chave-openweathermap
+
+# Google Flood Hub — adicionar quando aprovação chegar
+# GOOGLE_FLOOD_HUB_API_KEY=sua-chave-flood-hub
 ```
 
 ---
@@ -696,10 +920,165 @@ curl -X POST http://localhost:3000/auth/login \
 8. **Integração clima em `startTrip`** (chamar WeatherService antes de IN_PROGRESS)
 
 ### App Mobile — ordem de prioridade:
-1. **Sincronizar `config.ts`** — centralizar endpoints hardcoded nas classes `*API.ts`
-2. **Filtros avançados de busca** — data, preço, tipo de embarcação, amenidades
+1. **Filtros avançados de busca** — data, preço, tipo de embarcação, amenidades
+2. **Flood Hub Fase 2 restante** — gráfico 7 dias no RiverDetailModal + card de eventos na SafetyScreen (quando backend entregar endpoints `/flood/gauge/:id/forecast` e `/flood/events`)
 3. **Analytics / Crash Reporting** — Sentry ou Firebase Analytics
+4. **Compressão de imagens** — antes do upload S3
 
 ---
 
-*Prompt gerado em: 19/02/2026 | Atualizado: 20/02/2026 | Versão: 3.7 | Projeto: NavegaJá Full Stack*
+## 🧩 COMPONENTES REUTILIZÁVEIS (exportados de `@components`)
+
+| Componente | Props principais | Uso |
+|------------|-----------------|-----|
+| `UserAvatar` | `userId?`, `avatarUrl?`, `name?`, `size?` (xs/sm/md/lg/xl) | Toda tela que exibe avatar de usuário |
+| `AvatarEditorModal` | `visible`, `currentAvatarUrl?`, `userName?`, `onConfirm(url)`, `onClose` | EditProfileScreen |
+| `PhotoPicker` | `photos`, `onPhotosChange`, `maxPhotos?=5` | Upload de múltiplas fotos |
+| `WeatherWidget` | `region?`, `latitude?`, `longitude?`, `onPress?` | HomeScreen, TrackingScreen — exibe skeleton durante loading |
+| `WeatherAlertCard` | `alert: WeatherAlert`, `compact?` | HomeScreen (compact), WeatherScreen (full) |
+| `TripWeatherWidget` | `tripWeather: TripWeather` | TripDetailsScreen, CaptainTripLive |
+| `RiverLevelsPanel` | _(sem props — faz próprio fetch)_ | WeatherScreen — exibe skeleton durante loading |
+| `FloodForecastPanel` | `lat: number`, `lng: number`, `radiusKm?=50` | WeatherScreen — alertas Flood Hub; badge "estimados" enquanto `source==='mock'` |
+| `ConfirmationModal` | `visible`, `title`, `message`, `icon?`, `iconColor?`, `confirmText?`, `cancelText?`, `onConfirm`, `onCancel`, `isLoading?` | Qualquer confirmação destrutiva |
+
+### Skeletons disponíveis (`@components` → `Skeleton.tsx`)
+| Skeleton | Uso |
+|----------|-----|
+| `Skeleton` | Base (width, height, borderRadius, animate) |
+| `TripCardSkeleton` | Cards de viagem em listas |
+| `TripListSkeleton` | Lista de cards (prop `count`) |
+| `TripDetailsSkeleton` | Tela de detalhes da viagem |
+| `BookingCardSkeleton` | Cards de reserva |
+| `ShipmentCardSkeleton` | Cards de encomenda |
+| `WeatherWidgetSkeleton` | Widget de clima atual (header + temp + grid + pressão + UV) |
+| `ForecastCardSkeleton` | Card 110px para previsão horizontal |
+| `RiverLevelsSkeleton` | Painel de nível de rios (prop `count`) |
+| `WeatherAlertCardSkeleton` | Card de alerta meteorológico |
+
+### UserAvatar — Render priority:
+1. DiceBear URL (`https://api.dicebear.com/9.x/{style}/svg?seed=...`) → renderizado localmente via SVG
+2. Foto real (URL http/https com imagem real)
+3. Fallback: avatar SVG local com iniciais
+
+### AvatarEditorModal — 12 estilos DiceBear disponíveis:
+`avataaars`, `micah`, `lorelei`, `adventurer`, `open-peeps`, `personas`, `notionists`, `bottts`, `pixel-art`, `fun-emoji`, `thumbs`, `initials`
+
+---
+
+## 🧪 TESTES UNITÁRIOS
+
+### Suítes existentes (217 testes, 16 suítes)
+
+| Arquivo de teste | O que cobre |
+|-----------------|-------------|
+| `utils/cpfValidator.test.ts` | Validação de CPF |
+| `utils/phoneMask.test.ts` | Máscara de telefone |
+| `utils/formatBRL.test.ts` | Formatação de moeda BRL |
+| `hooks/useVirtualPagination.test.ts` | Paginação virtual |
+| `api/normalizeFileUrl.test.ts` | Normalização de URLs de imagem |
+| `screens/useBookingsScreen.test.ts` | Filtros, badges, cancelamento, navegação |
+| `domain/gamificationService.test.ts` | Transformação de histórico, leaderboard |
+| `domain/locationService.test.ts` | Cache AsyncStorage (24h cities, 30min label), fallback |
+| `domain/useCepLookup.test.ts` | Lookup CEP, validação 8 dígitos, limpeza de máscara, error |
+| `domain/useCities.test.ts` | Carregamento, fallback offline, cityNames derivado |
+| `domain/useLocationLabel.test.ts` | fetchLabel, falha silenciosa, clear |
+| `domain/useWeatherAlerts.test.ts` | fetchAlerts (lat/lng), fetchRegionAlerts, error state |
+| `domain/paymentMethodService.test.ts` | Normalização cardNumber/holderName, getAll, setDefault, remove |
+
+### Padrão de testes de service
+```typescript
+import {myService} from '../../domain/App/Domain/myService';
+import {myAPI} from '../../domain/App/Domain/myAPI';
+
+jest.mock('../../domain/App/Domain/myAPI');
+const mockAPI = myAPI as jest.Mocked<typeof myAPI>;
+
+describe('myService.method', () => {
+  beforeEach(() => jest.clearAllMocks());
+  it('...', async () => { ... });
+});
+```
+
+### Padrão de testes de hook (useState pattern)
+```typescript
+import {renderHook, act} from '@testing-library/react-native';
+import {useMyHook} from '../../domain/App/Domain/useCases/useMyHook';
+import {myService} from '../../domain/App/Domain/myService';
+
+jest.mock('../../domain/App/Domain/myService');
+const mockService = myService as jest.Mocked<typeof myService>;
+
+it('...', async () => {
+  mockService.method.mockResolvedValue(data);
+  const {result} = renderHook(() => useMyHook());
+  await act(async () => { await result.current.doSomething(); });
+  expect(result.current.state).toEqual(data);
+});
+```
+
+### Limitação conhecida
+- Hooks que usam `@tanstack/react-query` (`useMyCards`, `useAddCard`, etc.) requerem wrapper com `QueryClient` — testados via `paymentMethodService.test.ts` em vez de hooks.
+- `@dicebear/core` não tem mock Jest — testes de componentes que importam `UserAvatar` falham (16 testes pré-existentes ignorados no CI).
+
+---
+
+## 🔑 PADRÕES CRÍTICOS DO APP (NUNCA VIOLAR)
+
+### Restyle — Tokens de borda e espaçamento
+```typescript
+// ✅ borderRadius válidos: s8, s12, s16, s20, s24, s48
+<Box borderRadius="s16" />
+// ❌ s4 NÃO existe → usar style
+<Box style={{borderRadius: 4}} />
+
+// ✅ spacing começa em s4
+<Box padding="s4" />
+// ❌ s2 NÃO existe
+```
+
+### Restyle — Cores dinâmicas (hex)
+```typescript
+// ✅ Hex dinâmico → sempre via style
+<Box style={{backgroundColor: '#FF5733'}} />
+// ❌ NUNCA como prop Restyle direta
+<Box backgroundColor="#FF5733" />  // TS error
+
+// Icon com hex:
+<Icon name="star" color={hexColor as any} />
+```
+
+### Imagens — Normalização de URL
+```typescript
+// ✅ Sempre usar apiImageSource para <Image>
+<Image source={apiImageSource(url)} />
+// ✅ Sempre usar normalizeFileUrl ao guardar estado
+setAvatarUrl(normalizeFileUrl(responseUrl));
+// ❌ NUNCA fazer manualmente
+const src = url.startsWith('http') ? url : API_BASE_URL + url; // buggy
+```
+
+### Toast — API correta
+```typescript
+// ✅ useToast()
+const {showSuccess, showError, showWarning, showInfo} = useToast();
+showSuccess('Mensagem');
+// ❌ NÃO existe
+toast.show({message, preset});
+```
+
+### Domínio — Estrutura obrigatória
+```
+App/DomainName/
+  domainAPI.ts      — api.get/post/patch/delete
+  domainTypes.ts    — interfaces e enums
+  domainService.ts  — (opcional) cache/transformações
+  index.ts          — barrel export
+  useCases/
+    useActionName.ts   — hook com estado (useState pattern)
+    index.ts
+```
+**SEMPRE** exportar o novo domínio em `src/domain/App/index.ts`.
+
+---
+
+*Prompt gerado em: 19/02/2026 | Atualizado: 26/02/2026 | Versão: 4.3 | Projeto: NavegaJá Full Stack*

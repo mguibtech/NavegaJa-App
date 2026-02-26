@@ -7,6 +7,7 @@ import QRCode from 'react-native-qrcode-svg';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
 import {Booking, bookingAPI, BookingStatus, Trip, tripAPI, PaymentMethod} from '@domain';
+import {usePdfDownload} from '@hooks';
 
 import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
@@ -18,6 +19,7 @@ type TicketStatus = 'confirmed' | 'active' | 'completed' | 'cancelled' | 'pendin
 export function TicketScreen({navigation, route}: Props) {
   const {top} = useSafeAreaInsets();
   const {bookingId} = route.params;
+  const {download, isDownloading} = usePdfDownload();
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -568,6 +570,20 @@ export function TicketScreen({navigation, route}: Props) {
               rightIcon="near-me"
             />
 
+            <Button
+              title="💬 Falar com o capitão"
+              onPress={() => navigation.navigate('Chat', {bookingId: booking.id})}
+              preset="outline"
+            />
+
+            <Button
+              title={isDownloading ? 'Baixando...' : 'Baixar bilhete PDF'}
+              onPress={() => download(`/bookings/${booking.id}/ticket`, `bilhete-${booking.id.slice(0, 8)}.pdf`)}
+              preset="outline"
+              loading={isDownloading}
+              leftIcon="picture-as-pdf"
+            />
+
             <TouchableOpacityBox
               paddingVertical="s16"
               borderRadius="s12"
@@ -582,12 +598,25 @@ export function TicketScreen({navigation, route}: Props) {
         )}
 
         {ticketStatus === 'active' && (
-          <Button
-            title="Ver Rastreamento em Tempo Real"
-            onPress={handleStartTracking}
-            rightIcon="near-me"
-            mb="s24"
-          />
+          <Box gap="s12" mb="s24">
+            <Button
+              title="Ver Rastreamento em Tempo Real"
+              onPress={handleStartTracking}
+              rightIcon="near-me"
+            />
+            <Button
+              title="💬 Falar com o capitão"
+              onPress={() => navigation.navigate('Chat', {bookingId: booking.id})}
+              preset="outline"
+            />
+            <Button
+              title={isDownloading ? 'Baixando...' : 'Baixar bilhete PDF'}
+              onPress={() => download(`/bookings/${booking.id}/ticket`, `bilhete-${booking.id.slice(0, 8)}.pdf`)}
+              preset="outline"
+              loading={isDownloading}
+              leftIcon="picture-as-pdf"
+            />
+          </Box>
         )}
 
         {/* Help */}

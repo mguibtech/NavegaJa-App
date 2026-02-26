@@ -5,8 +5,10 @@ import MapView from 'react-native-maps';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {SosAlert, SosStatus, useTrackBooking, TrackingStatus, useSosAlert, useLocationLabel} from '@domain';
+import {SosAlert, SosStatus, useTrackBooking, TrackingStatus, useSosAlert, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE} from '@domain';
 import {AppStackParamList} from '@routes';
+import {api} from '@api';
+import {API_ENDPOINTS} from '@api/config';
 
 // Coordenadas padrão (Manaus → Parintins) - fallback quando API não tem coordenadas
 const MANAUS_COORDS = {latitude: -3.119, longitude: -60.0217};
@@ -27,6 +29,7 @@ export function useTrackingScreen() {
 
   const [showSosAlerts, setShowSosAlerts] = useState(true);
   const [showDangerZones, setShowDangerZones] = useState(true);
+  const [livePosition, setLivePosition] = useState<{latitude: number; longitude: number} | null>(null);
 
   // Modal state
   const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
@@ -51,6 +54,34 @@ export function useTrackingScreen() {
     }
   }, [error]);
 
+  // GPS polling — atualiza posição do barco a cada 15s enquanto viagem está em andamento
+  useEffect(() => {
+    const tripId = trackingInfo?.booking.tripId;
+    const status = trackingInfo?.trackingStatus;
+    if (!tripId || status === 'arrived' || status === 'cancelled' || status === 'scheduled') {
+      return;
+    }
+    async function pollLocation() {
+      try {
+        const res = await api.get<{lat: number; lng: number}>(API_ENDPOINTS.TRIP_LOCATION(tripId!));
+        if (res?.lat != null && res?.lng != null) {
+          setLivePosition({latitude: res.lat, longitude: res.lng});
+        }
+      } catch {
+        // falha silenciosa — mantém posição anterior
+      }
+    }
+    pollLocation();
+    const interval = setInterval(pollLocation, 15_000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackingInfo?.booking.tripId, trackingInfo?.trackingStatus]);
+
+  // Flood inundation polygons — usa posição da embarcação como centro
+  const inundLat = trackingInfo?.currentLat ?? MANAUS_COORDS.latitude;
+  const inundLng = trackingInfo?.currentLng ?? MANAUS_COORDS.longitude;
+  const {inundation} = useFloodInundation(inundLat, inundLng);
+
   const trip = trackingInfo?.booking.trip;
   const booking = trackingInfo?.booking;
 
@@ -58,10 +89,11 @@ export function useTrackingScreen() {
   const originCoords = MANAUS_COORDS;
   const destinationCoords = PARINTINS_COORDS;
 
-  // Boat position: prefer real GPS from trip, otherwise interpolate from progress
+  // Boat position: prefer live GPS poll, then tracking API, then interpolate from progress
   const progress = trackingInfo?.progressPercent ?? 0;
   const currentPosition =
-    trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
+    livePosition ??
+    (trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
       ? {latitude: trackingInfo.currentLat, longitude: trackingInfo.currentLng}
       : {
           latitude:
@@ -72,7 +104,7 @@ export function useTrackingScreen() {
             originCoords.longitude +
             (destinationCoords.longitude - originCoords.longitude) *
               (progress / 100),
-        };
+        });
 
   const routeCoordinates = [originCoords, currentPosition, destinationCoords];
 
@@ -238,5 +270,8 @@ export function useTrackingScreen() {
     handleCancelEmergency,
     handleCloseSosDetail,
     locationLabel,
+    inundation,
+    RISK_FILL,
+    RISK_STROKE,
   };
 }

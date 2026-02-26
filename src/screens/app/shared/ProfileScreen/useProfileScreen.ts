@@ -12,6 +12,8 @@ import {AppStackParamList} from '@routes';
 export const MENU_ITEMS = [
   {id: 'edit-profile', icon: 'edit', title: 'Editar Perfil', subtitle: 'Nome, email, cidade e senha', color: 'primary' as const},
   {id: 'gamification', icon: 'stars', title: 'NavegaCoins', subtitle: 'Pontos, nível e ranking', color: 'primary' as const},
+  {id: 'referrals', icon: 'group-add', title: 'Indicar Amigos', subtitle: 'Compartilhe seu código e ganhe pontos', color: 'primary' as const},
+  {id: 'messages', icon: 'chat', title: 'Mensagens', subtitle: 'Conversas com capitães e passageiros', color: 'primary' as const},
   {id: 'my-reviews', icon: 'star-rate', title: 'Minhas Avaliações', subtitle: 'Avaliações enviadas e recebidas', color: 'secondary' as const},
   {id: 'payment', icon: 'credit-card', title: 'Formas de Pagamento', subtitle: 'Gerencie seus métodos de pagamento', color: 'secondary' as const},
   {id: 'notifications', icon: 'notifications', title: 'Notificações', subtitle: 'Preferências de notificação', color: 'primary' as const},
@@ -21,7 +23,7 @@ export const MENU_ITEMS = [
 ];
 
 export const MENU_GROUPS = [
-  {title: 'Conta', items: ['edit-profile', 'gamification', 'my-reviews', 'payment', 'notifications']},
+  {title: 'Conta', items: ['edit-profile', 'gamification', 'referrals', 'messages', 'my-reviews', 'payment', 'notifications']},
   {title: 'Informações', items: ['help', 'terms', 'privacy']},
 ];
 
@@ -44,6 +46,8 @@ export function useProfileScreen() {
     switch (itemId) {
       case 'edit-profile': navigation.navigate('EditProfile'); break;
       case 'gamification': navigation.navigate('Gamification'); break;
+      case 'referrals': navigation.navigate('Referrals'); break;
+      case 'messages': navigation.navigate('Conversations'); break;
       case 'my-reviews': navigation.navigate('MyReviews'); break;
       case 'payment': navigation.navigate('PaymentMethods'); break;
       case 'notifications': navigation.navigate('Notifications'); break;

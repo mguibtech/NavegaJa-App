@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react';
-import {ActivityIndicator} from 'react-native';
 
-import {Box, Icon, Text, TouchableOpacityBox, WeatherIcon} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, WeatherIcon, WeatherWidgetSkeleton} from '@components';
 import {
   useWeather,
   Region,
@@ -47,20 +46,7 @@ export function WeatherWidget({
   }
 
   if (isLoading) {
-    return (
-      <Box
-        backgroundColor="surface"
-        borderRadius="s16"
-        padding="s20"
-        alignItems="center"
-        justifyContent="center"
-        height={120}>
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text preset="paragraphSmall" color="textSecondary" mt="s8">
-          Carregando clima...
-        </Text>
-      </Box>
-    );
+    return <WeatherWidgetSkeleton />;
   }
 
   if (!weather) {

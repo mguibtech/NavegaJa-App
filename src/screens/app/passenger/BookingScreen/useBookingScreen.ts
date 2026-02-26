@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
@@ -11,6 +12,7 @@ import {
   useCalculatePrice,
   PriceBreakdown as PriceBreakdownType,
   useCouponValidation,
+  useKmStats,
 } from '@domain';
 import {AppStackParamList} from '@routes';
 
@@ -91,6 +93,9 @@ export function useBookingScreen() {
     setPaymentMethod(method);
     AsyncStorage.setItem(PAYMENT_PREF_KEY, method).catch(() => {});
   };
+  const [redeemKm, setRedeemKm] = useState(false);
+  const {kmStats} = useKmStats();
+
   const [priceBreakdown, setPriceBreakdown] =
     useState<PriceBreakdownType | null>(null);
 
@@ -109,13 +114,13 @@ export function useBookingScreen() {
     if (tripError) { setShowLoadErrorModal(true); }
   }, [tripError]);
 
-  // Calculate price whenever trip, passengers, or coupon changes
+  // Calculate price whenever trip, passengers, coupon or km toggle changes
   useEffect(() => {
     if (trip) {
       calculatePrice();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip, passengers, couponValidation.state]);
+  }, [trip, passengers, couponValidation.state, redeemKm]);
 
   async function calculatePrice() {
     if (!trip) return;
@@ -130,6 +135,7 @@ export function useBookingScreen() {
         tripId: trip.id,
         quantity: passengers,
         couponCode,
+        ...(redeemKm ? {redeemKm: true} : {}),
       });
       setPriceBreakdown(breakdown);
     } catch (_error) {
@@ -233,7 +239,25 @@ export function useBookingScreen() {
         quantity: passengers,
         paymentMethod,
         couponCode,
+        ...(redeemKm ? {redeemKm: true} : {}),
       });
+
+      // Aviso de cheia — reserva já confirmada, só informa
+      if (booking.floodWarning) {
+        const severityLabel: Record<string, string> = {
+          ABOVE_NORMAL: 'Atenção',
+          SEVERE: 'Alerta de Cheia',
+          EXTREME: 'Emergência',
+        };
+        const label = severityLabel[booking.floodSeverity ?? 'ABOVE_NORMAL'] ?? 'Atenção';
+        await new Promise<void>(resolve => {
+          Alert.alert(
+            `⚠️ ${label} — Risco de Cheia`,
+            'Há risco de cheia na rota desta viagem. Sua reserva foi confirmada. Verifique as condições com o capitão antes de embarcar.',
+            [{text: 'Entendi', onPress: () => resolve()}],
+          );
+        });
+      }
 
       navigation.replace('Payment', {
         bookingId: booking.id,
@@ -303,6 +327,9 @@ export function useBookingScreen() {
     isCreatingBooking,
     isCalculatingPrice,
     couponValidation,
+    kmStats,
+    redeemKm,
+    setRedeemKm,
     showLoadErrorModal,
     showCpfErrorModal,
     cpfErrorMessage,

@@ -1,5 +1,5 @@
 import {gamificationAPI} from './gamificationAPI';
-import {GamificationStats, GamificationTransaction, LeaderboardEntry} from './gamificationTypes';
+import {GamificationStats, GamificationTransaction, KmStats, LeaderboardEntry} from './gamificationTypes';
 
 async function getStats(): Promise<GamificationStats> {
   return gamificationAPI.getStats();
@@ -29,8 +29,13 @@ async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
   }));
 }
 
+async function getKmStats(): Promise<KmStats> {
+  return gamificationAPI.getKmStats();
+}
+
 export const gamificationService = {
   getStats,
   getHistory,
   getLeaderboard,
+  getKmStats,
 };

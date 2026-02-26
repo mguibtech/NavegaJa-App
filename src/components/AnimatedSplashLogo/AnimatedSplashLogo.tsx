@@ -6,7 +6,6 @@ import Svg, {
   Line,
   G,
   Defs,
-  LinearGradient as SvgLinearGradient,
   RadialGradient,
   Stop,
   Text as SvgText,
@@ -117,19 +116,11 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
     <Svg width={size} height={size} viewBox="0 0 300 300">
       {/* Gradientes */}
       <Defs>
-        <SvgLinearGradient id="splashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0B5D8A" stopOpacity="1" />
-          <Stop offset="100%" stopColor="#075985" stopOpacity="1" />
-        </SvgLinearGradient>
-
         <RadialGradient id="glowGradient">
-          <Stop offset="0%" stopColor="#0B5D8A" stopOpacity="0.3" />
-          <Stop offset="100%" stopColor="#0B5D8A" stopOpacity="0" />
+          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15" />
+          <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
       </Defs>
-
-      {/* Fundo com gradiente */}
-      <Rect width="300" height="300" fill="url(#splashGradient)" />
 
       {/* Glow effect pulsante */}
       <AnimatedCircle
@@ -188,7 +179,7 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           width={12}
           height={8}
           rx={2}
-          fill="#0B5D8A"
+          fill="#064E73"
           animatedProps={useAnimatedProps(() => ({
             opacity: windowOpacity.value,
           }))}
@@ -199,7 +190,7 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           width={12}
           height={8}
           rx={2}
-          fill="#0B5D8A"
+          fill="#064E73"
           animatedProps={useAnimatedProps(() => ({
             opacity: windowOpacity.value,
           }))}

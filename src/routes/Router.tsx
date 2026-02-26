@@ -4,10 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 
 import {NavigationContainer} from '@react-navigation/native';
+import {useQueryClient} from '@tanstack/react-query';
 
 import {Box} from '@components';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
+import {queryKeys} from '@infra';
 import {OnboardingScreen} from '../screens/onboarding/OnboardingScreen';
 import {SplashScreen} from '../screens/splash/SplashScreen';
 import {apiClient} from '../api/apiClient';
@@ -102,6 +104,34 @@ function handleNotificationNavigation(data: Record<string, string>) {
       }
       break;
 
+    case 'chat':
+      // Nova mensagem no chat — abre a conversa específica
+      if (data.bookingId) {
+        navigationRef.navigate('Chat', {
+          bookingId: data.bookingId,
+          otherName: data.senderName,
+        });
+      }
+      break;
+
+    case 'kyc_approved':
+      // KYC aprovado — abre tela de status KYC
+      navigationRef.navigate('KycStatus');
+      break;
+
+    case 'kyc_rejected':
+      // KYC rejeitado — abre tela de envio com motivo preenchido
+      navigationRef.navigate('KycSubmit', {
+        rejected: true,
+        reason: data.rejectionReason,
+      });
+      break;
+
+    case 'referral_converted':
+      // Indicação convertida — abre tela de indicações
+      navigationRef.navigate('Referrals');
+      break;
+
     default:
       break;
   }
@@ -113,6 +143,7 @@ export function Router() {
   const [showSplash, setShowSplash] = useState(true);
   const {showSuccess, showError} = useToast();
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const queryClient = useQueryClient();
 
   // Atualiza perfil ao voltar ao foreground (garante estados de verificação atualizados sem FCM)
   useEffect(() => {
@@ -232,6 +263,22 @@ export function Router() {
             }
           }
         }, 1500);
+      } else if (data?.type === 'kyc_approved') {
+        queryClient.invalidateQueries({queryKey: queryKeys.kyc.status()});
+        showSuccess('Verificação aprovada! Você já pode criar viagens.');
+      } else if (data?.type === 'kyc_rejected') {
+        queryClient.invalidateQueries({queryKey: queryKeys.kyc.status()});
+        const reason = data.rejectionReason || '';
+        showError(
+          reason
+            ? `KYC reprovado: ${reason}`
+            : 'Sua verificação foi reprovada. Reenvie os documentos.',
+        );
+      } else if (data?.type === 'referral_converted') {
+        queryClient.invalidateQueries({queryKey: queryKeys.gamification.stats()});
+        queryClient.invalidateQueries({queryKey: queryKeys.referrals.my()});
+        const referredName = data.referredName || 'Um amigo';
+        showSuccess(`🎉 +50 NavegaCoins! ${referredName} fez a primeira viagem!`);
       }
     });
 

@@ -43,3 +43,15 @@ export * from './PaymentMethod';
 
 // Location
 export * from './Location';
+
+// Chat
+export * from './Chat';
+
+// KYC
+export * from './Kyc';
+
+// Analytics
+export * from './Analytics';
+
+// StopReview
+export * from './StopReview';

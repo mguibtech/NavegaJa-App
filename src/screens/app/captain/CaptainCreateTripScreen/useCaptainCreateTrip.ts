@@ -166,7 +166,18 @@ export function useCaptainCreateTrip() {
       toast.showSuccess('Viagem criada com sucesso!');
       navigation.goBack();
     } catch (err: any) {
-      toast.showError(err?.message || 'Erro ao criar viagem');
+      const isFloodBlock =
+        err?.statusCode === 403 &&
+        (err?.message?.toLowerCase().includes('cheia') ||
+          err?.message?.toLowerCase().includes('flood'));
+
+      if (isFloodBlock) {
+        toast.showError(
+          'Criação bloqueada: cheia extrema detectada no trecho. Aguarde normalização das condições fluviais.',
+        );
+      } else {
+        toast.showError(err?.message || 'Erro ao criar viagem');
+      }
     }
   }
 

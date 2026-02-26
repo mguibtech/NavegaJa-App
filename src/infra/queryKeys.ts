@@ -37,6 +37,7 @@ export const queryKeys = {
     stats: () => [...queryKeys.gamification.all, 'stats'] as const,
     history: () => [...queryKeys.gamification.all, 'history'] as const,
     leaderboard: () => [...queryKeys.gamification.all, 'leaderboard'] as const,
+    km: () => [...queryKeys.gamification.all, 'km'] as const,
   },
   safety: {
     all: ['safety'] as const,
@@ -73,5 +74,31 @@ export const queryKeys = {
   paymentMethods: {
     all: ['paymentMethods'] as const,
     my: () => [...queryKeys.paymentMethods.all, 'my'] as const,
+  },
+  chat: {
+    all: ['chat'] as const,
+    conversations: () => [...queryKeys.chat.all, 'conversations'] as const,
+    messages: (bookingId: string) => [...queryKeys.chat.all, 'messages', bookingId] as const,
+  },
+  kyc: {
+    all: ['kyc'] as const,
+    status: () => [...queryKeys.kyc.all, 'status'] as const,
+  },
+  analytics: {
+    all: ['analytics'] as const,
+    summary: () => [...queryKeys.analytics.all, 'summary'] as const,
+    revenue: (period: string) => [...queryKeys.analytics.all, 'revenue', period] as const,
+    routes: () => [...queryKeys.analytics.all, 'routes'] as const,
+    passengers: () => [...queryKeys.analytics.all, 'passengers'] as const,
+  },
+  stopReviews: {
+    all: ['stopReviews'] as const,
+    byLocation: (location: string) => [...queryKeys.stopReviews.all, 'location', location] as const,
+    top: () => [...queryKeys.stopReviews.all, 'top'] as const,
+    my: () => [...queryKeys.stopReviews.all, 'my'] as const,
+  },
+  referrals: {
+    all: ['referrals'] as const,
+    my: () => [...queryKeys.referrals.all, 'my'] as const,
   },
 };

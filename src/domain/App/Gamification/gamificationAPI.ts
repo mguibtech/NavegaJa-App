@@ -1,7 +1,7 @@
 import {api} from '@api';
 import {API_ENDPOINTS} from '../../../api/config';
 
-import {GamificationStats, HistoryApiResponse, LeaderboardEntryRaw} from './gamificationTypes';
+import {GamificationStats, HistoryApiResponse, KmStats, LeaderboardEntryRaw} from './gamificationTypes';
 
 async function getStats(): Promise<GamificationStats> {
   return api.get<GamificationStats>(API_ENDPOINTS.GAMIFICATION_STATS);
@@ -19,8 +19,13 @@ async function getLeaderboard(limit = 10): Promise<LeaderboardEntryRaw[]> {
   );
 }
 
+async function getKmStats(): Promise<KmStats> {
+  return api.get<KmStats>(API_ENDPOINTS.GAMIFICATION_KM_STATS);
+}
+
 export const gamificationAPI = {
   getStats,
   getHistory,
   getLeaderboard,
+  getKmStats,
 };

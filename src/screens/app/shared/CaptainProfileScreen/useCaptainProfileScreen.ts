@@ -31,7 +31,7 @@ export function useCaptainProfileScreen() {
 
   useEffect(() => {
     getReviewsByCaptainUseCase(captainId)
-      .then(setReviews)
+      .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [captainId]);

@@ -287,7 +287,7 @@ export function ProfileScreen() {
               </Box>
               <Switch
                 value={isDark}
-                onValueChange={val => setThemeMode(val ? 'dark' : 'system')}
+                onValueChange={val => setThemeMode(val ? 'dark' : 'light')}
                 trackColor={{false: '#E2E8ED', true: '#0B5D8A'}}
                 thumbColor="#ffffff"
               />

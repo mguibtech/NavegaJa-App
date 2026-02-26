@@ -70,9 +70,35 @@ export const API_ENDPOINTS = {
   GAMIFICATION_STATS: '/gamification/stats',
   GAMIFICATION_HISTORY: '/gamification/history',
   GAMIFICATION_LEADERBOARD: '/gamification/leaderboard',
+  GAMIFICATION_REFERRALS: '/gamification/referrals',
+  GAMIFICATION_KM_STATS: '/gamification/km-stats',
 
   // Upload
   UPLOAD_IMAGE: '/upload/image',
+
+  // KYC
+  KYC_SUBMIT: '/users/kyc/submit',
+  KYC_STATUS: '/users/kyc/status',
+
+  // PDFs
+  BOOKING_TICKET: (id: string) => `/bookings/${id}/ticket`,
+  TRIP_CARGO_MANIFEST: (id: string) => `/trips/${id}/cargo-manifest`,
+
+  // Captain Analytics
+  CAPTAIN_ANALYTICS: '/captain/analytics',
+  CAPTAIN_ANALYTICS_REVENUE: '/captain/analytics/revenue',
+  CAPTAIN_ANALYTICS_ROUTES: '/captain/analytics/routes',
+  CAPTAIN_ANALYTICS_PASSENGERS: '/captain/analytics/passengers',
+
+  // Stop Reviews
+  STOP_REVIEWS: '/stop-reviews',
+  STOP_REVIEWS_TOP: '/stop-reviews/top',
+  STOP_REVIEWS_MY: '/stop-reviews/my',
+
+  // Chat
+  CHAT_CONVERSATIONS: '/chat/conversations',
+  CHAT_MESSAGES: (bookingId: string) => `/chat/${bookingId}/messages`,
+  CHAT_READ: (bookingId: string) => `/chat/${bookingId}/read`,
 };
 
 // Timeouts

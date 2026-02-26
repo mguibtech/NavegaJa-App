@@ -49,6 +49,12 @@ export interface LeaderboardEntryRaw {
   totalPoints: number;
 }
 
+export interface KmStats {
+  totalKmTraveled: number;
+  redeemableKm: number;
+  kmValue: number; // R$ por km (ex: 0.05 → 1 km = R$0,05)
+}
+
 // Normalized shape used by the UI
 export interface LeaderboardEntry {
   rank: number;

@@ -27,6 +27,14 @@ export interface Booking {
   createdAt: string;
   updatedAt: string;
 
+  // Braças
+  kmRedeemed?: number;
+  kmDiscount?: number;
+
+  // Flood Hub — aviso pós-criação (não bloqueia, só informa)
+  floodWarning?: boolean;
+  floodSeverity?: 'ABOVE_NORMAL' | 'SEVERE' | 'EXTREME';
+
   // Populated by backend (optional)
   trip?: Trip;
   priceBreakdown?: PriceBreakdown;  // Discount details
@@ -59,6 +67,7 @@ export interface CreateBookingData {
   quantity: number;
   paymentMethod: PaymentMethod;
   couponCode?: string;  // Optional coupon code
+  redeemKm?: boolean;   // Aplicar desconto de Braças
 }
 
 export interface CancelBookingData {

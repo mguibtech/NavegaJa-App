@@ -9,7 +9,7 @@ import {formatBRL} from '@utils';
 import {useTripDetailsScreen} from './useTripDetailsScreen';
 
 export function TripDetailsScreen() {
-  const {top} = useSafeAreaInsets();
+  const {top, bottom} = useSafeAreaInsets();
   const {
     trip,
     isLoading,
@@ -407,7 +407,7 @@ export function TripDetailsScreen() {
           </Box>
 
           {/* Spacer for fixed footer */}
-          <Box height={100} />
+          <Box height={140 + bottom} />
         </Box>
       </ScrollView>
 
@@ -419,10 +419,11 @@ export function TripDetailsScreen() {
         right={0}
         backgroundColor="surface"
         paddingHorizontal="s24"
-        paddingVertical="s20"
+        paddingTop="s20"
         borderTopWidth={1}
         borderTopColor="border"
         style={{
+          paddingBottom: 20 + bottom,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: -2},
           shadowOpacity: 0.1,

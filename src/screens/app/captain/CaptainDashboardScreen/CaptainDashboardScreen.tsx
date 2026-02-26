@@ -113,7 +113,7 @@ export function CaptainDashboardScreen() {
                 alignItems="center"
                 borderLeftWidth={4}
                 borderLeftColor="danger"
-                onPress={() => navigation.navigate('EditProfile')}>
+                onPress={() => navigation.navigate('KycSubmit', {rejected: true, reason: user?.rejectionReason ?? undefined})}>
                 <Box
                   width={40}
                   height={40}
@@ -155,7 +155,7 @@ export function CaptainDashboardScreen() {
                 alignItems="center"
                 borderLeftWidth={4}
                 borderLeftColor="warning"
-                onPress={() => navigation.navigate('EditProfile')}>
+                onPress={() => navigation.navigate('KycSubmit')}>
                 <Box
                   width={40}
                   height={40}
@@ -604,7 +604,7 @@ export function CaptainDashboardScreen() {
         onClose={() => {
           setShowBlockedModal(false);
           if (!isPending) {
-            navigation.navigate('EditProfile');
+            navigation.navigate('KycSubmit');
           }
         }}
       />

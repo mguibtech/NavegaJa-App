@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, {Marker, Polyline, Polygon, PROVIDER_GOOGLE} from 'react-native-maps';
 
 import {
   Box,
@@ -95,6 +95,9 @@ export function TrackingScreen() {
     handleCancelEmergency,
     handleCloseSosDetail,
     locationLabel,
+    inundation,
+    RISK_FILL,
+    RISK_STROKE,
   } = useTrackingScreen();
 
   if (isLoading && !trackingInfo) {
@@ -289,6 +292,18 @@ export function TrackingScreen() {
             {showDangerZones &&
               DANGER_ZONES.map(zone => (
                 <DangerZone key={zone.id} zone={zone} />
+              ))}
+
+            {/* Flood Inundation Polygons — apenas com dados reais do Flood Hub */}
+            {inundation?.source === 'flood_hub' &&
+              inundation.polygons.map(poly => (
+                <Polygon
+                  key={poly.id}
+                  coordinates={poly.coordinates}
+                  fillColor={RISK_FILL[poly.risk]}
+                  strokeColor={RISK_STROKE[poly.risk]}
+                  strokeWidth={1}
+                />
               ))}
           </MapView>
 

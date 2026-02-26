@@ -4,3 +4,4 @@ export {useAppPermissions} from './useAppPermissions';
 export {useRecentSearches} from './useRecentSearches';
 export type {RecentSearch} from './useRecentSearches';
 export {useVirtualPagination} from './useVirtualPagination';
+export {usePdfDownload} from './usePdfDownload';

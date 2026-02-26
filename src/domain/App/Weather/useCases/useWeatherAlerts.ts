@@ -13,8 +13,9 @@ export function useWeatherAlerts() {
     setError(null);
     try {
       const data = await weatherService.getAlerts(lat, lng);
-      setAlerts(data);
-      return data;
+      const result = Array.isArray(data) ? data : [];
+      setAlerts(result);
+      return result;
     } catch (e) {
       setError(e as Error);
       return [];
@@ -28,8 +29,9 @@ export function useWeatherAlerts() {
     setError(null);
     try {
       const data = await weatherService.getRegionAlerts(region);
-      setAlerts(data);
-      return data;
+      const result = Array.isArray(data) ? data : [];
+      setAlerts(result);
+      return result;
     } catch (e) {
       setError(e as Error);
       return [];

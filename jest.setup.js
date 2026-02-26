@@ -40,6 +40,7 @@ jest.mock('react-native-reanimated', () => {
   const createAnimatedComponent = (Component) => Component;
 
   return {
+    __esModule: true,
     default: {
       View,
       Text: View,
@@ -50,12 +51,14 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent,
     useSharedValue: jest.fn(() => ({value: 0})),
     useAnimatedStyle: jest.fn(() => ({})),
+    useAnimatedProps: jest.fn(() => ({})),
     withTiming: jest.fn((value) => value),
     withSpring: jest.fn((value) => value),
     withDelay: jest.fn((_, value) => value),
     withSequence: jest.fn((...values) => values[0]),
     withRepeat: jest.fn((value) => value),
     runOnJS: jest.fn((fn) => fn),
+    interpolate: jest.fn((_value, _inputRange, outputRange) => outputRange[0]),
     Easing: {
       linear: (x) => x,
       ease: (x) => x,
@@ -106,6 +109,13 @@ jest.mock('react-native-svg', () => {
   const MockRect = (props) => React.createElement(View, props);
   const MockLine = (props) => React.createElement(View, props);
   const MockG = (props) => React.createElement(View, props);
+  const MockDefs = (props) => React.createElement(View, props);
+  const MockLinearGradient = (props) => React.createElement(View, props);
+  const MockRadialGradient = (props) => React.createElement(View, props);
+  const MockStop = (props) => React.createElement(View, props);
+  const MockText = (props) => React.createElement(View, props);
+  const MockPolygon = (props) => React.createElement(View, props);
+  const MockEllipse = (props) => React.createElement(View, props);
 
   return {
     __esModule: true,
@@ -116,6 +126,13 @@ jest.mock('react-native-svg', () => {
     Rect: MockRect,
     Line: MockLine,
     G: MockG,
+    Defs: MockDefs,
+    LinearGradient: MockLinearGradient,
+    RadialGradient: MockRadialGradient,
+    Stop: MockStop,
+    Text: MockText,
+    Polygon: MockPolygon,
+    Ellipse: MockEllipse,
   };
 });
 
@@ -193,6 +210,50 @@ jest.mock('@react-native-community/geolocation', () => ({
   setRNConfiguration: jest.fn(),
   requestAuthorization: jest.fn(() => Promise.resolve('granted')),
 }));
+
+// Mock react-native-blob-util (native module for PDF download)
+jest.mock('react-native-blob-util', () => ({
+  __esModule: true,
+  default: {
+    fs: {
+      dirs: {
+        CacheDir: '/tmp/cache',
+        DocumentDir: '/tmp/documents',
+      },
+    },
+    config: jest.fn(() => ({
+      fetch: jest.fn(() =>
+        Promise.resolve({
+          path: () => '/tmp/cache/mock-file.pdf',
+        }),
+      ),
+    })),
+    android: {
+      actionViewIntent: jest.fn(() => Promise.resolve()),
+    },
+    ios: {
+      openDocument: jest.fn(() => Promise.resolve()),
+    },
+  },
+}));
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => {
+  const {View} = require('react-native');
+  return {
+    SafeAreaProvider: ({children}) => children,
+    SafeAreaView: View,
+    SafeAreaInsetsContext: {
+      Consumer: ({children}) => children({top: 0, bottom: 0, left: 0, right: 0}),
+    },
+    useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),
+    useSafeAreaFrame: () => ({x: 0, y: 0, width: 375, height: 812}),
+    initialWindowMetrics: {
+      frame: {x: 0, y: 0, width: 375, height: 812},
+      insets: {top: 0, left: 0, right: 0, bottom: 0},
+    },
+  };
+});
 
 // Silence console warnings in tests
 global.console = {

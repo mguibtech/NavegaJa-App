@@ -37,7 +37,7 @@ export interface WeatherForecastDay {
   date: string; // ISO date
   tempMin: number;
   tempMax: number;
-  tempAvg: number;
+  tempAvg?: number;
   condition: string;
   conditionCode: string;
   description: string;
@@ -80,6 +80,9 @@ export interface NavigationSafetyAssessment {
   recommendations: string[];
   weather: CurrentWeather;
   assessedAt: string;
+  // Flood Hub — campos opcionais adicionados pelo backend (Fase 1)
+  floodSeverity?: 'NO_FLOODING' | 'ABOVE_NORMAL' | 'SEVERE' | 'EXTREME';
+  hasFloodRisk?: boolean;
 }
 
 // ========== WEATHER ALERTS ==========

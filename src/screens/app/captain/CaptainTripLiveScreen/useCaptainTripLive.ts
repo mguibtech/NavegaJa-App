@@ -15,12 +15,15 @@ import {
   useCompleteTrip,
   useNavigationSafety,
   useWeatherAlerts,
+  useFloodInundation,
   REGION_COORDINATES,
   Region,
   NavigationSafetyAssessment,
   WeatherAlert,
   SafetyLevel,
   AlertSeverity,
+  RISK_FILL,
+  RISK_STROKE,
 } from '@domain';
 
 import {
@@ -88,6 +91,10 @@ export function useCaptainTripLive() {
   const {completeTrip} = useCompleteTrip();
   const {assess: fetchSafety} = useNavigationSafety();
   const {fetchAlerts} = useWeatherAlerts();
+
+  // Flood inundation polygons — centralizado na posição atual do barco
+  const inundPos = navState.smoothedPosition ?? DEFAULT_POSITION;
+  const {inundation} = useFloodInundation(inundPos.latitude, inundPos.longitude);
 
   const watchIdRef = useRef<number | null>(null);
   const updateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -325,6 +332,10 @@ export function useCaptainTripLive() {
     safetyAssessment,
     weatherAlertMarkers,
     safetyColors,
+    // flood inundation
+    inundation,
+    RISK_FILL,
+    RISK_STROKE,
     // handlers
     recenter,
     toggleMapMode,

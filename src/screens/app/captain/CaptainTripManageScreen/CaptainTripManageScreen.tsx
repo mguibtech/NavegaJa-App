@@ -4,6 +4,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
 import {TripStatus, ShipmentStatus} from '@domain';
+import {usePdfDownload} from '@hooks';
 import {formatBRL} from '@utils';
 
 import {
@@ -14,6 +15,7 @@ import {
 
 export function CaptainTripManageScreen() {
   const {top} = useSafeAreaInsets();
+  const {download, isDownloading} = usePdfDownload();
   const {
     trip,
     tripLoading,
@@ -33,6 +35,7 @@ export function CaptainTripManageScreen() {
     navigateToChecklist,
     navigateToShipmentCollect,
     navigateToTripLive,
+    navigateToChat,
   } = useCaptainTripManage();
 
   return (
@@ -193,17 +196,29 @@ export function CaptainTripManageScreen() {
                           {p.phone} · {p.quantity} {p.quantity === 1 ? 'assento' : 'assentos'}
                         </Text>
                       </Box>
-                      {p.checkedInAt ? (
-                        <Box
-                          backgroundColor="successBg"
-                          paddingHorizontal="s8"
-                          paddingVertical="s4"
-                          style={{borderRadius: 6}}>
-                          <Text preset="paragraphCaptionSmall" color="success" bold>
-                            Check-in
-                          </Text>
-                        </Box>
-                      ) : null}
+                      <Box flexDirection="row" alignItems="center" gap="s8">
+                        {p.checkedInAt ? (
+                          <Box
+                            backgroundColor="successBg"
+                            paddingHorizontal="s8"
+                            paddingVertical="s4"
+                            style={{borderRadius: 6}}>
+                            <Text preset="paragraphCaptionSmall" color="success" bold>
+                              Check-in
+                            </Text>
+                          </Box>
+                        ) : null}
+                        <TouchableOpacityBox
+                          width={32}
+                          height={32}
+                          borderRadius="s16"
+                          backgroundColor="primaryBg"
+                          alignItems="center"
+                          justifyContent="center"
+                          onPress={() => navigateToChat(p.id, p.name)}>
+                          <Icon name="chat" size={16} color="primary" />
+                        </TouchableOpacityBox>
+                      </Box>
                     </Box>
                   ))}
                 </Box>
@@ -212,9 +227,23 @@ export function CaptainTripManageScreen() {
 
             {/* Shipments */}
             <Box mb="s16">
-              <Text preset="paragraphMedium" color="text" bold mb="s12">
-                Encomendas ({shipments.length})
-              </Text>
+              <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
+                <Text preset="paragraphMedium" color="text" bold>
+                  Encomendas ({shipments.length})
+                </Text>
+                {shipments.length > 0 && (
+                  <TouchableOpacityBox
+                    flexDirection="row"
+                    alignItems="center"
+                    onPress={() => download(`/trips/${trip.id}/cargo-manifest`, `manifesto-${trip.id.slice(0, 8)}.pdf`)}
+                    disabled={isDownloading}>
+                    <Icon name="picture-as-pdf" size={16} color="secondary" />
+                    <Text preset="paragraphCaptionSmall" color="secondary" ml="s4" bold>
+                      {isDownloading ? 'Baixando...' : 'Manifesto'}
+                    </Text>
+                  </TouchableOpacityBox>
+                )}
+              </Box>
               {shipmentsLoading ? (
                 <Box
                   backgroundColor="surface"

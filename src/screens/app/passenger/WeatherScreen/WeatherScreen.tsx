@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
+import {ScrollView, RefreshControl} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
-import {Box, Icon, Text, TouchableOpacityBox, WeatherWidget, RiverLevelsPanel, WeatherIcon, WeatherAlertCard} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, WeatherWidget, RiverLevelsPanel, FloodForecastPanel, WeatherIcon, WeatherAlertCard, ForecastCardSkeleton, WeatherAlertCardSkeleton} from '@components';
 import {
   useWeatherForecast,
   useWeatherAlerts,
@@ -24,6 +24,7 @@ function ForecastCard({day}: {day: WeatherForecastDay}) {
   const date = new Date(day.date);
   const weekday = date.toLocaleDateString('pt-BR', {weekday: 'short'});
   const dayNum = date.getDate();
+  const tempAvg = day.tempAvg ?? Math.round((day.tempMin + day.tempMax) / 2);
 
   const safeColor = day.isSafeForNavigation ? '#10B981' : '#F59E0B';
   const safeBg = day.isSafeForNavigation ? '#D1FAE5' : '#FEF3C7';
@@ -55,7 +56,7 @@ function ForecastCard({day}: {day: WeatherForecastDay}) {
         {formatTemperature(day.tempMin)}
       </Text>
       <Text preset="paragraphCaptionSmall" color="textSecondary">
-        méd {formatTemperature(day.tempAvg)}
+        méd {formatTemperature(tempAvg)}
       </Text>
 
       {day.precipitationProbability > 0 && (
@@ -94,7 +95,7 @@ export function WeatherScreen({route}: WeatherScreenProps) {
   const coords = REGION_COORDINATES[region];
 
   const {forecast, fetchRegion, isLoading: isForecastLoading} = useWeatherForecast();
-  const {alerts: weatherAlerts, fetchRegionAlerts} = useWeatherAlerts();
+  const {alerts: weatherAlerts, fetchRegionAlerts, isLoading: isAlertsLoading} = useWeatherAlerts();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -159,40 +160,49 @@ export function WeatherScreen({route}: WeatherScreenProps) {
         <WeatherWidget region={region as Region} />
 
         {/* Alertas Ativos */}
-        {weatherAlerts.length > 0 && (
+        {(isAlertsLoading || weatherAlerts.length > 0) && (
           <Box mt="s24">
             <Box flexDirection="row" alignItems="center" mb="s12">
               <Icon name="warning" size={18} color={'#DC2626' as any} />
               <Text preset="paragraphMedium" color="text" bold ml="s8">
                 Alertas Ativos
               </Text>
-              <Box
-                ml="s8"
-                paddingHorizontal="s8"
-                paddingVertical="s4"
-                borderRadius="s8"
-                style={{backgroundColor: '#FEE2E2'}}>
-                <Text
-                  preset="paragraphCaptionSmall"
-                  bold
-                  style={{color: '#DC2626'}}>
-                  {weatherAlerts.length}
-                </Text>
-              </Box>
+              {!isAlertsLoading && (
+                <Box
+                  ml="s8"
+                  paddingHorizontal="s8"
+                  paddingVertical="s4"
+                  borderRadius="s8"
+                  style={{backgroundColor: '#FEE2E2'}}>
+                  <Text
+                    preset="paragraphCaptionSmall"
+                    bold
+                    style={{color: '#DC2626'}}>
+                    {weatherAlerts.length}
+                  </Text>
+                </Box>
+              )}
             </Box>
-            {weatherAlerts
-              .sort((a, b) => {
-                const order: Record<string, number> = {
-                  extreme: 0,
-                  severe: 1,
-                  warning: 2,
-                  info: 3,
-                };
-                return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
-              })
-              .map(alert => (
-                <WeatherAlertCard key={alert.id} alert={alert} />
-              ))}
+            {isAlertsLoading ? (
+              <>
+                <WeatherAlertCardSkeleton />
+                <WeatherAlertCardSkeleton />
+              </>
+            ) : (
+              weatherAlerts
+                .sort((a, b) => {
+                  const order: Record<string, number> = {
+                    extreme: 0,
+                    severe: 1,
+                    warning: 2,
+                    info: 3,
+                  };
+                  return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+                })
+                .map(alert => (
+                  <WeatherAlertCard key={alert.id} alert={alert} />
+                ))
+            )}
           </Box>
         )}
 
@@ -206,16 +216,13 @@ export function WeatherScreen({route}: WeatherScreenProps) {
           </Box>
 
           {isForecastLoading ? (
-            <Box
-              backgroundColor="surface"
-              borderRadius="s16"
-              padding="s24"
-              alignItems="center">
-              <ActivityIndicator size="small" color="#0B5D8A" />
-              <Text preset="paragraphSmall" color="textSecondary" mt="s8">
-                Carregando previsão...
-              </Text>
-            </Box>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Box flexDirection="row" paddingBottom="s8">
+                {Array.from({length: 5}).map((_, i) => (
+                  <ForecastCardSkeleton key={i} />
+                ))}
+              </Box>
+            </ScrollView>
           ) : forecast?.forecast && forecast.forecast.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <Box flexDirection="row" paddingBottom="s8">
@@ -247,6 +254,17 @@ export function WeatherScreen({route}: WeatherScreenProps) {
             </Text>
           </Box>
           <RiverLevelsPanel />
+        </Box>
+
+        {/* Previsão de Cheias — Google Flood Hub */}
+        <Box mt="s24">
+          <Box flexDirection="row" alignItems="center" mb="s12">
+            <Icon name="flood" size={18} color="primary" />
+            <Text preset="paragraphMedium" color="text" bold ml="s8">
+              Previsão de Cheias
+            </Text>
+          </Box>
+          <FloodForecastPanel lat={coords.lat} lng={coords.lng} />
         </Box>
 
         {/* Legenda nível dos rios */}

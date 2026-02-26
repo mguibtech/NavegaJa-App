@@ -7,6 +7,7 @@ import MapView, {
   Marker,
   Polyline,
   Circle,
+  Polygon,
   PROVIDER_GOOGLE,
 } from 'react-native-maps';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -49,6 +50,9 @@ export function CaptainTripLiveScreen() {
     safetyAssessment,
     weatherAlertMarkers,
     safetyColors,
+    inundation,
+    RISK_FILL,
+    RISK_STROKE,
     recenter,
     toggleMapMode,
     handleSOS,
@@ -224,6 +228,18 @@ export function CaptainTripLiveScreen() {
               <Icon name="directions-boat" size={26} color="surface" />
             </Box>
           </Marker>
+
+          {/* ── Flood Inundation Polygons — apenas com dados reais do Flood Hub ── */}
+          {inundation?.source === 'flood_hub' &&
+            inundation.polygons.map(poly => (
+              <Polygon
+                key={poly.id}
+                coordinates={poly.coordinates}
+                fillColor={RISK_FILL[poly.risk]}
+                strokeColor={RISK_STROKE[poly.risk]}
+                strokeWidth={1}
+              />
+            ))}
         </MapView>
       ) : (
         <Box flex={1} alignItems="center" justifyContent="center" backgroundColor="background">

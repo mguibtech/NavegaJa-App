@@ -260,6 +260,176 @@ export function ShipmentCardSkeleton() {
 }
 
 /**
+ * Skeleton para o WeatherWidget (clima atual)
+ */
+export function WeatherWidgetSkeleton() {
+  return (
+    <Box
+      backgroundColor="surface"
+      borderRadius="s16"
+      padding="s20"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}>
+      {/* Header: label + badge */}
+      <Box flexDirection="row" justifyContent="space-between" mb="s16">
+        <Box>
+          <Skeleton width={70} height={12} borderRadius={4} mb="s6" />
+          <Skeleton width={110} height={18} borderRadius={6} />
+        </Box>
+        <Skeleton width={64} height={28} borderRadius={8} />
+      </Box>
+
+      {/* Main info: ícone + temp + condição */}
+      <Box flexDirection="row" alignItems="center" mb="s16">
+        <Skeleton width={56} height={56} borderRadius={12} />
+        <Box ml="s16" flex={1}>
+          <Skeleton width={90} height={32} borderRadius={8} mb="s8" />
+          <Skeleton width="60%" height={16} borderRadius={6} mb="s6" />
+          <Skeleton width="50%" height={13} borderRadius={4} />
+        </Box>
+      </Box>
+
+      {/* Details grid: umidade / vento / nuvens */}
+      <Box
+        flexDirection="row"
+        justifyContent="space-between"
+        paddingTop="s12"
+        borderTopWidth={1}
+        borderTopColor="border">
+        <Skeleton width={52} height={16} borderRadius={6} />
+        <Skeleton width={72} height={16} borderRadius={6} />
+        <Skeleton width={40} height={16} borderRadius={6} />
+      </Box>
+
+      {/* Pressão + visibilidade + descrição */}
+      <Box
+        flexDirection="row"
+        paddingTop="s12"
+        mt="s8"
+        borderTopWidth={1}
+        borderTopColor="border">
+        <Box flex={1}>
+          <Skeleton width={64} height={13} borderRadius={4} />
+        </Box>
+        <Box flex={1} alignItems="center">
+          <Skeleton width={60} height={13} borderRadius={4} />
+        </Box>
+        <Box flex={1} alignItems="flex-end">
+          <Skeleton width={70} height={13} borderRadius={4} />
+        </Box>
+      </Box>
+
+      {/* Sunrise / Sunset / UV */}
+      <Box
+        flexDirection="row"
+        justifyContent="space-around"
+        paddingTop="s12"
+        mt="s8"
+        borderTopWidth={1}
+        borderTopColor="border">
+        <Skeleton width={52} height={16} borderRadius={6} />
+        <Skeleton width={52} height={16} borderRadius={6} />
+        <Skeleton width={70} height={16} borderRadius={6} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Skeleton para um card de previsão do tempo (horizontal scroll)
+ */
+export function ForecastCardSkeleton() {
+  return (
+    <Box
+      backgroundColor="surface"
+      borderRadius="s16"
+      padding="s16"
+      mr="s12"
+      style={{width: 110, elevation: 2}}>
+      <Skeleton width={56} height={12} borderRadius={4} mb="s8" />
+      <Skeleton width={40} height={40} borderRadius={8} mb="s8" />
+      <Skeleton width={48} height={18} borderRadius={6} mb="s4" />
+      <Skeleton width={40} height={13} borderRadius={4} mb="s4" />
+      <Skeleton width={44} height={13} borderRadius={4} mb="s8" />
+      <Skeleton width="100%" height={24} borderRadius={8} />
+    </Box>
+  );
+}
+
+/**
+ * Skeleton para a listagem de nível dos rios
+ */
+export function RiverLevelsSkeleton({count = 3}: {count?: number}) {
+  return (
+    <Box
+      backgroundColor="surface"
+      borderRadius="s16"
+      padding="s20"
+      style={{elevation: 3}}>
+      {/* Header */}
+      <Box flexDirection="row" alignItems="center" mb="s16">
+        <Skeleton width={20} height={20} borderRadius={10} />
+        <Box flex={1} ml="s8">
+          <Skeleton width={120} height={16} borderRadius={6} />
+        </Box>
+        <Skeleton width={60} height={12} borderRadius={4} />
+      </Box>
+
+      {Array.from({length: count}).map((_, i) => (
+        <Box key={i}>
+          {i > 0 && <Box height={1} backgroundColor="border" my="s12" />}
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="space-between">
+            <Box flex={1} mr="s12">
+              <Skeleton width="70%" height={16} borderRadius={6} mb="s6" />
+              <Skeleton width="50%" height={13} borderRadius={4} />
+            </Box>
+            <Box mr="s8"><Skeleton width={40} height={13} borderRadius={4} /></Box>
+            <Skeleton width={64} height={24} borderRadius={8} />
+          </Box>
+          {/* Progress bar */}
+          <Box mt="s8" height={4} backgroundColor="border" style={{borderRadius: 4}} overflow="hidden">
+            <Skeleton width={`${30 + i * 20}%`} height={4} borderRadius={4} animate={false} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+/**
+ * Skeleton para o WeatherAlertCard (variant full)
+ */
+export function WeatherAlertCardSkeleton() {
+  return (
+    <Box
+      backgroundColor="surface"
+      borderRadius="s12"
+      padding="s16"
+      mb="s12"
+      style={{elevation: 2}}>
+      {/* Evento + badge */}
+      <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s8">
+        <Skeleton width="55%" height={16} borderRadius={6} />
+        <Skeleton width={64} height={22} borderRadius={8} />
+      </Box>
+      {/* Headline */}
+      <Skeleton width="100%" height={14} borderRadius={4} mb="s4" />
+      <Skeleton width="80%" height={14} borderRadius={4} mb="s8" />
+      {/* Período */}
+      <Skeleton width={140} height={12} borderRadius={4} />
+    </Box>
+  );
+}
+
+/**
  * Skeleton para lista de viagens
  */
 export function TripListSkeleton({count = 3}: {count?: number}) {

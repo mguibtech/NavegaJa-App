@@ -11,3 +11,6 @@ export * from './CaptainChecklistScreen';
 export * from './CaptainStartTripScreen';
 export * from './CaptainShipmentCollectScreen';
 export * from './CaptainTripLiveScreen';
+export * from './KycSubmitScreen';
+export * from './KycStatusScreen';
+export * from './CaptainAnalyticsScreen';

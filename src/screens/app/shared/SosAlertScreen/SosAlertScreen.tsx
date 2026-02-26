@@ -89,7 +89,7 @@ export function SosAlertScreen() {
               justifyContent="center"
               borderWidth={1}
               borderColor="border"
-              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTabs')}>
+              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.reset({index: 0, routes: [{name: 'HomeTabs'}]})}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
             <Text preset="headingSmall" color="text" bold ml="s12">
@@ -247,7 +247,7 @@ export function SosAlertScreen() {
               justifyContent="center"
               borderWidth={1}
               borderColor="border"
-              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTabs')}>
+              onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.reset({index: 0, routes: [{name: 'HomeTabs'}]})}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
             <Text preset="headingSmall" color="text" bold ml="s12">

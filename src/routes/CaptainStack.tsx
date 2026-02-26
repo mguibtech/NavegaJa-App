@@ -39,6 +39,14 @@ import {
   PrivacyScreen,
   EmergencyContactsScreen,
   SosAlertScreen,
+  ChatScreen,
+  ConversationsScreen,
+  ReferralsScreen,
+  StopReviewCreateScreen,
+  StopReviewsListScreen,
+  KycSubmitScreen,
+  KycStatusScreen,
+  CaptainAnalyticsScreen,
 } from '@screens';
 
 import type {CaptainStackParamList, CaptainTabsParamList} from './navigationTypes';
@@ -133,6 +141,14 @@ export function CaptainStack() {
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
       <Stack.Screen name="SosAlert" component={SosAlertScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="Conversations" component={ConversationsScreen} />
+      <Stack.Screen name="Referrals" component={ReferralsScreen} />
+      <Stack.Screen name="StopReviewCreate" component={StopReviewCreateScreen} />
+      <Stack.Screen name="StopReviewsList" component={StopReviewsListScreen} />
+      <Stack.Screen name="KycSubmit" component={KycSubmitScreen} />
+      <Stack.Screen name="KycStatus" component={KycStatusScreen} />
+      <Stack.Screen name="CaptainAnalytics" component={CaptainAnalyticsScreen} />
     </Stack.Navigator>
   );
 }
