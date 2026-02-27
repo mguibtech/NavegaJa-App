@@ -42,9 +42,17 @@ export function useNotificationsScreen() {
       prev.map(n => (n.id === notification.id ? {...n, read: true} : n)),
     );
 
-    const {type, bookingId, tripId, shipmentId} = notification.data;
+    const {type, bookingId, tripId, shipmentId, senderName, otherName} = notification.data;
 
     switch (type) {
+      case 'chat':
+        if (bookingId) {
+          navigation.navigate('Chat', {
+            bookingId,
+            otherName: senderName ?? otherName ?? 'Conversa',
+          });
+        }
+        break;
       case 'booking_confirmed':
       case 'payment_confirmed':
         if (bookingId) {

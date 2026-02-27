@@ -55,6 +55,13 @@ function handleNotificationNavigation(data: Record<string, string>) {
       }
       break;
 
+    case 'shipment_incoming':
+      // Destinatário recebe aviso que uma encomenda foi criada para ele
+      if (shipmentId) {
+        navigationRef.navigate('ShipmentDetails', {shipmentId});
+      }
+      break;
+
     case 'shipment_collected':
     case 'shipment_in_transit':
     case 'shipment_arrived':
@@ -279,6 +286,24 @@ export function Router() {
         queryClient.invalidateQueries({queryKey: queryKeys.referrals.my()});
         const referredName = data.referredName || 'Um amigo';
         showSuccess(`🎉 +50 NavegaCoins! ${referredName} fez a primeira viagem!`);
+      } else if (data?.type === 'shipment_incoming') {
+        // Destinatário: nova encomenda criada para ele — atualiza lista
+        queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+        showSuccess('Nova encomenda! Alguém criou uma encomenda para você.');
+      } else if (
+        data?.type === 'shipment_paid' ||
+        data?.type === 'shipment_collected' ||
+        data?.type === 'shipment_in_transit' ||
+        data?.type === 'shipment_arrived' ||
+        data?.type === 'shipment_out_for_delivery' ||
+        data?.type === 'shipment_delivered'
+      ) {
+        // Atualiza dados da encomenda específica em foreground
+        if (data.shipmentId) {
+          queryClient.invalidateQueries({queryKey: queryKeys.shipments.detail(data.shipmentId)});
+          queryClient.invalidateQueries({queryKey: queryKeys.shipments.timeline(data.shipmentId)});
+        }
+        queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
       }
     });
 

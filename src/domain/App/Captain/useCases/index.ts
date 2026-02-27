@@ -4,6 +4,7 @@ export * from './useCaptainTrips';
 export * from './useCreateTrip';
 export * from './useStartTrip';
 export * from './useCompleteTrip';
+export * from './useCancelTrip';
 export * from './useMyBoats';
 export * from './useCreateBoat';
 export * from './useUpdateBoat';

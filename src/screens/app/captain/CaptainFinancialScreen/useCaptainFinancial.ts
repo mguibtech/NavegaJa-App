@@ -2,13 +2,14 @@ import {useEffect} from 'react';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {useCaptainTrips, TripStatus} from '@domain';
+import {useCaptainTrips, TripStatus, useCaptainAnalytics} from '@domain';
 import {useAuthStore} from '@store';
 import {formatBRL} from '@utils';
 
 export function useCaptainFinancial() {
   const user = useAuthStore(s => s.user);
-  const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
+  const {trips, isLoading: tripsLoading, fetchMyTrips} = useCaptainTrips();
+  const {summary, revenue, isLoading: analyticsLoading} = useCaptainAnalytics();
 
   useEffect(() => {
     fetchMyTrips();
@@ -31,17 +32,17 @@ export function useCaptainFinancial() {
     }
   });
 
+  const isLoading = tripsLoading || analyticsLoading;
+
   function tripEarnings(t: (typeof trips)[number]): number {
     const seatsUsed = (t.totalSeats ?? 0) - (t.availableSeats ?? 0);
     return Number(t.price) * Math.max(0, seatsUsed);
   }
 
-  const totalEarnings = completedTrips.reduce((sum, t) => sum + tripEarnings(t), 0);
-  const monthEarnings = monthTrips.reduce((sum, t) => sum + tripEarnings(t), 0);
-  const totalPassengers = completedTrips.reduce(
-    (sum, t) => sum + Math.max(0, (t.totalSeats ?? 0) - (t.availableSeats ?? 0)),
-    0,
-  );
+  // Usa dados reais do backend (bookings confirmados, não estimativa local)
+  const totalEarnings = summary?.totalRevenue ?? 0;
+  const monthEarnings = revenue.reduce((sum, point) => sum + point.amount, 0);
+  const totalPassengers = summary?.totalPassengers ?? 0;
 
   function formatDeparture(dateStr: string) {
     try {

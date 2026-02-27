@@ -100,11 +100,12 @@ export type CaptainStackParamList = {
   CaptainEditBoat: {boatId: string};
   CaptainChecklist: {tripId: string};
   CaptainStartTrip: {tripId: string};
-  CaptainShipmentCollect: {shipmentId: string};
+  CaptainShipmentCollect: {shipmentId: string; validationCode?: string};
   CaptainTripLive: {tripId: string; origin: string; destination: string};
   KycSubmit: {rejected?: boolean; reason?: string} | undefined;
   KycStatus: undefined;
   CaptainAnalytics: undefined;
+  ScanBookingQR: {tripId: string};
 } & SharedParamList;
 
 // Lista completa para o navigationRef (FCM navigation)

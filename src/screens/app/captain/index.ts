@@ -14,3 +14,4 @@ export * from './CaptainTripLiveScreen';
 export * from './KycSubmitScreen';
 export * from './KycStatusScreen';
 export * from './CaptainAnalyticsScreen';
+export * from './ScanBookingQRScreen';

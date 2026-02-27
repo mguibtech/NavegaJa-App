@@ -1,8 +1,11 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
+import {View} from 'react-native';
 
 import {useNavigation} from '@react-navigation/native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {captureRef} from 'react-native-view-shot';
+import RNShare from 'react-native-share';
 
 import {
   ShipmentStatus,
@@ -15,8 +18,6 @@ import {
 } from '@domain';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
-import {Share} from 'react-native';
-import {formatBRL} from '@utils';
 import {API_BASE_URL} from '@api/config';
 
 import {AppStackParamList} from '@routes';
@@ -28,6 +29,7 @@ export function useShipmentDetailsScreen() {
   const toast = useToast();
   const user = useAuthStore(state => state.user);
   const isCaptain = user?.role === 'captain';
+  const shareCardRef = useRef<View>(null);
 
   const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -86,14 +88,23 @@ export function useShipmentDetailsScreen() {
   };
 
   async function handleShare() {
-    if (!shipment) {return;}
+    if (!shipment || !shareCardRef.current) {return;}
     try {
-      await Share.share({
-        message: `Código de rastreamento da encomenda:\n${shipment.trackingCode}\n\nDestinatário: ${shipment.recipientName}\nPeso: ${shipment.weight}kg\nPreço: ${formatBRL(shipment.price)}`,
-        title: 'Compartilhar Encomenda',
+      const uri = await captureRef(shareCardRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+      });
+      await RNShare.open({
+        url: uri,
+        type: 'image/png',
+        title: `Encomenda ${shipment.trackingCode}`,
+        message: `Acompanhe minha encomenda NavegaJá\nCódigo: ${shipment.trackingCode}`,
+        failOnCancel: false,
       });
     } catch (error) {
       console.error('Error sharing:', error);
+      toast.showError('Não foi possível compartilhar. Tente novamente.');
     }
   }
 
@@ -184,7 +195,9 @@ export function useShipmentDetailsScreen() {
 
   const statusConfig = shipment ? getStatusConfig(shipment.status) : null;
 
-  const canConfirmPayment = shipment?.status === ShipmentStatus.PENDING;
+  // Frete a cobrar: destinatário paga ao capitão na entrega → sem botão de "Confirmar Pagamento"
+  const isFreteACobrar = shipment?.paidBy === 'recipient';
+  const canConfirmPayment = shipment?.status === ShipmentStatus.PENDING && !isFreteACobrar;
   const canCollect = isCaptain && shipment?.status === ShipmentStatus.PAID;
   const canOutForDelivery = isCaptain && shipment?.status === ShipmentStatus.ARRIVED;
   const showValidationPIN =
@@ -227,6 +240,7 @@ export function useShipmentDetailsScreen() {
     isCollecting,
     isMarkingOutForDelivery,
     statusConfig,
+    isFreteACobrar,
     canConfirmPayment,
     canCollect,
     canOutForDelivery,
@@ -236,6 +250,7 @@ export function useShipmentDetailsScreen() {
     canReview,
     getPaymentMethodLabel,
     resolvePhotoUri,
+    shareCardRef,
     handleShare,
     handleCancel,
     confirmCancel,

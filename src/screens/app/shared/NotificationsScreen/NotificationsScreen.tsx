@@ -16,6 +16,8 @@ type NotificationIconConfig = {
 
 function getNotificationConfig(type: string): NotificationIconConfig {
   switch (type) {
+    case 'chat':
+      return {icon: 'chat', color: 'secondary', bg: 'secondaryBg'};
     case 'booking_confirmed':
     case 'payment_confirmed':
       return {icon: 'confirmation-number', color: 'primary', bg: 'primaryBg'};

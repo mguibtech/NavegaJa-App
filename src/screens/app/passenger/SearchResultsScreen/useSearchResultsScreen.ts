@@ -25,6 +25,9 @@ export function useSearchResultsScreen() {
     'morning' | 'afternoon' | 'night' | undefined
   >(undefined);
   const [minRating, setMinRating] = useState<number | undefined>(undefined);
+  const [boatType, setBoatType] = useState<string | undefined>(undefined);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [onlyVerified, setOnlyVerified] = useState(false);
 
   useEffect(() => {
     loadTrips();
@@ -60,9 +63,20 @@ export function useSearchResultsScreen() {
     setMaxPrice('');
     setDepartureTime(undefined);
     setMinRating(undefined);
+    setBoatType(undefined);
+    setOnlyAvailable(false);
+    setOnlyVerified(false);
     setShowFilters(false);
     loadTrips();
   };
+
+  // Filtros client-side aplicados sobre os resultados já ordenados
+  const filteredTrips = sortedTrips.filter(trip => {
+    if (boatType && trip.boat?.type !== boatType) {return false;}
+    if (onlyAvailable && trip.availableSeats === 0) {return false;}
+    if (onlyVerified && !trip.boat?.isVerified) {return false;}
+    return true;
+  });
 
   const handleSort = (option: SortOption) => {
     setSortBy(option);
@@ -91,10 +105,12 @@ export function useSearchResultsScreen() {
 
   const handleGoBack = () => navigation.goBack();
 
-  const hasActiveFilters = !!(minPrice || maxPrice || departureTime || minRating);
-  const activeFiltersCount = [minPrice, maxPrice, departureTime, minRating].filter(
-    Boolean,
-  ).length;
+  const hasActiveFilters = !!(minPrice || maxPrice || departureTime || minRating || boatType || onlyAvailable || onlyVerified);
+  const activeFiltersCount = [
+    minPrice, maxPrice, departureTime, minRating, boatType,
+    onlyAvailable || undefined,
+    onlyVerified || undefined,
+  ].filter(Boolean).length;
 
   const sortOptions = [
     {value: 'price' as const, label: 'Menor Preço', icon: 'attach-money'},
@@ -107,9 +123,9 @@ export function useSearchResultsScreen() {
     : 'Qualquer data';
 
   const tripCountLabel =
-    sortedTrips.length === 1
+    filteredTrips.length === 1
       ? '1 viagem encontrada'
-      : `${sortedTrips.length} viagens encontradas`;
+      : `${filteredTrips.length} viagens encontradas`;
 
   return {
     origin,
@@ -117,7 +133,7 @@ export function useSearchResultsScreen() {
     date,
     promotion,
     context,
-    trips: sortedTrips,
+    trips: filteredTrips,
     isLoading,
     error,
     sortBy,
@@ -131,6 +147,12 @@ export function useSearchResultsScreen() {
     setDepartureTime,
     minRating,
     setMinRating,
+    boatType,
+    setBoatType,
+    onlyAvailable,
+    setOnlyAvailable,
+    onlyVerified,
+    setOnlyVerified,
     hasActiveFilters,
     activeFiltersCount,
     sortOptions,

@@ -97,6 +97,7 @@ async function createShipment(
   formData.append('weight', data.weight.toString());
   formData.append('tripId', data.tripId);
   formData.append('paymentMethod', data.paymentMethod);
+  formData.append('paidBy', data.paidBy ?? 'sender');
 
   if (data.couponCode) {
     formData.append('couponCode', data.couponCode);

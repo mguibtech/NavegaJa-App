@@ -5,7 +5,7 @@ import {useTheme} from '@shopify/restyle';
 
 import {CustomTabBar, Icon} from '@components';
 import {Theme} from '@theme';
-import {bookingService, BookingStatus} from '@domain';
+import {bookingService, BookingStatus, useConversations} from '@domain';
 
 import {
   // Tabs
@@ -58,6 +58,7 @@ const Tab = createBottomTabNavigator<TabsParamList>();
 
 function PassengerTabs() {
   const [bookingsBadge, setBookingsBadge] = useState<number | undefined>(undefined);
+  const {totalUnread} = useConversations();
 
   useEffect(() => {
     async function loadBadge() {
@@ -130,6 +131,7 @@ function PassengerTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="person" size={size} color={color} />
           ),
+          tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
         }}
       />
     </Tab.Navigator>

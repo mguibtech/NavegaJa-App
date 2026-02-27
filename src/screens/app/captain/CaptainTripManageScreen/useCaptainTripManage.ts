@@ -11,8 +11,8 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   useTripDetails,
   useCompleteTrip,
-  useGetTripPassengers,
-  useGetTripShipments,
+  useCancelTrip,
+  useTripManage,
   TripStatus,
   ShipmentStatus,
 } from '@domain';
@@ -44,19 +44,19 @@ export function useCaptainTripManage() {
   const {tripId} = route.params;
   const toast = useToast();
 
-  const {trip, isLoading: tripLoading, getTripById: fetchTrip} = useTripDetails();
+  const {trip, isLoading: tripLoading, getTripById: fetchTrip} = useTripDetails(tripId);
   const {completeTrip, isLoading: completeLoading} = useCompleteTrip();
-  const {passengers, isLoading: passengersLoading, refetch: refetchPassengers} = useGetTripPassengers(tripId);
-  const {shipments, isLoading: shipmentsLoading, refetch: refetchShipments} = useGetTripShipments(tripId);
+  const {cancelTrip, isLoading: cancelLoading} = useCancelTrip();
+  const {manageData, isLoading: manageLoading, isError: manageError, refetch: refetchManage} = useTripManage(tripId);
 
   const [refreshing, setRefreshing] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       fetchTrip(tripId);
-      refetchPassengers();
-      refetchShipments();
+      refetchManage();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tripId]),
   );
@@ -64,11 +64,7 @@ export function useCaptainTripManage() {
   async function onRefresh() {
     setRefreshing(true);
     try {
-      await Promise.all([
-        fetchTrip(tripId),
-        refetchPassengers(),
-        refetchShipments(),
-      ]);
+      await Promise.all([fetchTrip(tripId), refetchManage()]);
     } finally {
       setRefreshing(false);
     }
@@ -82,6 +78,17 @@ export function useCaptainTripManage() {
       fetchTrip(tripId);
     } catch (err: any) {
       toast.showError(err?.message || 'Erro ao concluir viagem');
+    }
+  }
+
+  async function handleCancelTrip() {
+    setShowCancelModal(false);
+    try {
+      await cancelTrip(tripId);
+      toast.showSuccess('Viagem cancelada.');
+      navigation.goBack();
+    } catch (err: any) {
+      toast.showError(err?.message || 'Erro ao cancelar viagem');
     }
   }
 
@@ -101,8 +108,8 @@ export function useCaptainTripManage() {
     navigation.navigate('CaptainChecklist', {tripId});
   }
 
-  function navigateToShipmentCollect(shipmentId: string) {
-    navigation.navigate('CaptainShipmentCollect', {shipmentId});
+  function navigateToShipmentCollect(shipmentId: string, validationCode?: string) {
+    navigation.navigate('CaptainShipmentCollect', {shipmentId, validationCode});
   }
 
   function navigateToTripLive() {
@@ -118,29 +125,41 @@ export function useCaptainTripManage() {
     navigation.navigate('Chat', {bookingId, otherName: passengerName});
   }
 
-  const isActionLoading = completeLoading;
+  function navigateToScanQR() {
+    navigation.navigate('ScanBookingQR', {tripId});
+  }
+
+  const isActionLoading = completeLoading || cancelLoading;
+
+  const passengers = manageData?.passageiros ?? [];
+  const shipments = manageData?.encomendas ?? [];
 
   return {
     // data
     trip,
     tripLoading,
+    manageData,
+    manageLoading,
+    manageError,
     passengers,
-    passengersLoading,
     shipments,
-    shipmentsLoading,
     refreshing,
     completeLoading,
     isActionLoading,
     showCompleteModal,
     setShowCompleteModal,
+    showCancelModal,
+    setShowCancelModal,
     // handlers
     onRefresh,
     handleCompleteTrip,
+    handleCancelTrip,
     formatDate,
     goBack,
     navigateToChecklist,
     navigateToShipmentCollect,
     navigateToTripLive,
     navigateToChat,
+    navigateToScanQR,
   };
 }

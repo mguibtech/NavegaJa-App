@@ -10,6 +10,7 @@ export function useChat(bookingId: string) {
   const {user} = useAuthStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [sending, setSending] = useState(false);
   const lastSinceRef = useRef<string | null>(null);
 
@@ -25,7 +26,7 @@ export function useChat(bookingId: string) {
         }
         chatService.markRead(bookingId).catch(() => {});
       })
-      .catch(() => {})
+      .catch(() => { setLoadError(true); })
       .finally(() => setIsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
@@ -38,7 +39,11 @@ export function useChat(bookingId: string) {
     try {
       const newMsgs = await chatService.getMessages(bookingId, lastSinceRef.current);
       if (newMsgs.length > 0) {
-        setMessages(prev => [...prev, ...newMsgs]);
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const unique = newMsgs.filter(m => !existingIds.has(m.id));
+          return unique.length > 0 ? [...prev, ...unique] : prev;
+        });
         lastSinceRef.current = newMsgs[newMsgs.length - 1].createdAt;
         chatService.markRead(bookingId).catch(() => {});
       }
@@ -99,5 +104,5 @@ export function useChat(bookingId: string) {
     [bookingId, sending, user],
   );
 
-  return {messages, send, sending, isLoading, fetchNew};
+  return {messages, send, sending, isLoading, loadError, fetchNew};
 }

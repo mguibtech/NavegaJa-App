@@ -86,6 +86,57 @@ export enum TripStatus {
   CANCELLED = 'cancelled',
 }
 
+// ── Manage endpoint (GET /trips/:id/manage) ──────────────────────────────────
+
+export interface TripManagePassenger {
+  bookingId: string;
+  status: string;
+  paymentStatus?: string;
+  seats: number;
+  seatNumber?: number;
+  totalPrice: number;
+  checkedInAt?: string | null;
+  passenger: {
+    id?: string;
+    name: string;
+    phone: string;
+    avatarUrl?: string | null;
+    passengerRating?: number | null;
+  };
+}
+
+export interface TripManageShipment {
+  id?: string;
+  trackingCode: string;
+  validationCode?: string;
+  status: string;
+  description?: string;
+  weightKg?: number;
+  recipientName?: string;
+  recipientPhone?: string;
+  senderName?: string;
+  totalPrice?: number;
+  paidBy?: 'sender' | 'recipient';
+}
+
+export interface TripManageData {
+  id: string;
+  origin: string;
+  destination: string;
+  departureAt: string;
+  estimatedArrivalAt: string;
+  price: number | string;
+  cargoPriceKg?: number | string;
+  availableSeats: number;
+  totalSeats: number;
+  status: TripStatus;
+  notes?: string | null;
+  passageiros: TripManagePassenger[];
+  encomendas: TripManageShipment[];
+  totalPassageiros: number;
+  totalEncomendas: number;
+}
+
 export interface SearchTripsParams {
   routeId?: string | null;
   origin?: string;

@@ -1,6 +1,8 @@
 import React from 'react';
-import {ScrollView, Image, Modal, KeyboardAvoidingView, Platform, ActivityIndicator} from 'react-native';
+import {ScrollView, Image, Modal, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, View} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+
+import {ShipmentShareCard} from './ShipmentShareCard';
 
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
@@ -9,6 +11,14 @@ import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, Toucha
 import {ShipmentStatus} from '@domain';
 
 import {useShipmentDetailsScreen} from './useShipmentDetailsScreen';
+
+const ss = StyleSheet.create({
+  offScreen: {
+    position: 'absolute',
+    top: -5000,
+    left: 0,
+  },
+});
 
 export function ShipmentDetailsScreen() {
   const {
@@ -32,6 +42,7 @@ export function ShipmentDetailsScreen() {
     isCollecting,
     isMarkingOutForDelivery,
     statusConfig,
+    isFreteACobrar,
     canConfirmPayment,
     canCollect,
     canOutForDelivery,
@@ -41,6 +52,7 @@ export function ShipmentDetailsScreen() {
     canReview,
     getPaymentMethodLabel,
     resolvePhotoUri,
+    shareCardRef,
     handleShare,
     handleCancel,
     confirmCancel,
@@ -269,7 +281,7 @@ export function ShipmentDetailsScreen() {
                 Peso
               </Text>
               <Text preset="paragraphSmall" color="text" bold>
-                {shipment.weight}kg
+                {shipment.weight != null ? `${shipment.weight} kg` : '—'}
               </Text>
             </Box>
 
@@ -279,8 +291,8 @@ export function ShipmentDetailsScreen() {
                   Dimensões
                 </Text>
                 <Text preset="paragraphSmall" color="text" bold>
-                  {shipment.dimensions.length} × {shipment.dimensions.width} ×{' '}
-                  {shipment.dimensions.height} cm
+                  {shipment.dimensions.length ?? '—'} × {shipment.dimensions.width ?? '—'} ×{' '}
+                  {shipment.dimensions.height ?? '—'} cm
                 </Text>
               </Box>
             )}
@@ -291,6 +303,15 @@ export function ShipmentDetailsScreen() {
               </Text>
               <Text preset="paragraphSmall" color="text" bold>
                 {getPaymentMethodLabel(shipment.paymentMethod)}
+              </Text>
+            </Box>
+
+            <Box flexDirection="row" justifyContent="space-between" mb="s12">
+              <Text preset="paragraphSmall" color="textSecondary">
+                Pago por
+              </Text>
+              <Text preset="paragraphSmall" color={isFreteACobrar ? 'warning' : 'text'} bold>
+                {isFreteACobrar ? 'Destinatário (frete a cobrar)' : 'Remetente'}
               </Text>
             </Box>
 
@@ -438,6 +459,28 @@ export function ShipmentDetailsScreen() {
                     </Box>
                   );
                 })}
+              </Box>
+            </Box>
+          )}
+
+          {/* Frete a cobrar — banner informativo */}
+          {isFreteACobrar && shipment.status === ShipmentStatus.PENDING && (
+            <Box
+              backgroundColor="warningBg"
+              borderRadius="s12"
+              padding="s16"
+              mb="s16"
+              flexDirection="row"
+              alignItems="flex-start"
+              gap="s12">
+              <Icon name="info" size={20} color="warning" />
+              <Box flex={1}>
+                <Text preset="paragraphSmall" color="warning" bold mb="s4">
+                  Frete a cobrar
+                </Text>
+                <Text preset="paragraphCaptionSmall" color="warning">
+                  O destinatário pagará em dinheiro ao capitão na entrega. Não é necessário confirmar pagamento agora.
+                </Text>
               </Box>
             </Box>
           )}
@@ -720,6 +763,13 @@ export function ShipmentDetailsScreen() {
           setErrorMessage('');
         }}
       />
+
+      {/* Share card — renderizado off-screen para captura de imagem */}
+      {shipment && (
+        <View style={ss.offScreen} pointerEvents="none">
+          <ShipmentShareCard ref={shareCardRef} shipment={shipment} />
+        </View>
+      )}
     </Box>
   );
 }

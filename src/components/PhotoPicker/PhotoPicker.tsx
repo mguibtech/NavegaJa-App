@@ -42,9 +42,9 @@ export function PhotoPicker({
     try {
       const result = await launchCamera({
         mediaType: 'photo',
-        quality: 0.8,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        quality: 0.7,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: false,
         cameraType: 'back',
       });
@@ -73,9 +73,9 @@ export function PhotoPicker({
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        quality: 0.8,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        quality: 0.7,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: false,
         selectionLimit: maxPhotos - photos.length,
       });
@@ -132,7 +132,7 @@ export function PhotoPicker({
         {label}
       </Text>
       <Text preset="paragraphSmall" color="textSecondary" mb="s12">
-        {description ?? `Tire fotos para referência. Máximo ${maxPhotos} ${allowPdf ? 'arquivos' : 'fotos'}.`}
+        {description ?? `Tire fotos para referência. Máximo ${maxPhotos} ${allowPdf ? 'arquivos' : 'fotos'}. Imagens comprimidas automaticamente.`}
       </Text>
 
       {/* Grid de fotos/documentos */}

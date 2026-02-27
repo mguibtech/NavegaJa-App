@@ -19,24 +19,31 @@ export function CaptainTripManageScreen() {
   const {
     trip,
     tripLoading,
+    manageLoading,
+    manageError,
     passengers,
-    passengersLoading,
     shipments,
-    shipmentsLoading,
     refreshing,
     completeLoading,
     isActionLoading,
     showCompleteModal,
     setShowCompleteModal,
+    showCancelModal,
+    setShowCancelModal,
     onRefresh,
     handleCompleteTrip,
+    handleCancelTrip,
     formatDate,
     goBack,
     navigateToChecklist,
     navigateToShipmentCollect,
     navigateToTripLive,
     navigateToChat,
+    navigateToScanQR,
   } = useCaptainTripManage();
+
+  const canScanQR =
+    trip?.status === TripStatus.SCHEDULED || trip?.status === TripStatus.IN_PROGRESS;
 
   return (
     <>
@@ -153,12 +160,41 @@ export function CaptainTripManageScreen() {
 
             {/* Passengers */}
             <Box mb="s16">
-              <Text preset="paragraphMedium" color="text" bold mb="s12">
-                Passageiros ({passengers.length})
-              </Text>
-              {passengersLoading ? (
+              <Box
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                mb="s12">
+                <Text preset="paragraphMedium" color="text" bold>
+                  Passageiros ({passengers.length})
+                </Text>
+                {canScanQR && (
+                  <TouchableOpacityBox
+                    flexDirection="row"
+                    alignItems="center"
+                    backgroundColor="primaryBg"
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s8"
+                    onPress={navigateToScanQR}>
+                    <Icon name="qr-code-scanner" size={16} color="primary" />
+                    <Text preset="paragraphCaptionSmall" color="primary" bold ml="s6">
+                      Escanear QR
+                    </Text>
+                  </TouchableOpacityBox>
+                )}
+              </Box>
+
+              {manageLoading && passengers.length === 0 ? (
                 <Box backgroundColor="surface" borderRadius="s12" padding="s20" alignItems="center">
                   <ActivityIndicator size="small" color="#0a6fbd" />
+                </Box>
+              ) : manageError ? (
+                <Box backgroundColor="dangerBg" borderRadius="s12" padding="s16" flexDirection="row" alignItems="center">
+                  <Icon name="error-outline" size={20} color="danger" />
+                  <Text preset="paragraphSmall" color="danger" ml="s8" flex={1}>
+                    Erro ao carregar dados. Puxe para atualizar.
+                  </Text>
                 </Box>
               ) : passengers.length === 0 ? (
                 <Box backgroundColor="surface" borderRadius="s12" padding="s20" alignItems="center">
@@ -169,58 +205,80 @@ export function CaptainTripManageScreen() {
                 </Box>
               ) : (
                 <Box>
-                  {passengers.map(p => (
-                    <Box
-                      key={p.id}
-                      backgroundColor="surface"
-                      borderRadius="s12"
-                      padding="s16"
-                      mb="s8"
-                      flexDirection="row"
-                      alignItems="center">
+                  {passengers.map(p => {
+                    const checkedIn = !!p.checkedInAt;
+                    return (
                       <Box
-                        width={40}
-                        height={40}
-                        borderRadius="s20"
-                        backgroundColor="secondaryBg"
+                        key={p.bookingId}
+                        backgroundColor="surface"
+                        borderRadius="s12"
+                        padding="s16"
+                        mb="s8"
+                        flexDirection="row"
                         alignItems="center"
-                        justifyContent="center"
-                        mr="s12">
-                        <Icon name="person" size={22} color="secondary" />
-                      </Box>
-                      <Box flex={1}>
-                        <Text preset="paragraphSmall" color="text" bold>
-                          {p.name}
-                        </Text>
-                        <Text preset="paragraphCaptionSmall" color="textSecondary">
-                          {p.phone} · {p.quantity} {p.quantity === 1 ? 'assento' : 'assentos'}
-                        </Text>
-                      </Box>
-                      <Box flexDirection="row" alignItems="center" gap="s8">
-                        {p.checkedInAt ? (
-                          <Box
-                            backgroundColor="successBg"
-                            paddingHorizontal="s8"
-                            paddingVertical="s4"
-                            style={{borderRadius: 6}}>
-                            <Text preset="paragraphCaptionSmall" color="success" bold>
-                              Check-in
-                            </Text>
-                          </Box>
-                        ) : null}
-                        <TouchableOpacityBox
-                          width={32}
-                          height={32}
-                          borderRadius="s16"
-                          backgroundColor="primaryBg"
+                        style={{
+                          borderLeftWidth: 3,
+                          borderLeftColor: checkedIn ? '#22C55E' : '#64748B',
+                        }}>
+                        <Box
+                          width={40}
+                          height={40}
+                          borderRadius="s20"
+                          backgroundColor={checkedIn ? 'successBg' : 'secondaryBg'}
                           alignItems="center"
                           justifyContent="center"
-                          onPress={() => navigateToChat(p.id, p.name)}>
-                          <Icon name="chat" size={16} color="primary" />
-                        </TouchableOpacityBox>
+                          mr="s12">
+                          <Icon
+                            name={checkedIn ? 'how-to-reg' : 'person'}
+                            size={22}
+                            color={checkedIn ? 'success' : 'secondary'}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Text preset="paragraphSmall" color="text" bold>
+                            {p.passenger.name}
+                          </Text>
+                          <Text preset="paragraphCaptionSmall" color="textSecondary">
+                            {p.passenger.phone} · {p.seats}{' '}
+                            {p.seats === 1 ? 'assento' : 'assentos'}
+                          </Text>
+                        </Box>
+                        <Box flexDirection="row" alignItems="center" gap="s8">
+                          {checkedIn ? (
+                            <Box
+                              backgroundColor="successBg"
+                              paddingHorizontal="s8"
+                              paddingVertical="s4"
+                              style={{borderRadius: 6}}>
+                              <Text preset="paragraphCaptionSmall" color="success" bold>
+                                Embarcou
+                              </Text>
+                            </Box>
+                          ) : (
+                            <Box
+                              backgroundColor="warningBg"
+                              paddingHorizontal="s8"
+                              paddingVertical="s4"
+                              style={{borderRadius: 6}}>
+                              <Text preset="paragraphCaptionSmall" color="warning" bold>
+                                Pendente
+                              </Text>
+                            </Box>
+                          )}
+                          <TouchableOpacityBox
+                            width={32}
+                            height={32}
+                            borderRadius="s16"
+                            backgroundColor="primaryBg"
+                            alignItems="center"
+                            justifyContent="center"
+                            onPress={() => navigateToChat(p.bookingId, p.passenger.name)}>
+                            <Icon name="chat" size={16} color="primary" />
+                          </TouchableOpacityBox>
+                        </Box>
                       </Box>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
               )}
             </Box>
@@ -235,7 +293,12 @@ export function CaptainTripManageScreen() {
                   <TouchableOpacityBox
                     flexDirection="row"
                     alignItems="center"
-                    onPress={() => download(`/trips/${trip.id}/cargo-manifest`, `manifesto-${trip.id.slice(0, 8)}.pdf`)}
+                    onPress={() =>
+                      download(
+                        `/trips/${trip.id}/cargo-manifest`,
+                        `manifesto-${trip.id.slice(0, 8)}.pdf`,
+                      )
+                    }
                     disabled={isDownloading}>
                     <Icon name="picture-as-pdf" size={16} color="secondary" />
                     <Text preset="paragraphCaptionSmall" color="secondary" ml="s4" bold>
@@ -244,7 +307,7 @@ export function CaptainTripManageScreen() {
                   </TouchableOpacityBox>
                 )}
               </Box>
-              {shipmentsLoading ? (
+              {manageLoading && shipments.length === 0 ? (
                 <Box
                   backgroundColor="surface"
                   borderRadius="s12"
@@ -252,7 +315,7 @@ export function CaptainTripManageScreen() {
                   alignItems="center">
                   <ActivityIndicator size="small" color="#0a6fbd" />
                 </Box>
-              ) : shipments.length === 0 ? (
+              ) : manageError ? null : shipments.length === 0 ? (
                 <Box
                   backgroundColor="surface"
                   borderRadius="s12"
@@ -265,27 +328,29 @@ export function CaptainTripManageScreen() {
                 </Box>
               ) : (
                 <Box>
-                  {shipments.map(shipment => {
+                  {shipments.map((shipment, index) => {
                     const canCollect = shipment.status === ShipmentStatus.PAID;
                     const canDeliver = shipment.status === ShipmentStatus.ARRIVED;
                     const isActionable = canCollect || canDeliver;
+                    const key = shipment.id ?? shipment.trackingCode ?? String(index);
                     return (
                       <TouchableOpacityBox
-                        key={shipment.id}
+                        key={key}
                         backgroundColor="surface"
                         borderRadius="s12"
                         padding="s16"
                         mb="s8"
                         flexDirection="row"
                         alignItems="center"
-                        onPress={() => navigateToShipmentCollect(shipment.id)}>
+                        onPress={() => shipment.id && navigateToShipmentCollect(shipment.id, shipment.validationCode)}>
                         <Icon name="inventory-2" size={20} color="primary" />
                         <Box flex={1} mx="s12">
                           <Text preset="paragraphSmall" color="text" bold>
                             {shipment.trackingCode}
                           </Text>
                           <Text preset="paragraphCaptionSmall" color="textSecondary">
-                            {shipment.recipientName} · {SHIPMENT_STATUS_LABELS[shipment.status] || shipment.status}
+                            {shipment.recipientName} ·{' '}
+                            {SHIPMENT_STATUS_LABELS[shipment.status] || shipment.status}
                           </Text>
                         </Box>
                         {isActionable ? (
@@ -310,11 +375,20 @@ export function CaptainTripManageScreen() {
 
             {/* Action Buttons */}
             {trip.status === TripStatus.SCHEDULED && (
-              <Button
-                title="Iniciar Viagem"
-                onPress={navigateToChecklist}
-                disabled={isActionLoading}
-              />
+              <>
+                <Button
+                  title="Iniciar Viagem"
+                  onPress={navigateToChecklist}
+                  disabled={isActionLoading}
+                  mb="s12"
+                />
+                <Button
+                  title="Cancelar Viagem"
+                  onPress={() => setShowCancelModal(true)}
+                  disabled={isActionLoading}
+                  preset="outline"
+                />
+              </>
             )}
             {trip.status === TripStatus.IN_PROGRESS && (
               <>
@@ -344,10 +418,24 @@ export function CaptainTripManageScreen() {
         icon="check-circle"
         iconColor="success"
         confirmText="Concluir"
-        cancelText="Cancelar"
+        cancelText="Voltar"
         onConfirm={handleCompleteTrip}
         onCancel={() => setShowCompleteModal(false)}
         isLoading={completeLoading}
+      />
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmationModal
+        visible={showCancelModal}
+        title="Cancelar Viagem"
+        message="Tem certeza que deseja cancelar esta viagem? Todas as reservas serão afetadas."
+        icon="warning"
+        iconColor="danger"
+        confirmText="Sim, cancelar"
+        cancelText="Voltar"
+        onConfirm={handleCancelTrip}
+        onCancel={() => setShowCancelModal(false)}
+        isLoading={isActionLoading}
       />
     </>
   );

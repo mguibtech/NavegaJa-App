@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
+import {useQuery} from '@tanstack/react-query';
+
 import {
   useTripDetails,
   PaymentMethod,
@@ -13,6 +15,9 @@ import {
   PriceBreakdown as PriceBreakdownType,
   useCouponValidation,
   useKmStats,
+  floodHubAPI,
+  FloodSeverity,
+  FLOOD_SEVERITY_ORDER,
 } from '@domain';
 import {AppStackParamList} from '@routes';
 
@@ -72,6 +77,23 @@ export function useBookingScreen() {
     useCreateBooking();
 
   const {trip, isLoading: isLoadingTrip, error: tripError} = useTripDetails(tripId);
+
+  // Flood status — Manaus region (covers all routes in Amazônia)
+  const {data: floodData} = useQuery({
+    queryKey: ['flood-booking', tripId],
+    queryFn: () => floodHubAPI.getFloodStatus(-3.119, -60.0217, 200),
+    staleTime: 15 * 60 * 1000,
+    enabled: !!trip,
+  });
+
+  const floodSeverity: FloodSeverity | null =
+    (floodData?.statuses ?? []).sort(
+      (a, b) => FLOOD_SEVERITY_ORDER[a.severity] - FLOOD_SEVERITY_ORDER[b.severity],
+    )[0]?.severity ?? null;
+
+  const hasFloodRisk =
+    floodSeverity === 'SEVERE' || floodSeverity === 'EXTREME';
+
   const [passengers, setPassengers] = useState(1);
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
@@ -348,5 +370,7 @@ export function useBookingScreen() {
     setShowBookingErrorModal,
     formatTime,
     formatDate,
+    hasFloodRisk,
+    floodSeverity,
   };
 }

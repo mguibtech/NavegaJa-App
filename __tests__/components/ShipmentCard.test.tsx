@@ -29,6 +29,7 @@ const mockShipment: Shipment = {
   validationCode: '123456',
   price: 25.0,
   paymentMethod: PaymentMethod.PIX,
+  paidBy: 'sender' as const,
   createdAt: '2024-01-15T10:30:00Z',
   updatedAt: '2024-01-15T10:30:00Z',
 };

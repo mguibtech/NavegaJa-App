@@ -1,5 +1,5 @@
 import {tripAPI} from './tripAPI';
-import {SearchTripsParams, Trip} from './tripTypes';
+import {SearchTripsParams, Trip, TripManageData} from './tripTypes';
 import {PopularDestinationsResponse} from './popularRoutesTypes';
 
 async function searchTrips(params: SearchTripsParams): Promise<Trip[]> {
@@ -21,8 +21,13 @@ async function getPopular(): Promise<PopularDestinationsResponse> {
   return await tripAPI.getPopular();
 }
 
+async function getTripManage(id: string): Promise<TripManageData> {
+  return await tripAPI.getTripManage(id);
+}
+
 export const tripService = {
   searchTrips,
   getTripById,
   getPopular,
+  getTripManage,
 };

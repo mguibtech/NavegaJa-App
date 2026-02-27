@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, RefreshControl, Modal, ScrollView, ImageBackground} from 'react-native';
+import {FlatList, RefreshControl, Modal, ScrollView, ImageBackground, Switch} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton} from '@components';
@@ -7,6 +7,14 @@ import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, Tri
 import {formatBRL} from '@utils';
 
 import {useSearchResultsScreen} from './useSearchResultsScreen';
+
+const FILTER_BOAT_TYPES = [
+  {value: 'Lancha', label: 'Lancha'},
+  {value: 'Barco regional', label: 'Barco regional'},
+  {value: 'Barco de linha', label: 'Barco de linha'},
+  {value: 'Canoa motorizada', label: 'Canoa'},
+  {value: 'Ferry', label: 'Ferry'},
+];
 
 function calculateDuration(departure: string, arrival: string): string {
   try {
@@ -55,6 +63,12 @@ export function SearchResultsScreen() {
     setDepartureTime,
     minRating,
     setMinRating,
+    boatType,
+    setBoatType,
+    onlyAvailable,
+    setOnlyAvailable,
+    onlyVerified,
+    setOnlyVerified,
     hasActiveFilters,
     activeFiltersCount,
     sortOptions,
@@ -683,6 +697,82 @@ export function SearchResultsScreen() {
                       </Text>
                     </TouchableOpacityBox>
                   ))}
+                </Box>
+              </Box>
+
+              {/* Tipo de Barco */}
+              <Box mb="s24">
+                <Text preset="paragraphMedium" color="text" bold mb="s12">
+                  Tipo de Barco
+                </Text>
+                <Box flexDirection="row" flexWrap="wrap" gap="s8">
+                  {FILTER_BOAT_TYPES.map(bt => (
+                    <TouchableOpacityBox
+                      key={bt.value}
+                      paddingHorizontal="s16"
+                      paddingVertical="s10"
+                      borderRadius="s20"
+                      borderWidth={1}
+                      borderColor={boatType === bt.value ? 'primary' : 'border'}
+                      backgroundColor={boatType === bt.value ? 'primaryBg' : 'background'}
+                      onPress={() => setBoatType(boatType === bt.value ? undefined : bt.value)}>
+                      <Text
+                        preset="paragraphSmall"
+                        color={boatType === bt.value ? 'primary' : 'text'}
+                        bold={boatType === bt.value}>
+                        {bt.label}
+                      </Text>
+                    </TouchableOpacityBox>
+                  ))}
+                </Box>
+              </Box>
+
+              {/* Opções adicionais */}
+              <Box mb="s24">
+                <Text preset="paragraphMedium" color="text" bold mb="s12">
+                  Opções
+                </Text>
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  paddingVertical="s14"
+                  borderBottomWidth={1}
+                  borderBottomColor="border">
+                  <Box>
+                    <Text preset="paragraphSmall" color="text" bold>
+                      Somente com vagas
+                    </Text>
+                    <Text preset="paragraphCaptionSmall" color="textSecondary">
+                      Ocultar viagens esgotadas
+                    </Text>
+                  </Box>
+                  <Switch
+                    value={onlyAvailable}
+                    onValueChange={setOnlyAvailable}
+                    trackColor={{false: '#D1D5DB', true: '#BFDBFE'}}
+                    thumbColor={onlyAvailable ? '#0B5D8A' : '#9CA3AF'}
+                  />
+                </Box>
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  paddingVertical="s14">
+                  <Box>
+                    <Text preset="paragraphSmall" color="text" bold>
+                      Barco verificado
+                    </Text>
+                    <Text preset="paragraphCaptionSmall" color="textSecondary">
+                      Apenas embarcações certificadas
+                    </Text>
+                  </Box>
+                  <Switch
+                    value={onlyVerified}
+                    onValueChange={setOnlyVerified}
+                    trackColor={{false: '#D1D5DB', true: '#BFDBFE'}}
+                    thumbColor={onlyVerified ? '#0B5D8A' : '#9CA3AF'}
+                  />
                 </Box>
               </Box>
 

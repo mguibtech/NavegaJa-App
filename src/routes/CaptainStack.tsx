@@ -5,6 +5,7 @@ import {useTheme} from '@shopify/restyle';
 
 import {CaptainTabBar, Icon} from '@components';
 import {Theme} from '@theme';
+import {useConversations} from '@domain';
 
 import {
   // Tabs
@@ -47,6 +48,7 @@ import {
   KycSubmitScreen,
   KycStatusScreen,
   CaptainAnalyticsScreen,
+  ScanBookingQRScreen,
 } from '@screens';
 
 import type {CaptainStackParamList, CaptainTabsParamList} from './navigationTypes';
@@ -55,6 +57,7 @@ const Stack = createNativeStackNavigator<CaptainStackParamList>();
 const CaptainTab = createBottomTabNavigator<CaptainTabsParamList>();
 
 function CaptainTabs() {
+  const {totalUnread} = useConversations();
   return (
     <CaptainTab.Navigator
       tabBar={props => <CaptainTabBar {...props} />}
@@ -97,6 +100,7 @@ function CaptainTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="person" size={size} color={color} />
           ),
+          tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
         }}
       />
     </CaptainTab.Navigator>
@@ -149,6 +153,7 @@ export function CaptainStack() {
       <Stack.Screen name="KycSubmit" component={KycSubmitScreen} />
       <Stack.Screen name="KycStatus" component={KycStatusScreen} />
       <Stack.Screen name="CaptainAnalytics" component={CaptainAnalyticsScreen} />
+      <Stack.Screen name="ScanBookingQR" component={ScanBookingQRScreen} />
     </Stack.Navigator>
   );
 }

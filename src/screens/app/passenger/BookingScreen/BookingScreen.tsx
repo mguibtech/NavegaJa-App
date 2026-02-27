@@ -54,6 +54,8 @@ export function BookingScreen() {
     setShowBookingErrorModal,
     formatTime,
     formatDate,
+    hasFloodRisk,
+    floodSeverity,
   } = useBookingScreen();
 
   // Show loading state while fetching trip
@@ -286,7 +288,7 @@ export function BookingScreen() {
           onRetry={couponValidation.retry}
         />
 
-        {/* Braças — só exibe se usuário tem saldo */}
+        {/* Milhas Náuticas — só exibe se usuário tem saldo */}
         {kmStats && kmStats.redeemableKm > 0 && (
           <Box
             backgroundColor="surface"
@@ -303,7 +305,7 @@ export function BookingScreen() {
             <Box flexDirection="row" alignItems="center" mb="s12">
               <Icon name="waves" size={20} color={'#0B5D8A' as any} />
               <Text preset="paragraphMedium" color="text" bold ml="s8">
-                Braças
+                Milhas Náuticas
               </Text>
             </Box>
 
@@ -320,7 +322,7 @@ export function BookingScreen() {
                   Saldo disponível
                 </Text>
                 <Text preset="paragraphMedium" color="text" bold>
-                  {kmStats.redeemableKm} braças
+                  {kmStats.redeemableKm} milhas náuticas
                 </Text>
               </Box>
               <Switch
@@ -341,7 +343,7 @@ export function BookingScreen() {
                 alignItems="center">
                 <Icon name="info" size={16} color="info" />
                 <Text preset="paragraphSmall" color="info" ml="s8" flex={1}>
-                  Desconto de braças será aplicado no valor final
+                  Desconto de milhas náuticas será aplicado no valor final
                 </Text>
               </Box>
             )}
@@ -493,6 +495,32 @@ export function BookingScreen() {
           shadowRadius: 8,
           elevation: 5,
         }}>
+        {/* Banner de risco de cheia */}
+        {hasFloodRisk && (
+          <Box
+            backgroundColor={floodSeverity === 'EXTREME' ? 'dangerBg' : 'warningBg'}
+            borderRadius="s12"
+            padding="s12"
+            flexDirection="row"
+            alignItems="flex-start"
+            mb="s12">
+            <Icon
+              name="warning"
+              size={18}
+              color={floodSeverity === 'EXTREME' ? 'danger' : 'warning'}
+            />
+            <Text
+              preset="paragraphCaptionSmall"
+              color={floodSeverity === 'EXTREME' ? 'danger' : 'warning'}
+              bold
+              ml="s8"
+              flex={1}>
+              {floodSeverity === 'EXTREME'
+                ? 'Cheia extrema detectada no trecho. Confirme as condições com o capitão antes de embarcar.'
+                : 'Cheia severa na área. Verifique as condições com o capitão.'}
+            </Text>
+          </Box>
+        )}
         <Button
           title={
             isCreatingBooking

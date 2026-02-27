@@ -27,7 +27,7 @@ export interface Booking {
   createdAt: string;
   updatedAt: string;
 
-  // Braças
+  // Milhas Náuticas
   kmRedeemed?: number;
   kmDiscount?: number;
 
@@ -67,7 +67,7 @@ export interface CreateBookingData {
   quantity: number;
   paymentMethod: PaymentMethod;
   couponCode?: string;  // Optional coupon code
-  redeemKm?: boolean;   // Aplicar desconto de Braças
+  redeemKm?: boolean;   // Aplicar desconto de Milhas Náuticas
 }
 
 export interface CancelBookingData {

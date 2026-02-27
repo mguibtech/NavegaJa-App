@@ -1,11 +1,13 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
 import {useCaptainTrips, Trip, TripStatus, useMyBoats} from '@domain';
 import {useAuthStore} from '@store';
+import {getUnreadCount} from '@services';
 
 import {AppStackParamList} from '@routes';
 
@@ -25,6 +27,7 @@ export function useCaptainDashboard() {
 
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
   const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -32,6 +35,12 @@ export function useCaptainDashboard() {
     fetchBoats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getUnreadCount().then(setUnreadNotifications).catch(() => {});
+    }, []),
+  );
 
   const canOperate = !user?.capabilities || user.capabilities.canOperate;
   const isBlocked = user?.capabilities && !user.capabilities.canOperate;
@@ -99,6 +108,7 @@ export function useCaptainDashboard() {
     isRefreshingStatus,
     showBlockedModal,
     setShowBlockedModal,
+    unreadNotifications,
     canOperate,
     isBlocked,
     isRejected,

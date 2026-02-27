@@ -20,6 +20,7 @@ export const queryKeys = {
     checklist: (tripId: string) => [...queryKeys.captain.all, 'checklist', tripId] as const,
     passengers: (tripId: string) => [...queryKeys.captain.all, 'passengers', tripId] as const,
     tripShipments: (tripId: string) => [...queryKeys.captain.all, 'trip-shipments', tripId] as const,
+    manage: (tripId: string) => [...queryKeys.captain.all, 'manage', tripId] as const,
     shipment: (id: string) => [...queryKeys.captain.all, 'shipment', id] as const,
   },
   shipments: {

@@ -11,9 +11,12 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
+import {useTheme} from '@shopify/restyle';
+
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {useChat} from '@domain';
 import {useAuthStore} from '@store';
+import {Theme} from '@theme';
 
 import {AppStackParamList} from '@routes';
 
@@ -21,9 +24,10 @@ type Props = NativeStackScreenProps<AppStackParamList, 'Chat'>;
 
 export function ChatScreen({navigation, route}: Props) {
   const {top, bottom} = useSafeAreaInsets();
+  const {colors} = useTheme<Theme>();
   const {bookingId, otherName} = route.params;
   const {user} = useAuthStore();
-  const {messages, send, sending, isLoading} = useChat(bookingId);
+  const {messages, send, sending, isLoading, loadError} = useChat(bookingId);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
@@ -47,7 +51,7 @@ export function ChatScreen({navigation, route}: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
       {/* Header */}
       <Box
@@ -96,6 +100,13 @@ export function ChatScreen({navigation, route}: Props) {
               Carregando mensagens...
             </Text>
           </Box>
+        ) : loadError ? (
+          <Box flex={1} alignItems="center" justifyContent="center" padding="s24">
+            <Icon name="error-outline" size={48} color="danger" />
+            <Text preset="paragraphMedium" color="textSecondary" textAlign="center" mt="s16">
+              Não foi possível carregar as mensagens.{'\n'}Tente novamente mais tarde.
+            </Text>
+          </Box>
         ) : messages.length === 0 ? (
           <Box flex={1} alignItems="center" justifyContent="center" padding="s24">
             <Icon name="chat-bubble-outline" size={48} color="textSecondary" />
@@ -140,7 +151,7 @@ export function ChatScreen({navigation, route}: Props) {
                       paddingVertical="s10"
                       borderRadius="s16"
                       style={{
-                        backgroundColor: isMe ? '#0B5D8A' : '#FFFFFF',
+                        backgroundColor: isMe ? '#0B5D8A' : colors.surface,
                         borderBottomRightRadius: isMe ? 4 : 16,
                         borderBottomLeftRadius: isMe ? 16 : 4,
                         shadowColor: '#000',
@@ -151,7 +162,7 @@ export function ChatScreen({navigation, route}: Props) {
                       }}>
                       <Text
                         preset="paragraphSmall"
-                        style={{color: isMe ? '#FFFFFF' : '#1A1A2E'}}>
+                        style={{color: isMe ? '#FFFFFF' : colors.text}}>
                         {item.content}
                       </Text>
                     </Box>
@@ -185,9 +196,9 @@ export function ChatScreen({navigation, route}: Props) {
             value={inputText}
             onChangeText={setInputText}
             placeholder="Escreva uma mensagem..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
             multiline
-            style={styles.textInput}
+            style={[styles.textInput, {color: colors.text}]}
             returnKeyType="send"
             onSubmitEditing={handleSend}
             blurOnSubmit={false}
@@ -212,7 +223,6 @@ const styles = StyleSheet.create({
   messageList: {padding: 16, paddingBottom: 8},
   textInput: {
     fontSize: 15,
-    color: '#1A1A2E',
     padding: 0,
     minHeight: 20,
   },

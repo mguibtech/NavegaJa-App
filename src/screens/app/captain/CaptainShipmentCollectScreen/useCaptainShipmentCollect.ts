@@ -26,7 +26,7 @@ export const STATUS_LABELS: Partial<Record<ShipmentStatus, string>> = {
 export function useCaptainShipmentCollect() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'CaptainShipmentCollect'>>();
-  const {shipmentId} = route.params;
+  const {shipmentId, validationCode: prefilledCode} = route.params;
   const toast = useToast();
   const user = useAuthStore(s => s.user);
 
@@ -36,7 +36,7 @@ export function useCaptainShipmentCollect() {
   const {collect, isLoading: isCollecting} = useCaptainCollect();
   const {markOutForDelivery, isLoading: isMarkingDelivery} = useCaptainOutForDelivery();
 
-  const [validationCode, setValidationCode] = useState('');
+  const [validationCode, setValidationCode] = useState(prefilledCode ?? '');
 
   if (error) {
     toast.showError(error?.message || 'Erro ao carregar encomenda');
@@ -76,6 +76,7 @@ export function useCaptainShipmentCollect() {
     isLoading,
     validationCode,
     setValidationCode,
+    isCodePrefilled: !!(prefilledCode && prefilledCode.length > 0),
     isCollecting,
     isMarkingDelivery,
     canManageShipments,

@@ -56,6 +56,9 @@ export function CreateShipmentScreen() {
     setPhotos,
     paymentMethod,
     setPaymentMethod,
+    paidBy,
+    handleSetPaidBy,
+    isRecipientPays,
     // Coupon
     couponValidation,
     handleApplyCoupon,
@@ -494,8 +497,75 @@ export function CreateShipmentScreen() {
             />
           </Box>
 
-          {/* Card: Pagamento */}
+          {/* Toggle: Quem paga o frete? */}
           <Box
+            backgroundColor="surface"
+            borderRadius="s16"
+            padding="s20"
+            mb="s16"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 2,
+            }}>
+            <Text preset="paragraphMedium" color="text" bold mb="s16">
+              Quem paga o frete?
+            </Text>
+            <Box gap="s10">
+              {/* Opção: Eu pago */}
+              <TouchableOpacityBox
+                flexDirection="row"
+                alignItems="center"
+                padding="s16"
+                borderRadius="s12"
+                borderWidth={paidBy === 'sender' ? 2 : 1}
+                borderColor={paidBy === 'sender' ? 'primary' : 'border'}
+                backgroundColor={paidBy === 'sender' ? 'primaryBg' : 'background'}
+                onPress={() => handleSetPaidBy('sender')}>
+                <Icon name="payments" size={20} color={paidBy === 'sender' ? 'primary' : 'textSecondary'} />
+                <Box ml="s12" flex={1}>
+                  <Text preset="paragraphMedium" color={paidBy === 'sender' ? 'primary' : 'text'} bold>
+                    Eu pago agora
+                  </Text>
+                  <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                    PIX, cartão ou dinheiro
+                  </Text>
+                </Box>
+                {paidBy === 'sender' && (
+                  <Icon name="check-circle" size={20} color="primary" />
+                )}
+              </TouchableOpacityBox>
+
+              {/* Opção: Destinatário paga */}
+              <TouchableOpacityBox
+                flexDirection="row"
+                alignItems="center"
+                padding="s16"
+                borderRadius="s12"
+                borderWidth={paidBy === 'recipient' ? 2 : 1}
+                borderColor={paidBy === 'recipient' ? 'primary' : 'border'}
+                backgroundColor={paidBy === 'recipient' ? 'primaryBg' : 'background'}
+                onPress={() => handleSetPaidBy('recipient')}>
+                <Icon name="person-pin" size={20} color={paidBy === 'recipient' ? 'primary' : 'textSecondary'} />
+                <Box ml="s12" flex={1}>
+                  <Text preset="paragraphMedium" color={paidBy === 'recipient' ? 'primary' : 'text'} bold>
+                    Destinatário paga na entrega
+                  </Text>
+                  <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                    Frete a cobrar — pago ao capitão
+                  </Text>
+                </Box>
+                {paidBy === 'recipient' && (
+                  <Icon name="check-circle" size={20} color="primary" />
+                )}
+              </TouchableOpacityBox>
+            </Box>
+          </Box>
+
+          {/* Card: Pagamento — oculto no frete a cobrar */}
+          {!isRecipientPays && <Box
             backgroundColor="surface"
             borderRadius="s16"
             padding="s20"
@@ -587,7 +657,7 @@ export function CreateShipmentScreen() {
                 <Icon name="check-circle" size={24} color="primary" />
               )}
             </TouchableOpacityBox>
-          </Box>
+          </Box>}
 
           {/* Price Breakdown */}
           {priceData && (

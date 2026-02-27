@@ -17,6 +17,7 @@ export function CaptainDashboardScreen() {
     isRefreshingStatus,
     showBlockedModal,
     setShowBlockedModal,
+    unreadNotifications,
     canOperate,
     isBlocked,
     isRejected,
@@ -40,12 +41,52 @@ export function CaptainDashboardScreen() {
         paddingBottom="s16"
         backgroundColor="secondary"
         style={{paddingTop: top + 16}}>
-        <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)'}}>
-          Bem-vindo, Capitão
-        </Text>
-        <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
-          {user?.name || 'Capitão'}
-        </Text>
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between">
+          <Box flex={1}>
+            <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)'}}>
+              Bem-vindo, Capitão
+            </Text>
+            <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+              {user?.name || 'Capitão'}
+            </Text>
+          </Box>
+
+          {/* Botão de notificações */}
+          <TouchableOpacityBox
+            onPress={() => navigation.navigate('Notifications')}
+            width={44}
+            height={44}
+            borderRadius="s24"
+            alignItems="center"
+            justifyContent="center"
+            style={{backgroundColor: 'rgba(255,255,255,0.15)'}}>
+            <Icon name="notifications" size={24} color={'#FFFFFF' as any} />
+            {unreadNotifications > 0 && (
+              <Box
+                style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  backgroundColor: '#EF4444',
+                  borderRadius: 10,
+                  minWidth: 18,
+                  height: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 4,
+                  borderWidth: 1.5,
+                  borderColor: '#0B5D8A',
+                }}>
+                <Text
+                  preset="paragraphCaptionSmall"
+                  bold
+                  style={{color: '#FFFFFF', fontSize: 10, lineHeight: 14}}>
+                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                </Text>
+              </Box>
+            )}
+          </TouchableOpacityBox>
+        </Box>
 
         {/* Status chip no header */}
         {isBlocked && (

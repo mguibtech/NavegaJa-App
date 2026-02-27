@@ -5,3 +5,4 @@ export type {TrackingInfo, TrackingStatus} from './useTrackBooking';
 export {useCancelBooking} from './useCancelBooking';
 export {useBookingDetails} from './useBookingDetails';
 export {usePaymentStatus} from './usePaymentStatus';
+export {useCheckInBooking} from './useCheckInBooking';

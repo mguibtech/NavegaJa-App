@@ -38,6 +38,7 @@ export interface Shipment {
   // Financeiro
   price: number;
   paymentMethod: PaymentMethod;
+  paidBy: 'sender' | 'recipient';
   couponCode?: string;
 
   // Timestamps
@@ -66,6 +67,7 @@ export interface CreateShipmentData {
   dimensions?: {length: number; width: number; height: number};
   tripId: string;
   paymentMethod: PaymentMethod;
+  paidBy?: 'sender' | 'recipient';
   couponCode?: string;
 }
 

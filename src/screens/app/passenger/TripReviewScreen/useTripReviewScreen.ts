@@ -106,7 +106,8 @@ export function useTripReviewScreen() {
       });
 
       toast.showSuccess('Avaliação enviada! +5 NavegaCoins creditados 🪙');
-      navigation.goBack();
+      // Convida a avaliar o porto de chegada
+      navigation.replace('StopReviewCreate', {tripId});
     } catch (error: any) {
       setErrorMessage(error?.message || 'Não foi possível enviar a avaliação');
       setShowErrorModal(true);

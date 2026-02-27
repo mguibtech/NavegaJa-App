@@ -288,7 +288,7 @@ export function GamificationScreen() {
                 </Box>
               )}
 
-              {/* Braças */}
+              {/* Milhas Náuticas */}
               <Box
                 mt="s12"
                 pt="s12"
@@ -297,7 +297,7 @@ export function GamificationScreen() {
                 <Box flexDirection="row" alignItems="center" mb="s8">
                   <Icon name="waves" size={14} color={'rgba(255,255,255,0.7)' as any} />
                   <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)', marginLeft: 4}}>
-                    Braças
+                    Milhas Náuticas
                   </Text>
                 </Box>
                 <Box flexDirection="row">
@@ -315,7 +315,7 @@ export function GamificationScreen() {
                       Disponíveis
                     </Text>
                     <Text preset="paragraphMedium" bold style={{color: '#fff'}}>
-                      {(kmStats?.redeemableKm ?? 0).toLocaleString('pt-BR')} braças
+                      {(kmStats?.redeemableKm ?? 0).toLocaleString('pt-BR')} milhas náuticas
                     </Text>
                   </Box>
                 </Box>

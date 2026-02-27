@@ -12,6 +12,7 @@ export function CaptainShipmentCollectScreen() {
     isLoading,
     validationCode,
     setValidationCode,
+    isCodePrefilled,
     isCollecting,
     isMarkingDelivery,
     canManageShipments,
@@ -119,7 +120,7 @@ export function CaptainShipmentCollectScreen() {
                     Peso
                   </Text>
                   <Text preset="paragraphSmall" color="text">
-                    {shipment.weight} kg
+                    {shipment.weight != null ? `${shipment.weight} kg` : '—'}
                   </Text>
                 </Box>
               </Box>
@@ -141,9 +142,24 @@ export function CaptainShipmentCollectScreen() {
                 </Text>
               </Box>
 
-              <Text preset="paragraphSmall" color="textSecondary" mb="s16">
-                Solicite o PIN de validação ao remetente. O código tem 6 dígitos.
-              </Text>
+              {isCodePrefilled ? (
+                <Box
+                  backgroundColor="successBg"
+                  borderRadius="s8"
+                  padding="s12"
+                  mb="s16"
+                  flexDirection="row"
+                  alignItems="center">
+                  <Icon name="check-circle" size={16} color="success" />
+                  <Text preset="paragraphSmall" color="success" ml="s8" bold>
+                    Código carregado automaticamente
+                  </Text>
+                </Box>
+              ) : (
+                <Text preset="paragraphSmall" color="textSecondary" mb="s16">
+                  Solicite o PIN de validação ao remetente. O código tem 6 dígitos.
+                </Text>
+              )}
 
               <Box mb="s16">
                 <TextInput

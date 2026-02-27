@@ -90,6 +90,15 @@ export function useCreateShipmentScreen() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PaymentMethod.PIX,
   );
+  const [paidBy, setPaidBy] = useState<'sender' | 'recipient'>('sender');
+
+  function handleSetPaidBy(value: 'sender' | 'recipient') {
+    setPaidBy(value);
+    // Frete a cobrar → só dinheiro (pago ao capitão na entrega)
+    if (value === 'recipient') {
+      setPaymentMethod(PaymentMethod.CASH);
+    }
+  }
 
   // Error handling for trip load
   useEffect(() => {
@@ -229,10 +238,11 @@ export function useCreateShipmentScreen() {
   const totalPrice = priceData?.finalPrice || 0;
   const hasWeight = !!(weight && parseFloat(weight) > 0);
 
-  // PIX requer preço calculado para processar pagamento
+  // PIX requer preço calculado para processar pagamento (frete a cobrar usa CASH)
   const isPIX = paymentMethod === PaymentMethod.PIX;
+  const isRecipientPays = paidBy === 'recipient';
   const canSubmit =
-    isFormValid() && !isCreatingShipment && (!isPIX || totalPrice > 0);
+    isFormValid() && !isCreatingShipment && (isRecipientPays || !isPIX || totalPrice > 0);
 
   function getButtonTitle(): string {
     if (isCreatingShipment) return 'Criando encomenda...';
@@ -284,6 +294,7 @@ export function useCreateShipmentScreen() {
       dimensions,
       tripId: trip.id,
       paymentMethod,
+      paidBy,
       couponCode,
     };
 
@@ -362,6 +373,9 @@ export function useCreateShipmentScreen() {
     setPhotos,
     paymentMethod,
     setPaymentMethod,
+    paidBy,
+    handleSetPaidBy,
+    isRecipientPays,
     // Coupon
     couponValidation,
     handleApplyCoupon,

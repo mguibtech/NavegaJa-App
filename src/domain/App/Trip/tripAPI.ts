@@ -1,6 +1,6 @@
 import {api} from '@api';
 
-import {CreateTripData, SearchTripsParams, Trip, TripPassenger} from './tripTypes';
+import {CreateTripData, SearchTripsParams, Trip, TripManageData, TripPassenger} from './tripTypes';
 import {PopularDestinationsResponse} from './popularRoutesTypes';
 import {Shipment} from '../Shipment/shipmentTypes';
 
@@ -59,6 +59,11 @@ async function getTripShipments(id: string): Promise<Shipment[]> {
   return response;
 }
 
+async function getTripManage(id: string): Promise<TripManageData> {
+  const response = await api.get<TripManageData>(`/trips/${id}/manage`);
+  return response;
+}
+
 export const tripAPI = {
   search,
   getById,
@@ -71,4 +76,5 @@ export const tripAPI = {
   complete,
   getPassengers,
   getTripShipments,
+  getTripManage,
 };

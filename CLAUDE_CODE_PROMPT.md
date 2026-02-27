@@ -333,7 +333,7 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 | Clima | WeatherScreen (alertas, previsão 7 dias, chuva mm, tempAvg) | ✅ 100% |
 | Perfil & Segurança | Profile, EditProfile (DiceBear avatar), Favorites, EmergencyContacts, SOS, Notifications, Help | ✅ 100% |
 | Legal | Terms, Privacy | ✅ 100% |
-| Capitão — Viagens | Dashboard, MyTrips, CreateTrip (cidades via API), StartTrip, TripManage, TripLive (Google Maps) | ✅ 100% |
+| Capitão — Viagens | Dashboard (bell notif + badge), MyTrips, CreateTrip (cidades via API), StartTrip, TripManage (diff passageiros check-in/pendente, cancelar viagem), TripLive (Google Maps), ScanBookingQR (QR check-in) | ✅ 100% |
 | Capitão — Checklist | CaptainChecklist (8 itens pré-partida) | ✅ 100% |
 | Capitão — Embarcações | MyBoats, CreateBoat, EditBoat | ✅ 100% |
 | Capitão — Financeiro | Financial (ganhos reais, filtro mensal, adiantamento), Operations, ShipmentCollect (QR) | ✅ 100% |
@@ -617,9 +617,10 @@ GET /locations/reverse-geocode?lat=&lng=  — geocodificação reversa completa
 
 ### Sistema de Notificações Push (FCM)
 
-#### 17 tipos de notificação tratados em `Router.tsx`:
+#### 18 tipos de notificação tratados em `Router.tsx` e `NotificationsScreen`:
 | Tipo | Ação |
 |------|------|
+| `chat` | navega para Chat (bookingId + senderName) |
 | `booking_confirmed` | navega para Ticket |
 | `trip_started` | navega para Tracking |
 | `trip_completed` | navega para TripReview |
@@ -639,10 +640,16 @@ GET /locations/reverse-geocode?lat=&lng=  — geocodificação reversa completa
 | `captain_verified` | navega para CaptainDashboard |
 
 #### NotificationsScreen
-- Lê histórico de AsyncStorage (máx 100 notificações)
+- Lê histórico de AsyncStorage (máx 50 notificações)
 - Badge de não-lidas em tempo real
-- Tap em notificação → navega para tela correta + marca como lida
+- Tap em notificação → navega para tela correta + marca como lida (incluindo chat)
 - `notificationsService.ts`: `registerPushToken()` / `unregisterPushToken()`
+
+#### FCM — Canal Android (CRÍTICO para background)
+- **`MainApplication.kt`**: cria canal `"default"` com `IMPORTANCE_HIGH` no `onCreate()` (Android 8+)
+- **`AndroidManifest.xml`**: `<meta-data name="com.google.firebase.messaging.default_notification_channel_id" value="default" tools:replace="android:value" />`
+- **Backend**: payload FCM deve incluir campo `notification` (title + body) + `android.channelId: 'default'`
+- Sem canal criado no app → notificação descartada silenciosamente em background no Android 8+
 
 ### Sistema de Reviews — Fluxo completo (padrão Uber)
 - **"Conta bloqueada ou não encontrada"** → limpa tokens + toast de erro (6s) + logout imediato. Não tenta refresh.
@@ -734,20 +741,50 @@ Garantir que `arrivalTime > departureTime` em todas as validações.
 #### ~~M7. Armazenamento seguro de tokens~~ ✅ IMPLEMENTADO
 `react-native-keychain` — JWT armazenado no Keychain/Keystore do dispositivo (não em AsyncStorage).
 
+#### ~~M8. Chat em Tempo Real~~ ✅ IMPLEMENTADO (v9.0+)
+`src/domain/App/Chat/` — chatTypes, chatAPI, chatService, useConversations, useChat. `ChatListScreen` (ConversationsScreen) + `ChatScreen` (mensagens por booking). Badge de não lidos nos tabs de passageiro e capitão via `tabBarBadge: totalUnread > 0 ? totalUnread : undefined`. Polling a cada 10s + FCM wakeup (`data.type === 'chat'`). Deduplicação de mensagens via `Set` de IDs. Dark mode: cores via `useTheme<Theme>()` (não hardcoded). Tap em notificação `chat` → navega direto para `ChatScreen` com `{bookingId, otherName: senderName ?? 'Conversa'}`.
+
+#### ~~M9. KYC (Verificação de Capitão)~~ ✅ IMPLEMENTADO (v9.0)
+`src/domain/App/KYC/` — `useKycStatus`, `useKycSubmit`. `KycSubmitScreen` (upload selfie + habilitação) + `KycStatusScreen` (status + thumbnails + motivo rejeição). `KycBanner` no `CaptainDashboardScreen`. FCM handlers `kyc_approved` / `kyc_rejected` com `invalidateQueries`. `CaptainCapabilities` no tipo `User` para controle de permissões.
+
+#### ~~M10. Compartilhamento como Imagem~~ ✅ IMPLEMENTADO (v9.0)
+`ShipmentShareCard` (`src/screens/app/shared/ShipmentDetailsScreen/ShipmentShareCard.tsx`) — card 360px com QR Code (react-native-qrcode-svg), tracking code, status, dados do destinatário, preço. Capturado via `react-native-view-shot` (`captureRef`) e compartilhado via `react-native-share` como PNG. Renderizado off-screen (`position: absolute, top: -5000`).
+
+#### ~~M11. ShipmentCard Compacto com Expand~~ ✅ IMPLEMENTADO (v9.0)
+`ShipmentCard.tsx` redesenhado: compacto (badge status + tracking, nome + preço, peso + botão ▾) com expand/collapse para mostrar data, telefone, rota e pagamento. Dois touchables separados: área principal navega para detalhes, botão ▾ expande o card.
+
+#### ~~M12. Flood Hub + Alerta no BookingScreen~~ ✅ IMPLEMENTADO (v9.0)
+`src/domain/App/FloodHub/` — `floodHubAPI.getFloodStatus()`, `FloodSeverity` (`NO_FLOODING | ABOVE_NORMAL | SEVERE | EXTREME`), `FLOOD_SEVERITY_ORDER`. Banner no footer do `BookingScreen`: EXTREME → `dangerBg` (vermelho), SEVERE → `warningBg` (amarelo). Coordenadas Manaus (`-3.119, -60.0217`), raio 200km.
+
+#### ~~M13. Stop Reviews (Avaliação de Porto)~~ ✅ IMPLEMENTADO (v9.0)
+`src/domain/App/StopReview/`. `StopReviewCreateScreen` com StarRating + comentário + fotos opcionais. Acionado automaticamente após submit de `TripReviewScreen` → `navigation.replace('StopReviewCreate', {tripId})`.
+
+#### ~~M14. Frete a Cobrar (paidBy)~~ ✅ IMPLEMENTADO (v9.0)
+Campo `paidBy: 'sender' | 'recipient'` em `Shipment` e `CreateShipmentData`. `CreateShipmentScreen`: seletor "Quem paga o frete?" — ao escolher "recipient", força `PaymentMethod.CASH` e esconde card de pagamento. `ShipmentDetailsScreen`: `canConfirmPayment` bloqueado para `paidBy === 'recipient'`; linha "Pago por" no card de detalhes; banner informativo "frete a cobrar" quando PENDING + recipient.
+
+#### ~~M15. FCM Handlers para Encomendas~~ ✅ IMPLEMENTADO (v9.0)
+`Router.tsx`: `shipment_incoming` adicionado ao switch de navegação (→ ShipmentDetails). Foreground handler: `shipment_incoming` → toast + `invalidateQueries(shipments.my())`; demais eventos (`shipment_paid`, `shipment_collected`, etc.) → `invalidateQueries` em `detail` + `timeline` + `my`.
+
+#### ~~M16. CaptainAnalyticsScreen~~ ✅ IMPLEMENTADO (v9.0)
+Cards de resumo (receita total, viagens, passageiros, avaliação). Seletor de período 7d/30d/90d. `LineChart` de receita diária via `react-native-chart-kit`. Top 5 rotas mais lucrativas. Top 5 passageiros fiéis. Empty state. Acesso via "Ver Analytics" em `CaptainFinancialScreen`.
+
+#### ~~M17. Referrals (Sistema de Indicação)~~ ✅ IMPLEMENTADO (v9.0)
+`src/domain/App/Gamification/useCases/useReferrals/`. `ReferralsScreen`: código referral com Clipboard + Share.share nativo, stats (indicados/convertidos/pendentes), lista. FCM handler `referral_converted` → toast + `invalidateQueries`.
+
 #### 🟠 DESEJÁVEL — Mobile Priority 1
 
-#### M8. Filtros avançados de busca
+#### M18. Filtros avançados de busca
 `SearchScreen.tsx` / `SearchResultsScreen.tsx` — busca básica por origem/destino. Faltam filtros: data, faixa de preço, tipo de embarcação, amenidades.
 
-#### M9. `src/api/config.ts` — Sincronizar endpoints faltantes
+#### M19. `src/api/config.ts` — Sincronizar endpoints faltantes
 Os domínios usam caminhos hardcoded nas classes `*API.ts`. `config.ts` está desatualizado — mas não bloqueia nada pois cada domínio define sua própria URL.
 
 #### 🟡 DESEJÁVEL — Mobile Priority 2
 
-#### M10. Analytics / Crash Reporting
+#### M20. Analytics / Crash Reporting
 Sem Sentry (crash reports) nem Firebase Analytics (eventos de usuário).
 
-#### M11. Compressão de imagens
+#### M21. Compressão de imagens
 `PhotoPicker.tsx` usa Image Picker mas sem compressão antes do upload S3. Fotos grandes podem causar timeouts.
 
 ---
@@ -920,10 +957,10 @@ curl -X POST http://localhost:3000/auth/login \
 8. **Integração clima em `startTrip`** (chamar WeatherService antes de IN_PROGRESS)
 
 ### App Mobile — ordem de prioridade:
-1. **Filtros avançados de busca** — data, preço, tipo de embarcação, amenidades
-2. **Flood Hub Fase 2 restante** — gráfico 7 dias no RiverDetailModal + card de eventos na SafetyScreen (quando backend entregar endpoints `/flood/gauge/:id/forecast` e `/flood/events`)
-3. **Analytics / Crash Reporting** — Sentry ou Firebase Analytics
-4. **Compressão de imagens** — antes do upload S3
+1. **Filtros avançados de busca** (M18) — data, preço, tipo de embarcação, amenidades em `SearchScreen`
+2. **Flood Hub Fase 2** (P1) — gráfico 7 dias no `RiverDetailModal` (requer `react-native-chart-kit` já instalado) + card de eventos na `SafetyScreen`
+3. **Compressão de imagens** (M21) — antes do upload S3, `quality: 0.7` no ImagePicker
+4. **Analytics / Crash Reporting** (M20) — Sentry ou Firebase Analytics
 
 ---
 

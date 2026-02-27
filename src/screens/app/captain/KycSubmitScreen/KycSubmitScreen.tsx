@@ -7,11 +7,22 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {Box, Button, Icon, PhotoPicker, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useKycSubmit} from '@domain';
 import {useToast} from '@hooks';
-import {normalizeFileUrl} from '@api/config';
+import {api} from '@api';
 
 import {CaptainStackParamList} from '@routes';
 
 type Photo = {uri: string; type: string; name: string};
+
+async function uploadPhoto(photo: Photo): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: photo.uri,
+    type: photo.type,
+    name: photo.name,
+  } as any);
+  const result = await api.upload<{url: string}>('/upload/image', formData);
+  return result.url;
+}
 
 export function KycSubmitScreen() {
   const {top} = useSafeAreaInsets();
@@ -26,6 +37,9 @@ export function KycSubmitScreen() {
   const [licensePhotos, setLicensePhotos] = useState<Photo[]>([]);
   const [certificatePhotos, setCertificatePhotos] = useState<Photo[]>([]);
   const [rnaqNumber, setRnaqNumber] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const isBusy = isLoading || isUploading;
 
   async function handleSubmit() {
     if (selfiePhotos.length === 0) {
@@ -38,15 +52,34 @@ export function KycSubmitScreen() {
     }
 
     try {
+      setIsUploading(true);
+
+      // 1. Upload selfie
+      const selfieUrl = await uploadPhoto(selfiePhotos[0]);
+
+      // 2. Upload licença náutica
+      const licensePhotoUrl = await uploadPhoto(licensePhotos[0]);
+
+      // 3. Upload certificado (opcional)
+      let certificatePhotoUrl: string | undefined;
+      if (certificatePhotos.length > 0) {
+        certificatePhotoUrl = await uploadPhoto(certificatePhotos[0]);
+      }
+
+      setIsUploading(false);
+
+      // 4. Envia KYC com as URLs do servidor
       await submit({
-        selfieUrl: normalizeFileUrl(selfiePhotos[0].uri),
-        licensePhotoUrl: normalizeFileUrl(licensePhotos[0].uri),
-        certificatePhotoUrl: certificatePhotos.length > 0 ? normalizeFileUrl(certificatePhotos[0].uri) : undefined,
+        selfieUrl,
+        licensePhotoUrl,
+        certificatePhotoUrl,
         rnaqNumber: rnaqNumber.trim() || undefined,
       });
+
       toast.showSuccess('Documentos enviados! Aguarde a análise.');
       navigation.navigate('KycStatus');
     } catch (err: any) {
+      setIsUploading(false);
       toast.showError(err?.message || 'Erro ao enviar documentos');
     }
   }
@@ -194,10 +227,10 @@ export function KycSubmitScreen() {
         </Box>
 
         <Button
-          title={isLoading ? 'Enviando...' : 'Enviar documentos'}
+          title={isUploading ? 'Enviando fotos...' : isLoading ? 'Enviando...' : 'Enviar documentos'}
           onPress={handleSubmit}
-          disabled={isLoading}
-          loading={isLoading}
+          disabled={isBusy}
+          loading={isBusy}
         />
       </ScrollView>
     </Box>
