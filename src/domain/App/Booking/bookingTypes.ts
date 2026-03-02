@@ -35,6 +35,10 @@ export interface Booking {
   floodWarning?: boolean;
   floodSeverity?: 'ABOVE_NORMAL' | 'SEVERE' | 'EXTREME';
 
+  // Crianças ≤ 9 anos viajam grátis
+  childrenCount?: number;
+  childrenAges?: number[] | null;
+
   // Populated by backend (optional)
   trip?: Trip;
   priceBreakdown?: PriceBreakdown;  // Discount details
@@ -68,6 +72,7 @@ export interface CreateBookingData {
   paymentMethod: PaymentMethod;
   couponCode?: string;  // Optional coupon code
   redeemKm?: boolean;   // Aplicar desconto de Milhas Náuticas
+  children?: number[];  // Idades de menores (0-17); ≤ 9 = gratuitos
 }
 
 export interface CancelBookingData {

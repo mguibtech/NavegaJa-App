@@ -55,6 +55,10 @@ export function PriceBreakdown({data}: PriceBreakdownProps) {
                       ? 'local-offer'
                       : discount.type === 'loyalty'
                       ? 'stars'
+                      : discount.type === 'children'
+                      ? 'child-care'
+                      : discount.type === 'km'
+                      ? 'directions-boat'
                       : 'discount'
                   }
                   size={16}

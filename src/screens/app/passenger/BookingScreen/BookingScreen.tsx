@@ -42,8 +42,14 @@ export function BookingScreen() {
     showBookingErrorModal,
     bookingErrorMessage,
     paymentMethods,
+    hasChildren,
+    childrenAges,
     handleIncrement,
     handleDecrement,
+    handleToggleChildren,
+    handleAddChild,
+    handleRemoveChild,
+    handleChildAgeChange,
     handleCPFChange,
     handleConfirmBooking,
     handleApplyCoupon,
@@ -171,7 +177,7 @@ export function BookingScreen() {
             alignItems="center"
             justifyContent="space-between">
             <Text preset="paragraphMedium" color="text">
-              Adultos (máx. {trip.availableSeats})
+              {`Adultos (máx. ${trip.availableSeats - childrenAges.length})`}
             </Text>
 
             <Box flexDirection="row" alignItems="center" gap="s12">
@@ -208,22 +214,129 @@ export function BookingScreen() {
                 width={32}
                 height={32}
                 borderRadius="s16"
-                backgroundColor={passengers >= trip.availableSeats ? 'disabled' : 'primary'}
+                backgroundColor={passengers >= trip.availableSeats - childrenAges.length ? 'disabled' : 'primary'}
                 alignItems="center"
                 justifyContent="center"
                 accessibilityLabel="Aumentar número de passageiros"
                 accessibilityRole="button"
-                accessibilityState={{disabled: passengers >= trip.availableSeats}}
+                accessibilityState={{disabled: passengers >= trip.availableSeats - childrenAges.length}}
                 onPress={handleIncrement}
-                disabled={passengers >= trip.availableSeats}>
+                disabled={passengers >= trip.availableSeats - childrenAges.length}>
                 <Icon
                   name="add"
                   size={16}
-                  color={passengers >= trip.availableSeats ? 'disabledText' : 'surface'}
+                  color={passengers >= trip.availableSeats - childrenAges.length ? 'disabledText' : 'surface'}
                 />
               </TouchableOpacityBox>
             </Box>
           </Box>
+
+          {/* Há crianças no grupo? */}
+          <Box
+            flexDirection="row"
+            justifyContent="space-between"
+            alignItems="center"
+            mt="s16"
+            pt="s16"
+            borderTopWidth={1}
+            borderTopColor="border">
+            <Box flexDirection="row" alignItems="center" gap="s8">
+              <Icon name="child-care" size={20} color="secondary" />
+              <Text preset="paragraphMedium" color="text">
+                Há crianças no grupo?
+              </Text>
+            </Box>
+            <Switch
+              value={hasChildren}
+              onValueChange={handleToggleChildren}
+              trackColor={{false: '#D1D5DB', true: '#93C5FD'}}
+              thumbColor={hasChildren ? '#2563EB' : '#9CA3AF'}
+            />
+          </Box>
+
+          {/* Lista de crianças */}
+          {hasChildren && (
+            <Box mt="s16">
+              {/* Info banner */}
+              <Box
+                backgroundColor="infoBg"
+                borderRadius="s12"
+                padding="s12"
+                mb="s12"
+                flexDirection="row"
+                alignItems="center"
+                gap="s8">
+                <Icon name="info" size={16} color="info" />
+                <Text preset="paragraphSmall" color="info" flex={1}>
+                  Crianças até 9 anos viajam sem custo adicional
+                </Text>
+              </Box>
+
+              {childrenAges.map((age, index) => (
+                <Box
+                  key={index}
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb="s12"
+                  gap="s12">
+                  <Text preset="paragraphMedium" color="text">
+                    {`Criança ${index + 1}`}
+                  </Text>
+                  <Box flexDirection="row" alignItems="center" gap="s8" flex={1} justifyContent="flex-end">
+                    <TouchableOpacityBox
+                      width={32}
+                      height={32}
+                      borderRadius="s16"
+                      backgroundColor={age <= 0 ? 'disabled' : 'primary'}
+                      alignItems="center"
+                      justifyContent="center"
+                      onPress={() => handleChildAgeChange(index, Math.max(0, age - 1))}
+                      disabled={age <= 0}>
+                      <Icon name="remove" size={14} color={age <= 0 ? 'disabledText' : 'surface'} />
+                    </TouchableOpacityBox>
+                    <Text preset="paragraphMedium" color="text" bold minWidth={48} textAlign="center">
+                      {age === 0 ? 'Bebê' : `${age} anos`}
+                    </Text>
+                    <TouchableOpacityBox
+                      width={32}
+                      height={32}
+                      borderRadius="s16"
+                      backgroundColor={age >= 17 ? 'disabled' : 'primary'}
+                      alignItems="center"
+                      justifyContent="center"
+                      onPress={() => handleChildAgeChange(index, Math.min(17, age + 1))}
+                      disabled={age >= 17}>
+                      <Icon name="add" size={14} color={age >= 17 ? 'disabledText' : 'surface'} />
+                    </TouchableOpacityBox>
+                    <TouchableOpacityBox
+                      width={32}
+                      height={32}
+                      borderRadius="s16"
+                      style={{backgroundColor: '#FEE2E2'}}
+                      alignItems="center"
+                      justifyContent="center"
+                      onPress={() => handleRemoveChild(index)}>
+                      <Icon name="close" size={14} color="danger" />
+                    </TouchableOpacityBox>
+                  </Box>
+                </Box>
+              ))}
+
+              {childrenAges.length < trip.availableSeats - passengers && (
+                <TouchableOpacityBox
+                  flexDirection="row"
+                  alignItems="center"
+                  gap="s8"
+                  onPress={handleAddChild}>
+                  <Icon name="add-circle" size={20} color="primary" />
+                  <Text preset="paragraphMedium" color="primary">
+                    Adicionar criança
+                  </Text>
+                </TouchableOpacityBox>
+              )}
+            </Box>
+          )}
         </Box>
 
         {/* Passenger Info */}

@@ -96,6 +96,8 @@ export function useBookingScreen() {
     floodSeverity === 'SEVERE' || floodSeverity === 'EXTREME';
 
   const [passengers, setPassengers] = useState(1);
+  const [hasChildren, setHasChildren] = useState(false);
+  const [childrenAges, setChildrenAges] = useState<number[]>([]);
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
   const [cpfError, setCpfError] = useState<string | null>(null);
@@ -137,13 +139,15 @@ export function useBookingScreen() {
     if (tripError) { setShowLoadErrorModal(true); }
   }, [tripError]);
 
-  // Calculate price whenever trip, passengers, coupon or km toggle changes
+  const totalPassengers = passengers + childrenAges.length;
+
+  // Calculate price whenever trip, passengers, children, coupon or km toggle changes
   useEffect(() => {
     if (trip) {
       calculatePrice();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip, passengers, couponValidation.state, redeemKm]);
+  }, [trip, passengers, childrenAges, couponValidation.state, redeemKm]);
 
   async function calculatePrice() {
     if (!trip) return;
@@ -156,20 +160,21 @@ export function useBookingScreen() {
 
       const breakdown = await calculate({
         tripId: trip.id,
-        quantity: passengers,
+        quantity: totalPassengers,
         couponCode,
         ...(redeemKm ? {redeemKm: true} : {}),
+        ...(hasChildren && childrenAges.length > 0 ? {children: childrenAges} : {}),
       });
       setPriceBreakdown(breakdown);
     } catch (_error) {
       console.error('Failed to calculate price:', _error);
-      const basePrice = Number(trip.price) * passengers;
+      const basePrice = Number(trip.price) * totalPassengers;
       setPriceBreakdown({
         basePrice,
         totalDiscount: 0,
         finalPrice: basePrice,
         discountsApplied: [],
-        quantity: passengers,
+        quantity: totalPassengers,
       });
     }
   }
@@ -188,9 +193,32 @@ export function useBookingScreen() {
   }
 
   const handleIncrement = () => {
-    if (trip && passengers < trip.availableSeats) {
+    if (trip && passengers < trip.availableSeats - childrenAges.length) {
       setPassengers(passengers + 1);
     }
+  };
+
+  const handleToggleChildren = () => {
+    setHasChildren(prev => {
+      if (prev) { setChildrenAges([]); }
+      return !prev;
+    });
+  };
+
+  const handleAddChild = () => {
+    if (!trip) return;
+    if (childrenAges.length < trip.availableSeats - passengers) {
+      setChildrenAges(prev => [...prev, 0]);
+    }
+  };
+
+  const handleRemoveChild = (index: number) => {
+    setChildrenAges(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChildAgeChange = (index: number, age: number) => {
+    if (age < 0 || age > 17) return;
+    setChildrenAges(prev => prev.map((a, i) => (i === index ? age : a)));
   };
 
   const handleDecrement = () => {
@@ -259,10 +287,11 @@ export function useBookingScreen() {
 
       const booking = await createBooking({
         tripId: trip!.id,
-        quantity: passengers,
+        quantity: totalPassengers,
         paymentMethod,
         couponCode,
         ...(redeemKm ? {redeemKm: true} : {}),
+        ...(hasChildren && childrenAges.length > 0 ? {children: childrenAges} : {}),
       });
 
       // Aviso de cheia — reserva já confirmada, só informa
@@ -340,6 +369,9 @@ export function useBookingScreen() {
     trip,
     isLoadingTrip,
     passengers,
+    totalPassengers,
+    hasChildren,
+    childrenAges,
     passengerName,
     nameError,
     handleNameChange,
@@ -362,6 +394,10 @@ export function useBookingScreen() {
     paymentMethods,
     handleIncrement,
     handleDecrement,
+    handleToggleChildren,
+    handleAddChild,
+    handleRemoveChild,
+    handleChildAgeChange,
     handleCPFChange,
     handleConfirmBooking,
     handleApplyCoupon,

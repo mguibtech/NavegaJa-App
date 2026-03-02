@@ -25,7 +25,7 @@ export enum CouponType {
 }
 
 export interface DiscountApplied {
-  type: 'trip' | 'coupon' | 'loyalty';
+  type: 'trip' | 'coupon' | 'loyalty' | 'children' | 'km';
   label: string;
   percent?: number;
   amount: number;
@@ -44,6 +44,10 @@ export interface PriceBreakdown {
   loyaltyLevel?: string;
   kmDiscount?: number;
   kmRedeemed?: number;
+  // Crianças ≤ 9 anos viajam grátis
+  childrenDiscount?: number;
+  freeChildrenCount?: number;
+  childrenAges?: number[];
   totalDiscount: number;
   finalPrice: number;
   quantity?: number;
@@ -55,6 +59,7 @@ export interface CalculatePriceRequest {
   quantity: number;
   couponCode?: string;
   redeemKm?: boolean;
+  children?: number[];
 }
 
 export interface CalculatePriceResponse extends PriceBreakdown {}
