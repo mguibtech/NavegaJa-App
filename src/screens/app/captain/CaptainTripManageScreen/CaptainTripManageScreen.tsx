@@ -242,6 +242,14 @@ export function CaptainTripManageScreen() {
                             {p.passenger.phone} · {p.seats}{' '}
                             {p.seats === 1 ? 'assento' : 'assentos'}
                           </Text>
+                          {p.childrenCount != null && p.childrenCount > 0 && (
+                            <Text preset="paragraphCaptionSmall" color="info">
+                              {`Crianças: ${p.childrenCount}`}
+                              {p.childrenAges && p.childrenAges.length > 0
+                                ? ` (${p.childrenAges.map(a => (a === 0 ? 'bebê' : `${a}a`)).join(', ')})`
+                                : ''}
+                            </Text>
+                          )}
                         </Box>
                         <Box flexDirection="row" alignItems="center" gap="s8">
                           {checkedIn ? (

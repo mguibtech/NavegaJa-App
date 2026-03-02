@@ -23,6 +23,7 @@ export function BookingScreen() {
     trip,
     isLoadingTrip,
     passengers,
+    totalPassengers,
     passengerName,
     nameError,
     handleNameChange,
@@ -268,7 +269,7 @@ export function BookingScreen() {
                 gap="s8">
                 <Icon name="info" size={16} color="info" />
                 <Text preset="paragraphSmall" color="info" flex={1}>
-                  Crianças até 9 anos viajam sem custo adicional
+                  Crianças até 9 anos viajam sem custo adicional. Máximo 3 crianças grátis por reserva.
                 </Text>
               </Box>
 
@@ -337,6 +338,27 @@ export function BookingScreen() {
               )}
             </Box>
           )}
+
+          {/* Total de assentos */}
+          <Box
+            mt="s16"
+            pt="s16"
+            borderTopWidth={1}
+            borderTopColor="border"
+            flexDirection="row"
+            justifyContent="space-between"
+            alignItems="center">
+            <Text preset="paragraphMedium" color="textSecondary">
+              Total de assentos
+            </Text>
+            <Text preset="paragraphMedium" color="text" bold>
+              {totalPassengers === 1
+                ? '1 assento'
+                : `${totalPassengers} assentos`}
+              {childrenAges.length > 0 &&
+                ` (${passengers} adulto${passengers > 1 ? 's' : ''} + ${childrenAges.length} criança${childrenAges.length > 1 ? 's' : ''})`}
+            </Text>
+          </Box>
         </Box>
 
         {/* Passenger Info */}

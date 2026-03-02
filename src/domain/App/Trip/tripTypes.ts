@@ -96,6 +96,8 @@ export interface TripManagePassenger {
   seatNumber?: number;
   totalPrice: number;
   checkedInAt?: string | null;
+  childrenCount?: number;
+  childrenAges?: number[] | null;
   passenger: {
     id?: string;
     name: string;

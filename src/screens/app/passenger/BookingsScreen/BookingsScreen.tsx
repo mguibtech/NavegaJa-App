@@ -256,6 +256,9 @@ export function BookingsScreen() {
                   <Icon name="confirmation-number" size={18} color="primary" />
                   <Text preset="paragraphSmall" color="primary" bold ml="s8">
                     {seats} {seats === 1 ? 'passagem' : 'passagens'}
+                    {(item as Booking).childrenCount
+                      ? ` · ${(item as Booking).childrenCount} criança${(item as Booking).childrenCount! > 1 ? 's' : ''}`
+                      : ''}
                   </Text>
                 </Box>
               </Box>

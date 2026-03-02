@@ -273,6 +273,18 @@ export function useBookingScreen() {
       return;
     }
 
+    // Validação: máx. 3 crianças grátis por reserva
+    if (hasChildren) {
+      const freeChildren = childrenAges.filter(age => age <= 9).length;
+      if (freeChildren > 3) {
+        setBookingErrorMessage(
+          'Máximo de 3 crianças grátis por reserva. Para grupos maiores, contate o capitão.',
+        );
+        setShowBookingErrorModal(true);
+        return;
+      }
+    }
+
     if (!validateCPF()) {
       setCpfErrorMessage(cpfError || 'Por favor, informe um CPF válido');
       setShowCpfErrorModal(true);

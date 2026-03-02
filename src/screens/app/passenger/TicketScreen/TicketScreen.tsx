@@ -503,6 +503,27 @@ export function TicketScreen({navigation, route}: Props) {
               </Text>
             </Box>
           </Box>
+
+          {/* Crianças declaradas */}
+          {booking.childrenCount != null && booking.childrenCount > 0 && (
+            <Box
+              mt="s12"
+              backgroundColor="infoBg"
+              borderRadius="s8"
+              paddingHorizontal="s12"
+              paddingVertical="s8"
+              flexDirection="row"
+              alignItems="center"
+              gap="s8">
+              <Icon name="child-care" size={16} color="info" />
+              <Text preset="paragraphSmall" color="info">
+                {`${booking.childrenCount} criança${booking.childrenCount > 1 ? 's' : ''} declarada${booking.childrenCount > 1 ? 's' : ''}`}
+                {booking.childrenAges && booking.childrenAges.length > 0
+                  ? ` (${booking.childrenAges.map(a => (a === 0 ? 'Bebê' : `${a}a`)).join(', ')})`
+                  : ''}
+              </Text>
+            </Box>
+          )}
         </Box>
 
         {/* Payment Info */}
