@@ -5,7 +5,7 @@ import {useQueryClient} from '@tanstack/react-query';
 
 import {queryKeys} from '@infra';
 import {boatStaffService, useBoatStaff, BoatStaff, UpdateBoatStaffData} from '@domain';
-import {useToast} from '@services';
+import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
 
