@@ -440,6 +440,53 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 
 ---
 
+### Crianças ≤ 9 anos viajam grátis
+
+#### Regra de negócio
+| Condição | Comportamento |
+|---|---|
+| Criança ≤ 9 anos | Ocupa assento, não paga |
+| Criança 10–17 anos | Ocupa assento e paga preço cheio |
+| Máximo de crianças grátis | **3 por reserva** |
+| `children` não enviado | Sem desconto (comportamento anterior) |
+
+#### API — campos novos
+- `POST /bookings/calculate-price` e `POST /bookings`: aceitam `children?: number[]` (idades 0–17)
+- `quantity` deve incluir TODOS (adultos + crianças)
+- Resposta inclui `childrenDiscount`, `freeChildrenCount`, `childrenAges` em `PriceBreakdown`
+- `GET /bookings/:id` retorna `childrenCount` e `childrenAges` na entidade `Booking`
+- `GET /trips/:id/manage` retorna `childrenCount` e `childrenAges` em cada `TripManagePassenger`
+
+#### Tipos atualizados (CRÍTICO)
+```typescript
+// discountTypes.ts
+DiscountApplied.type: 'trip' | 'coupon' | 'loyalty' | 'children' | 'km'
+PriceBreakdown: + childrenDiscount?, freeChildrenCount?, childrenAges?
+CalculatePriceRequest: + children?: number[]
+
+// bookingTypes.ts
+CreateBookingData: + children?: number[]
+Booking: + childrenCount?, childrenAges?: number[] | null
+
+// tripTypes.ts
+TripManagePassenger: + childrenCount?, childrenAges?: number[] | null
+```
+
+#### UI — BookingScreen
+- Toggle "Há crianças no grupo?" (Switch)
+- Stepper de idade por criança (0 = Bebê … 17 anos) + botão remover
+- Info: "Crianças até 9 anos viajam sem custo. Máximo 3 grátis por reserva."
+- Contador "Total de assentos: X (Y adultos + Z crianças)"
+- Limite de adultos = `availableSeats - childrenAges.length`
+- Validação client-side: `freeChildren > 3` → modal de erro antes de submeter
+
+#### UI — leitura em outras telas
+- `TicketScreen`: badge azul com count + idades das crianças
+- `BookingsScreen`: card mostra "2 passagens · 1 criança"
+- `CaptainTripManageScreen`: linha "Crianças: 2 (5a, 8a)" em azul na lista de passageiros
+
+---
+
 ### Google Flood Hub — Integração (aguardando aprovação da API)
 
 #### Status da integração
