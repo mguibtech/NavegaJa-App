@@ -3438,6 +3438,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-firebase/analytics@npm:^23.8.6":
+  version: 23.8.6
+  resolution: "@react-native-firebase/analytics@npm:23.8.6"
+  dependencies:
+    superstruct: "npm:^2.0.2"
+  peerDependencies:
+    "@react-native-firebase/app": 23.8.6
+  checksum: 10c0/65ccac47fc1dbb52195930ec0ca8c46c431b28a2b94afb8bc2b2d8e947d7e53d6c732fd15b4f6a0e8e006f32c67f793eac3e193942c5d41f2ffb50f0acd2f7ba
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/app@npm:^23.8.6":
   version: 23.8.6
   resolution: "@react-native-firebase/app@npm:23.8.6"
@@ -8857,6 +8868,7 @@ __metadata:
     "@react-native-community/cli-platform-ios": "npm:20.0.0"
     "@react-native-community/datetimepicker": "npm:^8.6.0"
     "@react-native-community/geolocation": "npm:^3.4.0"
+    "@react-native-firebase/analytics": "npm:^23.8.6"
     "@react-native-firebase/app": "npm:^23.8.6"
     "@react-native-firebase/messaging": "npm:^23.8.6"
     "@react-native/babel-preset": "npm:0.83.1"
@@ -10947,6 +10959,13 @@ __metadata:
   version: 1.1.2
   resolution: "strnum@npm:1.1.2"
   checksum: 10c0/a0fce2498fa3c64ce64a40dada41beb91cabe3caefa910e467dc0518ef2ebd7e4d10f8c2202a6104f1410254cae245066c0e94e2521fb4061a5cb41831952392
+  languageName: node
+  linkType: hard
+
+"superstruct@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "superstruct@npm:2.0.2"
+  checksum: 10c0/c6853db5240b4920f47b3c864dd1e23ede6819ea399ad29a65387d746374f6958c5f1c5b7e5bb152d9db117a74973e5005056d9bb83c24e26f18ec6bfae4a718
   languageName: node
   linkType: hard
 

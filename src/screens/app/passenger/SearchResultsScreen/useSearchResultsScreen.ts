@@ -5,6 +5,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {Trip, useSearchTrips} from '@domain';
 import {AppStackParamList} from '@routes';
+import {logSearch} from '@services';
 
 type SortOption = 'price' | 'time' | 'rating';
 
@@ -48,6 +49,7 @@ export function useSearchResultsScreen() {
       if (departureTime) params.departureTime = departureTime;
       if (minRating) params.minRating = minRating;
       await search(params);
+      logSearch(origin ?? '', destination ?? '');
     } catch (err) {
       console.error('Failed to load trips:', err);
     }

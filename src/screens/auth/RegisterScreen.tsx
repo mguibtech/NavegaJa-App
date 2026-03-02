@@ -7,6 +7,7 @@ import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@co
 import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
+import {logSignUp} from '@services';
 
 import {AuthStackParamList} from '@routes';
 
@@ -120,6 +121,7 @@ export function RegisterScreen({navigation}: Props) {
       if (currentUser) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
+      logSignUp('phone');
     } catch (_error: any) {
       const msg =
         _error?.message ||

@@ -20,6 +20,7 @@ import {
   FLOOD_SEVERITY_ORDER,
 } from '@domain';
 import {AppStackParamList} from '@routes';
+import {logBookingStarted} from '@services';
 
 const PAYMENT_PREF_KEY = '@navegaja:last-payment-method';
 
@@ -281,6 +282,7 @@ export function useBookingScreen() {
         });
       }
 
+      logBookingStarted(trip!.id, priceBreakdown?.finalPrice || 0);
       navigation.replace('Payment', {
         bookingId: booking.id,
         amount: priceBreakdown?.finalPrice || 0,

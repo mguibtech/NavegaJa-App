@@ -387,7 +387,7 @@ navegaja://shipment/validate?trackingCode=XXX&validationCode=YYY
 | Histórico local de notificações (AsyncStorage, 100 itens) | ✅ |
 | Normalização de URLs de imagem (localhost → API_BASE_URL, ngrok header) | ✅ |
 | Avatar DiceBear (12 estilos, geração local via SVG, sem network) | ✅ |
-| **Analytics / Crash reporting** | ❌ **Não implementado** |
+| **Analytics / Crash reporting** | ✅ Firebase Analytics (`@react-native-firebase/analytics`) — `src/services/analyticsService.ts` |
 
 ### Tipo `User` — campos relevantes
 - `isActive: boolean` — usuário bloqueado (`isActive: false`) não consegue autenticar.
@@ -781,11 +781,17 @@ Os domínios usam caminhos hardcoded nas classes `*API.ts`. `config.ts` está de
 
 #### 🟡 DESEJÁVEL — Mobile Priority 2
 
-#### M20. Analytics / Crash Reporting
-Sem Sentry (crash reports) nem Firebase Analytics (eventos de usuário).
+#### ~~M20. Analytics / Crash Reporting~~ ✅ IMPLEMENTADO
+`@react-native-firebase/analytics` instalado. `src/services/analyticsService.ts` com eventos:
+- `logLogin` / `logSignUp` — após auth bem-sucedida (LoginScreen, RegisterScreen)
+- `logSearch(origin, destination)` — após busca (SearchResultsScreen)
+- `logTripView(tripId, origin, destination)` — ao abrir detalhes de viagem
+- `logBookingStarted(tripId, amount)` — ao confirmar reserva (antes do Payment)
+- `logPurchase(bookingId, amount, paymentMethod)` — ao confirmar pagamento PIX
+- `logShipmentCreated()` — ao criar encomenda
 
-#### M21. Compressão de imagens
-`PhotoPicker.tsx` usa Image Picker mas sem compressão antes do upload S3. Fotos grandes podem causar timeouts.
+#### ~~M21. Compressão de imagens~~ ✅ JÁ IMPLEMENTADO
+`PhotoPicker.tsx` já usa `quality: 0.7, maxWidth: 1280, maxHeight: 1280` em câmera e galeria.
 
 ---
 
@@ -957,10 +963,10 @@ curl -X POST http://localhost:3000/auth/login \
 8. **Integração clima em `startTrip`** (chamar WeatherService antes de IN_PROGRESS)
 
 ### App Mobile — ordem de prioridade:
-1. **Filtros avançados de busca** (M18) — data, preço, tipo de embarcação, amenidades em `SearchScreen`
+1. ~~**Filtros avançados de busca** (M18)~~ ✅ JÁ IMPLEMENTADO
 2. **Flood Hub Fase 2** (P1) — gráfico 7 dias no `RiverDetailModal` (requer `react-native-chart-kit` já instalado) + card de eventos na `SafetyScreen`
-3. **Compressão de imagens** (M21) — antes do upload S3, `quality: 0.7` no ImagePicker
-4. **Analytics / Crash Reporting** (M20) — Sentry ou Firebase Analytics
+3. ~~**Compressão de imagens** (M21)~~ ✅ JÁ IMPLEMENTADO (`quality: 0.7` no PhotoPicker)
+4. ~~**Analytics / Crash Reporting** (M20)~~ ✅ IMPLEMENTADO (Firebase Analytics)
 
 ---
 

@@ -13,6 +13,7 @@ import {Box, Button, Logo, Text, TextInput} from '@components';
 import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone} from '@utils';
 import {useToast} from '@hooks';
+import {logLogin} from '@services';
 
 import {AuthStackParamList} from '@routes';
 
@@ -50,6 +51,7 @@ export function LoginScreen({navigation}: Props) {
       if (currentUser) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
+      logLogin('phone');
     } catch (_error: any) {
       const msg =
         _error?.message ||

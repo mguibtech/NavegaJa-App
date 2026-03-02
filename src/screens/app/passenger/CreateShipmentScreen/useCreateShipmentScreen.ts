@@ -15,6 +15,7 @@ import {
 import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
+import {logShipmentCreated} from '@services';
 
 // Validação de telefone (formato WhatsApp)
 export function formatPhoneNumber(value: string): string {
@@ -305,6 +306,7 @@ export function useCreateShipmentScreen() {
         `Encomenda criada! Código de rastreamento: ${shipment.trackingCode}`,
       );
 
+      logShipmentCreated();
       // Navegar para detalhes da encomenda
       navigation.replace('ShipmentDetails', {shipmentId: shipment.id});
     } catch (error: any) {

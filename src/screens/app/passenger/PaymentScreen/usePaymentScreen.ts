@@ -8,6 +8,7 @@ import {PaymentMethod, PaymentStatus, useBookingDetails, usePaymentStatus} from 
 import {useToast} from '@hooks';
 import {formatBRL} from '@utils';
 import type {AppStackParamList} from '@routes';
+import {logPurchase} from '@services';
 
 export function usePaymentScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -125,6 +126,7 @@ export function usePaymentScreen() {
 
   function handlePaymentConfirmed() {
     setShowSuccessModal(false);
+    logPurchase(bookingId, amount, paymentMethod);
     navigation.replace('Ticket', {bookingId});
   }
 

@@ -5,6 +5,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
 import {AppStackParamList} from '@routes';
+import {logTripView} from '@services';
 
 export function useTripDetailsScreen() {
   const navigation =
@@ -63,7 +64,10 @@ export function useTripDetailsScreen() {
 
   async function loadTripDetails() {
     try {
-      await getTripById(tripId);
+      const loaded = await getTripById(tripId);
+      if (loaded) {
+        logTripView(loaded.id, loaded.origin, loaded.destination);
+      }
     } catch {
       setShowLoadErrorModal(true);
     }
