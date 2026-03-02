@@ -139,6 +139,16 @@ function handleNotificationNavigation(data: Record<string, string>) {
       navigationRef.navigate('Referrals');
       break;
 
+    case 'boat_manager_assigned':
+      // Utilizador foi adicionado como gestor — abre dashboard (role já actualizado)
+      navigationRef.navigate('HomeTabs', undefined);
+      break;
+
+    case 'boat_manager_removed':
+      // Utilizador foi removido como gestor — volta ao início
+      navigationRef.navigate('HomeTabs', undefined);
+      break;
+
     default:
       break;
   }
@@ -304,6 +314,18 @@ export function Router() {
           queryClient.invalidateQueries({queryKey: queryKeys.shipments.timeline(data.shipmentId)});
         }
         queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+      } else if (data?.type === 'boat_manager_assigned') {
+        // Fui adicionado como gestor de um barco — actualiza role/capabilities
+        await useAuthStore.getState().loadStoredUser();
+        queryClient.invalidateQueries({queryKey: queryKeys.captain.staff()});
+        const boatName = data.boatName || 'um barco';
+        showSuccess(`Fui adicionado como gestor de ${boatName}`);
+      } else if (data?.type === 'boat_manager_removed') {
+        // Fui removido como gestor — actualiza role/capabilities
+        await useAuthStore.getState().loadStoredUser();
+        queryClient.invalidateQueries({queryKey: queryKeys.captain.staff()});
+        const boatName = data.boatName || 'um barco';
+        showError(`Fui removido como gestor de ${boatName}`);
       }
     });
 
