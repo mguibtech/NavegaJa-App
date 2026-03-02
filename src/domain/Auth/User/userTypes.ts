@@ -1,4 +1,5 @@
 export interface CaptainCapabilities {
+  isBoatManager?: boolean;
   isVerified: boolean;
   pendingVerification: boolean;
   canOperate: boolean;
@@ -11,6 +12,7 @@ export enum UserRole {
   PASSENGER = 'passenger',
   CAPTAIN = 'captain',
   ADMIN = 'admin',
+  BOAT_MANAGER = 'boat_manager',
 }
 
 export interface User {
@@ -18,7 +20,7 @@ export interface User {
   name: string;
   phone: string;
   email?: string | null;
-  role: UserRole | 'passenger' | 'captain' | 'admin';
+  role: UserRole | 'passenger' | 'captain' | 'admin' | 'boat_manager';
   isActive: boolean;
   isVerified?: boolean;
   cpf?: string | null;

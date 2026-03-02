@@ -57,7 +57,7 @@ export interface AuthResponse {
     name: string;
     phone: string;
     email?: string;
-    role: UserRole | 'passenger' | 'captain' | 'admin';
+    role: UserRole | 'passenger' | 'captain' | 'admin' | 'boat_manager';
     isActive: boolean;
     isVerified?: boolean;
     cpf?: string;

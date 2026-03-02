@@ -18,6 +18,7 @@ export function CaptainDashboardScreen() {
     showBlockedModal,
     setShowBlockedModal,
     unreadNotifications,
+    isBoatManager,
     canOperate,
     isBlocked,
     isRejected,
@@ -44,10 +45,10 @@ export function CaptainDashboardScreen() {
         <Box flexDirection="row" alignItems="center" justifyContent="space-between">
           <Box flex={1}>
             <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)'}}>
-              Bem-vindo, Capitão
+              {isBoatManager ? 'Bem-vindo, Gestor' : 'Bem-vindo, Capitão'}
             </Text>
             <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
-              {user?.name || 'Capitão'}
+              {user?.name || (isBoatManager ? 'Gestor' : 'Capitão')}
             </Text>
           </Box>
 

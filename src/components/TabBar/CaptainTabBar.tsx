@@ -111,7 +111,7 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
       style={styles.tabItem}>
       <Box alignItems="center">
         {/* Container do ícone */}
-        <Box position="relative" mb="s6">
+        <Box position="relative" mb="s6" style={{overflow: 'visible'}}>
           <Animated.View
             style={[
               styles.iconContainer,

@@ -17,6 +17,6 @@ export type {
 
 export function AppStack() {
   const user = useAuthStore(s => s.user);
-  const isCaptain = user?.role === 'captain';
-  return isCaptain ? <CaptainStack /> : <PassengerStack />;
+  const isManagerRole = user?.role === 'captain' || user?.role === 'boat_manager';
+  return isManagerRole ? <CaptainStack /> : <PassengerStack />;
 }

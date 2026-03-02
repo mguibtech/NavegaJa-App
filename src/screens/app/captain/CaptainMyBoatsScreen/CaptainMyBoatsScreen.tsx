@@ -161,6 +161,23 @@ export function CaptainMyBoatsScreen() {
             {boat.description}
           </Text>
         ) : null}
+
+        {/* Gerir equipa */}
+        <TouchableOpacityBox
+          flexDirection="row"
+          alignItems="center"
+          mt="s12"
+          paddingTop="s12"
+          borderTopWidth={1}
+          borderTopColor="border"
+          onPress={() => navigation.navigate('CaptainBoatStaff', {boatId: boat.id, boatName: boat.name})}>
+          <Icon name="group" size={16} color="secondary" />
+          <Text preset="paragraphSmall" color="secondary" bold ml="s6">
+            Gerir equipa
+          </Text>
+          <Box flex={1} />
+          <Icon name="chevron-right" size={16} color="secondary" />
+        </TouchableOpacityBox>
       </Box>
     );
   }

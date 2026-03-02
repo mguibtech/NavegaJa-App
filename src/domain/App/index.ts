@@ -55,3 +55,6 @@ export * from './Analytics';
 
 // StopReview
 export * from './StopReview';
+
+// BoatStaff
+export * from './BoatStaff';

@@ -22,6 +22,7 @@ export function ProfileScreen() {
     showLogoutModal,
     setShowLogoutModal,
     isCaptain,
+    isBoatManager,
     ratingDisplay,
     receivedReviews,
     phoneDisplay,
@@ -121,13 +122,13 @@ export function ProfileScreen() {
               mt="s8"
               alignSelf="flex-start"
               style={{
-                backgroundColor: isCaptain ? 'rgba(255,193,7,0.25)' : 'rgba(255,255,255,0.2)',
+                backgroundColor: isCaptain ? 'rgba(255,193,7,0.25)' : isBoatManager ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.2)',
                 borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
                 borderWidth: 1,
-                borderColor: isCaptain ? 'rgba(255,193,7,0.5)' : 'rgba(255,255,255,0.35)',
+                borderColor: isCaptain ? 'rgba(255,193,7,0.5)' : isBoatManager ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.35)',
               }}>
               <Text preset="paragraphSmall" bold style={{color: '#fff'}}>
-                {isCaptain ? '⚓ Barqueiro' : '👤 Passageiro'}
+                {isCaptain ? '⚓ Barqueiro' : isBoatManager ? '🛳️ Gestor' : '👤 Passageiro'}
               </Text>
             </Box>
           </Box>
@@ -148,7 +149,7 @@ export function ProfileScreen() {
             label: 'Viagens',
             value: String(user?.totalTrips ?? 0),
             color: '#0B5D8A',
-            onPress: () => isCaptain ? navigation.navigate('CaptainMyTrips') : (navigation as any).navigate('Bookings'),
+            onPress: () => (isCaptain || isBoatManager) ? navigation.navigate('CaptainMyTrips') : (navigation as any).navigate('Bookings'),
           },
           {
             icon: 'star',

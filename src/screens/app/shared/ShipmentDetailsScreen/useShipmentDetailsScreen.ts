@@ -28,7 +28,7 @@ export function useShipmentDetailsScreen() {
   const {shipmentId} = route.params;
   const toast = useToast();
   const user = useAuthStore(state => state.user);
-  const isCaptain = user?.role === 'captain';
+  const isCaptain = user?.role === 'captain' || user?.role === 'boat_manager';
   const shareCardRef = useRef<View>(null);
 
   const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);

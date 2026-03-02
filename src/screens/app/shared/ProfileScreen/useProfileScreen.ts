@@ -58,6 +58,7 @@ export function useProfileScreen() {
   }
 
   const isCaptain = user?.role === 'captain';
+  const isBoatManager = user?.role === 'boat_manager';
   const ratingDisplay =
     typeof user?.rating === 'number' && user.rating > 0
       ? user.rating.toFixed(1)
@@ -71,6 +72,7 @@ export function useProfileScreen() {
     showLogoutModal,
     setShowLogoutModal,
     isCaptain,
+    isBoatManager,
     ratingDisplay,
     receivedReviews,
     phoneDisplay,

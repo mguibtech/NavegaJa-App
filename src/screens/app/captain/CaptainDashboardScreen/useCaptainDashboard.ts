@@ -42,8 +42,9 @@ export function useCaptainDashboard() {
     }, []),
   );
 
-  const canOperate = !user?.capabilities || user.capabilities.canOperate;
-  const isBlocked = user?.capabilities && !user.capabilities.canOperate;
+  const isBoatManager = user?.capabilities?.isBoatManager === true;
+  const canOperate = isBoatManager || !user?.capabilities || user.capabilities.canOperate;
+  const isBlocked = !isBoatManager && user?.capabilities && !user.capabilities.canOperate;
   const isRejected = !!isBlocked && !!user?.rejectionReason;
   const isPending = !!isBlocked && !isRejected;
 
@@ -109,6 +110,7 @@ export function useCaptainDashboard() {
     showBlockedModal,
     setShowBlockedModal,
     unreadNotifications,
+    isBoatManager,
     canOperate,
     isBlocked,
     isRejected,

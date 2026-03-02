@@ -49,6 +49,7 @@ import {
   KycStatusScreen,
   CaptainAnalyticsScreen,
   ScanBookingQRScreen,
+  CaptainBoatStaffScreen,
 } from '@screens';
 
 import type {CaptainStackParamList, CaptainTabsParamList} from './navigationTypes';
@@ -154,6 +155,7 @@ export function CaptainStack() {
       <Stack.Screen name="KycStatus" component={KycStatusScreen} />
       <Stack.Screen name="CaptainAnalytics" component={CaptainAnalyticsScreen} />
       <Stack.Screen name="ScanBookingQR" component={ScanBookingQRScreen} />
+      <Stack.Screen name="CaptainBoatStaff" component={CaptainBoatStaffScreen} />
     </Stack.Navigator>
   );
 }

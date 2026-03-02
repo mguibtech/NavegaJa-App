@@ -1,13 +1,16 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Alert} from 'react-native';
 import messaging from '@react-native-firebase/messaging';
+import {useQueryClient} from '@tanstack/react-query';
 
+import {queryKeys} from '@infra';
 import {useAuthStore} from '@store';
 import {chatService} from '../chatService';
 import {ChatMessage} from '../chatTypes';
 
 export function useChat(bookingId: string) {
   const {user} = useAuthStore();
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -24,7 +27,9 @@ export function useChat(bookingId: string) {
         if (data.length > 0) {
           lastSinceRef.current = data[data.length - 1].createdAt;
         }
-        chatService.markRead(bookingId).catch(() => {});
+        chatService.markRead(bookingId).then(() => {
+          queryClient.invalidateQueries({queryKey: queryKeys.chat.conversations()});
+        }).catch(() => {});
       })
       .catch(() => { setLoadError(true); })
       .finally(() => setIsLoading(false));
@@ -45,7 +50,9 @@ export function useChat(bookingId: string) {
           return unique.length > 0 ? [...prev, ...unique] : prev;
         });
         lastSinceRef.current = newMsgs[newMsgs.length - 1].createdAt;
-        chatService.markRead(bookingId).catch(() => {});
+        chatService.markRead(bookingId).then(() => {
+          queryClient.invalidateQueries({queryKey: queryKeys.chat.conversations()});
+        }).catch(() => {});
       }
     } catch {
       // falha silenciosa no polling
