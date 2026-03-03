@@ -177,6 +177,8 @@ export function Router() {
   const {showSuccess, showError} = useToast();
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const queryClient = useQueryClient();
+  // Dados de notificação pendentes — executados quando o NavigationContainer ficar ready
+  const pendingNavigationRef = useRef<Record<string, string> | null>(null);
 
   // Atualiza perfil ao voltar ao foreground (garante estados de verificação atualizados sem FCM)
   useEffect(() => {
@@ -217,7 +219,11 @@ export function Router() {
         if (remoteMessage.data) {
           const d = remoteMessage.data as Record<string, string>;
           await refreshTokensIfNeeded(d);
-          handleNotificationNavigation(d);
+          if (navigationRef.isReady()) {
+            handleNotificationNavigation(d);
+          } else {
+            pendingNavigationRef.current = d;
+          }
         }
       },
     );
@@ -239,9 +245,8 @@ export function Router() {
             });
           }
           await refreshTokensIfNeeded(d);
-          setTimeout(() => {
-            handleNotificationNavigation(d);
-          }, 500);
+          // Guarda para executar quando o NavigationContainer estiver pronto
+          pendingNavigationRef.current = d;
         }
       });
 
@@ -397,7 +402,14 @@ export function Router() {
 
   // Show Auth or App
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (pendingNavigationRef.current) {
+          handleNotificationNavigation(pendingNavigationRef.current);
+          pendingNavigationRef.current = null;
+        }
+      }}>
       {isLoggedIn ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
