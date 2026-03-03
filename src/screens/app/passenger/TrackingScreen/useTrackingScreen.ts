@@ -7,7 +7,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {SosAlert, SosStatus, SosType, useTrackBooking, TrackingStatus, useSosAlert, usePersonalContacts, PersonalContact, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE} from '@domain';
 import {AppStackParamList} from '@routes';
-import {useToast} from '@hooks';
+import {useToast, useVolumeButtonSos} from '@hooks';
 import {api} from '@api';
 import {API_ENDPOINTS} from '@api/config';
 
@@ -163,6 +163,16 @@ export function useTrackingScreen() {
   function handleCloseSosResult() {
     setShowSosResultModal(false);
   }
+
+  // Physical Volume Down button — 3× in 2s triggers SOS (Android only)
+  useVolumeButtonSos({
+    onTrigger: handleSosTrigger,
+    onHint: remaining =>
+      toast.showInfo(
+        `SOS: prima mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume ↓`,
+      ),
+    enabled: !sosTriggering,
+  });
 
   const handleSosMarkerPress = (alert: SosAlert) => {
     setSelectedSosAlert(alert);

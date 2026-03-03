@@ -550,12 +550,19 @@ export function TrackingScreen() {
       {/* SOS Hold Button */}
       <Box
         position="absolute"
-        bottom={24}
+        bottom={16}
         left={0}
         right={0}
         alignItems="center"
         style={{pointerEvents: 'box-none'}}>
         <SosHoldButton onTrigger={handleSosTrigger} disabled={sosTriggering} />
+        <Text
+          preset="paragraphCaptionSmall"
+          color="textSecondary"
+          mt="s4"
+          style={{textAlign: 'center', opacity: 0.7}}>
+          ou prima volume ↓ 3×
+        </Text>
       </Box>
 
       {/* Error Modal */}

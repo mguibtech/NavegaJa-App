@@ -5,3 +5,4 @@ export {useRecentSearches} from './useRecentSearches';
 export type {RecentSearch} from './useRecentSearches';
 export {useVirtualPagination} from './useVirtualPagination';
 export {usePdfDownload} from './usePdfDownload';
+export {useVolumeButtonSos} from './useVolumeButtonSos';
