@@ -221,15 +221,27 @@ export function CaptainCreateTripScreen() {
                 leftIcon="attach-money"
               />
             </Box>
-            <Box mb="s12">
+            <Box mb={selectedBoat ? 's4' : 's12'}>
               <TextInput
-                placeholder="Número de assentos"
+                placeholder={
+                  selectedBoat
+                    ? `Número de assentos (máx. ${selectedBoat.capacity})`
+                    : 'Número de assentos'
+                }
                 value={totalSeats}
                 onChangeText={v => setTotalSeats(v.replace(/\D/g, ''))}
                 keyboardType="numeric"
                 leftIcon="event-seat"
               />
             </Box>
+            {selectedBoat && (
+              <Box flexDirection="row" alignItems="center" mb="s12" ml="s4">
+                <Icon name="event-seat" size={14} color="textSecondary" />
+                <Text preset="paragraphCaptionSmall" color="textSecondary" ml="s4">
+                  Capacidade da embarcação: {selectedBoat.capacity} lugares
+                </Text>
+              </Box>
+            )}
             <Box mb="s24">
               <TextInput
                 placeholder="Frete por kg (ex: 2,50) — opcional"
