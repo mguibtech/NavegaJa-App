@@ -44,7 +44,7 @@ export function useCaptainCreateTrip() {
   const isBoatManager = user?.role === 'boat_manager';
 
   const {boats: ownedBoats, fetchBoats} = useMyBoats();
-  const {staff} = useBoatStaff();
+  const {staff, isLoading: isStaffLoading} = useBoatStaff();
   const {cityNames} = useCities();
   const cityList = cityNames.length > 0 ? cityNames : AM_CITIES;
   const {createTrip, isLoading} = useCreateTrip();
@@ -218,9 +218,10 @@ export function useCaptainCreateTrip() {
     // auth / guard
     canCreateTrips,
     isPending,
+    isBoatManager,
     // data
     boats,
-    isLoading,
+    isLoading: isLoading || (isBoatManager && isStaffLoading),
     selectedBoat,
     selectedBoatId,
     // route form

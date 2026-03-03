@@ -22,6 +22,7 @@ export function CaptainCreateTripScreen() {
   const {
     canCreateTrips,
     isPending,
+    isBoatManager,
     boats,
     isLoading,
     selectedBoat,
@@ -253,16 +254,24 @@ export function CaptainCreateTripScreen() {
                 alignItems="center">
                 <Icon name="warning" size={20} color="warning" />
                 <Box flex={1} ml="s12">
-                  <Text preset="paragraphSmall" color="warning">
-                    Nenhuma embarcação cadastrada.
-                  </Text>
-                  <TouchableOpacityBox
-                    mt="s8"
-                    onPress={navigateToCreateBoat}>
-                    <Text preset="paragraphSmall" color="secondary" bold>
-                      Cadastrar embarcação →
+                  {isBoatManager ? (
+                    <Text preset="paragraphSmall" color="warning">
+                      Nenhuma embarcação atribuída. Contacte o capitão responsável.
                     </Text>
-                  </TouchableOpacityBox>
+                  ) : (
+                    <>
+                      <Text preset="paragraphSmall" color="warning">
+                        Nenhuma embarcação cadastrada.
+                      </Text>
+                      <TouchableOpacityBox
+                        mt="s8"
+                        onPress={navigateToCreateBoat}>
+                        <Text preset="paragraphSmall" color="secondary" bold>
+                          Cadastrar embarcação →
+                        </Text>
+                      </TouchableOpacityBox>
+                    </>
+                  )}
                 </Box>
               </Box>
             ) : (

@@ -30,9 +30,13 @@ export function useCaptainDashboard() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const isBoatManager = user?.capabilities?.isBoatManager === true;
+
   useEffect(() => {
     fetchMyTrips();
-    fetchBoats();
+    if (!isBoatManager) {
+      fetchBoats();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -42,7 +46,6 @@ export function useCaptainDashboard() {
     }, []),
   );
 
-  const isBoatManager = user?.capabilities?.isBoatManager === true;
   const canOperate = isBoatManager || !user?.capabilities || user.capabilities.canOperate;
   const isBlocked = !isBoatManager && user?.capabilities && !user.capabilities.canOperate;
   const isRejected = !!isBlocked && !!user?.rejectionReason;
@@ -89,8 +92,8 @@ export function useCaptainDashboard() {
     return new Date(t.updatedAt).toDateString() === today;
   }).length;
 
-  const pendingBoats = boats.filter(b => !b.isVerified && !b.rejectionReason);
-  const rejectedBoats = boats.filter(b => !b.isVerified && !!b.rejectionReason);
+  const pendingBoats = isBoatManager ? [] : boats.filter(b => !b.isVerified && !b.rejectionReason);
+  const rejectedBoats = isBoatManager ? [] : boats.filter(b => !b.isVerified && !!b.rejectionReason);
 
   function formatDeparture(trip: Trip) {
     try {

@@ -311,8 +311,8 @@ export function CaptainDashboardScreen() {
         {/* Boat Status Banners — visível apenas quando captain pode operar */}
         {canOperate && (
           <>
-            {/* Nenhuma embarcação cadastrada */}
-            {boats.length === 0 && (
+            {/* Nenhuma embarcação cadastrada — apenas para capitões (gestor não cria barcos) */}
+            {boats.length === 0 && !isBoatManager && (
               <TouchableOpacityBox
                 marginHorizontal="s20"
                 mb="s12"
@@ -561,42 +561,44 @@ export function CaptainDashboardScreen() {
           </Box>
 
           <Box flexDirection="row" gap="s12" mt="s12">
-            {/* Embarcações — bloqueado se !canOperate */}
-            <TouchableOpacityBox
-              flex={1}
-              backgroundColor="surface"
-              borderRadius="s16"
-              padding="s20"
-              alignItems="center"
-              onPress={() => canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction()}
-              style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
-              <Box style={{position: 'relative'}}>
-                <Box
-                  width={48}
-                  height={48}
-                  borderRadius="s24"
-                  backgroundColor={canOperate ? 'secondaryBg' : 'border'}
-                  alignItems="center"
-                  justifyContent="center"
-                  mb="s12">
-                  <Icon name="sailing" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
-                </Box>
-                {!canOperate && (
+            {/* Embarcações — apenas para capitões (gestor não gere barcos próprios) */}
+            {!isBoatManager && (
+              <TouchableOpacityBox
+                flex={1}
+                backgroundColor="surface"
+                borderRadius="s16"
+                padding="s20"
+                alignItems="center"
+                onPress={() => canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction()}
+                style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
+                <Box style={{position: 'relative'}}>
                   <Box
-                    style={{
-                      position: 'absolute', top: -4, right: -4,
-                      backgroundColor: '#F59E0B',
-                      borderRadius: 10, width: 20, height: 20,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                    <Icon name="lock" size={12} color={'#FFFFFF' as any} />
+                    width={48}
+                    height={48}
+                    borderRadius="s24"
+                    backgroundColor={canOperate ? 'secondaryBg' : 'border'}
+                    alignItems="center"
+                    justifyContent="center"
+                    mb="s12">
+                    <Icon name="sailing" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
                   </Box>
-                )}
-              </Box>
-              <Text preset="paragraphSmall" color={canOperate ? 'text' : 'textSecondary'} bold textAlign="center">
-                Embarcações
-              </Text>
-            </TouchableOpacityBox>
+                  {!canOperate && (
+                    <Box
+                      style={{
+                        position: 'absolute', top: -4, right: -4,
+                        backgroundColor: '#F59E0B',
+                        borderRadius: 10, width: 20, height: 20,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                      <Icon name="lock" size={12} color={'#FFFFFF' as any} />
+                    </Box>
+                  )}
+                </Box>
+                <Text preset="paragraphSmall" color={canOperate ? 'text' : 'textSecondary'} bold textAlign="center">
+                  Embarcações
+                </Text>
+              </TouchableOpacityBox>
+            )}
 
             <TouchableOpacityBox
               flex={1}
