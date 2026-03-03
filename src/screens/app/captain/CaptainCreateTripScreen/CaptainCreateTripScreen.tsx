@@ -24,6 +24,7 @@ export function CaptainCreateTripScreen() {
     isPending,
     isBoatManager,
     boats,
+    isBoatsLoading,
     isLoading,
     selectedBoat,
     selectedBoatId,
@@ -244,7 +245,20 @@ export function CaptainCreateTripScreen() {
               Embarcação
             </Text>
 
-            {boats.length === 0 ? (
+            {isBoatsLoading ? (
+              <Box
+                backgroundColor="surface"
+                padding="s16"
+                borderRadius="s12"
+                mb="s24"
+                flexDirection="row"
+                alignItems="center">
+                <ActivityIndicator size="small" color="#0a6fbd" />
+                <Text preset="paragraphSmall" color="textSecondary" ml="s12">
+                  A carregar embarcações…
+                </Text>
+              </Box>
+            ) : boats.length === 0 ? (
               <Box
                 backgroundColor="warningBg"
                 padding="s16"

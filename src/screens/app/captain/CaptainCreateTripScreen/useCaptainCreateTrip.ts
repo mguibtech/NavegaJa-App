@@ -44,7 +44,7 @@ export function useCaptainCreateTrip() {
   const isBoatManager = user?.role === 'boat_manager';
 
   const {boats: ownedBoats, fetchBoats} = useMyBoats();
-  const {staff, isLoading: isStaffLoading} = useBoatStaff();
+  const {staff, isLoading: isStaffLoading, refetch: refetchStaff} = useBoatStaff();
   const {cityNames} = useCities();
   const cityList = cityNames.length > 0 ? cityNames : AM_CITIES;
   const {createTrip, isLoading} = useCreateTrip();
@@ -78,7 +78,9 @@ export function useCaptainCreateTrip() {
   const isPending = user?.capabilities?.pendingVerification ?? false;
 
   useEffect(() => {
-    if (!isBoatManager) {
+    if (isBoatManager) {
+      refetchStaff();
+    } else {
       fetchBoats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,6 +223,7 @@ export function useCaptainCreateTrip() {
     isBoatManager,
     // data
     boats,
+    isBoatsLoading: isBoatManager && isStaffLoading,
     isLoading: isLoading || (isBoatManager && isStaffLoading),
     selectedBoat,
     selectedBoatId,
