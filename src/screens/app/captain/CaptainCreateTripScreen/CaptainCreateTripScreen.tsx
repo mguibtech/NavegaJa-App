@@ -314,14 +314,20 @@ export function CaptainCreateTripScreen() {
                   onPress={() => setShowBoatPicker(!showBoatPicker)}>
                   <Box flexDirection="row" alignItems="center" flex={1}>
                     <Icon name="sailing" size={20} color="secondary" />
-                    <Text
-                      preset="paragraphMedium"
-                      color={selectedBoatId ? 'text' : 'textSecondary'}
-                      ml="s12">
-                      {selectedBoat
-                        ? selectedBoat.name
-                        : 'Selecione uma embarcação'}
-                    </Text>
+                    <Box ml="s12" flex={1}>
+                      <Text
+                        preset="paragraphMedium"
+                        color={selectedBoatId ? 'text' : 'textSecondary'}>
+                        {selectedBoat
+                          ? selectedBoat.name
+                          : 'Selecione uma embarcação'}
+                      </Text>
+                      {selectedBoat && (
+                        <Text preset="paragraphCaptionSmall" color="textSecondary">
+                          Máx. {selectedBoat.capacity} assentos
+                        </Text>
+                      )}
+                    </Box>
                   </Box>
                   <Icon
                     name={showBoatPicker ? 'expand-less' : 'expand-more'}
@@ -366,8 +372,25 @@ export function CaptainCreateTripScreen() {
                               {boat.name}
                             </Text>
                             <Text preset="paragraphSmall" color="textSecondary">
-                              {boat.type} · {boat.capacity} lugares ·{' '}
-                              {boat.registrationNum}
+                              {boat.type}
+                              {boat.registrationNum ? ` · ${boat.registrationNum}` : ''}
+                            </Text>
+                          </Box>
+                          <Box
+                            paddingHorizontal="s8"
+                            paddingVertical="s4"
+                            borderRadius="s8"
+                            backgroundColor={isSelected ? 'secondaryBg' : 'background'}
+                            flexDirection="row"
+                            alignItems="center"
+                            mr={isUnverified ? 's8' : 's0'}>
+                            <Icon name="event-seat" size={12} color={isSelected ? 'secondary' : 'textSecondary'} />
+                            <Text
+                              preset="paragraphCaptionSmall"
+                              color={isSelected ? 'secondary' : 'textSecondary'}
+                              bold
+                              ml="s4">
+                              {boat.capacity}
                             </Text>
                           </Box>
                           {isUnverified && (
