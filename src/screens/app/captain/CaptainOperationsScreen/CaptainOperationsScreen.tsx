@@ -10,6 +10,7 @@ export function CaptainOperationsScreen() {
   const {top} = useSafeAreaInsets();
   const {
     navigation,
+    isBoatManager,
     boats,
     isLoading,
     recentTrips,
@@ -146,11 +147,13 @@ export function CaptainOperationsScreen() {
           <Text preset="paragraphMedium" color="text" bold>
             Embarcações
           </Text>
-          <TouchableOpacityBox onPress={() => navigation.navigate('CaptainMyBoats')}>
-            <Text preset="paragraphSmall" color="secondary">
-              Ver todas
-            </Text>
-          </TouchableOpacityBox>
+          {!isBoatManager && (
+            <TouchableOpacityBox onPress={() => navigation.navigate('CaptainMyBoats')}>
+              <Text preset="paragraphSmall" color="secondary">
+                Ver todas
+              </Text>
+            </TouchableOpacityBox>
+          )}
         </Box>
 
         {boats.length === 0 ? (

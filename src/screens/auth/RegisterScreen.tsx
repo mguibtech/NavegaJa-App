@@ -100,7 +100,11 @@ export function RegisterScreen({navigation}: Props) {
     }
 
     const cleanCpf = cpf.replace(/\D/g, '');
-    if (cleanCpf.length > 0 && !isValidCPF(cpf)) {
+    if (!cleanCpf) {
+      toast.showWarning('CPF é obrigatório');
+      return;
+    }
+    if (!isValidCPF(cpf)) {
       toast.showWarning('CPF inválido. Verifique os dígitos');
       return;
     }
@@ -113,7 +117,7 @@ export function RegisterScreen({navigation}: Props) {
         password,
         city: city.trim(),
         state: 'AM',
-        cpf: cpf.replace(/\D/g, '') || undefined,
+        cpf: cpf.replace(/\D/g, ''),
         referralCode: referralCode.trim().toUpperCase() || undefined,
       });
 
@@ -231,10 +235,10 @@ export function RegisterScreen({navigation}: Props) {
                 />
               </Box>
 
-              {/* CPF (opcional) */}
+              {/* CPF */}
               <Box mt="s16">
                 <TextInput
-                  label="CPF (opcional)"
+                  label="CPF *"
                   placeholder="000.000.000-00"
                   keyboardType="numeric"
                   value={cpf}
@@ -332,7 +336,7 @@ export function RegisterScreen({navigation}: Props) {
                   loading={isLoading}
                   onPress={handleRegister}
                   rightIcon="arrow-forward"
-                  disabled={!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim() || !city.trim()}
+                  disabled={!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim() || !city.trim() || !cpf.trim()}
                 />
               </Box>
 

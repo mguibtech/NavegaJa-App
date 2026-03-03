@@ -1,10 +1,11 @@
-import {useEffect} from 'react';
+import {useEffect, useMemo} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {useCaptainTrips, useMyBoats, TripStatus} from '@domain';
+import {useCaptainTrips, useMyBoats, useBoatStaff, TripStatus} from '@domain';
+import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
 
@@ -17,23 +18,43 @@ export const STATUS_CONFIG = {
 
 export function useCaptainOperations() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-  const {trips, isLoading: tripsLoading, fetchMyTrips} = useCaptainTrips();
-  const {boats, isLoading: boatsLoading, fetchBoats} = useMyBoats();
+  const user = useAuthStore(s => s.user);
+  const isBoatManager = user?.role === 'boat_manager';
 
-  const isLoading = tripsLoading || boatsLoading;
+  const {trips, isLoading: tripsLoading, fetchMyTrips} = useCaptainTrips();
+  const {boats: ownedBoats, isLoading: boatsLoading, fetchBoats} = useMyBoats();
+  const {staff, isLoading: staffLoading, refetch: refetchStaff} = useBoatStaff();
+
+  const isLoading = tripsLoading || (isBoatManager ? staffLoading : boatsLoading);
+
+  // boat_manager: listar barcos atribuídos; captain: listar barcos próprios
+  const boats = useMemo(() => {
+    if (isBoatManager) {
+      return staff.filter(s => s.isActive).map(s => s.boat);
+    }
+    return ownedBoats;
+  }, [isBoatManager, staff, ownedBoats]);
 
   useEffect(() => {
     fetchMyTrips();
-    fetchBoats();
+    if (isBoatManager) {
+      refetchStaff();
+    } else {
+      fetchBoats();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onRefresh() {
     fetchMyTrips();
-    fetchBoats();
+    if (isBoatManager) {
+      refetchStaff();
+    } else {
+      fetchBoats();
+    }
   }
 
-  const recentTrips = trips.slice(0, 3);
+  const recentTrips = trips.filter(t => t.status !== TripStatus.CANCELLED).slice(0, 3);
 
   function formatDepartureStr(departureAt: string): string {
     try {
@@ -45,6 +66,7 @@ export function useCaptainOperations() {
 
   return {
     navigation,
+    isBoatManager,
     trips,
     boats,
     isLoading,

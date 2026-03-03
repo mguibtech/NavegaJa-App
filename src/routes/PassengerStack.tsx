@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useTheme} from '@shopify/restyle';
 
 import {CustomTabBar, Icon} from '@components';
 import {Theme} from '@theme';
-import {bookingService, BookingStatus, useConversations} from '@domain';
+import {useConversations} from '@domain';
 
 import {
   // Tabs
@@ -57,26 +57,7 @@ const Stack = createNativeStackNavigator<PassengerStackParamList>();
 const Tab = createBottomTabNavigator<TabsParamList>();
 
 function PassengerTabs() {
-  const [bookingsBadge, setBookingsBadge] = useState<number | undefined>(undefined);
   const {totalUnread} = useConversations();
-
-  useEffect(() => {
-    async function loadBadge() {
-      try {
-        const bookings = await bookingService.getMyBookings();
-        const activeCount = bookings.filter(
-          b =>
-            b.status === BookingStatus.CONFIRMED ||
-            b.status === BookingStatus.PENDING ||
-            b.status === BookingStatus.CHECKED_IN,
-        ).length;
-        setBookingsBadge(activeCount > 0 ? activeCount : undefined);
-      } catch {
-        // ignore badge errors silently
-      }
-    }
-    loadBadge();
-  }, []);
 
   return (
     <Tab.Navigator
@@ -110,7 +91,7 @@ function PassengerTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="receipt-long" size={size} color={color} />
           ),
-          tabBarBadge: bookingsBadge,
+          // badge gerenciado via setOptions em useBookingsScreen
         }}
       />
       <Tab.Screen

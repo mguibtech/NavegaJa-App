@@ -110,7 +110,7 @@ export function NavigationHUD({
         <Box
           style={{
             position: 'absolute',
-            bottom: bottom + 170,
+            bottom: bottom + 220,
             left: 16,
             right: 70,
             backgroundColor: '#EF4444',
@@ -135,7 +135,7 @@ export function NavigationHUD({
         <Box
           style={{
             position: 'absolute',
-            bottom: bottom + 170,
+            bottom: bottom + 220,
             left: 16,
             right: 70,
             backgroundColor: DANGER_ZONE_COLOR[closestZone.zone.severity],

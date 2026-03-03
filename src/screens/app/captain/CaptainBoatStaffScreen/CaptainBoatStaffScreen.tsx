@@ -1,12 +1,18 @@
 import React from 'react';
-import {FlatList, Modal, Switch, TextInput, ActivityIndicator} from 'react-native';
+import {FlatList, Modal, Switch, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal, UserAvatar} from '@components';
+import {Box, Icon, Text, TextInput, TouchableOpacityBox, ConfirmationModal, UserAvatar} from '@components';
 import {BoatStaff} from '@domain';
 import {formatPhone} from '@utils';
 
 import {useCaptainBoatStaff} from './useCaptainBoatStaff';
+
+const PERMS = [
+  {key: 'canCreateTrips', label: 'Criar viagens'} as const,
+  {key: 'canConfirmPayments', label: 'Confirmar pagamentos'} as const,
+  {key: 'canManageShipments', label: 'Gerir envios'} as const,
+];
 
 function CapabilityChip({label, active}: {label: string; active: boolean}) {
   return (
@@ -15,10 +21,7 @@ function CapabilityChip({label, active}: {label: string; active: boolean}) {
       paddingVertical="s4"
       borderRadius="s8"
       style={{backgroundColor: active ? '#D1FAE5' : '#F3F4F6'}}>
-      <Text
-        preset="paragraphCaptionSmall"
-        bold
-        style={{color: active ? '#065F46' : '#9CA3AF'}}>
+      <Text preset="paragraphCaptionSmall" bold style={{color: active ? '#065F46' : '#9CA3AF'}}>
         {label}
       </Text>
     </Box>
@@ -37,12 +40,24 @@ export function CaptainBoatStaffScreen() {
     removeLoading,
     handleRemove,
     showAddModal,
-    setShowAddModal,
+    addStep,
+    setAddStep,
+    lookupMode,
+    handleSetLookupMode,
     addPhone,
-    setAddPhone,
+    handleAddPhoneChange,
+    addCpf,
+    handleAddCpfChange,
+    lookedUpUser,
+    lookupLoading,
+    lookupError,
+    canLookup,
     addPerms,
     setAddPerms,
     addLoading,
+    handleOpenAddModal,
+    handleCloseAddModal,
+    handleLookup,
     handleAdd,
     editingStaff,
     openEdit,
@@ -64,12 +79,8 @@ export function CaptainBoatStaffScreen() {
         <Box flexDirection="row" alignItems="center">
           <UserAvatar userId={item.userId} avatarUrl={item.user.avatarUrl} name={item.user.name} size="sm" />
           <Box flex={1} ml="s12">
-            <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
-              {item.user.name}
-            </Text>
-            <Text preset="paragraphSmall" color="textSecondary" mt="s4">
-              {formatPhone(item.user.phone)}
-            </Text>
+            <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>{item.user.name}</Text>
+            <Text preset="paragraphSmall" color="textSecondary" mt="s4">{formatPhone(item.user.phone)}</Text>
           </Box>
           <TouchableOpacityBox padding="s8" onPress={() => openEdit(item)}>
             <Icon name="edit" size={20} color="secondary" />
@@ -84,14 +95,9 @@ export function CaptainBoatStaffScreen() {
           <CapabilityChip label="Pagamentos" active={item.canConfirmPayments} />
           <CapabilityChip label="Envios" active={item.canManageShipments} />
           <Box
-            paddingHorizontal="s8"
-            paddingVertical="s4"
-            borderRadius="s8"
+            paddingHorizontal="s8" paddingVertical="s4" borderRadius="s8"
             style={{backgroundColor: item.isActive ? '#DBEAFE' : '#F3F4F6'}}>
-            <Text
-              preset="paragraphCaptionSmall"
-              bold
-              style={{color: item.isActive ? '#1E40AF' : '#9CA3AF'}}>
+            <Text preset="paragraphCaptionSmall" bold style={{color: item.isActive ? '#1E40AF' : '#9CA3AF'}}>
               {item.isActive ? '● Activo' : '○ Inactivo'}
             </Text>
           </Box>
@@ -106,43 +112,26 @@ export function CaptainBoatStaffScreen() {
         {/* Header */}
         <Box
           backgroundColor="surface"
-          paddingHorizontal="s24"
-          paddingBottom="s12"
-          borderBottomWidth={1}
-          borderBottomColor="border"
+          paddingHorizontal="s24" paddingBottom="s12"
+          borderBottomWidth={1} borderBottomColor="border"
           style={{paddingTop: top + 12}}>
           <Box flexDirection="row" alignItems="center">
             <TouchableOpacityBox
-              width={40}
-              height={40}
-              alignItems="center"
-              justifyContent="center"
-              mr="s8"
+              width={40} height={40} alignItems="center" justifyContent="center" mr="s8"
               onPress={() => navigation.goBack()}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
             <Box flex={1}>
-              <Text preset="headingSmall" color="text" bold>
-                Equipa
-              </Text>
-              {!!boatName && (
-                <Text preset="paragraphSmall" color="textSecondary">
-                  {boatName}
-                </Text>
-              )}
+              <Text preset="headingSmall" color="text" bold>Equipa</Text>
+              {!!boatName && <Text preset="paragraphSmall" color="textSecondary">{boatName}</Text>}
             </Box>
             <TouchableOpacityBox
               backgroundColor="secondary"
-              paddingHorizontal="s16"
-              paddingVertical="s8"
-              borderRadius="s12"
-              flexDirection="row"
-              alignItems="center"
-              onPress={() => setShowAddModal(true)}>
+              paddingHorizontal="s16" paddingVertical="s8" borderRadius="s12"
+              flexDirection="row" alignItems="center"
+              onPress={handleOpenAddModal}>
               <Icon name="person-add" size={18} color="surface" />
-              <Text preset="paragraphSmall" color="surface" bold ml="s4">
-                Adicionar
-              </Text>
+              <Text preset="paragraphSmall" color="surface" bold ml="s4">Adicionar</Text>
             </TouchableOpacityBox>
           </Box>
         </Box>
@@ -172,7 +161,7 @@ export function CaptainBoatStaffScreen() {
         />
       </Box>
 
-      {/* Remove confirmation */}
+      {/* ── Remover ─────────────────────────────────────────────────────── */}
       <ConfirmationModal
         visible={!!staffToRemove}
         title="Remover gestor"
@@ -186,106 +175,209 @@ export function CaptainBoatStaffScreen() {
         isLoading={removeLoading}
       />
 
-      {/* Add modal */}
-      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
+      {/* ── Adicionar — dois passos ──────────────────────────────────────── */}
+      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={handleCloseAddModal}>
         <Box flex={1} justifyContent="flex-end" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <Box backgroundColor="surface" borderRadius="s24" padding="s24" style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}}>
+          <Box backgroundColor="surface" padding="s24" style={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}>
+
+            {/* Cabeçalho */}
             <Box flexDirection="row" alignItems="center" mb="s20">
+              {addStep === 'confirm' && (
+                <TouchableOpacityBox
+                  width={36} height={36} borderRadius="s20"
+                  backgroundColor="background"
+                  alignItems="center" justifyContent="center" mr="s12"
+                  onPress={() => setAddStep('search')}>
+                  <Icon name="arrow-back" size={20} color="text" />
+                </TouchableOpacityBox>
+              )}
               <Text preset="headingSmall" color="text" bold flex={1}>
-                Adicionar Gestor
+                {addStep === 'search' ? 'Adicionar Gestor' : 'Confirmar Adição'}
               </Text>
-              <TouchableOpacityBox onPress={() => setShowAddModal(false)}>
+              <TouchableOpacityBox onPress={handleCloseAddModal}>
                 <Icon name="close" size={24} color="textSecondary" />
               </TouchableOpacityBox>
             </Box>
 
-            <Text preset="paragraphSmall" color="textSecondary" mb="s8">
-              Telefone do utilizador
-            </Text>
-            <Box
-              borderWidth={1}
-              borderColor="border"
-              borderRadius="s12"
-              paddingHorizontal="s16"
-              paddingVertical="s12"
-              mb="s20">
-              <TextInput
-                value={addPhone}
-                onChangeText={setAddPhone}
-                placeholder="Ex: 92991001001"
-                keyboardType="phone-pad"
-                style={{fontSize: 15, color: '#111827'}}
-              />
-            </Box>
+            {/* ── Passo 1: Buscar por telefone ou CPF ────────────────────── */}
+            {addStep === 'search' && (
+              <>
+                {/* Toggle Telefone / CPF */}
+                <Box
+                  flexDirection="row"
+                  backgroundColor="background"
+                  borderRadius="s12"
+                  padding="s4"
+                  mb="s16">
+                  <TouchableOpacityBox
+                    flex={1}
+                    paddingVertical="s8"
+                    borderRadius="s8"
+                    alignItems="center"
+                    style={{backgroundColor: lookupMode === 'phone' ? '#FFFFFF' : 'transparent'}}
+                    onPress={() => handleSetLookupMode('phone')}>
+                    <Text
+                      preset="paragraphSmall"
+                      bold
+                      style={{color: lookupMode === 'phone' ? '#0B5D8A' : '#9CA3AF'}}>
+                      Telefone
+                    </Text>
+                  </TouchableOpacityBox>
+                  <TouchableOpacityBox
+                    flex={1}
+                    paddingVertical="s8"
+                    borderRadius="s8"
+                    alignItems="center"
+                    style={{backgroundColor: lookupMode === 'cpf' ? '#FFFFFF' : 'transparent'}}
+                    onPress={() => handleSetLookupMode('cpf')}>
+                    <Text
+                      preset="paragraphSmall"
+                      bold
+                      style={{color: lookupMode === 'cpf' ? '#0B5D8A' : '#9CA3AF'}}>
+                      CPF
+                    </Text>
+                  </TouchableOpacityBox>
+                </Box>
 
-            <Text preset="paragraphSmall" color="textSecondary" mb="s12" bold>
-              Permissões
-            </Text>
-            {(
-              [
-                {key: 'canCreateTrips', label: 'Criar viagens'} as const,
-                {key: 'canConfirmPayments', label: 'Confirmar pagamentos'} as const,
-                {key: 'canManageShipments', label: 'Gerir envios'} as const,
-              ] as const
-            ).map(({key, label}) => (
-              <Box key={key} flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
-                <Text preset="paragraphMedium" color="text">{label}</Text>
-                <Switch
-                  value={addPerms[key]}
-                  onValueChange={v => setAddPerms(prev => ({...prev, [key]: v}))}
-                />
-              </Box>
-            ))}
+                <Box mb="s16">
+                  {lookupMode === 'phone' ? (
+                    <TextInput
+                      label="Telefone do utilizador"
+                      placeholder="+55 (92) 99999-9999"
+                      value={addPhone}
+                      onChangeText={handleAddPhoneChange}
+                      keyboardType="phone-pad"
+                      leftIcon="phone"
+                      maxLength={15}
+                      errorMessage={lookupError || undefined}
+                    />
+                  ) : (
+                    <TextInput
+                      label="CPF do utilizador"
+                      placeholder="000.000.000-00"
+                      value={addCpf}
+                      onChangeText={handleAddCpfChange}
+                      keyboardType="numeric"
+                      leftIcon="badge"
+                      maxLength={14}
+                      errorMessage={lookupError || undefined}
+                    />
+                  )}
+                </Box>
 
-            <TouchableOpacityBox
-              backgroundColor="secondary"
-              paddingVertical="s16"
-              borderRadius="s12"
-              alignItems="center"
-              mt="s8"
-              onPress={handleAdd}
-              disabled={addLoading || !addPhone.trim()}
-              style={{opacity: addLoading || !addPhone.trim() ? 0.5 : 1}}>
-              {addLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text preset="paragraphMedium" color="surface" bold>
-                  Adicionar
-                </Text>
-              )}
-            </TouchableOpacityBox>
+                <TouchableOpacityBox
+                  backgroundColor="secondary"
+                  paddingVertical="s16" borderRadius="s12"
+                  flexDirection="row" alignItems="center" justifyContent="center" gap="s8"
+                  onPress={handleLookup}
+                  disabled={lookupLoading || !canLookup}
+                  style={{opacity: lookupLoading || !canLookup ? 0.5 : 1}}>
+                  {lookupLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Icon name="search" size={20} color="surface" />
+                      <Text preset="paragraphMedium" color="surface" bold>Buscar</Text>
+                    </>
+                  )}
+                </TouchableOpacityBox>
+              </>
+            )}
+
+            {/* ── Passo 2: Confirmar utilizador + permissões ────────────── */}
+            {addStep === 'confirm' && lookedUpUser && (
+              <>
+                {/* Card do utilizador encontrado */}
+                <Box
+                  backgroundColor="background" borderRadius="s12" padding="s16"
+                  flexDirection="row" alignItems="center" mb="s20">
+                  <UserAvatar
+                    userId={lookedUpUser.id}
+                    avatarUrl={lookedUpUser.avatarUrl}
+                    name={lookedUpUser.name}
+                    size="md"
+                  />
+                  <Box flex={1} ml="s12">
+                    <Text preset="paragraphMedium" color="text" bold>{lookedUpUser.name}</Text>
+                    <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                      {formatPhone(lookedUpUser.phone)}
+                    </Text>
+                  </Box>
+                  <Icon name="check-circle" size={22} color={'#16A34A' as any} />
+                </Box>
+
+                {/* Permissões */}
+                <Text preset="paragraphSmall" color="textSecondary" mb="s12" bold>Permissões</Text>
+                {PERMS.map(({key, label}) => (
+                  <Box key={key} flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
+                    <Text preset="paragraphMedium" color="text">{label}</Text>
+                    <Switch
+                      value={addPerms[key]}
+                      onValueChange={v => setAddPerms(prev => ({...prev, [key]: v}))}
+                      trackColor={{false: '#D1D5DB', true: '#93C5FD'}}
+                      thumbColor={addPerms[key] ? '#2563EB' : '#9CA3AF'}
+                    />
+                  </Box>
+                ))}
+
+                <TouchableOpacityBox
+                  backgroundColor="secondary"
+                  paddingVertical="s16" borderRadius="s12"
+                  flexDirection="row" alignItems="center" justifyContent="center" gap="s8"
+                  mt="s8"
+                  onPress={handleAdd}
+                  disabled={addLoading}
+                  style={{opacity: addLoading ? 0.5 : 1}}>
+                  {addLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Icon name="person-add" size={20} color="surface" />
+                      <Text preset="paragraphMedium" color="surface" bold>Adicionar à Equipa</Text>
+                    </>
+                  )}
+                </TouchableOpacityBox>
+              </>
+            )}
           </Box>
         </Box>
       </Modal>
 
-      {/* Edit modal */}
+      {/* ── Editar ───────────────────────────────────────────────────────── */}
       <Modal visible={!!editingStaff} transparent animationType="slide" onRequestClose={() => setEditingStaff(null)}>
         <Box flex={1} justifyContent="flex-end" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <Box backgroundColor="surface" borderRadius="s24" padding="s24" style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}}>
+          <Box backgroundColor="surface" padding="s24" style={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}>
+
+            {/* Header com avatar */}
             <Box flexDirection="row" alignItems="center" mb="s20">
-              <Text preset="headingSmall" color="text" bold flex={1}>
-                Editar — {editingStaff?.user.name}
-              </Text>
+              {editingStaff && (
+                <UserAvatar
+                  userId={editingStaff.userId}
+                  avatarUrl={editingStaff.user.avatarUrl}
+                  name={editingStaff.user.name}
+                  size="sm"
+                />
+              )}
+              <Box flex={1} ml="s12">
+                <Text preset="headingSmall" color="text" bold>{editingStaff?.user.name}</Text>
+                <Text preset="paragraphSmall" color="textSecondary">
+                  {editingStaff ? formatPhone(editingStaff.user.phone) : ''}
+                </Text>
+              </Box>
               <TouchableOpacityBox onPress={() => setEditingStaff(null)}>
                 <Icon name="close" size={24} color="textSecondary" />
               </TouchableOpacityBox>
             </Box>
 
-            <Text preset="paragraphSmall" color="textSecondary" mb="s12" bold>
-              Permissões
-            </Text>
-            {(
-              [
-                {key: 'canCreateTrips', label: 'Criar viagens'} as const,
-                {key: 'canConfirmPayments', label: 'Confirmar pagamentos'} as const,
-                {key: 'canManageShipments', label: 'Gerir envios'} as const,
-              ] as const
-            ).map(({key, label}) => (
+            <Text preset="paragraphSmall" color="textSecondary" mb="s12" bold>Permissões</Text>
+            {PERMS.map(({key, label}) => (
               <Box key={key} flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
                 <Text preset="paragraphMedium" color="text">{label}</Text>
                 <Switch
                   value={!!editPerms[key]}
                   onValueChange={v => setEditPerms(prev => ({...prev, [key]: v}))}
+                  trackColor={{false: '#D1D5DB', true: '#93C5FD'}}
+                  thumbColor={editPerms[key] ? '#2563EB' : '#9CA3AF'}
                 />
               </Box>
             ))}
@@ -295,23 +387,21 @@ export function CaptainBoatStaffScreen() {
               <Switch
                 value={!!editPerms.isActive}
                 onValueChange={v => setEditPerms(prev => ({...prev, isActive: v}))}
+                trackColor={{false: '#D1D5DB', true: '#93C5FD'}}
+                thumbColor={editPerms.isActive ? '#2563EB' : '#9CA3AF'}
               />
             </Box>
 
             <TouchableOpacityBox
               backgroundColor="secondary"
-              paddingVertical="s16"
-              borderRadius="s12"
-              alignItems="center"
+              paddingVertical="s16" borderRadius="s12" alignItems="center"
               onPress={handleUpdate}
               disabled={editLoading}
               style={{opacity: editLoading ? 0.5 : 1}}>
               {editLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text preset="paragraphMedium" color="surface" bold>
-                  Guardar
-                </Text>
+                <Text preset="paragraphMedium" color="surface" bold>Guardar</Text>
               )}
             </TouchableOpacityBox>
           </Box>

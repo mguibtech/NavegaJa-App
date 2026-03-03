@@ -13,7 +13,7 @@ import {queryKeys} from '@infra';
 import {OnboardingScreen} from '../screens/onboarding/OnboardingScreen';
 import {SplashScreen} from '../screens/splash/SplashScreen';
 import {apiClient} from '../api/apiClient';
-import {saveNotificationToHistory} from '@services';
+import {saveNotificationToHistory, authStorage} from '@services';
 
 import {AppStack} from './AppStack';
 import {AuthStack} from './AuthStack';
@@ -154,6 +154,22 @@ function handleNotificationNavigation(data: Record<string, string>) {
   }
 }
 
+async function refreshTokensIfNeeded(data: Record<string, string>): Promise<void> {
+  if (data.requiresTokenRefresh !== 'true') { return; }
+  try {
+    const storedRefreshToken = await authStorage.getRefreshToken();
+    if (!storedRefreshToken) { return; }
+    const response = await apiClient.post<{accessToken: string; refreshToken: string}>(
+      '/auth/refresh',
+      {refreshToken: storedRefreshToken},
+    );
+    await authStorage.saveToken(response.accessToken);
+    await authStorage.saveRefreshToken(response.refreshToken);
+  } catch {
+    // Silencioso — loadStoredUser atualiza o perfil mesmo sem novo token
+  }
+}
+
 export function Router() {
   const {isLoggedIn, isLoading, loadStoredUser, logout} = useAuthStore();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
@@ -187,7 +203,7 @@ export function Router() {
 
     // Notificação recebida com app em background (usuário tocou na notificação)
     const unsubscribeResponse = messaging().onNotificationOpenedApp(
-      remoteMessage => {
+      async remoteMessage => {
         const title = remoteMessage.notification?.title ?? '';
         const body = remoteMessage.notification?.body ?? '';
         if (title && remoteMessage.data) {
@@ -199,9 +215,9 @@ export function Router() {
           });
         }
         if (remoteMessage.data) {
-          handleNotificationNavigation(
-            remoteMessage.data as Record<string, string>,
-          );
+          const d = remoteMessage.data as Record<string, string>;
+          await refreshTokensIfNeeded(d);
+          handleNotificationNavigation(d);
         }
       },
     );
@@ -209,8 +225,9 @@ export function Router() {
     // App aberto a partir de notificação quando estava completamente fechado
     messaging()
       .getInitialNotification()
-      .then(remoteMessage => {
+      .then(async remoteMessage => {
         if (remoteMessage?.data) {
+          const d = remoteMessage.data as Record<string, string>;
           const title = remoteMessage.notification?.title ?? '';
           const body = remoteMessage.notification?.body ?? '';
           if (title) {
@@ -218,13 +235,12 @@ export function Router() {
               messageId: remoteMessage.messageId,
               title,
               body,
-              data: remoteMessage.data as Record<string, string>,
+              data: d,
             });
           }
+          await refreshTokensIfNeeded(d);
           setTimeout(() => {
-            handleNotificationNavigation(
-              remoteMessage.data as Record<string, string>,
-            );
+            handleNotificationNavigation(d);
           }, 500);
         }
       });
@@ -315,17 +331,24 @@ export function Router() {
         }
         queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
       } else if (data?.type === 'boat_manager_assigned') {
-        // Fui adicionado como gestor de um barco — actualiza role/capabilities
+        // Fui adicionado como gestor de um barco — actualiza JWT + role/capabilities
+        await refreshTokensIfNeeded(data);
         await useAuthStore.getState().loadStoredUser();
         queryClient.invalidateQueries({queryKey: queryKeys.captain.staff()});
         const boatName = data.boatName || 'um barco';
         showSuccess(`Fui adicionado como gestor de ${boatName}`);
       } else if (data?.type === 'boat_manager_removed') {
-        // Fui removido como gestor — actualiza role/capabilities
+        // Fui removido como gestor — actualiza JWT + role/capabilities + volta ao início
+        await refreshTokensIfNeeded(data);
         await useAuthStore.getState().loadStoredUser();
         queryClient.invalidateQueries({queryKey: queryKeys.captain.staff()});
         const boatName = data.boatName || 'um barco';
         showError(`Fui removido como gestor de ${boatName}`);
+        setTimeout(() => {
+          if (navigationRef.isReady()) {
+            navigationRef.navigate('HomeTabs', undefined);
+          }
+        }, 1500);
       }
     });
 

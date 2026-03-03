@@ -252,6 +252,7 @@ export function CaptainTripLiveScreen() {
 
       {/* ── Floating header ────────────────────────────────────────────── */}
       <Box
+        backgroundColor="surface"
         style={{
           position: 'absolute',
           top: 0,
@@ -260,9 +261,13 @@ export function CaptainTripLiveScreen() {
           paddingTop: top + 8,
           paddingBottom: 12,
           paddingHorizontal: 16,
-          backgroundColor: 'rgba(255,255,255,0.95)',
           flexDirection: 'row',
           alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+          elevation: 4,
         }}>
         <TouchableOpacityBox
           width={40}
@@ -289,7 +294,7 @@ export function CaptainTripLiveScreen() {
             <Text preset="paragraphCaptionSmall" color="textSecondary">
               Em andamento
             </Text>
-            {safetyAssessment && (
+            {safetyAssessment && SAFETY_LEVEL_CONFIGS[safetyAssessment.level] && (
               <Text
                 preset="paragraphCaptionSmall"
                 style={{

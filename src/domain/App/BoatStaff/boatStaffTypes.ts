@@ -15,12 +15,16 @@ export interface BoatStaff {
   boat: {
     id: string;
     name: string;
+    type: string;
+    capacity: number;
+    isVerified: boolean;
   };
   createdAt: string;
 }
 
 export interface AddBoatStaffData {
-  phone: string;
+  phone?: string;
+  cpf?: string;
   boatId: string;
   canCreateTrips: boolean;
   canConfirmPayments: boolean;
@@ -32,4 +36,11 @@ export interface UpdateBoatStaffData {
   canConfirmPayments?: boolean;
   canManageShipments?: boolean;
   isActive?: boolean;
+}
+
+export interface UserLookupResult {
+  id: string;
+  name: string;
+  phone: string;
+  avatarUrl?: string | null;
 }

@@ -59,7 +59,7 @@ export interface CalculatePriceRequest {
   quantity: number;
   couponCode?: string;
   redeemKm?: boolean;
-  children?: number[];
+  children?: Array<{age: number}>;
 }
 
 export interface CalculatePriceResponse extends PriceBreakdown {}

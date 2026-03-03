@@ -1,6 +1,6 @@
 import {api} from '@api';
 
-import {AddBoatStaffData, BoatStaff, UpdateBoatStaffData} from './boatStaffTypes';
+import {AddBoatStaffData, BoatStaff, UpdateBoatStaffData, UserLookupResult} from './boatStaffTypes';
 
 const PATH = '/captain/boat-staff';
 
@@ -20,4 +20,12 @@ async function remove(id: string): Promise<void> {
   await api.delete(`${PATH}/${id}`);
 }
 
-export const boatStaffAPI = {getAll, add, update, remove};
+async function lookupByPhone(phone: string): Promise<UserLookupResult> {
+  return api.get<UserLookupResult>(`${PATH}/lookup?phone=${encodeURIComponent(phone)}`);
+}
+
+async function lookupByCpf(cpf: string): Promise<UserLookupResult> {
+  return api.get<UserLookupResult>(`${PATH}/lookup?cpf=${encodeURIComponent(cpf)}`);
+}
+
+export const boatStaffAPI = {getAll, add, update, remove, lookupByPhone, lookupByCpf};

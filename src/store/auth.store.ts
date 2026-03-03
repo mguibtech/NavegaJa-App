@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 
-import {authStorage, registerPushToken, unregisterPushToken} from '@services';
+import {authStorage, registerPushToken, unregisterPushToken, clearNotificationHistory} from '@services';
 import {loginAPI, loginAdapter, RegisterDto} from '@domain';
 import {registerAPI, registerAdapter} from '@domain';
 import {userAPI} from '@domain';
@@ -65,6 +65,9 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
       await authStorage.saveRefreshToken(refreshToken);
       await authStorage.saveUser(user);
 
+      // Limpa histórico de notificações do utilizador anterior
+      await clearNotificationHistory();
+
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
 
@@ -91,6 +94,9 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
       await authStorage.saveRefreshToken(refreshToken);
       await authStorage.saveUser(user);
 
+      // Limpa histórico de notificações de sessões anteriores
+      await clearNotificationHistory();
+
       // Atualiza estado global
       set({user, isLoggedIn: true, isLoading: false});
 
@@ -109,6 +115,7 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
       await unregisterPushToken();
     }
     await authStorage.clear();
+    await clearNotificationHistory();
     set({user: null, isLoggedIn: false});
   },
 

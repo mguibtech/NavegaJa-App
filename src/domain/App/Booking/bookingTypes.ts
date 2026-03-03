@@ -65,14 +65,23 @@ export enum PaymentMethod {
   DEBIT_CARD = 'debit_card',
 }
 
+export interface ChildPassenger {
+  age: number;     // 0–17; ≤ 9 = gratuito
+}
+
+export interface ExtraPassenger {
+  cpf: string;
+}
+
 export interface CreateBookingData {
   tripId: string;
   seatNumber?: number;
   quantity: number;
   paymentMethod: PaymentMethod;
-  couponCode?: string;  // Optional coupon code
-  redeemKm?: boolean;   // Aplicar desconto de Milhas Náuticas
-  children?: number[];  // Idades de menores (0-17); ≤ 9 = gratuitos
+  couponCode?: string;
+  redeemKm?: boolean;
+  children?: ChildPassenger[];
+  passengers?: ExtraPassenger[];
 }
 
 export interface CancelBookingData {

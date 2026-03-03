@@ -1,11 +1,11 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useMemo} from 'react';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {useMyBoats, useCreateTrip, Boat, useCities} from '@domain';
+import {useMyBoats, useBoatStaff, useCreateTrip, Boat, useCities} from '@domain';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 
@@ -41,10 +41,21 @@ export function useCaptainCreateTrip() {
   const toast = useToast();
   const user = useAuthStore(s => s.user);
 
-  const {boats, fetchBoats} = useMyBoats();
+  const isBoatManager = user?.role === 'boat_manager';
+
+  const {boats: ownedBoats, fetchBoats} = useMyBoats();
+  const {staff} = useBoatStaff();
   const {cityNames} = useCities();
   const cityList = cityNames.length > 0 ? cityNames : AM_CITIES;
   const {createTrip, isLoading} = useCreateTrip();
+
+  // boat_manager: barcos atribuídos activos; captain: barcos próprios
+  const boats = useMemo<Boat[]>(() => {
+    if (isBoatManager) {
+      return staff.filter(s => s.isActive).map(s => s.boat as unknown as Boat);
+    }
+    return ownedBoats;
+  }, [isBoatManager, staff, ownedBoats]);
 
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -67,9 +78,19 @@ export function useCaptainCreateTrip() {
   const isPending = user?.capabilities?.pendingVerification ?? false;
 
   useEffect(() => {
-    fetchBoats();
+    if (!isBoatManager) {
+      fetchBoats();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-seleccionar se apenas um barco disponível
+  useEffect(() => {
+    if (boats.length === 1 && !selectedBoatId) {
+      setSelectedBoatId(boats[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boats]);
 
   const selectedBoat = boats.find((b: Boat) => b.id === selectedBoatId);
   const currentCityValue = cityPickerTarget === 'origin' ? origin : destination;

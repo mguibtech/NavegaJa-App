@@ -1,5 +1,5 @@
 import {boatStaffAPI} from './boatStaffAPI';
-import {AddBoatStaffData, BoatStaff, UpdateBoatStaffData} from './boatStaffTypes';
+import {AddBoatStaffData, BoatStaff, UpdateBoatStaffData, UserLookupResult} from './boatStaffTypes';
 
 async function getAll(): Promise<BoatStaff[]> {
   return boatStaffAPI.getAll();
@@ -17,4 +17,12 @@ async function remove(id: string): Promise<void> {
   return boatStaffAPI.remove(id);
 }
 
-export const boatStaffService = {getAll, add, update, remove};
+async function lookupByPhone(phone: string): Promise<UserLookupResult> {
+  return boatStaffAPI.lookupByPhone(phone);
+}
+
+async function lookupByCpf(cpf: string): Promise<UserLookupResult> {
+  return boatStaffAPI.lookupByCpf(cpf);
+}
+
+export const boatStaffService = {getAll, add, update, remove, lookupByPhone, lookupByCpf};

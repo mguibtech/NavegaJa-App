@@ -65,16 +65,20 @@ export function CaptainAnalyticsScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
+        flexDirection='row' 
+        gap='s12'
         style={{paddingTop: top + 16}}>
         <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
           <Icon name="arrow-back" size={24} color={'#FFFFFF' as any} />
         </TouchableOpacityBox>
+        <Box>
         <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
           Analytics
         </Text>
         <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.8)'}} mt="s4">
           Desempenho das suas operações
         </Text>
+        </Box>
       </Box>
 
       {isLoading ? (

@@ -4,19 +4,31 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQueryClient} from '@tanstack/react-query';
 
 import {queryKeys} from '@infra';
-import {boatStaffService, useBoatStaff, BoatStaff, UpdateBoatStaffData} from '@domain';
+import {boatStaffService, useBoatStaff, BoatStaff, UpdateBoatStaffData, UserLookupResult} from '@domain';
 import {useToast} from '@hooks';
+
+import {formatPhone} from '@utils';
 
 import {AppStackParamList} from '@routes';
 
 type AddPerms = {canCreateTrips: boolean; canConfirmPayments: boolean; canManageShipments: boolean};
+export type LookupMode = 'phone' | 'cpf';
+
+function formatCPF(value: string): string {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  let f = numbers;
+  if (numbers.length > 3) {f = `${numbers.slice(0, 3)}.${numbers.slice(3)}`;}
+  if (numbers.length > 6) {f = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;}
+  if (numbers.length > 9) {f = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;}
+  return f;
+}
 
 function httpErrorMsg(e: unknown): string {
   const status = (e as {statusCode?: number})?.statusCode;
-  if (status === 403) return 'Este barco não pertence a você';
-  if (status === 404) return 'Nenhum utilizador com este telefone';
-  if (status === 400) return 'Não pode adicionar-se a si mesmo';
-  if (status === 409) return 'Utilizador já é gestor deste barco';
+  if (status === 403) {return 'Este barco não pertence a você';}
+  if (status === 404) {return 'Nenhum utilizador encontrado';}
+  if (status === 400) {return 'Não pode adicionar-se a si mesmo';}
+  if (status === 409) {return 'Utilizador já é gestor deste barco';}
   return 'Erro ao processar pedido';
 }
 
@@ -35,7 +47,7 @@ export function useCaptainBoatStaff() {
   const [removeLoading, setRemoveLoading] = useState(false);
 
   async function handleRemove() {
-    if (!staffToRemove) return;
+    if (!staffToRemove) {return;}
     setRemoveLoading(true);
     try {
       await boatStaffService.remove(staffToRemove.id);
@@ -48,9 +60,15 @@ export function useCaptainBoatStaff() {
     }
   }
 
-  // Add
+  // ── Add — fluxo dois passos ──────────────────────────────────────────
   const [showAddModal, setShowAddModal] = useState(false);
+  const [addStep, setAddStep] = useState<'search' | 'confirm'>('search');
+  const [lookupMode, setLookupMode] = useState<LookupMode>('phone');
   const [addPhone, setAddPhone] = useState('');
+  const [addCpf, setAddCpf] = useState('');
+  const [lookedUpUser, setLookedUpUser] = useState<UserLookupResult | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [addPerms, setAddPerms] = useState<AddPerms>({
     canCreateTrips: true,
     canConfirmPayments: true,
@@ -58,20 +76,80 @@ export function useCaptainBoatStaff() {
   });
   const [addLoading, setAddLoading] = useState(false);
 
+  function handleOpenAddModal() {
+    setAddStep('search');
+    setLookupMode('phone');
+    setAddPhone('');
+    setAddCpf('');
+    setLookedUpUser(null);
+    setLookupError(null);
+    setAddPerms({canCreateTrips: true, canConfirmPayments: true, canManageShipments: true});
+    setShowAddModal(true);
+  }
+
+  function handleCloseAddModal() {
+    setShowAddModal(false);
+  }
+
+  function handleSetLookupMode(mode: LookupMode) {
+    setLookupMode(mode);
+    setLookupError(null);
+  }
+
+  function handleAddCpfChange(value: string) {
+    setAddCpf(formatCPF(value));
+    if (lookupError) {setLookupError(null);}
+  }
+
+  function handleAddPhoneChange(value: string) {
+    setAddPhone(formatPhone(value));
+    if (lookupError) {setLookupError(null);}
+  }
+
+  const canLookup = lookupMode === 'phone'
+    ? addPhone.replace(/\D/g, '').length >= 8
+    : addCpf.replace(/\D/g, '').length === 11;
+
+  async function handleLookup() {
+    setLookupLoading(true);
+    setLookupError(null);
+    try {
+      let user: UserLookupResult;
+      if (lookupMode === 'phone') {
+        user = await boatStaffService.lookupByPhone(addPhone.replace(/\D/g, ''));
+      } else {
+        user = await boatStaffService.lookupByCpf(addCpf.replace(/\D/g, ''));
+      }
+      setLookedUpUser(user);
+      setAddStep('confirm');
+    } catch (e: any) {
+      const status = (e as {statusCode?: number})?.statusCode;
+      if (status === 404) {
+        setLookupError(`Nenhum utilizador encontrado com este ${lookupMode === 'phone' ? 'telefone' : 'CPF'}`);
+      } else if (status === 401 || status === 403) {
+        setLookupError('Sem permissão para realizar esta operação');
+      } else {
+        setLookupError(e?.message || `Erro ${status ?? 'de rede'}. Verifique a ligação ao servidor.`);
+      }
+    } finally {
+      setLookupLoading(false);
+    }
+  }
+
   async function handleAdd() {
-    if (!addPhone.trim()) return;
+    if (!lookedUpUser) {return;}
     setAddLoading(true);
     try {
       await boatStaffService.add({
-        phone: addPhone.trim(),
+        ...(lookupMode === 'phone'
+          ? {phone: addPhone.replace(/\D/g, '')}
+          : {cpf: addCpf.replace(/\D/g, '')}),
         boatId,
         ...addPerms,
       });
       queryClient.invalidateQueries({queryKey: queryKeys.captain.staff()});
       setShowAddModal(false);
-      setAddPhone('');
-      setAddPerms({canCreateTrips: true, canConfirmPayments: true, canManageShipments: true});
-      showSuccess('Gestor adicionado com sucesso');
+      showSuccess(`${lookedUpUser.name} adicionado à equipa`);
     } catch (e) {
       showError(httpErrorMsg(e));
     } finally {
@@ -95,7 +173,7 @@ export function useCaptainBoatStaff() {
   }
 
   async function handleUpdate() {
-    if (!editingStaff) return;
+    if (!editingStaff) {return;}
     setEditLoading(true);
     try {
       await boatStaffService.update(editingStaff.id, editPerms);
@@ -120,12 +198,24 @@ export function useCaptainBoatStaff() {
     handleRemove,
     // add
     showAddModal,
-    setShowAddModal,
+    addStep,
+    setAddStep,
+    lookupMode,
+    handleSetLookupMode,
     addPhone,
-    setAddPhone,
+    handleAddPhoneChange,
+    addCpf,
+    handleAddCpfChange,
+    lookedUpUser,
+    lookupLoading,
+    lookupError,
+    canLookup,
     addPerms,
     setAddPerms,
     addLoading,
+    handleOpenAddModal,
+    handleCloseAddModal,
+    handleLookup,
     handleAdd,
     // edit
     editingStaff,

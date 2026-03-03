@@ -18,6 +18,8 @@ import {
   floodHubAPI,
   FloodSeverity,
   FLOOD_SEVERITY_ORDER,
+  ChildPassenger,
+  ExtraPassenger,
 } from '@domain';
 import {AppStackParamList} from '@routes';
 import {logBookingStarted} from '@services';
@@ -68,6 +70,11 @@ function isCPFComplete(cpf: string): boolean {
   return cpf.replace(/\D/g, '').length === 11;
 }
 
+export type PassengerModalState =
+  | {visible: false}
+  | {visible: true; type: 'adult'; index: number; cpf: string}
+  | {visible: true; type: 'child'; index: number; age: number};
+
 export function useBookingScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -95,12 +102,26 @@ export function useBookingScreen() {
   const hasFloodRisk =
     floodSeverity === 'SEVERE' || floodSeverity === 'EXTREME';
 
-  const [passengers, setPassengers] = useState(1);
-  const [hasChildren, setHasChildren] = useState(false);
-  const [childrenAges, setChildrenAges] = useState<number[]>([]);
+  // ── Passageiro principal ─────────────────────────────────────────────
   const [passengerName, setPassengerName] = useState('');
   const [passengerCPF, setPassengerCPF] = useState('');
   const [cpfError, setCpfError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  // ── Contagem de adultos ──────────────────────────────────────────────
+  const [passengers, setPassengers] = useState(1);
+
+  // ── Passageiros adultos extras (passengers 2, 3, ...) ───────────────
+  const [extraAdults, setExtraAdults] = useState<ExtraPassenger[]>([]);
+
+  // ── Crianças ─────────────────────────────────────────────────────────
+  const [hasChildren, setHasChildren] = useState(false);
+  const [children, setChildren] = useState<ChildPassenger[]>([]);
+
+  // ── Modal de passageiro ───────────────────────────────────────────────
+  const [passengerModal, setPassengerModal] = useState<PassengerModalState>({visible: false});
+
+  // ── Pagamento / descontos ─────────────────────────────────────────────
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PaymentMethod.CREDIT_CARD,
   );
@@ -118,6 +139,7 @@ export function useBookingScreen() {
     setPaymentMethod(method);
     AsyncStorage.setItem(PAYMENT_PREF_KEY, method).catch(() => {});
   };
+
   const [redeemKm, setRedeemKm] = useState(false);
   const {kmStats} = useKmStats();
 
@@ -129,7 +151,6 @@ export function useBookingScreen() {
   const [cpfErrorMessage, setCpfErrorMessage] = useState('');
   const [showBookingErrorModal, setShowBookingErrorModal] = useState(false);
   const [bookingErrorMessage, setBookingErrorMessage] = useState('');
-  const [nameError, setNameError] = useState<string | null>(null);
 
   const {calculate, isLoading: isCalculatingPrice} = useCalculatePrice();
   const couponValidation = useCouponValidation();
@@ -139,15 +160,27 @@ export function useBookingScreen() {
     if (tripError) { setShowLoadErrorModal(true); }
   }, [tripError]);
 
-  const totalPassengers = passengers + childrenAges.length;
+  const totalPassengers = passengers + children.length;
 
-  // Calculate price whenever trip, passengers, children, coupon or km toggle changes
+  // Sincroniza extraAdults com o número de adultos (passengers - 1)
+  useEffect(() => {
+    const extraCount = passengers - 1;
+    setExtraAdults(prev => {
+      if (prev.length === extraCount) return prev;
+      if (prev.length < extraCount) {
+        return [...prev, ...Array(extraCount - prev.length).fill({cpf: ''})];
+      }
+      return prev.slice(0, extraCount);
+    });
+  }, [passengers]);
+
+  // Recalcula preço sempre que relevante mudar
   useEffect(() => {
     if (trip) {
       calculatePrice();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip, passengers, childrenAges, couponValidation.state, redeemKm]);
+  }, [trip, passengers, children, couponValidation.state, redeemKm]);
 
   async function calculatePrice() {
     if (!trip) return;
@@ -163,7 +196,7 @@ export function useBookingScreen() {
         quantity: totalPassengers,
         couponCode,
         ...(redeemKm ? {redeemKm: true} : {}),
-        ...(hasChildren && childrenAges.length > 0 ? {children: childrenAges} : {}),
+        ...(hasChildren && children.length > 0 ? {children} : {}),
       });
       setPriceBreakdown(breakdown);
     } catch (_error) {
@@ -192,38 +225,89 @@ export function useBookingScreen() {
     couponValidation.remove();
   }
 
+  // ── Controles de adultos ─────────────────────────────────────────────
+
   const handleIncrement = () => {
-    if (trip && passengers < trip.availableSeats - childrenAges.length) {
+    if (trip && passengers < trip.availableSeats - children.length) {
       setPassengers(passengers + 1);
     }
   };
 
+  const handleDecrement = () => {
+    if (passengers > 1) setPassengers(passengers - 1);
+  };
+
+  // ── Controles de crianças ────────────────────────────────────────────
+
   const handleToggleChildren = () => {
     setHasChildren(prev => {
-      if (prev) { setChildrenAges([]); }
+      if (prev) { setChildren([]); }
       return !prev;
     });
   };
 
   const handleAddChild = () => {
     if (!trip) return;
-    if (childrenAges.length < trip.availableSeats - passengers) {
-      setChildrenAges(prev => [...prev, 0]);
+    if (children.length < trip.availableSeats - passengers) {
+      setChildren(prev => [...prev, {age: 0}]);
     }
   };
 
   const handleRemoveChild = (index: number) => {
-    setChildrenAges(prev => prev.filter((_, i) => i !== index));
+    setChildren(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleChildAgeChange = (index: number, age: number) => {
-    if (age < 0 || age > 17) return;
-    setChildrenAges(prev => prev.map((a, i) => (i === index ? age : a)));
-  };
+  // ── Modal de passageiro ───────────────────────────────────────────────
 
-  const handleDecrement = () => {
-    if (passengers > 1) setPassengers(passengers - 1);
-  };
+  function openAdultModal(index: number) {
+    const adult = extraAdults[index] ?? {cpf: ''};
+    setPassengerModal({
+      visible: true,
+      type: 'adult',
+      index,
+      cpf: adult.cpf,
+    });
+  }
+
+  function openChildModal(index: number) {
+    const child = children[index] ?? {age: 0};
+    setPassengerModal({
+      visible: true,
+      type: 'child',
+      index,
+      age: child.age,
+    });
+  }
+
+  function handleClosePassengerModal() {
+    setPassengerModal({visible: false});
+  }
+
+  function handleConfirmPassengerModal(data: {cpf?: string; age?: number}) {
+    if (!passengerModal.visible) return;
+
+    if (passengerModal.type === 'adult') {
+      setExtraAdults(prev => {
+        const updated = [...prev];
+        updated[passengerModal.index] = {
+          cpf: data.cpf ?? '',
+        };
+        return updated;
+      });
+    } else {
+      setChildren(prev => {
+        const updated = [...prev];
+        updated[passengerModal.index] = {
+          age: data.age ?? 0,
+        };
+        return updated;
+      });
+    }
+
+    setPassengerModal({visible: false});
+  }
+
+  // ── CPF do passageiro principal ───────────────────────────────────────
 
   const handleCPFChange = (value: string) => {
     const formatted = formatCPFUtil(value);
@@ -267,6 +351,8 @@ export function useBookingScreen() {
     }
   };
 
+  // ── Confirmar reserva ─────────────────────────────────────────────────
+
   const handleConfirmBooking = async () => {
     if (!passengerName.trim()) {
       setNameError('Por favor, informe o nome do passageiro');
@@ -275,7 +361,7 @@ export function useBookingScreen() {
 
     // Validação: máx. 3 crianças grátis por reserva
     if (hasChildren) {
-      const freeChildren = childrenAges.filter(age => age <= 9).length;
+      const freeChildren = children.filter(c => c.age <= 9).length;
       if (freeChildren > 3) {
         setBookingErrorMessage(
           'Máximo de 3 crianças grátis por reserva. Para grupos maiores, contate o capitão.',
@@ -297,13 +383,17 @@ export function useBookingScreen() {
           ? couponValidation.state.data.code
           : undefined;
 
+      // Adultos extras preenchidos (filtra os sem CPF)
+      const filledExtraAdults = extraAdults.filter(a => a.cpf.trim());
+
       const booking = await createBooking({
         tripId: trip!.id,
         quantity: totalPassengers,
         paymentMethod,
         couponCode,
         ...(redeemKm ? {redeemKm: true} : {}),
-        ...(hasChildren && childrenAges.length > 0 ? {children: childrenAges} : {}),
+        ...(hasChildren && children.length > 0 ? {children} : {}),
+        ...(filledExtraAdults.length > 0 ? {passengers: filledExtraAdults} : {}),
       });
 
       // Aviso de cheia — reserva já confirmada, só informa
@@ -382,8 +472,10 @@ export function useBookingScreen() {
     isLoadingTrip,
     passengers,
     totalPassengers,
+    extraAdults,
     hasChildren,
-    childrenAges,
+    children,
+    passengerModal,
     passengerName,
     nameError,
     handleNameChange,
@@ -409,7 +501,10 @@ export function useBookingScreen() {
     handleToggleChildren,
     handleAddChild,
     handleRemoveChild,
-    handleChildAgeChange,
+    openAdultModal,
+    openChildModal,
+    handleClosePassengerModal,
+    handleConfirmPassengerModal,
     handleCPFChange,
     handleConfirmBooking,
     handleApplyCoupon,

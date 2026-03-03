@@ -132,6 +132,14 @@ export function useCaptainEditBoat() {
     }
   }
 
+  function handleRemoveSavedPhoto(index: number) {
+    setSavedPhotos(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleRemoveSavedDocPhoto(index: number) {
+    setSavedDocPhotos(prev => prev.filter((_, i) => i !== index));
+  }
+
   function goBack() {
     navigation.goBack();
   }
@@ -164,6 +172,8 @@ export function useCaptainEditBoat() {
     rejectionReason,
     // handlers
     handleSubmit,
+    handleRemoveSavedPhoto,
+    handleRemoveSavedDocPhoto,
     goBack,
   };
 }

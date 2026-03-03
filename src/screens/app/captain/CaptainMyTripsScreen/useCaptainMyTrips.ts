@@ -47,7 +47,8 @@ export function useCaptainMyTrips() {
     if (filterTab === 'completed') {
       return trip.status === TripStatus.COMPLETED || trip.status === TripStatus.CANCELLED;
     }
-    return true;
+    // "Todas" — exclui canceladas
+    return trip.status !== TripStatus.CANCELLED;
   });
 
   const {visibleItems: visibleTrips, hasMore: hasMoreTrips, loadMore: loadMoreTrips} =
