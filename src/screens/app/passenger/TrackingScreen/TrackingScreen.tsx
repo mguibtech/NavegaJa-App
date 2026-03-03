@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
+import {Modal, ScrollView, StyleSheet, ActivityIndicator} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import MapView, {Marker, Polyline, Polygon, PROVIDER_GOOGLE} from 'react-native-maps';
 
@@ -14,7 +14,7 @@ import {
   DangerZone,
   DangerZoneData,
   SafetyOverlay,
-  EmergencyButton,
+  SosHoldButton,
   InfoModal,
   ConfirmationModal,
 } from '@components';
@@ -98,6 +98,12 @@ export function TrackingScreen() {
     inundation,
     RISK_FILL,
     RISK_STROKE,
+    sosTriggering,
+    showSosResultModal,
+    unlinkedSosContacts,
+    handleSosTrigger,
+    handleWhatsApp,
+    handleCloseSosResult,
   } = useTrackingScreen();
 
   if (isLoading && !trackingInfo) {
@@ -202,7 +208,7 @@ export function TrackingScreen() {
       )}
 
       <ScrollView
-        contentContainerStyle={{padding: 24}}
+        contentContainerStyle={{padding: 24, paddingBottom: 148}}
         showsVerticalScrollIndicator={false}>
 
         {/* Trip not started yet banner */}
@@ -541,8 +547,16 @@ export function TrackingScreen() {
         </Box>
       </ScrollView>
 
-      {/* Emergency SOS Button */}
-      <EmergencyButton onPress={handleSosPress} />
+      {/* SOS Hold Button */}
+      <Box
+        position="absolute"
+        bottom={24}
+        left={0}
+        right={0}
+        alignItems="center"
+        style={{pointerEvents: 'box-none'}}>
+        <SosHoldButton onTrigger={handleSosTrigger} disabled={sosTriggering} />
+      </Box>
 
       {/* Error Modal */}
       <InfoModal
@@ -604,6 +618,80 @@ export function TrackingScreen() {
         buttonText="OK"
         onClose={() => setShowSafetyModal(false)}
       />
+
+      {/* SOS Result Modal */}
+      <Modal
+        visible={showSosResultModal}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseSosResult}>
+        <Box
+          flex={1}
+          style={{backgroundColor: 'rgba(0,0,0,0.6)'}}
+          justifyContent="flex-end">
+          <Box
+            backgroundColor="surface"
+            padding="s24"
+            paddingBottom="s32"
+            style={{borderTopLeftRadius: 20, borderTopRightRadius: 20}}>
+            {/* Header */}
+            <Box alignItems="center" mb="s20">
+              <Box
+                width={64}
+                height={64}
+                borderRadius="s48"
+                backgroundColor="dangerBg"
+                alignItems="center"
+                justifyContent="center"
+                mb="s12">
+                <Icon name="crisis-alert" size={32} color="danger" />
+              </Box>
+              <Text preset="headingSmall" color="text" bold>
+                SOS Enviado!
+              </Text>
+              <Text
+                preset="paragraphSmall"
+                color="textSecondary"
+                mt="s8"
+                style={{textAlign: 'center'}}>
+                {unlinkedSosContacts.length > 0
+                  ? 'A equipa NavegaJá foi notificada. Notifique os restantes contactos via WhatsApp:'
+                  : 'A equipa NavegaJá e os seus contactos foram notificados.'}
+              </Text>
+            </Box>
+
+            {/* Unlinked contacts — WhatsApp buttons */}
+            {unlinkedSosContacts.length > 0 && (
+              <Box mb="s20">
+                {unlinkedSosContacts.map(contact => (
+                  <TouchableOpacityBox
+                    key={contact.id}
+                    backgroundColor="successBg"
+                    borderRadius="s12"
+                    padding="s12"
+                    mb="s8"
+                    flexDirection="row"
+                    alignItems="center"
+                    onPress={() => handleWhatsApp(contact)}>
+                    <Icon name="phone" size={20} color="success" />
+                    <Box flex={1} ml="s12">
+                      <Text preset="paragraphMedium" color="text" bold>
+                        {contact.name}
+                      </Text>
+                      <Text preset="paragraphSmall" color="textSecondary">
+                        {contact.phone}
+                      </Text>
+                    </Box>
+                    <Icon name="open-in-new" size={16} color="success" />
+                  </TouchableOpacityBox>
+                ))}
+              </Box>
+            )}
+
+            <Button title="Fechar" onPress={handleCloseSosResult} />
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 }

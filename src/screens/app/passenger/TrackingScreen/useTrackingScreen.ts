@@ -5,8 +5,9 @@ import MapView from 'react-native-maps';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {SosAlert, SosStatus, useTrackBooking, TrackingStatus, useSosAlert, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE} from '@domain';
+import {SosAlert, SosStatus, SosType, useTrackBooking, TrackingStatus, useSosAlert, usePersonalContacts, PersonalContact, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE} from '@domain';
 import {AppStackParamList} from '@routes';
+import {useToast} from '@hooks';
 import {api} from '@api';
 import {API_ENDPOINTS} from '@api/config';
 
@@ -23,13 +24,18 @@ export function useTrackingScreen() {
   const mapRef = useRef<MapView>(null);
 
   const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
-  const {alerts} = useSosAlert();
+  const toast = useToast();
+  const {alerts, createAlert} = useSosAlert();
+  const {contacts} = usePersonalContacts();
   const {label: locationLabel, fetchLabel} = useLocationLabel();
   const mySosAlerts = alerts.filter(a => a.status === SosStatus.ACTIVE);
 
   const [showSosAlerts, setShowSosAlerts] = useState(true);
   const [showDangerZones, setShowDangerZones] = useState(true);
   const [livePosition, setLivePosition] = useState<{latitude: number; longitude: number} | null>(null);
+  const [sosTriggering, setSosTriggering] = useState(false);
+  const [showSosResultModal, setShowSosResultModal] = useState(false);
+  const [unlinkedSosContacts, setUnlinkedSosContacts] = useState<PersonalContact[]>([]);
 
   // Modal state
   const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
@@ -123,6 +129,40 @@ export function useTrackingScreen() {
   const handleSosPress = () => {
     navigation.navigate('SosAlert', {tripId: bookingId});
   };
+
+  async function handleSosTrigger() {
+    if (sosTriggering) {return;}
+    setSosTriggering(true);
+    try {
+      await createAlert(SosType.GENERAL, {
+        tripId: trip?.id,
+        description: 'SOS acionado pelo passageiro',
+      });
+      const unlinked = contacts.filter(c => !c.linkedUserId);
+      setUnlinkedSosContacts(unlinked);
+      setShowSosResultModal(true);
+    } catch {
+      toast.showError('Erro ao enviar SOS. Verifique a sua ligação e tente novamente.');
+    } finally {
+      setSosTriggering(false);
+    }
+  }
+
+  function handleWhatsApp(contact: PersonalContact) {
+    const lat = currentPosition.latitude.toFixed(6);
+    const lng = currentPosition.longitude.toFixed(6);
+    const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+    const msg = `🆘 EMERGÊNCIA! Preciso de ajuda urgente! A minha localização: ${mapsUrl}`;
+    Linking.openURL(
+      `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(msg)}`,
+    ).catch(() => {
+      Linking.openURL(`sms:${contact.phone}?body=${encodeURIComponent(msg)}`);
+    });
+  }
+
+  function handleCloseSosResult() {
+    setShowSosResultModal(false);
+  }
 
   const handleSosMarkerPress = (alert: SosAlert) => {
     setSelectedSosAlert(alert);
@@ -273,5 +313,11 @@ export function useTrackingScreen() {
     inundation,
     RISK_FILL,
     RISK_STROKE,
+    sosTriggering,
+    showSosResultModal,
+    unlinkedSosContacts,
+    handleSosTrigger,
+    handleWhatsApp,
+    handleCloseSosResult,
   };
 }
