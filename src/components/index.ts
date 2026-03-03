@@ -45,6 +45,7 @@ export {SosMarker} from './SosMarker/SosMarker';
 export {DangerZone} from './DangerZone/DangerZone';
 export type {DangerZoneData} from './DangerZone/DangerZone';
 export {SafetyOverlay} from './SafetyOverlay/SafetyOverlay';
+export {SosHoldButton} from './SosHoldButton/SosHoldButton';
 
 export {UserAvatar} from './UserAvatar/UserAvatar';
 export type {UserAvatarProps, AvatarSize, DiceBearStyle} from './UserAvatar/UserAvatar';

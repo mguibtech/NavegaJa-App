@@ -5,6 +5,8 @@
 
 import {api} from '../../../api';
 import {
+  PersonalContact,
+  CreatePersonalContactData,
   EmergencyContact,
   SafetyChecklist,
   CreateSafetyChecklistData,
@@ -14,6 +16,20 @@ import {
   CreateSosAlertData,
   ResolveSosAlertData,
 } from './safetyTypes';
+
+// ========== PERSONAL CONTACTS ==========
+
+async function getPersonalContacts(): Promise<PersonalContact[]> {
+  return api.get<PersonalContact[]>('/safety/personal-contacts');
+}
+
+async function createPersonalContact(data: CreatePersonalContactData): Promise<PersonalContact> {
+  return api.post<PersonalContact>('/safety/personal-contacts', data);
+}
+
+async function deletePersonalContact(id: string): Promise<void> {
+  await api.delete(`/safety/personal-contacts/${id}`);
+}
 
 // ========== EMERGENCY CONTACTS ==========
 
@@ -178,6 +194,9 @@ async function deleteSosAlert(id: string): Promise<void> {
 }
 
 export const safetyAPI = {
+  getPersonalContacts,
+  createPersonalContact,
+  deletePersonalContact,
   getEmergencyContacts,
   seedEmergencyContacts,
   createChecklist,

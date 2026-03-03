@@ -3,6 +3,21 @@
  * Sistema de segurança para navegação fluvial
  */
 
+// ========== PERSONAL EMERGENCY CONTACTS ==========
+
+export interface PersonalContact {
+  id: string;
+  name: string;
+  phone: string;
+  linkedUserId?: string | null;
+  createdAt: string;
+}
+
+export interface CreatePersonalContactData {
+  name: string;
+  phone: string;
+}
+
 // ========== EMERGENCY CONTACTS ==========
 
 export interface EmergencyContact {

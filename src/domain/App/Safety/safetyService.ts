@@ -10,6 +10,8 @@ import Geolocation from '@react-native-community/geolocation';
 
 import {safetyAPI} from './safetyAPI';
 import {
+  PersonalContact,
+  CreatePersonalContactData,
   EmergencyContact,
   SafetyChecklist,
   CreateSafetyChecklistData,
@@ -24,6 +26,20 @@ import {
 const EMERGENCY_CONTACTS_KEY = '@navegaja:emergency_contacts';
 const SOS_ALERTS_KEY = '@navegaja:sos_alerts';
 const LAST_KNOWN_LOCATION_KEY = '@navegaja:last_known_location';
+
+// ========== PERSONAL CONTACTS ==========
+
+async function getPersonalContacts(): Promise<PersonalContact[]> {
+  return safetyAPI.getPersonalContacts();
+}
+
+async function createPersonalContact(data: CreatePersonalContactData): Promise<PersonalContact> {
+  return safetyAPI.createPersonalContact(data);
+}
+
+async function deletePersonalContact(id: string): Promise<void> {
+  return safetyAPI.deletePersonalContact(id);
+}
 
 // ========== EMERGENCY CONTACTS ==========
 
@@ -439,6 +455,9 @@ async function getActiveAlert(): Promise<SosAlert | null> {
 }
 
 export const safetyService = {
+  getPersonalContacts,
+  createPersonalContact,
+  deletePersonalContact,
   getEmergencyContacts,
   loadEmergencyContactsOffline,
   createChecklist,

@@ -48,6 +48,7 @@ type SharedParamList = {
   Terms: undefined;
   Privacy: undefined;
   EmergencyContacts: undefined;
+  PersonalContacts: undefined;
   SosAlert: {tripId?: string};
 };
 

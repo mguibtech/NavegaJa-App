@@ -44,6 +44,7 @@ export const queryKeys = {
   safety: {
     all: ['safety'] as const,
     contacts: () => [...queryKeys.safety.all, 'contacts'] as const,
+    personalContacts: () => [...queryKeys.safety.all, 'personal-contacts'] as const,
     sosAlerts: () => [...queryKeys.safety.all, 'sos'] as const,
     checklist: (tripId: string) => [...queryKeys.safety.all, 'checklist', tripId] as const,
   },

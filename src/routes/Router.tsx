@@ -139,6 +139,15 @@ function handleNotificationNavigation(data: Record<string, string>) {
       navigationRef.navigate('Referrals');
       break;
 
+    case 'sos_personal_contact':
+      // Recebemos SOS de um contacto pessoal — abre mapa com localização
+      if (data.lat && data.lng) {
+        navigationRef.navigate('Tracking', {bookingId: data.bookingId ?? ''});
+      } else {
+        navigationRef.navigate('HomeTabs', undefined);
+      }
+      break;
+
     case 'boat_manager_assigned':
       // Utilizador foi adicionado como gestor — abre dashboard (role já actualizado)
       navigationRef.navigate('HomeTabs', undefined);
@@ -335,6 +344,18 @@ export function Router() {
           queryClient.invalidateQueries({queryKey: queryKeys.shipments.timeline(data.shipmentId)});
         }
         queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});
+      } else if (data?.type === 'sos_personal_contact') {
+        // Um contacto pessoal acionou SOS — alerta crítico em foreground
+        const senderName = data.senderName || 'Um contacto';
+        const alertType = data.alertType || 'emergência';
+        showError(`🆘 ${senderName} acionou SOS (${alertType})! Toque para ver localização.`);
+        if (data.lat && data.lng) {
+          setTimeout(() => {
+            if (navigationRef.isReady()) {
+              navigationRef.navigate('HomeTabs', undefined);
+            }
+          }, 2000);
+        }
       } else if (data?.type === 'boat_manager_assigned') {
         // Fui adicionado como gestor de um barco — actualiza JWT + role/capabilities
         await refreshTokensIfNeeded(data);

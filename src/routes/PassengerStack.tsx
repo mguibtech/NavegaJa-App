@@ -43,6 +43,7 @@ import {
   TermsScreen,
   PrivacyScreen,
   EmergencyContactsScreen,
+  PersonalContactsScreen,
   SosAlertScreen,
   ChatScreen,
   ConversationsScreen,
@@ -160,6 +161,7 @@ export function PassengerStack() {
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
+      <Stack.Screen name="PersonalContacts" component={PersonalContactsScreen} />
       <Stack.Screen name="SosAlert" component={SosAlertScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Conversations" component={ConversationsScreen} />

@@ -17,6 +17,7 @@ export const MENU_ITEMS = [
   {id: 'my-reviews', icon: 'star-rate', title: 'Minhas Avaliações', subtitle: 'Avaliações enviadas e recebidas', color: 'secondary' as const},
   {id: 'payment', icon: 'credit-card', title: 'Formas de Pagamento', subtitle: 'Gerencie seus métodos de pagamento', color: 'secondary' as const},
   {id: 'notifications', icon: 'notifications', title: 'Notificações', subtitle: 'Preferências de notificação', color: 'primary' as const},
+  {id: 'personal-contacts', icon: 'contact-emergency', title: 'Contactos de Emergência', subtitle: 'Pessoas a avisar em caso de SOS', color: 'danger' as const},
   {id: 'help', icon: 'help-outline', title: 'Ajuda e Suporte', subtitle: 'Tire suas dúvidas', color: 'secondary' as const},
   {id: 'terms', icon: 'description', title: 'Termos de Uso', subtitle: 'Leia nossos termos', color: 'primary' as const},
   {id: 'privacy', icon: 'lock-outline', title: 'Política de Privacidade', subtitle: 'Entenda como usamos seus dados', color: 'secondary' as const},
@@ -24,6 +25,7 @@ export const MENU_ITEMS = [
 
 export const MENU_GROUPS = [
   {title: 'Conta', items: ['edit-profile', 'gamification', 'referrals', 'messages', 'my-reviews', 'payment', 'notifications']},
+  {title: 'Segurança', items: ['personal-contacts']},
   {title: 'Informações', items: ['help', 'terms', 'privacy']},
 ];
 
@@ -51,6 +53,7 @@ export function useProfileScreen() {
       case 'my-reviews': navigation.navigate('MyReviews'); break;
       case 'payment': navigation.navigate('PaymentMethods'); break;
       case 'notifications': navigation.navigate('Notifications'); break;
+      case 'personal-contacts': navigation.navigate('PersonalContacts'); break;
       case 'help': navigation.navigate('Help'); break;
       case 'terms': navigation.navigate('Terms'); break;
       case 'privacy': navigation.navigate('Privacy'); break;
