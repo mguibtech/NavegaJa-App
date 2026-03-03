@@ -383,7 +383,7 @@ export function CaptainCreateTripScreen() {
                             backgroundColor={isSelected ? 'secondaryBg' : 'background'}
                             flexDirection="row"
                             alignItems="center"
-                            mr={isUnverified ? 's8' : 's0'}>
+                            mr={isUnverified ? 's8' : undefined}>
                             <Icon name="event-seat" size={12} color={isSelected ? 'secondary' : 'textSecondary'} />
                             <Text
                               preset="paragraphCaptionSmall"

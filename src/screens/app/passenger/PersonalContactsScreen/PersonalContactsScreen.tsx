@@ -15,7 +15,9 @@ import {useNavigation} from '@react-navigation/native';
 export function PersonalContactsScreen() {
   const navigation = useNavigation();
   const toast = useToast();
+  const MAX_CONTACTS = 5;
   const {contacts, isLoading, addContact, isAdding, removeContact} = usePersonalContacts();
+  const isAtMax = contacts.length >= MAX_CONTACTS;
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -94,9 +96,23 @@ export function PersonalContactsScreen() {
           </Box>
 
           {/* Add form */}
-          <Text preset="paragraphMedium" color="text" bold mb="s12">
-            Adicionar contacto
-          </Text>
+          <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
+            <Text preset="paragraphMedium" color="text" bold>
+              Adicionar contacto
+            </Text>
+            <Text preset="paragraphSmall" color={isAtMax ? 'danger' : 'textSecondary'}>
+              {contacts.length}/{MAX_CONTACTS}
+            </Text>
+          </Box>
+
+          {isAtMax && (
+            <Box backgroundColor="warningBg" borderRadius="s12" padding="s12" mb="s16" flexDirection="row" alignItems="center">
+              <Icon name="info" size={16} color="warning" />
+              <Text preset="paragraphSmall" color="warning" ml="s8" flex={1}>
+                Limite de {MAX_CONTACTS} contactos atingido. Remova um para adicionar outro.
+              </Text>
+            </Box>
+          )}
           <Box mb="s12">
             <TextInput
               placeholder="Nome (ex: Mãe, João Silva)"
@@ -119,7 +135,7 @@ export function PersonalContactsScreen() {
               title={isAdding ? 'A adicionar…' : 'Adicionar Contacto'}
               onPress={handleAdd}
               loading={isAdding}
-              disabled={isAdding}
+              disabled={isAdding || isAtMax}
               leftIcon="person-add"
             />
           </Box>
