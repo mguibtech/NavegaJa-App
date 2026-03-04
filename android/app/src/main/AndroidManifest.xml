@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- SOS Foreground Service (Volume Button) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
     <!-- Camera & Storage for Shipments -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -53,5 +58,15 @@
             <data android:scheme="navegaja" android:host="shipment" />
         </intent-filter>
       </activity>
+
+      <!-- SOS Foreground Service — Volume Button Emergency -->
+      <service
+        android:name=".SosVolumeService"
+        android:exported="false"
+        android:foregroundServiceType="specialUse">
+        <property
+          android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+          android:value="NavegaJá SOS — Detecção de emergência por botão físico de volume" />
+      </service>
     </application>
 </manifest>

@@ -1,24 +1,98 @@
-import React, {useState} from 'react';
-import {Linking, Modal} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  AppState,
+  AppStateStatus,
+  DeviceEventEmitter,
+  Linking,
+  Modal,
+  NativeModules,
+  Platform,
+} from 'react-native';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
 import {PersonalContact, SosType, usePersonalContacts, useSosAlert} from '@domain';
 import {useToast, useVolumeButtonSos} from '@hooks';
+import {useAuthStore} from '@store';
+import {authStorage} from '@services';
+import {API_BASE_URL} from '../../api/config';
+
+const {SosVolumeModule} = NativeModules;
+const isAndroid = Platform.OS === 'android';
 
 /**
- * Componente global que vive na raiz da app (apenas quando autenticado).
- * Activa o SOS por botão físico (Volume ↓ 3×) em qualquer tela.
- * Mostra modal de resultado com botões WhatsApp para contactos não vinculados.
+ * Componente global montado na raiz do AppStack.
+ *
+ * Estratégia por estado do app:
+ *  - Foreground (active)   → useVolumeButtonSos (JS) detecta volume ↓ 3×
+ *  - Background / fechado  → SosVolumeService (Kotlin) detecta volume ↓ 3×
+ *
+ * Transição:
+ *  - active → background : para JS listener, inicia Foreground Service
+ *  - background → active : para Foreground Service, retoma JS listener
  */
 export function GlobalSosHandler() {
   const toast = useToast();
   const {createAlert} = useSosAlert();
   const {contacts} = usePersonalContacts();
+  const {isLoggedIn} = useAuthStore();
 
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [sosTriggering, setSosTriggering] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [unlinkedContacts, setUnlinkedContacts] = useState<PersonalContact[]>([]);
 
+  const isActive = appState === 'active';
+
+  // ── Credenciais → SharedPreferences nativas ─────────────────────────────────
+  useEffect(() => {
+    if (!isAndroid || !SosVolumeModule || !isLoggedIn) {return;}
+    authStorage.getToken().then(token => {
+      if (token) {
+        SosVolumeModule.saveCredentials(token, API_BASE_URL);
+      }
+    });
+  }, [isLoggedIn]);
+
+  // Limpa credenciais e para serviço no logout
+  useEffect(() => {
+    if (!isAndroid || !SosVolumeModule) {return;}
+    if (!isLoggedIn) {
+      SosVolumeModule.clearCredentials?.();
+      SosVolumeModule.stopService();
+    }
+  }, [isLoggedIn]);
+
+  // ── AppState — troca entre JS listener e Foreground Service ─────────────────
+  useEffect(() => {
+    if (!isAndroid || !SosVolumeModule || !isLoggedIn) {return;}
+
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      setAppState(next);
+      if (next === 'background') {
+        SosVolumeModule.startService();
+      } else if (next === 'active') {
+        SosVolumeModule.stopService();
+      }
+    });
+
+    return () => sub.remove();
+  }, [isLoggedIn]);
+
+  // ── Evento do Foreground Service (JS ainda vivo em background) ───────────────
+  useEffect(() => {
+    if (!isAndroid) {return;}
+    const sub = DeviceEventEmitter.addListener('SosTriggerFromBackground', () => {
+      // SOS já enviado pelo serviço nativo — mostra modal WhatsApp p/ contactos sem app
+      const unlinked = contacts.filter(c => !c.linkedUserId);
+      setUnlinkedContacts(unlinked);
+      if (unlinked.length > 0) {
+        setShowResultModal(true);
+      }
+    });
+    return () => sub.remove();
+  }, [contacts]);
+
+  // ── SOS trigger (Volume ↓ em foreground ou SosHoldButton virtual) ────────────
   async function handleSosTrigger() {
     if (sosTriggering) {return;}
     setSosTriggering(true);
@@ -44,14 +118,14 @@ export function GlobalSosHandler() {
     });
   }
 
-  // Volume ↓ 3× em 2s → dispara SOS em qualquer tela (Android)
+  // Volume ↓ 3× — activo apenas em foreground (background usa o serviço nativo)
   useVolumeButtonSos({
     onTrigger: handleSosTrigger,
     onHint: remaining =>
       toast.showInfo(
         `SOS: prima mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume ↓`,
       ),
-    enabled: !sosTriggering,
+    enabled: isActive && !sosTriggering,
   });
 
   return (
