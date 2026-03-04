@@ -6,7 +6,7 @@ import messaging from '@react-native-firebase/messaging';
 import {NavigationContainer} from '@react-navigation/native';
 import {useQueryClient} from '@tanstack/react-query';
 
-import {Box} from '@components';
+import {Box, GlobalSosHandler} from '@components';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 import {queryKeys} from '@infra';
@@ -431,7 +431,12 @@ export function Router() {
           pendingNavigationRef.current = null;
         }
       }}>
-      {isLoggedIn ? <AppStack /> : <AuthStack />}
+      {isLoggedIn ? (
+        <>
+          <AppStack />
+          <GlobalSosHandler />
+        </>
+      ) : <AuthStack />}
     </NavigationContainer>
   );
 }

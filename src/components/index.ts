@@ -57,3 +57,5 @@ export {RiverDetailModal} from './RiverDetailModal/RiverDetailModal';
 
 export {KycBanner} from './KycBanner/KycBanner';
 export {ScreenHeader} from './ScreenHeader/ScreenHeader';
+
+export {GlobalSosHandler} from './GlobalSosHandler/GlobalSosHandler';
