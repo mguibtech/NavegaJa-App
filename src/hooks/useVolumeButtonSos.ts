@@ -46,6 +46,11 @@ export function useVolumeButtonSos({
       return;
     }
 
+    // Guard: native module not linked until the app is rebuilt
+    if (!VolumeManager || typeof VolumeManager.showNativeVolumeUI !== 'function') {
+      return;
+    }
+
     // Suppress the native volume slider while this hook is active
     VolumeManager.showNativeVolumeUI({enabled: false});
 
