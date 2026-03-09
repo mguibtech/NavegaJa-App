@@ -10,6 +10,7 @@ import {
 import {Box, Button, Icon, ScreenHeader, Text, TextInput, TouchableOpacityBox} from '@components';
 import {usePersonalContacts} from '@domain';
 import {useToast} from '@hooks';
+import {formatPhone} from '@utils';
 import {useNavigation} from '@react-navigation/native';
 
 export function PersonalContactsScreen() {
@@ -123,10 +124,11 @@ export function PersonalContactsScreen() {
           </Box>
           <Box mb="s16">
             <TextInput
-              placeholder="Número de telemóvel"
+              placeholder="(92) 99999-9999"
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={text => setPhone(formatPhone(text))}
               keyboardType="phone-pad"
+              maxLength={15}
               leftIcon="phone"
             />
           </Box>
@@ -193,7 +195,7 @@ export function PersonalContactsScreen() {
                     </Text>
                     <Box flexDirection="row" alignItems="center" mt="s4">
                       <Text preset="paragraphSmall" color="textSecondary">
-                        {contact.phone}
+                        {formatPhone(contact.phone)}
                       </Text>
                       {contact.linkedUserId && (
                         <Box

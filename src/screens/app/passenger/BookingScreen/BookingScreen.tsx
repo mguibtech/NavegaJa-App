@@ -572,7 +572,13 @@ export function BookingScreen() {
           visible
           type="adult"
           index={passengerModal.index}
+          name={passengerModal.name}
           cpf={passengerModal.cpf}
+          mainCpf={passengerCPF.replace(/\D/g, '')}
+          otherCpfs={extraAdults
+            .filter((_, i) => i !== passengerModal.index)
+            .map(a => a.cpf)
+            .filter(Boolean)}
           onConfirm={data => handleConfirmPassengerModal(data)}
           onClose={handleClosePassengerModal}
         />

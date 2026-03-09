@@ -167,6 +167,8 @@ export const API_ENDPOINTS = {
   LOCATION_CITIES_BY_UF: (uf: string) => `/locations/cities/${uf}`,
   LOCATION_LABEL: '/locations/location-label',
   LOCATION_REVERSE_GEOCODE: '/locations/reverse-geocode',
+  LOCATION_GEOCODE: '/trips/geocode',
+  LOCATION_SUGGEST: '/locations/suggest',
 
   // ── Weather ───────────────────────────────────────────────────────────────
   WEATHER_CURRENT: '/weather/current',

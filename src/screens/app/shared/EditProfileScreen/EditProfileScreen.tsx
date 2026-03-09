@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {useTheme} from '@shopify/restyle';
 
-import {Box, Button, ConfirmationModal, Icon, ScreenHeader, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
+import {Box, Button, ConfirmationModal, Icon, MapLocationPicker, ScreenHeader, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
 import {apiImageSource} from '@api/config';
 import {Theme} from '@theme';
 
@@ -18,7 +18,13 @@ export function EditProfileScreen() {
     email, setEmail,
     cpf,
     city, setCity,
+    gender, setGender,
     showCityPicker, setShowCityPicker,
+    cityIsCustom, setCityIsCustom,
+    showLocationPicker, setShowLocationPicker,
+    homeCommunityLabel,
+    homeLat, homeLng,
+    handleLocationConfirm,
     licensePhotoUrl, setLicensePhotoUrl,
     licensePhotoType, setLicensePhotoType,
     certificatePhotoUrl, setCertificatePhotoUrl,
@@ -111,6 +117,7 @@ export function EditProfileScreen() {
                   userId={user?.id}
                   avatarUrl={avatarUrl}
                   name={user?.name}
+                  gender={user?.gender}
                   size="xl"
                 />
                 {/* Camera badge */}
@@ -206,13 +213,59 @@ export function EditProfileScreen() {
                 />
               </Box>
 
-              {/* Cidade */}
+              {/* Cidade / Município */}
+              <Box>
+                <Box flexDirection="row" alignItems="center" mb="s8">
+                  <Text preset="paragraphMedium" color="text" bold flex={1}>
+                    Cidade / Município
+                  </Text>
+                  <TouchableOpacityBox
+                    onPress={() => setCityIsCustom(!cityIsCustom)}>
+                    <Text preset="paragraphCaptionSmall" color="primary">
+                      {cityIsCustom ? '← Usar lista' : 'Digitar manualmente'}
+                    </Text>
+                  </TouchableOpacityBox>
+                </Box>
+
+                {cityIsCustom ? (
+                  <TextInput
+                    value={city}
+                    onChangeText={setCity}
+                    placeholder="Digite o município"
+                    autoCapitalize="words"
+                  />
+                ) : (
+                  <TouchableOpacityBox
+                    onPress={() => setShowCityPicker(true)}
+                    backgroundColor="surface"
+                    borderRadius="s12"
+                    borderWidth={1}
+                    borderColor="border"
+                    paddingHorizontal="s16"
+                    paddingVertical="s16"
+                    flexDirection="row"
+                    alignItems="center"
+                    style={{elevation: 1}}>
+                    <Icon name="location-city" size={20} color="textSecondary" />
+                    <Text
+                      preset="paragraphMedium"
+                      color={city ? 'text' : 'textSecondary'}
+                      ml="s12"
+                      flex={1}>
+                      {city || 'Selecione sua cidade'}
+                    </Text>
+                    <Icon name="keyboard-arrow-down" size={20} color="textSecondary" />
+                  </TouchableOpacityBox>
+                )}
+              </Box>
+
+              {/* Comunidade / localidade — pin no mapa */}
               <Box>
                 <Text preset="paragraphMedium" color="text" bold mb="s8">
-                  Cidade
+                  Comunidade / localidade
                 </Text>
                 <TouchableOpacityBox
-                  onPress={() => setShowCityPicker(true)}
+                  onPress={() => setShowLocationPicker(true)}
                   backgroundColor="surface"
                   borderRadius="s12"
                   borderWidth={1}
@@ -222,20 +275,63 @@ export function EditProfileScreen() {
                   flexDirection="row"
                   alignItems="center"
                   style={{elevation: 1}}>
-                  <Icon name="location-city" size={20} color="textSecondary" />
-                  <Text
-                    preset="paragraphMedium"
-                    color={city ? 'text' : 'textSecondary'}
-                    ml="s12"
-                    flex={1}>
-                    {city || 'Selecione sua cidade'}
-                  </Text>
-                  <Icon
-                    name="keyboard-arrow-down"
-                    size={20}
-                    color="textSecondary"
-                  />
+                  <Icon name="place" size={20} color={homeCommunityLabel ? 'secondary' : 'textSecondary'} />
+                  <Box flex={1} ml="s12">
+                    <Text
+                      preset="paragraphMedium"
+                      color={homeCommunityLabel ? 'text' : 'textSecondary'}>
+                      {homeCommunityLabel || 'Marcar localidade no mapa'}
+                    </Text>
+                    {homeLat != null && homeLng != null && (
+                      <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                        {homeLat.toFixed(5)}, {homeLng.toFixed(5)}
+                      </Text>
+                    )}
+                  </Box>
+                  <Icon name="map" size={18} color="textSecondary" />
                 </TouchableOpacityBox>
+                <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                  Marca o ponto no mapa para que capitães da sua região te encontrem.
+                </Text>
+              </Box>
+
+              {/* Género */}
+              <Box>
+                <Text preset="paragraphMedium" color="text" bold mb="s8">
+                  Género
+                </Text>
+                <Box flexDirection="row" gap="s8">
+                  {([
+                    {value: 'M', label: 'Masculino', icon: 'man'},
+                    {value: 'F', label: 'Feminino', icon: 'woman'},
+                    {value: 'other', label: 'Outro', icon: 'person'},
+                  ] as const).map(opt => {
+                    const selected = gender === opt.value;
+                    return (
+                      <TouchableOpacityBox
+                        key={opt.value}
+                        flex={1}
+                        paddingVertical="s12"
+                        paddingHorizontal="s8"
+                        borderRadius="s12"
+                        borderWidth={1}
+                        alignItems="center"
+                        onPress={() => setGender(selected ? null : opt.value)}
+                        style={{
+                          backgroundColor: selected ? colors.primaryBg : colors.surface,
+                          borderColor: selected ? colors.primary : colors.border,
+                        }}>
+                        <Icon name={opt.icon} size={20} color={selected ? 'primary' : 'textSecondary'} />
+                        <Text
+                          preset="paragraphCaptionSmall"
+                          mt="s4"
+                          style={{color: selected ? colors.primary : colors.textSecondary}}>
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacityBox>
+                    );
+                  })}
+                </Box>
               </Box>
 
               {/* Documentos do Capitão */}
@@ -432,6 +528,15 @@ export function EditProfileScreen() {
           />
         </Box>
       </Modal>
+
+      <MapLocationPicker
+        visible={showLocationPicker}
+        initialLat={homeLat ?? undefined}
+        initialLng={homeLng ?? undefined}
+        title="Minha localidade"
+        onConfirm={handleLocationConfirm}
+        onClose={() => setShowLocationPicker(false)}
+      />
 
       <AvatarEditorModal
         visible={showAvatarEditor}

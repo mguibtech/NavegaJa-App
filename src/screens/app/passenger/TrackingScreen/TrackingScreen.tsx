@@ -123,27 +123,54 @@ export function TrackingScreen() {
       <Box
         backgroundColor="surface"
         paddingHorizontal="s20"
+        paddingBottom="s16"
         style={{
-          paddingTop: top + 12,
-          paddingBottom: 16,
+          paddingTop: top + 16,
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
         }}>
-        <Box flexDirection="row" alignItems="center" mb="s12">
-          <Button
-            title=""
-            preset="outline"
-            leftIcon="arrow-back"
-            onPress={handleGoBack}
-          />
+        <Box flexDirection="row" alignItems="center">
+          <TouchableOpacityBox
+            width={40}
+            height={40}
+            borderRadius="s20"
+            backgroundColor="background"
+            alignItems="center"
+            justifyContent="center"
+            borderWidth={1}
+            borderColor="border"
+            marginRight="s12"
+            onPress={handleGoBack}>
+            <Icon name="arrow-back" size={22} color="text" />
+          </TouchableOpacityBox>
 
-          <Box flex={1} ml="s12">
-            <Text preset="headingSmall" color="text" bold>
-              Rastreamento
-            </Text>
+          <Box flex={1}>
+            <Box flexDirection="row" alignItems="center" gap="s8" flexWrap="wrap">
+              <Text preset="headingSmall" color="text" bold>
+                Rastreamento
+              </Text>
+              <Box
+                flexDirection="row"
+                alignItems="center"
+                backgroundColor={getStatusBgColor(trackingStatus)}
+                paddingHorizontal="s8"
+                paddingVertical="s4"
+                borderRadius="s8">
+                <Box
+                  width={6}
+                  height={6}
+                  borderRadius="s8"
+                  backgroundColor={getStatusColor(trackingStatus)}
+                  marginRight="s4"
+                />
+                <Text preset="paragraphCaptionSmall" color={getStatusColor(trackingStatus)} bold>
+                  {getStatusLabel(trackingStatus)}
+                </Text>
+              </Box>
+            </Box>
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               {trip?.origin ?? '—'} → {trip?.destination ?? '—'}
             </Text>
@@ -156,37 +183,11 @@ export function TrackingScreen() {
             backgroundColor="background"
             alignItems="center"
             justifyContent="center"
-            onPress={handleRefresh}
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 1},
-              shadowOpacity: 0.08,
-              shadowRadius: 3,
-              elevation: 2,
-            }}>
-            <Icon name="refresh" size={24} color="text" />
+            borderWidth={1}
+            borderColor="border"
+            onPress={handleRefresh}>
+            <Icon name="refresh" size={22} color="text" />
           </TouchableOpacityBox>
-        </Box>
-
-        {/* Status Badge */}
-        <Box
-          flexDirection="row"
-          alignItems="center"
-          backgroundColor={getStatusBgColor(trackingStatus)}
-          paddingHorizontal="s16"
-          paddingVertical="s10"
-          borderRadius="s12"
-          alignSelf="flex-start">
-          <Box
-            width={8}
-            height={8}
-            borderRadius="s8"
-            backgroundColor={getStatusColor(trackingStatus)}
-            marginRight="s8"
-          />
-          <Text preset="paragraphMedium" color={getStatusColor(trackingStatus)} bold>
-            {getStatusLabel(trackingStatus)}
-          </Text>
         </Box>
       </Box>
 
@@ -369,69 +370,31 @@ export function TrackingScreen() {
           </Box>
         </Box>
 
-        {/* Progresso da Viagem */}
+        {/* Trip Info + Progresso */}
         <Box
           backgroundColor="surface"
           borderRadius="s16"
           padding="s16"
-          mb="s16"
+          mb="s12"
           style={{
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
+            shadowOpacity: 0.08,
             shadowRadius: 4,
-            elevation: 3,
+            elevation: 2,
           }}>
-          <Box
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="space-between"
-            mb="s8">
-            <Text preset="paragraphSmall" color="textSecondary">
-              Progresso da Viagem
-            </Text>
-            <Text preset="paragraphMedium" color="primary" bold>
-              {progress}%
-            </Text>
-          </Box>
-          <Box
-            height={8}
-            backgroundColor="border"
-            borderRadius="s8"
-            overflow="hidden">
-            <Box
-              width={`${progress}%`}
-              height="100%"
-              backgroundColor={trackingStatus === 'cancelled' ? 'danger' : 'primary'}
-            />
-          </Box>
-        </Box>
-
-        {/* Trip Info Cards */}
-        <Box
-          backgroundColor="surface"
-          borderRadius="s16"
-          padding="s20"
-          mb="s16"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}>
-          <Box flexDirection="row" gap="s16" mb="s16">
+          <Box flexDirection="row" gap="s12" mb="s16">
             <Box
               flex={1}
               backgroundColor="primaryBg"
-              paddingVertical="s12"
-              paddingHorizontal="s12"
+              paddingVertical="s10"
+              paddingHorizontal="s10"
               borderRadius="s12">
-              <Icon name="schedule" size={20} color="primary" />
-              <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
+              <Icon name="schedule" size={18} color="primary" />
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
                 Chegada Prevista
               </Text>
-              <Text preset="paragraphMedium" color="text" bold>
+              <Text preset="paragraphSmall" color="text" bold>
                 {trackingInfo?.estimatedArrival ?? '—'}
               </Text>
             </Box>
@@ -439,14 +402,14 @@ export function TrackingScreen() {
             <Box
               flex={1}
               backgroundColor="secondaryBg"
-              paddingVertical="s12"
-              paddingHorizontal="s12"
+              paddingVertical="s10"
+              paddingHorizontal="s10"
               borderRadius="s12">
-              <Icon name="directions-boat" size={20} color="secondary" />
-              <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
+              <Icon name="directions-boat" size={18} color="secondary" />
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
                 Embarcação
               </Text>
-              <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>
+              <Text preset="paragraphSmall" color="text" bold numberOfLines={1}>
                 {boatName || '—'}
               </Text>
             </Box>
@@ -454,96 +417,110 @@ export function TrackingScreen() {
             <Box
               flex={1}
               backgroundColor="accentBg"
-              paddingVertical="s12"
-              paddingHorizontal="s12"
+              paddingVertical="s10"
+              paddingHorizontal="s10"
               borderRadius="s12">
-              <Icon name="event-seat" size={20} color="accent" />
-              <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s4">
+              <Icon name="event-seat" size={18} color="accent" />
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
                 Assento
               </Text>
-              <Text preset="paragraphMedium" color="text" bold>
+              <Text preset="paragraphSmall" color="text" bold>
                 {booking?.seatNumber ?? '—'}
               </Text>
             </Box>
           </Box>
+
+          {/* Progresso inline */}
+          <Box flexDirection="row" alignItems="center" gap="s12">
+            <Box flex={1} height={6} backgroundColor="border" borderRadius="s8" overflow="hidden">
+              <Box
+                width={`${progress}%`}
+                height="100%"
+                backgroundColor={trackingStatus === 'cancelled' ? 'danger' : 'primary'}
+              />
+            </Box>
+            <Text preset="paragraphCaptionSmall" color="primary" bold>
+              {progress}%
+            </Text>
+          </Box>
         </Box>
 
-        {/* Captain Contact */}
-        {captainPhone ? (
-          <Box
-            backgroundColor="surface"
-            borderRadius="s16"
-            padding="s20"
-            mb="s16"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
-            <Text preset="paragraphMedium" color="text" bold mb="s16">
-              Contato do Barqueiro
-            </Text>
-
-            <Box flexDirection="row" alignItems="center" mb="s16">
-              <Box
-                width={56}
-                height={56}
-                borderRadius="s48"
-                backgroundColor="primaryBg"
-                alignItems="center"
-                justifyContent="center"
-                marginRight="s16">
-                <Icon name="person" size={28} color="primary" />
-              </Box>
-
-              <Box flex={1}>
-                <Text preset="paragraphMedium" color="text" bold mb="s4">
-                  {captainName}
-                </Text>
-                <Text preset="paragraphSmall" color="textSecondary">
-                  {captainPhone}
-                </Text>
-              </Box>
-            </Box>
-
-            <Button
-              title="Ligar para o Capitão"
-              onPress={handleCallCaptain}
-              rightIcon="phone"
-            />
-          </Box>
-        ) : null}
-
-        {/* Emergency Button */}
-        <TouchableOpacityBox
-          backgroundColor="dangerBg"
-          borderRadius="s16"
-          padding="s20"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="center"
-          mb="s24"
-          onPress={handleEmergency}>
-          <Icon name="warning" size={24} color="danger" />
-          <Text preset="paragraphLarge" color="danger" bold ml="s8">
-            Emergência
-          </Text>
-        </TouchableOpacityBox>
-
-        {/* Info */}
+        {/* Capitão + Ações */}
         <Box
-          flexDirection="row"
-          paddingVertical="s16"
-          paddingHorizontal="s16"
           backgroundColor="surface"
-          borderRadius="s12"
-          mb="s24">
-          <Icon name="info" size={20} color="primary" />
-          <Text preset="paragraphSmall" color="textSecondary" flex={1} ml="s8">
-            A localização é atualizada automaticamente a cada 30 segundos
-          </Text>
+          borderRadius="s16"
+          padding="s16"
+          mb="s24"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+            elevation: 2,
+          }}>
+          {captainPhone ? (
+            <>
+              <Box flexDirection="row" alignItems="center" mb="s16">
+                <Box
+                  width={48}
+                  height={48}
+                  borderRadius="s48"
+                  backgroundColor="primaryBg"
+                  alignItems="center"
+                  justifyContent="center"
+                  marginRight="s12">
+                  <Icon name="person" size={24} color="primary" />
+                </Box>
+                <Box flex={1}>
+                  <Text preset="paragraphMedium" color="text" bold>
+                    {captainName}
+                  </Text>
+                  <Text preset="paragraphSmall" color="textSecondary">
+                    {captainPhone}
+                  </Text>
+                </Box>
+              </Box>
+              <Box flexDirection="row" gap="s12">
+                <Box flex={1}>
+                  <Button
+                    title="Ligar"
+                    onPress={handleCallCaptain}
+                    rightIcon="phone"
+                  />
+                </Box>
+                <TouchableOpacityBox
+                  flex={1}
+                  height={52}
+                  backgroundColor="dangerBg"
+                  borderRadius="s12"
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  gap="s8"
+                  onPress={handleEmergency}>
+                  <Icon name="warning" size={20} color="danger" />
+                  <Text preset="paragraphMedium" color="danger" bold>
+                    Emergência
+                  </Text>
+                </TouchableOpacityBox>
+              </Box>
+            </>
+          ) : (
+            <TouchableOpacityBox
+              height={52}
+              backgroundColor="dangerBg"
+              borderRadius="s12"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center"
+              gap="s8"
+              onPress={handleEmergency}>
+              <Icon name="warning" size={22} color="danger" />
+              <Text preset="paragraphLarge" color="danger" bold>
+                Emergência
+              </Text>
+            </TouchableOpacityBox>
+          )}
         </Box>
       </ScrollView>
 

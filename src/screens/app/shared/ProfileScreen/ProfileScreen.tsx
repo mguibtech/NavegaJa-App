@@ -80,6 +80,7 @@ export function ProfileScreen() {
                 userId={user?.id}
                 avatarUrl={user?.avatarUrl}
                 name={user?.name}
+                gender={user?.gender}
                 size="lg"
               />
             </Box>

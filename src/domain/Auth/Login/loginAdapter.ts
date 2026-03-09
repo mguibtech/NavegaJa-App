@@ -14,6 +14,7 @@ export const loginAdapter = {
       role: response.user.role as User['role'],
       cpf: response.user.cpf,
       avatarUrl: response.user.avatarUrl,
+      gender: response.user.gender ?? null,
       isVerified: response.user.isVerified,
       city: response.user.city,
       state: response.user.state,

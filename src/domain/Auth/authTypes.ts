@@ -13,6 +13,7 @@ export interface RegisterDto {
   state?: string;
   cpf?: string;
   referralCode?: string;
+  gender?: 'M' | 'F' | 'other' | null;
 }
 
 /**
@@ -73,6 +74,7 @@ export interface AuthResponse {
     totalPoints: number;
     level: string;
     referralCode?: string;
+    gender?: 'M' | 'F' | 'other' | null;
     createdAt: string;
     updatedAt: string;
   };

@@ -11,9 +11,47 @@ import {useToast} from '@hooks';
 import {api} from '@api';
 import {API_ENDPOINTS} from '@api/config';
 
-// Coordenadas padrão (Manaus → Parintins) - fallback quando API não tem coordenadas
-const MANAUS_COORDS = {latitude: -3.119, longitude: -60.0217};
-const PARINTINS_COORDS = {latitude: -2.6283, longitude: -56.7358};
+const FALLBACK_COORDS = {latitude: -3.119, longitude: -60.0217}; // Manaus
+
+// Chaves sem acentos para comparação robusta (evita problemas de Unicode NFC vs NFD)
+// Usado apenas para os marcadores de origem/destino e linha do percurso no mapa
+const CITY_COORDS: Record<string, {latitude: number; longitude: number}> = {
+  manaus:                   {latitude: -3.119,   longitude: -60.0217},
+  parintins:                {latitude: -2.6277,  longitude: -56.736},
+  itacoatiara:              {latitude: -3.1439,  longitude: -58.4442},
+  tefe:                     {latitude: -3.3684,  longitude: -64.7124},
+  barreirinha:              {latitude: -2.7869,  longitude: -57.0501},
+  coari:                    {latitude: -4.0856,  longitude: -63.1416},
+  maues:                    {latitude: -3.3714,  longitude: -57.7189},
+  tabatinga:                {latitude: -4.255,   longitude: -69.9327},
+  labrea:                   {latitude: -7.2592,  longitude: -64.7986},
+  humaita:                  {latitude: -7.5057,  longitude: -63.0173},
+  'benjamin constant':      {latitude: -4.3759,  longitude: -70.0339},
+  'sao gabriel da cachoeira': {latitude: -0.1303, longitude: -67.0892},
+  borba:                    {latitude: -4.384,   longitude: -59.5875},
+  autazes:                  {latitude: -3.5777,  longitude: -59.1301},
+  'nova olinda do norte':   {latitude: -3.8847,  longitude: -59.0906},
+  'presidente figueiredo':  {latitude: -2.0227,  longitude: -60.0249},
+  iranduba:                 {latitude: -3.2819,  longitude: -60.1879},
+  manacapuru:               {latitude: -3.2998,  longitude: -60.6217},
+  careiro:                  {latitude: -3.3521,  longitude: -59.7445},
+  anori:                    {latitude: -3.7697,  longitude: -61.6447},
+  'fonte boa':              {latitude: -2.5233,  longitude: -66.0928},
+  manicore:                 {latitude: -5.8105,  longitude: -61.3024},
+  alvaraes:                 {latitude: -3.2136,  longitude: -64.8067},
+  beruri:                   {latitude: -3.9005,  longitude: -61.3527},
+};
+
+function getCityCoords(city?: string | null): {latitude: number; longitude: number} {
+  if (!city) {return FALLBACK_COORDS;}
+  const key = city
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s*[-–]\s*(am|pa)\.?\s*$/i, '')
+    .trim();
+  return CITY_COORDS[key] ?? FALLBACK_COORDS;
+}
 
 export function useTrackingScreen() {
   const navigation =
@@ -60,11 +98,12 @@ export function useTrackingScreen() {
     }
   }, [error]);
 
-  // GPS polling — atualiza posição do barco a cada 15s enquanto viagem está em andamento
+  // GPS polling — corre para todos os estados excepto cancelado
+  // O backend devolve coords da origem (scheduled), GPS real (in_transit), destino (arrived)
   useEffect(() => {
     const tripId = trackingInfo?.booking.tripId;
     const status = trackingInfo?.trackingStatus;
-    if (!tripId || status === 'arrived' || status === 'cancelled' || status === 'scheduled') {
+    if (!tripId || status === 'cancelled') {
       return;
     }
     async function pollLocation() {
@@ -84,33 +123,33 @@ export function useTrackingScreen() {
   }, [trackingInfo?.booking.tripId, trackingInfo?.trackingStatus]);
 
   // Flood inundation polygons — usa posição da embarcação como centro
-  const inundLat = trackingInfo?.currentLat ?? MANAUS_COORDS.latitude;
-  const inundLng = trackingInfo?.currentLng ?? MANAUS_COORDS.longitude;
+  const inundLat = livePosition?.latitude ?? trackingInfo?.currentLat ?? FALLBACK_COORDS.latitude;
+  const inundLng = livePosition?.longitude ?? trackingInfo?.currentLng ?? FALLBACK_COORDS.longitude;
   const {inundation} = useFloodInundation(inundLat, inundLng);
 
   const trip = trackingInfo?.booking.trip;
   const booking = trackingInfo?.booking;
-
-  // Resolve origin/destination coordinates
-  const originCoords = MANAUS_COORDS;
-  const destinationCoords = PARINTINS_COORDS;
-
-  // Boat position: prefer live GPS poll, then tracking API, then interpolate from progress
+  const trackingStatus = trackingInfo?.trackingStatus ?? 'scheduled';
   const progress = trackingInfo?.progressPercent ?? 0;
+
+  // Marcadores fixos de origem/destino (linha do percurso no mapa)
+  // Prefer real geocoding coordinates stored in the trip; fall back to city-name lookup
+  const originCoords =
+    trip?.originLat != null && trip?.originLng != null
+      ? {latitude: trip.originLat, longitude: trip.originLng}
+      : getCityCoords(trip?.origin);
+  const destinationCoords =
+    trip?.destinationLat != null && trip?.destinationLng != null
+      ? {latitude: trip.destinationLat, longitude: trip.destinationLng}
+      : getCityCoords(trip?.destination);
+
+  // Posição do barco: polling → backend devolve coords correctas por status
+  // fallback para trackingInfo (primeira carga) ou originCoords
   const currentPosition =
     livePosition ??
     (trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
       ? {latitude: trackingInfo.currentLat, longitude: trackingInfo.currentLng}
-      : {
-          latitude:
-            originCoords.latitude +
-            (destinationCoords.latitude - originCoords.latitude) *
-              (progress / 100),
-          longitude:
-            originCoords.longitude +
-            (destinationCoords.longitude - originCoords.longitude) *
-              (progress / 100),
-        });
+      : originCoords);
 
   const routeCoordinates = [originCoords, currentPosition, destinationCoords];
 
@@ -141,8 +180,8 @@ export function useTrackingScreen() {
       const unlinked = contacts.filter(c => !c.linkedUserId);
       setUnlinkedSosContacts(unlinked);
       setShowSosResultModal(true);
-    } catch {
-      toast.showError('Erro ao enviar SOS. Verifique a sua ligação e tente novamente.');
+    } catch (err: any) {
+      toast.showError(err?.message ?? 'Erro ao enviar SOS. Verifique a sua ligação e tente novamente.');
     } finally {
       setSosTriggering(false);
     }
@@ -260,7 +299,6 @@ export function useTrackingScreen() {
   const captainName = trip?.captain?.name ?? 'Capitão';
   const captainPhone = trip?.captain?.phone ?? '';
   const boatName = trip?.boat?.name ?? '';
-  const trackingStatus = trackingInfo?.trackingStatus ?? 'scheduled';
 
   return {
     mapRef,

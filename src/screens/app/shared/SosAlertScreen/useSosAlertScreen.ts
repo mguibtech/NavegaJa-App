@@ -3,7 +3,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 
-import {useSosAlert, SosType, SOS_TYPE_CONFIGS, SosTypeConfig} from '@domain';
+import {useSosAlert, SosDuplicateError, SosType, SOS_TYPE_CONFIGS, SosTypeConfig} from '@domain';
 import {useToast} from '@hooks';
 
 import {AppStackParamList} from '@routes';
@@ -61,9 +61,16 @@ export function useSosAlertScreen() {
       setDescription('');
       setContactNumber('');
     } catch (error: any) {
-      toast.showError(
-        error?.message || 'Não foi possível acionar SOS. Tente novamente.',
-      );
+      if (error instanceof SosDuplicateError) {
+        // 409 — already have an active alert, just show a message
+        toast.showWarning('Você já possui um alerta SOS activo. Verifique o alerta em andamento.');
+        // Ensure the existing alert is surfaced
+        await checkActiveAlert();
+      } else {
+        toast.showError(
+          error?.message || 'Não foi possível acionar SOS. Tente novamente.',
+        );
+      }
     } finally {
       setIsCreating(false);
     }

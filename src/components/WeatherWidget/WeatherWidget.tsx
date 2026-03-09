@@ -40,8 +40,8 @@ export function WeatherWidget({
       } else if (latitude !== undefined && longitude !== undefined) {
         await fetchCurrentWeather(latitude, longitude);
       }
-    } catch (error) {
-      console.error('Error loading weather:', error);
+    } catch {
+      // Serviço de clima indisponível — widget mostra fallback "Clima indisponível"
     }
   }
 

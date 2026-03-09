@@ -221,7 +221,7 @@ export function ReferralsScreen() {
           </Box>
         )}
 
-        {!isLoading && referralsData?.referrals.length === 0 && (
+        {!isLoading && (referralsData?.referrals?.length ?? 0) === 0 && (
           <Box alignItems="center" mt="s20">
             <Icon name="people-outline" size={64} color="textSecondary" />
             <Text preset="paragraphMedium" color="textSecondary" mt="s12" textAlign="center">

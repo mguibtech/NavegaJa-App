@@ -21,6 +21,7 @@ import {
   CreateSosAlertData,
   ResolveSosAlertData,
   SosLocation,
+  SosType,
 } from './safetyTypes';
 
 const EMERGENCY_CONTACTS_KEY = '@navegaja:emergency_contacts';
@@ -141,6 +142,14 @@ async function getChecklistByTripId(tripId: string): Promise<SafetyChecklist | n
  *   2. {lat, lng}                  ← alias curto
  *   3. GeoJSON Point: {type:'Point', coordinates:[lng, lat]}  ← PostGIS/TypeORM
  */
+function normalizeAlertType(type: any): SosType {
+  if (!type) {return SosType.GENERAL;}
+  const lower = String(type).toLowerCase();
+  return (Object.values(SosType) as string[]).includes(lower)
+    ? (lower as SosType)
+    : SosType.GENERAL;
+}
+
 function normalizeLocation(loc: any): SosLocation | undefined {
   if (!loc) {return undefined;}
   if (loc.latitude != null) {
@@ -304,12 +313,17 @@ async function getMySosAlerts(): Promise<SosAlert[]> {
 
     console.log('[SOS] Alerts from API:', JSON.stringify(alerts));
 
-    // Normaliza formato de localização (lat/lng, GeoJSON Point, etc.)
+    // Normaliza formato de localização e tipo (API pode retornar uppercase)
+    const lastKnown = await loadLastKnownLocation();
     const normalized = alerts.map(alert => {
       const normalizedLoc = normalizeLocation(alert.location as any);
       if (normalizedLoc) {
         alert.location = normalizedLoc;
+      } else if (alert.status === 'active' && lastKnown) {
+        // fallback: usa última localização conhecida para alertas ativos sem coords
+        alert.location = lastKnown;
       }
+      alert.type = normalizeAlertType(alert.type);
       return alert;
     });
 

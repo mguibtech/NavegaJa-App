@@ -1,6 +1,6 @@
 import {api} from '../../../api';
 
-import {CepResult, City, LocationLabel, ReverseGeocode} from './locationTypes';
+import {CepResult, City, LocationLabel, LocationSuggestion, ReverseGeocode, SuggestLocationPayload} from './locationTypes';
 
 export const locationAPI = {
   async getCep(cep: string): Promise<CepResult> {
@@ -19,5 +19,15 @@ export const locationAPI = {
 
   async getReverseGeocode(lat: number, lng: number): Promise<ReverseGeocode> {
     return api.get<ReverseGeocode>(`/locations/reverse-geocode?lat=${lat}&lng=${lng}`);
+  },
+
+  /** Geocoding: busca sugestões de localização por texto livre */
+  async searchLocations(q: string): Promise<LocationSuggestion[]> {
+    return api.get<LocationSuggestion[]>(`/trips/geocode?q=${encodeURIComponent(q)}`);
+  },
+
+  /** Sugere nova localização para o banco de dados do sistema */
+  async suggestLocation(data: SuggestLocationPayload): Promise<void> {
+    return api.post<void>('/locations/suggest', data);
   },
 };

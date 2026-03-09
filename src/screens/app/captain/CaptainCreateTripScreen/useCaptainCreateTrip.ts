@@ -5,14 +5,13 @@ import {ptBR} from 'date-fns/locale';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {useMyBoats, useBoatStaff, useCreateTrip, Boat, useCities} from '@domain';
+import {useMyBoats, useBoatStaff, useCreateTrip, Boat, useCities, LocationSuggestion} from '@domain';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
 
 export type PickerTarget = 'departure' | 'arrival';
-export type CityPickerTarget = 'origin' | 'destination';
 
 export const AM_CITIES = [
   'Manaus', 'Parintins', 'Itacoatiara', 'Tefé', 'Barreirinha', 'Coari',
@@ -58,7 +57,11 @@ export function useCaptainCreateTrip() {
   }, [isBoatManager, staff, ownedBoats]);
 
   const [origin, setOrigin] = useState('');
+  const [originLat, setOriginLat] = useState<number | undefined>();
+  const [originLng, setOriginLng] = useState<number | undefined>();
   const [destination, setDestination] = useState('');
+  const [destinationLat, setDestinationLat] = useState<number | undefined>();
+  const [destinationLng, setDestinationLng] = useState<number | undefined>();
   const [departureDate, setDepartureDate] = useState<Date | null>(null);
   const [arrivalDate, setArrivalDate] = useState<Date | null>(null);
   const [price, setPrice] = useState('');
@@ -66,8 +69,6 @@ export function useCaptainCreateTrip() {
   const [totalSeats, setTotalSeats] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState<string | null>(null);
   const [showBoatPicker, setShowBoatPicker] = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
-  const [cityPickerTarget, setCityPickerTarget] = useState<CityPickerTarget>('origin');
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -95,7 +96,6 @@ export function useCaptainCreateTrip() {
   }, [boats]);
 
   const selectedBoat = boats.find((b: Boat) => b.id === selectedBoatId);
-  const currentCityValue = cityPickerTarget === 'origin' ? origin : destination;
 
   function formatDateTime(date: Date | null): string {
     if (!date) {return '';}
@@ -131,20 +131,26 @@ export function useCaptainCreateTrip() {
     }
   }
 
-  function openCityPicker(target: CityPickerTarget) {
-    setCityPickerTarget(target);
-    setShowCityPicker(true);
+  function selectOrigin(suggestion: LocationSuggestion) {
+    setOrigin(suggestion.label);
+    setOriginLat(suggestion.lat);
+    setOriginLng(suggestion.lng);
+    if (destination === suggestion.label) {
+      setDestination('');
+      setDestinationLat(undefined);
+      setDestinationLng(undefined);
+    }
   }
 
-  function selectCity(city: string) {
-    if (cityPickerTarget === 'origin') {
-      setOrigin(city);
-      if (destination === city) {setDestination('');}
-    } else {
-      setDestination(city);
-      if (origin === city) {setOrigin('');}
+  function selectDestination(suggestion: LocationSuggestion) {
+    setDestination(suggestion.label);
+    setDestinationLat(suggestion.lat);
+    setDestinationLng(suggestion.lng);
+    if (origin === suggestion.label) {
+      setOrigin('');
+      setOriginLat(undefined);
+      setOriginLng(undefined);
     }
-    setShowCityPicker(false);
   }
 
   function validate(): string | null {
@@ -185,6 +191,8 @@ export function useCaptainCreateTrip() {
         cargoPriceKg: cargoPriceKg ? digitsToFloat(cargoPriceKg) : undefined,
         totalSeats: Number(totalSeats),
         boatId: selectedBoatId!,
+        ...(originLat != null && originLng != null ? {originLat, originLng} : {}),
+        ...(destinationLat != null && destinationLng != null ? {destinationLat, destinationLng} : {}),
       });
       toast.showSuccess('Viagem criada com sucesso!');
       navigation.goBack();
@@ -230,10 +238,9 @@ export function useCaptainCreateTrip() {
     // route form
     origin,
     destination,
-    currentCityValue,
-    cityPickerTarget,
-    showCityPicker,
-    setShowCityPicker,
+    cityList,
+    selectOrigin,
+    selectDestination,
     // datetime form
     departureDate,
     arrivalDate,
@@ -256,11 +263,8 @@ export function useCaptainCreateTrip() {
     openDatePicker,
     onDateChange,
     onTimeChange,
-    openCityPicker,
-    selectCity,
     handleSubmit,
     goBack,
-    cityList,
     navigateToCreateBoat,
     navigateToEditProfile,
     onMoneyChange,

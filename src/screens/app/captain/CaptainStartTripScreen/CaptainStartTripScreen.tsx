@@ -12,6 +12,7 @@ import {
 export function CaptainStartTripScreen() {
   const {
     weather,
+    weatherWarning,
     isLoading,
     startLoading,
     score,
@@ -57,6 +58,22 @@ export function CaptainStartTripScreen() {
           </Box>
         ) : (
           <>
+            {/* Weather Warning Banner */}
+            {weatherWarning && (
+              <Box
+                backgroundColor="warningBg"
+                borderRadius="s12"
+                padding="s16"
+                mb="s16"
+                flexDirection="row"
+                alignItems="flex-start">
+                <Icon name="warning" size={20} color="warning" />
+                <Text preset="paragraphSmall" color="warning" ml="s12" flex={1}>
+                  {weatherWarning}
+                </Text>
+              </Box>
+            )}
+
             {/* Safety Level Card */}
             <Box
               backgroundColor="surface"

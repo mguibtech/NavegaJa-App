@@ -4,6 +4,8 @@ import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidin
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@components';
+import {useTheme} from '@shopify/restyle';
+import {Theme} from '@theme';
 import {useAuthStore} from '@store';
 import {formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
@@ -62,6 +64,7 @@ const AM_CITIES = [
 
 export function RegisterScreen({navigation}: Props) {
   const {register, isLoading} = useAuthStore();
+  const {colors} = useTheme<Theme>();
   const toast = useToast();
 
   const [name, setName] = useState('');
@@ -71,6 +74,7 @@ export function RegisterScreen({navigation}: Props) {
   const [city, setCity] = useState('Manaus');
   const [cpf, setCpf] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [gender, setGender] = useState<'M' | 'F' | 'other' | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -118,6 +122,7 @@ export function RegisterScreen({navigation}: Props) {
         city: city.trim(),
         state: 'AM',
         cpf: cpf.replace(/\D/g, ''),
+        gender: gender ?? undefined,
         referralCode: referralCode.trim().toUpperCase() || undefined,
       });
 
@@ -296,6 +301,44 @@ export function RegisterScreen({navigation}: Props) {
                   </Text>
                   <Icon name="keyboard-arrow-down" size={20} color="textSecondary" />
                 </TouchableOpacityBox>
+              </Box>
+
+              {/* Género (opcional) */}
+              <Box mt="s16">
+                <Text preset="paragraphSmall" color="text" semibold mb="s8">
+                  Género (opcional)
+                </Text>
+                <Box flexDirection="row" gap="s8">
+                  {([
+                    {value: 'M', label: 'Masculino', icon: 'man'},
+                    {value: 'F', label: 'Feminino', icon: 'woman'},
+                    {value: 'other', label: 'Outro', icon: 'person'},
+                  ] as const).map(opt => {
+                    const selected = gender === opt.value;
+                    return (
+                      <TouchableOpacityBox
+                        key={opt.value}
+                        flex={1}
+                        paddingVertical="s12"
+                        borderRadius="s12"
+                        borderWidth={1}
+                        alignItems="center"
+                        onPress={() => setGender(selected ? null : opt.value)}
+                        style={{
+                          backgroundColor: selected ? colors.primaryBg : colors.surface,
+                          borderColor: selected ? colors.primary : colors.border,
+                        }}>
+                        <Icon name={opt.icon} size={20} color={selected ? 'primary' : 'textSecondary'} />
+                        <Text
+                          preset="paragraphCaptionSmall"
+                          mt="s4"
+                          style={{color: selected ? colors.primary : colors.textSecondary}}>
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacityBox>
+                    );
+                  })}
+                </Box>
               </Box>
 
               <Box mt="s16">

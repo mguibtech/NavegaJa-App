@@ -14,6 +14,7 @@ export function CaptainDashboardScreen() {
     trips,
     boats,
     isLoading,
+    isBoatsLoading,
     isRefreshingStatus,
     showBlockedModal,
     setShowBlockedModal,
@@ -221,7 +222,7 @@ export function CaptainDashboardScreen() {
               </TouchableOpacityBox>
             )}
 
-            {/* Documentos enviados — aguardando aprovação */}
+            {/* Conta pendente de verificação */}
             {isPending && (
               <Box
                 margin="s16"
@@ -245,32 +246,48 @@ export function CaptainDashboardScreen() {
                   </Box>
                   <Box flex={1}>
                     <Text preset="paragraphMedium" color="text" bold>
-                      Documentação em análise
+                      Conta aguardando aprovação
                     </Text>
                     <Text preset="paragraphSmall" color="textSecondary" mt="s4">
-                      Seus documentos estão sendo analisados. Você será notificado após a aprovação.
+                      Envie sua habilitação náutica e documentos no seu perfil. Após o envio, nossa equipe irá analisar e você será notificado.
                     </Text>
                   </Box>
                 </Box>
-                <TouchableOpacityBox
-                  mt="s12"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  paddingVertical="s8"
-                  borderRadius="s8"
-                  backgroundColor="info"
-                  onPress={handleCheckStatus}
-                  disabled={isRefreshingStatus}>
-                  <Icon
-                    name={isRefreshingStatus ? 'hourglass-top' : 'refresh'}
-                    size={16}
-                    color={'#FFFFFF' as any}
-                  />
-                  <Text preset="paragraphSmall" bold ml="s6" style={{color: '#FFFFFF'}}>
-                    {isRefreshingStatus ? 'Verificando...' : 'Verificar status'}
-                  </Text>
-                </TouchableOpacityBox>
+                <Box flexDirection="row" gap="s8" mt="s12">
+                  <TouchableOpacityBox
+                    flex={1}
+                    flexDirection="row"
+                    alignItems="center"
+                    justifyContent="center"
+                    paddingVertical="s8"
+                    borderRadius="s8"
+                    style={{backgroundColor: 'rgba(37,99,235,0.15)', borderWidth: 1, borderColor: '#3B82F6'}}
+                    onPress={() => navigation.navigate('KycSubmit')}>
+                    <Icon name="upload-file" size={16} color={'#3B82F6' as any} />
+                    <Text preset="paragraphSmall" bold ml="s6" style={{color: '#3B82F6'}}>
+                      Enviar docs
+                    </Text>
+                  </TouchableOpacityBox>
+                  <TouchableOpacityBox
+                    flex={1}
+                    flexDirection="row"
+                    alignItems="center"
+                    justifyContent="center"
+                    paddingVertical="s8"
+                    borderRadius="s8"
+                    backgroundColor="info"
+                    onPress={handleCheckStatus}
+                    disabled={isRefreshingStatus}>
+                    <Icon
+                      name={isRefreshingStatus ? 'hourglass-top' : 'refresh'}
+                      size={16}
+                      color={'#FFFFFF' as any}
+                    />
+                    <Text preset="paragraphSmall" bold ml="s6" style={{color: '#FFFFFF'}}>
+                      {isRefreshingStatus ? 'Verificando...' : 'Verificar status'}
+                    </Text>
+                  </TouchableOpacityBox>
+                </Box>
               </Box>
             )}
           </>
@@ -312,7 +329,7 @@ export function CaptainDashboardScreen() {
         {canOperate && (
           <>
             {/* Nenhuma embarcação cadastrada — apenas para capitões (gestor não cria barcos) */}
-            {boats.length === 0 && !isBoatManager && (
+            {boats.length === 0 && !isBoatManager && !isBoatsLoading && (
               <TouchableOpacityBox
                 marginHorizontal="s20"
                 mb="s12"

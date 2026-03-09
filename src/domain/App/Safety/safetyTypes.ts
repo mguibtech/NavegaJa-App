@@ -86,6 +86,8 @@ export enum SosType {
   MECHANICAL = 'mechanical',
   WEATHER = 'weather',
   ACCIDENT = 'accident',
+  EMERGENCY = 'emergency',
+  MAN_OVERBOARD = 'man_overboard',
 }
 
 export enum SosStatus {
@@ -217,6 +219,24 @@ export const SOS_TYPE_CONFIGS: Record<SosType, SosTypeConfig> = {
     icon: 'warning',
     color: '#DC2626',
     bgColor: '#FEE2E2',
+    priority: 'critical',
+  },
+  [SosType.EMERGENCY]: {
+    type: SosType.EMERGENCY,
+    label: 'Emergência',
+    description: 'Situação de emergência crítica imediata',
+    icon: 'sos',
+    color: '#DC2626',
+    bgColor: '#FEE2E2',
+    priority: 'critical',
+  },
+  [SosType.MAN_OVERBOARD]: {
+    type: SosType.MAN_OVERBOARD,
+    label: 'Homem ao Mar',
+    description: 'Pessoa caiu ao rio — resgate urgente',
+    icon: 'pool',
+    color: '#1D4ED8',
+    bgColor: '#DBEAFE',
     priority: 'critical',
   },
 };

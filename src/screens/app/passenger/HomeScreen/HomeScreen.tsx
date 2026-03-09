@@ -8,7 +8,7 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget, WeatherAlertCard} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, EmergencyButton, WeatherWidget, WeatherAlertCard, UserAvatar} from '@components';
 import {apiImageSource} from '@api/config';
 import {useAuthStore} from '@store';
 import {useToast} from '@hooks';
@@ -393,24 +393,17 @@ export function HomeScreen({navigation}: Props) {
           {/* User Info with Avatar */}
           <Box flexDirection="row" alignItems="center" flex={1}>
             <TouchableOpacityBox
-              width={52}
-              height={52}
-              borderRadius="s48"
-              backgroundColor="primaryBg"
-              alignItems="center"
-              justifyContent="center"
               marginRight="s12"
               onPress={() => navigation.navigate('Profile')}
               accessibilityLabel={`Perfil de ${user?.name?.split(' ')[0] ?? 'usuário'}`}
-              accessibilityRole="button"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}>
-              <Icon name="person" size={26} color="primary" />
+              accessibilityRole="button">
+              <UserAvatar
+                userId={user?.id}
+                avatarUrl={user?.avatarUrl ?? undefined}
+                name={user?.name}
+                gender={user?.gender}
+                size="md"
+              />
             </TouchableOpacityBox>
 
             <Box flex={1}>
@@ -525,6 +518,39 @@ export function HomeScreen({navigation}: Props) {
             </Text>
           </TouchableOpacityBox>
         </Box>
+
+        {/* Community Onboarding Banner — shown once when homeCommunity is not set */}
+        {!user?.homeCommunity && (
+          <Box
+            marginHorizontal="s24"
+            mt="s16"
+            backgroundColor="infoBg"
+            borderRadius="s12"
+            padding="s16"
+            flexDirection="row"
+            alignItems="flex-start">
+            <Icon name="location-on" size={20} color="info" />
+            <Box flex={1} ml="s12">
+              <Text preset="paragraphSmall" color="text" bold mb="s4">
+                Informe sua comunidade
+              </Text>
+              <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s12">
+                Diga onde você mora para que capitães da sua região te encontrem com mais facilidade.
+              </Text>
+              <TouchableOpacityBox
+                onPress={() => navigation.navigate('EditProfile')}
+                backgroundColor="info"
+                borderRadius="s8"
+                paddingVertical="s8"
+                paddingHorizontal="s12"
+                alignSelf="flex-start">
+                <Text preset="paragraphCaptionSmall" color="surface" bold>
+                  Adicionar localidade
+                </Text>
+              </TouchableOpacityBox>
+            </Box>
+          </Box>
+        )}
 
         {/* Quick Stats */}
         <Box paddingHorizontal="s24" mt="s24" mb="s24">

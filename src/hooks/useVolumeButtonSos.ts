@@ -31,6 +31,7 @@ export function useVolumeButtonSos({
   const pressCountRef = useRef(0);
   const windowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevVolumeRef = useRef<number | null>(null);
+  // Flag to ignore the listener event fired by our own setVolume restoration
   const isRestoringRef = useRef(false);
 
   // Keep callbacks in refs to avoid re-subscribing on every render
@@ -47,12 +48,11 @@ export function useVolumeButtonSos({
     }
 
     // Guard: native module not linked until the app is rebuilt
-    if (!VolumeManager || typeof VolumeManager.showNativeVolumeUI !== 'function') {
+    if (!VolumeManager || typeof VolumeManager.addVolumeListener !== 'function') {
       return;
     }
 
-    // Suppress the native volume slider while this hook is active
-    VolumeManager.showNativeVolumeUI({enabled: false});
+    VolumeManager.showNativeVolumeUI({enabled: true});
 
     // Store initial volume as reference
     VolumeManager.getVolume().then(result => {
@@ -60,11 +60,6 @@ export function useVolumeButtonSos({
     });
 
     const subscription = VolumeManager.addVolumeListener(result => {
-      // Skip events triggered by our own setVolume restoration
-      if (isRestoringRef.current) {
-        return;
-      }
-
       const prev = prevVolumeRef.current;
       const curr = result.volume;
 
@@ -73,12 +68,16 @@ export function useVolumeButtonSos({
         return;
       }
 
+      // This event was fired by our own restoration — skip it
+      if (isRestoringRef.current) {
+        isRestoringRef.current = false;
+        return;
+      }
+
       if (curr < prev - 0.01) {
-        // Volume DOWN detected — restore immediately so it doesn't change
+        // Volume DOWN detectado — restaura para não alterar o som
         isRestoringRef.current = true;
-        VolumeManager.setVolume(prev, {showUI: false}).finally(() => {
-          isRestoringRef.current = false;
-        });
+        VolumeManager.setVolume(prev);
 
         pressCountRef.current += 1;
         const remaining = pressesRequired - pressCountRef.current;
@@ -98,7 +97,6 @@ export function useVolumeButtonSos({
             pressCountRef.current = 0;
           }, windowMs);
         }
-        // Don't update prevVolumeRef — we're restoring to prev
       } else {
         // Volume UP or same — legitimate change, update reference
         prevVolumeRef.current = curr;
@@ -107,12 +105,12 @@ export function useVolumeButtonSos({
 
     return () => {
       subscription.remove();
-      VolumeManager.showNativeVolumeUI({enabled: true});
       if (windowTimerRef.current) {
         clearTimeout(windowTimerRef.current);
         windowTimerRef.current = null;
       }
       pressCountRef.current = 0;
+      isRestoringRef.current = false;
     };
   }, [enabled, pressesRequired, windowMs]);
 }

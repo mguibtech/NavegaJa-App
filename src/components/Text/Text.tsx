@@ -29,6 +29,7 @@ export function Text({
   return (
     <SRText
       color="text"
+      allowFontScaling={false}
       style={[$fontSizes[preset], {fontFamily}, style]}
       {...sRTextProps}>
       {children}

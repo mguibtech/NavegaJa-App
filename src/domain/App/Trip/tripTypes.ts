@@ -62,6 +62,11 @@ export interface Trip {
   routeId: string | null;
   currentLat: string | null;
   currentLng: string | null;
+  // Geocoding coordinates (set when trip is created via SearchableLocationInput)
+  originLat?: number | null;
+  originLng?: number | null;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -160,4 +165,9 @@ export interface CreateTripData {
   cargoPriceKg?: number;
   totalSeats: number;
   boatId: string;
+  // Geocoding coordinates — sent when origin/destination have real coords
+  originLat?: number;
+  originLng?: number;
+  destinationLat?: number;
+  destinationLng?: number;
 }

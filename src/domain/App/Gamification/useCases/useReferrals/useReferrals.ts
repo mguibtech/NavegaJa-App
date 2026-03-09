@@ -27,7 +27,9 @@ export function useReferrals() {
   });
 
   return {
-    referralsData: query.data ?? null,
+    referralsData: query.data
+      ? {...query.data, referrals: query.data.referrals ?? []}
+      : null,
     isLoading: query.isLoading,
     refetch: query.refetch,
   };

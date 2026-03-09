@@ -5,6 +5,14 @@ import {queryKeys} from '@infra';
 import {safetyService} from '../safetyService';
 import {SosAlert, CreateSosAlertData, SosType} from '../safetyTypes';
 
+/** Error thrown when a SOS alert already exists (HTTP 409) */
+export class SosDuplicateError extends Error {
+  constructor(public readonly existingAlert: SosAlert | null = null) {
+    super('Já existe um alerta SOS activo.');
+    this.name = 'SosDuplicateError';
+  }
+}
+
 export function useSosAlert() {
   const queryClient = useQueryClient();
 
@@ -25,7 +33,19 @@ export function useSosAlert() {
         description: options?.description,
         contactNumber: options?.contactNumber,
       };
-      return safetyService.createSosAlert(data);
+      try {
+        return await safetyService.createSosAlert(data);
+      } catch (err: any) {
+        // 409 Conflict — there is already an active SOS alert
+        if (err?.statusCode === 409) {
+          // Refresh alerts so we can surface the existing one
+          await queryClient.invalidateQueries({queryKey: queryKeys.safety.sosAlerts()});
+          const existing = (queryClient.getQueryData<SosAlert[]>(queryKeys.safety.sosAlerts()) ?? [])
+            .find(a => a.status === 'active') ?? null;
+          throw new SosDuplicateError(existing);
+        }
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: queryKeys.safety.sosAlerts()});

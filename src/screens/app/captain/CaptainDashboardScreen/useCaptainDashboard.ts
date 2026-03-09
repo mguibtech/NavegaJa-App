@@ -23,7 +23,7 @@ export function useCaptainDashboard() {
   const user = useAuthStore(s => s.user);
   const loadStoredUser = useAuthStore(s => s.loadStoredUser);
   const {trips, isLoading, fetchMyTrips} = useCaptainTrips();
-  const {boats, fetchBoats} = useMyBoats();
+  const {boats, fetchBoats, isLoading: isBoatsLoading} = useMyBoats();
 
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
   const [showBlockedModal, setShowBlockedModal] = useState(false);
@@ -92,8 +92,8 @@ export function useCaptainDashboard() {
     return new Date(t.updatedAt).toDateString() === today;
   }).length;
 
-  const pendingBoats = isBoatManager ? [] : boats.filter(b => !b.isVerified && !b.rejectionReason);
-  const rejectedBoats = isBoatManager ? [] : boats.filter(b => !b.isVerified && !!b.rejectionReason);
+  const pendingBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !b.rejectionReason);
+  const rejectedBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !!b.rejectionReason);
 
   function formatDeparture(trip: Trip) {
     try {
@@ -109,6 +109,7 @@ export function useCaptainDashboard() {
     trips,
     boats,
     isLoading,
+    isBoatsLoading,
     isRefreshingStatus,
     showBlockedModal,
     setShowBlockedModal,

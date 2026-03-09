@@ -64,6 +64,7 @@ export function TextInput({
           )}
           <RNTextInput
             ref={inputRef}
+            allowFontScaling={false}
             placeholderTextColor={colors.textLight}
             style={[
               styles.input,

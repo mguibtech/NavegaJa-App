@@ -25,12 +25,19 @@ export interface User {
   isVerified?: boolean;
   cpf?: string | null;
   avatarUrl?: string | null;
+  gender?: 'M' | 'F' | 'other' | null;
   city?: string | null;
   state?: string | null;
   licensePhotoUrl?: string | null;
   certificatePhotoUrl?: string | null;
   capabilities?: CaptainCapabilities | null;
   rejectionReason?: string | null;
+  // Location community
+  homeCommunity?: string | null;
+  homeMunicipio?: string | null;
+  homeLat?: number | null;
+  homeLng?: number | null;
+  locationUpdatedAt?: string | null;
   rating: string | number; // Backend retorna como string
   totalTrips: number;
   totalPoints: number;
@@ -49,8 +56,13 @@ export interface UpdateProfileData {
   cpf?: string;
   city?: string;
   state?: string;
+  gender?: 'M' | 'F' | 'other' | null;
   licensePhotoUrl?: string;
   certificatePhotoUrl?: string;
+  homeCommunity?: string | null;
+  homeMunicipio?: string | null;
+  homeLat?: number | null;
+  homeLng?: number | null;
 }
 
 export interface UpdatePasswordData {

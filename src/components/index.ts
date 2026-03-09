@@ -59,3 +59,9 @@ export {KycBanner} from './KycBanner/KycBanner';
 export {ScreenHeader} from './ScreenHeader/ScreenHeader';
 
 export {GlobalSosHandler} from './GlobalSosHandler/GlobalSosHandler';
+
+export {SearchableLocationInput} from './SearchableLocationInput/SearchableLocationInput';
+export type {SearchableLocationInputProps} from './SearchableLocationInput/SearchableLocationInput';
+
+export {MapLocationPicker} from './MapLocationPicker/MapLocationPicker';
+export type {MapLocationPickerProps} from './MapLocationPicker/MapLocationPicker';

@@ -55,7 +55,15 @@ export function useEditProfileScreen() {
   const [email, setEmail] = useState(user?.email || '');
   const [cpf, setCpf] = useState(formatCPF(user?.cpf || ''));
   const [city, setCity] = useState(user?.city || 'Manaus');
+  const [gender, setGender] = useState<'M' | 'F' | 'other' | null>(user?.gender ?? null);
   const [showCityPicker, setShowCityPicker] = useState(false);
+  const [cityIsCustom, setCityIsCustom] = useState(
+    !!user?.city && !AM_CITIES.includes(user.city),
+  );
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [homeCommunityLabel, setHomeCommunityLabel] = useState(user?.homeCommunity || '');
+  const [homeLat, setHomeLat] = useState<number | null>(user?.homeLat ?? null);
+  const [homeLng, setHomeLng] = useState<number | null>(user?.homeLng ?? null);
 
   const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(
     normalizeFileUrl(user?.licensePhotoUrl) || null,
@@ -87,6 +95,27 @@ export function useEditProfileScreen() {
 
   const [showDocPicker, setShowDocPicker] = useState(false);
   const [docPickerField, setDocPickerField] = useState<'license' | 'certificate' | null>(null);
+
+  function handleLocationConfirm(lat: number, lng: number, label: string, geocodedCity?: string) {
+    setHomeLat(lat);
+    setHomeLng(lng);
+    setHomeCommunityLabel(label);
+    setShowLocationPicker(false);
+    // Auto-preenche município a partir do reverse geocode
+    if (geocodedCity) {
+      const normalised = geocodedCity.trim();
+      const match = AM_CITIES.find(
+        c => c.toLowerCase() === normalised.toLowerCase(),
+      );
+      if (match) {
+        setCity(match);
+        setCityIsCustom(false);
+      } else {
+        setCity(normalised);
+        setCityIsCustom(true);
+      }
+    }
+  }
 
   function handleCpfChange(value: string) {
     setCpf(formatCPF(value));
@@ -280,8 +309,13 @@ export function useEditProfileScreen() {
         cpf: cpf.replace(/\D/g, '') || undefined,
         city: city.trim() || undefined,
         state: 'AM',
+        gender: gender ?? undefined,
         licensePhotoUrl: licensePhotoUrl ?? undefined,
         certificatePhotoUrl: certificatePhotoUrl ?? undefined,
+        homeCommunity: homeCommunityLabel.trim() || null,
+        homeMunicipio: city.trim() || null,
+        homeLat: homeLat ?? undefined,
+        homeLng: homeLng ?? undefined,
       });
 
       updateUser({
@@ -317,7 +351,13 @@ export function useEditProfileScreen() {
     email, setEmail,
     cpf,
     city, setCity,
+    gender, setGender,
     showCityPicker, setShowCityPicker,
+    cityIsCustom, setCityIsCustom,
+    showLocationPicker, setShowLocationPicker,
+    homeCommunityLabel,
+    homeLat, homeLng,
+    handleLocationConfirm,
     licensePhotoUrl, setLicensePhotoUrl,
     licensePhotoType, setLicensePhotoType,
     certificatePhotoUrl, setCertificatePhotoUrl,

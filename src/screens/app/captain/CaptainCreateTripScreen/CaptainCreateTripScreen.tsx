@@ -4,12 +4,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Modal,
-  FlatList,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader, SearchableLocationInput} from '@components';
 import {Boat} from '@domain';
 
 import {
@@ -30,10 +28,8 @@ export function CaptainCreateTripScreen() {
     selectedBoatId,
     origin,
     destination,
-    currentCityValue,
-    cityPickerTarget,
-    showCityPicker,
-    setShowCityPicker,
+    selectOrigin,
+    selectDestination,
     departureDate,
     arrivalDate,
     showDatePicker,
@@ -52,11 +48,8 @@ export function CaptainCreateTripScreen() {
     openDatePicker,
     onDateChange,
     onTimeChange,
-    openCityPicker,
-    selectCity,
     handleSubmit,
     goBack,
-    cityList,
     navigateToCreateBoat,
     navigateToEditProfile,
   } = useCaptainCreateTrip();
@@ -110,52 +103,26 @@ export function CaptainCreateTripScreen() {
             </Text>
 
             {/* Origem */}
-            <TouchableOpacityBox
-              onPress={() => openCityPicker('origin')}
-              backgroundColor="surface"
-              borderRadius="s12"
-              borderWidth={1}
-              borderColor={origin ? 'secondary' : 'border'}
-              paddingHorizontal="s16"
-              paddingVertical="s16"
-              flexDirection="row"
-              alignItems="center"
-              mb="s12"
-              style={{elevation: 1}}>
-              <Icon name="place" size={20} color={origin ? 'secondary' : 'textSecondary'} />
-              <Text
-                preset="paragraphMedium"
-                color={origin ? 'text' : 'textSecondary'}
-                ml="s12"
-                flex={1}>
-                {origin || 'Selecionar origem'}
-              </Text>
-              <Icon name="keyboard-arrow-down" size={20} color="textSecondary" />
-            </TouchableOpacityBox>
+            <Box mb="s12">
+              <SearchableLocationInput
+                value={origin}
+                onSelect={selectOrigin}
+                placeholder="Buscar origem (cidade ou comunidade)"
+                iconName="place"
+                label="Origem"
+              />
+            </Box>
 
             {/* Destino */}
-            <TouchableOpacityBox
-              onPress={() => openCityPicker('destination')}
-              backgroundColor="surface"
-              borderRadius="s12"
-              borderWidth={1}
-              borderColor={destination ? 'secondary' : 'border'}
-              paddingHorizontal="s16"
-              paddingVertical="s16"
-              flexDirection="row"
-              alignItems="center"
-              mb="s24"
-              style={{elevation: 1}}>
-              <Icon name="flag" size={20} color={destination ? 'secondary' : 'textSecondary'} />
-              <Text
-                preset="paragraphMedium"
-                color={destination ? 'text' : 'textSecondary'}
-                ml="s12"
-                flex={1}>
-                {destination || 'Selecionar destino'}
-              </Text>
-              <Icon name="keyboard-arrow-down" size={20} color="textSecondary" />
-            </TouchableOpacityBox>
+            <Box mb="s24">
+              <SearchableLocationInput
+                value={destination}
+                onSelect={selectDestination}
+                placeholder="Buscar destino (cidade ou comunidade)"
+                iconName="flag"
+                label="Destino"
+              />
+            </Box>
 
             {/* Data e Hora */}
             <Text preset="paragraphMedium" color="text" bold mb="s12">
@@ -466,81 +433,6 @@ export function CaptainCreateTripScreen() {
           />
         )}
       </KeyboardAvoidingView>
-
-      {/* City Picker Modal */}
-      <Modal
-        visible={showCityPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCityPicker(false)}>
-        <TouchableOpacityBox
-          flex={1}
-          style={{backgroundColor: 'rgba(0,0,0,0.4)'}}
-          onPress={() => setShowCityPicker(false)}
-        />
-        <Box
-          backgroundColor="surface"
-          borderTopLeftRadius="s20"
-          borderTopRightRadius="s20"
-          paddingTop="s16"
-          style={{maxHeight: '60%'}}>
-          <Box
-            flexDirection="row"
-            alignItems="center"
-            paddingHorizontal="s20"
-            paddingBottom="s16"
-            borderBottomWidth={1}
-            borderBottomColor="border">
-            <Text preset="paragraphMedium" color="text" bold flex={1}>
-              {cityPickerTarget === 'origin' ? 'Selecionar origem' : 'Selecionar destino'}
-            </Text>
-            <TouchableOpacityBox
-              onPress={() => setShowCityPicker(false)}
-              padding="s4">
-              <Icon name="close" size={24} color="textSecondary" />
-            </TouchableOpacityBox>
-          </Box>
-          <FlatList
-            data={cityList}
-            keyExtractor={item => item}
-            renderItem={({item}) => {
-              const isSelected = item === currentCityValue;
-              const isDisabled =
-                cityPickerTarget === 'destination'
-                  ? item === origin
-                  : item === destination;
-              return (
-                <TouchableOpacityBox
-                  onPress={() => !isDisabled && selectCity(item)}
-                  paddingHorizontal="s20"
-                  paddingVertical="s16"
-                  flexDirection="row"
-                  alignItems="center"
-                  backgroundColor={isSelected ? 'secondaryBg' : 'surface'}
-                  borderBottomWidth={1}
-                  borderBottomColor="border"
-                  style={{opacity: isDisabled ? 0.35 : 1}}>
-                  <Text
-                    preset="paragraphMedium"
-                    color={isSelected ? 'secondary' : 'text'}
-                    bold={isSelected}
-                    flex={1}>
-                    {item}
-                  </Text>
-                  {isSelected && (
-                    <Icon name="check" size={20} color="secondary" />
-                  )}
-                  {isDisabled && (
-                    <Text preset="paragraphCaptionSmall" color="textSecondary">
-                      já selecionada
-                    </Text>
-                  )}
-                </TouchableOpacityBox>
-              );
-            }}
-          />
-        </Box>
-      </Modal>
     </>
   );
 }

@@ -12,7 +12,7 @@ import {
   TouchableOpacityBox,
   TextInput,
 } from '@components';
-import {SOS_TYPE_CONFIGS} from '@domain';
+import {SOS_TYPE_CONFIGS, SosType} from '@domain';
 import {formatPhone} from '@utils';
 import {Theme} from '@theme';
 
@@ -61,7 +61,7 @@ export function SosAlertScreen() {
 
   // Se já existe alerta ativo, mostrar status
   if (activeAlert) {
-    const config = SOS_TYPE_CONFIGS[activeAlert.type];
+    const config = SOS_TYPE_CONFIGS[activeAlert.type] ?? SOS_TYPE_CONFIGS[SosType.GENERAL];
 
     return (
       <Box flex={1} backgroundColor="background">

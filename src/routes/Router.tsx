@@ -183,7 +183,7 @@ export function Router() {
   const {isLoggedIn, isLoading, loadStoredUser, logout} = useAuthStore();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const [showSplash, setShowSplash] = useState(true);
-  const {showSuccess, showError} = useToast();
+  const {showSuccess, showError, showInfo} = useToast();
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const queryClient = useQueryClient();
   // Dados de notificação pendentes — executados quando o NavigationContainer ficar ready
@@ -375,6 +375,9 @@ export function Router() {
             navigationRef.navigate('HomeTabs', undefined);
           }
         }, 1500);
+      } else if (title) {
+        // Notificação genérica em foreground — exibe título/body como toast
+        showInfo(body || title);
       }
     });
 

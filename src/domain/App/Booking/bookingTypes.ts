@@ -67,9 +67,11 @@ export enum PaymentMethod {
 
 export interface ChildPassenger {
   age: number;     // 0–17; ≤ 9 = gratuito
+  name?: string;   // opcional — nome da criança
 }
 
 export interface ExtraPassenger {
+  name: string;
   cpf: string;
 }
 

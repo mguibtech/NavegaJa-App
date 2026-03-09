@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {Animated, StyleSheet} from 'react-native';
+import {Animated, StyleSheet, View} from 'react-native';
 
 import {Box, Text, TouchableOpacityBox} from '@components';
 
@@ -26,14 +26,14 @@ export function SosHoldButton({
 
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {toValue: 1.15, duration: 300, useNativeDriver: true}),
-        Animated.timing(pulseAnim, {toValue: 1, duration: 300, useNativeDriver: true}),
+        Animated.timing(pulseAnim, {toValue: 1.25, duration: 350, useNativeDriver: true}),
+        Animated.timing(pulseAnim, {toValue: 1, duration: 350, useNativeDriver: true}),
       ]),
     ).start();
 
     Animated.timing(scaleAnim, {
-      toValue: 0.92,
-      duration: 200,
+      toValue: 0.93,
+      duration: 150,
       useNativeDriver: true,
     }).start();
 
@@ -66,24 +66,25 @@ export function SosHoldButton({
 
   return (
     <Animated.View style={[styles.wrapper, {transform: [{scale: scaleAnim}]}]}>
-      {/* Pulse ring visível durante long press */}
+      {/* Anel externo estático — sempre visível */}
+      <View style={styles.outerRing} />
+      <View style={styles.innerRing} />
+
+      {/* Anel pulsante — apenas durante o hold */}
       {isHolding && (
         <Animated.View
-          style={[
-            styles.ring,
-            {transform: [{scale: pulseAnim}]},
-          ]}
+          style={[styles.pulseRing, {transform: [{scale: pulseAnim}]}]}
         />
       )}
 
       <TouchableOpacityBox
         onPressIn={startHold}
         onPressOut={stopHold}
-        activeOpacity={0.85}
+        activeOpacity={0.88}
         disabled={disabled}
         style={[
           styles.button,
-          {backgroundColor: isHolding ? '#B91C1C' : '#DC2626'},
+          {backgroundColor: disabled ? '#9CA3AF' : isHolding ? '#B91C1C' : '#DC2626'},
         ]}>
         <Box alignItems="center" justifyContent="center">
           {isHolding ? (
@@ -91,27 +92,27 @@ export function SosHoldButton({
               <Text
                 preset="headingMedium"
                 bold
-                style={{color: '#FFFFFF', fontSize: 28, lineHeight: 32}}>
+                style={{color: '#FFFFFF', fontSize: 34, lineHeight: 38}}>
                 {countdown}
               </Text>
               <Text
                 preset="paragraphCaptionSmall"
-                style={{color: 'rgba(255,255,255,0.85)', marginTop: 2}}>
-                Solte para cancelar
+                style={{color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 1}}>
+                solte p/ cancelar
               </Text>
             </>
           ) : (
             <>
               <Text
-                preset="paragraphMedium"
+                preset="headingSmall"
                 bold
-                style={{color: '#FFFFFF', fontSize: 22, letterSpacing: 2}}>
+                style={{color: '#FFFFFF', fontSize: 20, letterSpacing: 5}}>
                 SOS
               </Text>
               <Text
                 preset="paragraphCaptionSmall"
-                style={{color: 'rgba(255,255,255,0.85)', marginTop: 2}}>
-                Manter pressionado
+                style={{color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 2}}>
+                segurar
               </Text>
             </>
           )}
@@ -121,22 +122,40 @@ export function SosHoldButton({
   );
 }
 
-const BUTTON_SIZE = 96;
+const BUTTON_SIZE = 88;
 
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: BUTTON_SIZE + 32,
-    height: BUTTON_SIZE + 32,
+    width: BUTTON_SIZE + 48,
+    height: BUTTON_SIZE + 48,
   },
-  ring: {
+  outerRing: {
     position: 'absolute',
-    width: BUTTON_SIZE + 24,
-    height: BUTTON_SIZE + 24,
-    borderRadius: (BUTTON_SIZE + 24) / 2,
+    width: BUTTON_SIZE + 44,
+    height: BUTTON_SIZE + 44,
+    borderRadius: (BUTTON_SIZE + 44) / 2,
+    borderWidth: 1,
+    borderColor: 'rgba(220,38,38,0.15)',
+    backgroundColor: 'rgba(220,38,38,0.04)',
+  },
+  innerRing: {
+    position: 'absolute',
+    width: BUTTON_SIZE + 22,
+    height: BUTTON_SIZE + 22,
+    borderRadius: (BUTTON_SIZE + 22) / 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(220,38,38,0.3)',
+    backgroundColor: 'rgba(220,38,38,0.06)',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: BUTTON_SIZE + 16,
+    height: BUTTON_SIZE + 16,
+    borderRadius: (BUTTON_SIZE + 16) / 2,
     borderWidth: 3,
-    borderColor: 'rgba(220,38,38,0.4)',
+    borderColor: 'rgba(220,38,38,0.55)',
   },
   button: {
     width: BUTTON_SIZE,
@@ -145,9 +164,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#DC2626',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 10,
   },
 });

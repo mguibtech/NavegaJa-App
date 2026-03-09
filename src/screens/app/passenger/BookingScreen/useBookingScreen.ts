@@ -72,7 +72,7 @@ function isCPFComplete(cpf: string): boolean {
 
 export type PassengerModalState =
   | {visible: false}
-  | {visible: true; type: 'adult'; index: number; cpf: string}
+  | {visible: true; type: 'adult'; index: number; name: string; cpf: string}
   | {visible: true; type: 'child'; index: number; age: number};
 
 export function useBookingScreen() {
@@ -168,7 +168,7 @@ export function useBookingScreen() {
     setExtraAdults(prev => {
       if (prev.length === extraCount) return prev;
       if (prev.length < extraCount) {
-        return [...prev, ...Array(extraCount - prev.length).fill({cpf: ''})];
+        return [...prev, ...Array(extraCount - prev.length).fill({name: '', cpf: ''})];
       }
       return prev.slice(0, extraCount);
     });
@@ -260,11 +260,12 @@ export function useBookingScreen() {
   // ── Modal de passageiro ───────────────────────────────────────────────
 
   function openAdultModal(index: number) {
-    const adult = extraAdults[index] ?? {cpf: ''};
+    const adult = extraAdults[index] ?? {name: '', cpf: ''};
     setPassengerModal({
       visible: true,
       type: 'adult',
       index,
+      name: adult.name,
       cpf: adult.cpf,
     });
   }
@@ -283,13 +284,14 @@ export function useBookingScreen() {
     setPassengerModal({visible: false});
   }
 
-  function handleConfirmPassengerModal(data: {cpf?: string; age?: number}) {
+  function handleConfirmPassengerModal(data: {name?: string; cpf?: string; age?: number}) {
     if (!passengerModal.visible) return;
 
     if (passengerModal.type === 'adult') {
       setExtraAdults(prev => {
         const updated = [...prev];
         updated[passengerModal.index] = {
+          name: data.name ?? '',
           cpf: data.cpf ?? '',
         };
         return updated;
@@ -383,8 +385,22 @@ export function useBookingScreen() {
           ? couponValidation.state.data.code
           : undefined;
 
-      // Adultos extras preenchidos (filtra os sem CPF)
-      const filledExtraAdults = extraAdults.filter(a => a.cpf.trim());
+      // Adultos extras preenchidos (filtra os sem nome ou CPF)
+      const filledExtraAdults = extraAdults.filter(a => a.name.trim() && a.cpf.trim());
+
+      // Validação de CPFs duplicados
+      const mainCpfClean = passengerCPF.replace(/\D/g, '');
+      const extraCpfs = filledExtraAdults.map(a => a.cpf);
+      if (mainCpfClean && extraCpfs.includes(mainCpfClean)) {
+        setBookingErrorMessage('O seu CPF não pode constar nos passageiros adicionais.');
+        setShowBookingErrorModal(true);
+        return;
+      }
+      if (new Set(extraCpfs).size !== extraCpfs.length) {
+        setBookingErrorMessage('Há CPFs duplicados entre os passageiros adicionais.');
+        setShowBookingErrorModal(true);
+        return;
+      }
 
       const booking = await createBooking({
         tripId: trip!.id,

@@ -217,11 +217,18 @@ export function buildDiceBearUrlFromParsed(parsed: {
   return buildDiceBearUrl(parsed.style, parsed.seed, parsed.urlParams);
 }
 
+function getDefaultStyle(gender?: 'M' | 'F' | 'other' | null): DiceBearStyle {
+  if (gender === 'F') {return 'micah';}
+  if (gender === 'M') {return 'avataaars';}
+  return 'thumbs';
+}
+
 export interface UserAvatarProps {
   userId?: string | null;
   avatarUrl?: string | null;
   name?: string | null;
   size?: AvatarSize;
+  gender?: 'M' | 'F' | 'other' | null;
 }
 
 export function UserAvatar({
@@ -229,6 +236,7 @@ export function UserAvatar({
   avatarUrl,
   name,
   size = 'md',
+  gender,
 }: UserAvatarProps) {
   const [imgError, setImgError] = useState(false);
   const dim = SIZE_PX[size];
@@ -258,9 +266,9 @@ export function UserAvatar({
   // Caso 2: foto real (upload)
   const hasRealPhoto = !imgError && !!avatarUrl && avatarUrl.startsWith('http');
 
-  // Caso 3: fallback DiceBear local
+  // Caso 3: fallback DiceBear local — estilo baseado no género
   const seed = userId ?? name ?? 'default';
-  const fallbackSvg = generateDiceBearSvg('avataaars', seed);
+  const fallbackSvg = generateDiceBearSvg(getDefaultStyle(gender), seed);
 
   return (
     <Box

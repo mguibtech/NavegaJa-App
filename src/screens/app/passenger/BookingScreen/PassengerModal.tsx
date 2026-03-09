@@ -7,8 +7,13 @@ interface AdultModalProps {
   visible: true;
   type: 'adult';
   index: number;
+  name: string;
   cpf: string;
-  onConfirm: (data: {cpf: string}) => void;
+  /** CPF limpo do passageiro principal — para impedir duplicação */
+  mainCpf?: string;
+  /** CPFs limpos dos outros passageiros extras — para impedir duplicação entre eles */
+  otherCpfs?: string[];
+  onConfirm: (data: {name: string; cpf: string}) => void;
   onClose: () => void;
 }
 
@@ -56,6 +61,8 @@ function isValidCPF(cpf: string): boolean {
 }
 
 export function PassengerModal(props: Props) {
+  const [name, setName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [cpf, setCpf] = useState('');
   const [age, setAge] = useState(0);
   const [cpfError, setCpfError] = useState<string | null>(null);
@@ -64,7 +71,9 @@ export function PassengerModal(props: Props) {
   useEffect(() => {
     if (props.visible) {
       setCpfError(null);
+      setNameError(null);
       if (props.type === 'adult') {
+        setName(props.name);
         setCpf(props.cpf);
       } else {
         setAge(props.age);
@@ -84,11 +93,29 @@ export function PassengerModal(props: Props) {
   function handleCpfChange(value: string) {
     const formatted = formatCPF(value);
     setCpf(formatted);
-    if (cpfError) {setCpfError(null);}
+    // Feedback inline de duplicação assim que o CPF fica completo
+    if (cpfError && !cpfError.includes('duplicado') && !cpfError.includes('principal')) {
+      setCpfError(null);
+    }
+    const clean = formatted.replace(/\D/g, '');
+    if (clean.length === 11 && props.type === 'adult') {
+      const adultProps = props as AdultModalProps;
+      if (adultProps.mainCpf && clean === adultProps.mainCpf) {
+        setCpfError('Igual ao CPF do passageiro principal');
+      } else if (adultProps.otherCpfs?.includes(clean)) {
+        setCpfError('CPF duplicado com outro passageiro');
+      } else {
+        setCpfError(null);
+      }
+    }
   }
 
   function handleConfirm() {
     if (isAdult) {
+      if (!name.trim()) {
+        setNameError('Nome é obrigatório');
+        return;
+      }
       if (!cpf.trim()) {
         setCpfError('CPF é obrigatório');
         return;
@@ -101,7 +128,17 @@ export function PassengerModal(props: Props) {
         setCpfError('CPF inválido');
         return;
       }
-      (props as AdultModalProps).onConfirm({cpf: cpf.replace(/\D/g, '')});
+      const clean = cpf.replace(/\D/g, '');
+      const adultProps = props as AdultModalProps;
+      if (adultProps.mainCpf && clean === adultProps.mainCpf) {
+        setCpfError('Igual ao CPF do passageiro principal');
+        return;
+      }
+      if (adultProps.otherCpfs?.includes(clean)) {
+        setCpfError('CPF duplicado com outro passageiro');
+        return;
+      }
+      adultProps.onConfirm({name: name.trim(), cpf: clean});
     } else {
       (props as ChildModalProps).onConfirm({age});
     }
@@ -161,6 +198,20 @@ export function PassengerModal(props: Props) {
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled">
+
+              {/* Campo Nome — só adultos */}
+              {isAdult && (
+                <Box mb="s16">
+                  <TextInput
+                    label="Nome completo *"
+                    placeholder="Nome do passageiro"
+                    value={name}
+                    onChangeText={text => { setName(text); if (nameError) {setNameError(null);} }}
+                    leftIcon="person"
+                    errorMessage={nameError || undefined}
+                  />
+                </Box>
+              )}
 
               {/* Campo CPF — só adultos */}
               {isAdult && (
