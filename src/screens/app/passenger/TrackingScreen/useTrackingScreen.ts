@@ -1,49 +1,49 @@
-import {useEffect, useRef, useState} from 'react';
-import {Linking} from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Linking } from 'react-native';
 import MapView from 'react-native-maps';
 
-import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import {SosAlert, SosStatus, SosType, useTrackBooking, TrackingStatus, useSosAlert, usePersonalContacts, PersonalContact, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE} from '@domain';
-import {AppStackParamList} from '@routes';
-import {useToast} from '@hooks';
-import {api} from '@api';
-import {API_ENDPOINTS} from '@api/config';
+import { SosAlert, SosStatus, SosType, useTrackBooking, TrackingStatus, useSosAlert, usePersonalContacts, PersonalContact, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE } from '@domain';
+import { AppStackParamList } from '@routes';
+import { useToast } from '@hooks';
+import { api } from '@api';
+import { API_ENDPOINTS } from '@api/config';
 
-const FALLBACK_COORDS = {latitude: -3.119, longitude: -60.0217}; // Manaus
+const FALLBACK_COORDS = { latitude: -3.119, longitude: -60.0217 }; // Manaus
 
 // Chaves sem acentos para comparação robusta (evita problemas de Unicode NFC vs NFD)
 // Usado apenas para os marcadores de origem/destino e linha do percurso no mapa
-const CITY_COORDS: Record<string, {latitude: number; longitude: number}> = {
-  manaus:                   {latitude: -3.119,   longitude: -60.0217},
-  parintins:                {latitude: -2.6277,  longitude: -56.736},
-  itacoatiara:              {latitude: -3.1439,  longitude: -58.4442},
-  tefe:                     {latitude: -3.3684,  longitude: -64.7124},
-  barreirinha:              {latitude: -2.7869,  longitude: -57.0501},
-  coari:                    {latitude: -4.0856,  longitude: -63.1416},
-  maues:                    {latitude: -3.3714,  longitude: -57.7189},
-  tabatinga:                {latitude: -4.255,   longitude: -69.9327},
-  labrea:                   {latitude: -7.2592,  longitude: -64.7986},
-  humaita:                  {latitude: -7.5057,  longitude: -63.0173},
-  'benjamin constant':      {latitude: -4.3759,  longitude: -70.0339},
-  'sao gabriel da cachoeira': {latitude: -0.1303, longitude: -67.0892},
-  borba:                    {latitude: -4.384,   longitude: -59.5875},
-  autazes:                  {latitude: -3.5777,  longitude: -59.1301},
-  'nova olinda do norte':   {latitude: -3.8847,  longitude: -59.0906},
-  'presidente figueiredo':  {latitude: -2.0227,  longitude: -60.0249},
-  iranduba:                 {latitude: -3.2819,  longitude: -60.1879},
-  manacapuru:               {latitude: -3.2998,  longitude: -60.6217},
-  careiro:                  {latitude: -3.3521,  longitude: -59.7445},
-  anori:                    {latitude: -3.7697,  longitude: -61.6447},
-  'fonte boa':              {latitude: -2.5233,  longitude: -66.0928},
-  manicore:                 {latitude: -5.8105,  longitude: -61.3024},
-  alvaraes:                 {latitude: -3.2136,  longitude: -64.8067},
-  beruri:                   {latitude: -3.9005,  longitude: -61.3527},
+const CITY_COORDS: Record<string, { latitude: number; longitude: number }> = {
+  manaus: { latitude: -3.119, longitude: -60.0217 },
+  parintins: { latitude: -2.6277, longitude: -56.736 },
+  itacoatiara: { latitude: -3.1439, longitude: -58.4442 },
+  tefe: { latitude: -3.3684, longitude: -64.7124 },
+  barreirinha: { latitude: -2.7869, longitude: -57.0501 },
+  coari: { latitude: -4.0856, longitude: -63.1416 },
+  maues: { latitude: -3.3714, longitude: -57.7189 },
+  tabatinga: { latitude: -4.255, longitude: -69.9327 },
+  labrea: { latitude: -7.2592, longitude: -64.7986 },
+  humaita: { latitude: -7.5057, longitude: -63.0173 },
+  'benjamin constant': { latitude: -4.3759, longitude: -70.0339 },
+  'sao gabriel da cachoeira': { latitude: -0.1303, longitude: -67.0892 },
+  borba: { latitude: -4.384, longitude: -59.5875 },
+  autazes: { latitude: -3.5777, longitude: -59.1301 },
+  'nova olinda do norte': { latitude: -3.8847, longitude: -59.0906 },
+  'presidente figueiredo': { latitude: -2.0227, longitude: -60.0249 },
+  iranduba: { latitude: -3.2819, longitude: -60.1879 },
+  manacapuru: { latitude: -3.2998, longitude: -60.6217 },
+  careiro: { latitude: -3.3521, longitude: -59.7445 },
+  anori: { latitude: -3.7697, longitude: -61.6447 },
+  'fonte boa': { latitude: -2.5233, longitude: -66.0928 },
+  manicore: { latitude: -5.8105, longitude: -61.3024 },
+  alvaraes: { latitude: -3.2136, longitude: -64.8067 },
+  beruri: { latitude: -3.9005, longitude: -61.3527 },
 };
 
-function getCityCoords(city?: string | null): {latitude: number; longitude: number} {
-  if (!city) {return FALLBACK_COORDS;}
+function getCityCoords(city?: string | null): { latitude: number; longitude: number } {
+  if (!city) { return FALLBACK_COORDS; }
   const key = city
     .toLowerCase()
     .normalize('NFD')
@@ -57,20 +57,20 @@ export function useTrackingScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'Tracking'>>();
-  const {bookingId} = route.params;
+  const { bookingId } = route.params;
 
   const mapRef = useRef<MapView>(null);
 
-  const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
+  const { trackingInfo, isLoading, error, refetch } = useTrackBooking(bookingId);
   const toast = useToast();
-  const {alerts, createAlert} = useSosAlert();
-  const {contacts} = usePersonalContacts();
-  const {label: locationLabel, fetchLabel} = useLocationLabel();
+  const { alerts, createAlert } = useSosAlert();
+  const { contacts } = usePersonalContacts();
+  const { label: locationLabel, fetchLabel } = useLocationLabel();
   const mySosAlerts = alerts.filter(a => a.status === SosStatus.ACTIVE);
 
   const [showSosAlerts, setShowSosAlerts] = useState(true);
   const [showDangerZones, setShowDangerZones] = useState(true);
-  const [livePosition, setLivePosition] = useState<{latitude: number; longitude: number} | null>(null);
+  const [livePosition, setLivePosition] = useState<{ latitude: number; longitude: number } | null>(null);
   const [sosTriggering, setSosTriggering] = useState(false);
   const [showSosResultModal, setShowSosResultModal] = useState(false);
   const [unlinkedSosContacts, setUnlinkedSosContacts] = useState<PersonalContact[]>([]);
@@ -89,7 +89,7 @@ export function useTrackingScreen() {
     if (lat != null && lng != null) {
       fetchLabel(lat, lng);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackingInfo?.currentLat, trackingInfo?.currentLng]);
 
   useEffect(() => {
@@ -108,24 +108,27 @@ export function useTrackingScreen() {
     }
     async function pollLocation() {
       try {
-        const res = await api.get<{lat: number; lng: number}>(API_ENDPOINTS.TRIP_LOCATION(tripId!));
+        const res = await api.get<{ lat: number | string; lng: number | string }>(
+          API_ENDPOINTS.TRIP_LOCATION(tripId!),
+        );
+
         if (res?.lat != null && res?.lng != null) {
-          setLivePosition({latitude: res.lat, longitude: res.lng});
+          setLivePosition(normalizeCoords(res.lat, res.lng, FALLBACK_COORDS));
         }
       } catch {
-        // falha silenciosa — mantém posição anterior
+        // falha silenciosa
       }
     }
     pollLocation();
     const interval = setInterval(pollLocation, 15_000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackingInfo?.booking.tripId, trackingInfo?.trackingStatus]);
 
   // Flood inundation polygons — usa posição da embarcação como centro
   const inundLat = livePosition?.latitude ?? trackingInfo?.currentLat ?? FALLBACK_COORDS.latitude;
   const inundLng = livePosition?.longitude ?? trackingInfo?.currentLng ?? FALLBACK_COORDS.longitude;
-  const {inundation} = useFloodInundation(inundLat, inundLng);
+  const { inundation } = useFloodInundation(inundLat, inundLng);
 
   const trip = trackingInfo?.booking.trip;
   const booking = trackingInfo?.booking;
@@ -134,24 +137,30 @@ export function useTrackingScreen() {
 
   // Marcadores fixos de origem/destino (linha do percurso no mapa)
   // Prefer real geocoding coordinates stored in the trip; fall back to city-name lookup
+  const originFallback = getCityCoords(trip?.origin);
+  const destinationFallback = getCityCoords(trip?.destination);
+
   const originCoords =
     trip?.originLat != null && trip?.originLng != null
-      ? {latitude: trip.originLat, longitude: trip.originLng}
-      : getCityCoords(trip?.origin);
+      ? normalizeCoords(trip.originLat, trip.originLng, originFallback)
+      : originFallback;
+
   const destinationCoords =
     trip?.destinationLat != null && trip?.destinationLng != null
-      ? {latitude: trip.destinationLat, longitude: trip.destinationLng}
-      : getCityCoords(trip?.destination);
+      ? normalizeCoords(trip.destinationLat, trip.destinationLng, destinationFallback)
+      : destinationFallback;
 
-  // Posição do barco: polling → backend devolve coords correctas por status
-  // fallback para trackingInfo (primeira carga) ou originCoords
   const currentPosition =
     livePosition ??
     (trackingInfo?.currentLat != null && trackingInfo?.currentLng != null
-      ? {latitude: trackingInfo.currentLat, longitude: trackingInfo.currentLng}
+      ? normalizeCoords(trackingInfo.currentLat, trackingInfo.currentLng, originCoords)
       : originCoords);
 
-  const routeCoordinates = [originCoords, currentPosition, destinationCoords];
+  const routeCoordinates = [
+    originCoords,
+    currentPosition,
+    destinationCoords,
+  ];
 
   const handleRefresh = () => {
     refetch();
@@ -166,11 +175,11 @@ export function useTrackingScreen() {
   };
 
   const handleSosPress = () => {
-    navigation.navigate('SosAlert', {tripId: bookingId});
+    navigation.navigate('SosAlert', { tripId: bookingId });
   };
 
   async function handleSosTrigger() {
-    if (sosTriggering) {return;}
+    if (sosTriggering) { return; }
     setSosTriggering(true);
     try {
       await createAlert(SosType.GENERAL, {
@@ -185,6 +194,32 @@ export function useTrackingScreen() {
     } finally {
       setSosTriggering(false);
     }
+  }
+
+  function parseCoord(value: unknown, fallback: number): number {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value.replace(',', '.').trim());
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+
+    return fallback;
+  }
+
+  function normalizeCoords(
+    lat: unknown,
+    lng: unknown,
+    fallback: { latitude: number; longitude: number },
+  ) {
+    return {
+      latitude: parseCoord(lat, fallback.latitude),
+      longitude: parseCoord(lng, fallback.longitude),
+    };
   }
 
   function handleWhatsApp(contact: PersonalContact) {

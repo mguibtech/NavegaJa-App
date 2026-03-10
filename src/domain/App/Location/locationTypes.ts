@@ -33,7 +33,7 @@ export interface ReverseGeocode {
 }
 
 export interface LocationSuggestion {
-  label: string;        // "Comunidade Santo Antônio, Tefé, AM"
+  name: string;        // "Comunidade Santo Antônio, Tefé, AM"
   city?: string;        // "Tefé"
   state?: string;       // "AM"
   lat?: number;

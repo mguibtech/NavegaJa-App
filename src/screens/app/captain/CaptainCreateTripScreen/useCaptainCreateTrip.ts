@@ -10,15 +10,9 @@ import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
+import { AM_CITIES } from '@utils';
 
 export type PickerTarget = 'departure' | 'arrival';
-
-export const AM_CITIES = [
-  'Manaus', 'Parintins', 'Itacoatiara', 'Tefé', 'Barreirinha', 'Coari',
-  'Maués', 'Tabatinga', 'Lábrea', 'Humaitá', 'Benjamin Constant',
-  'São Gabriel da Cachoeira', 'Borba', 'Autazes', 'Nova Olinda do Norte',
-  'Presidente Figueiredo', 'Iranduba', 'Manacapuru', 'Careiro', 'Anori',
-];
 
 export function digitsToFloat(digits: string): number {
   return parseInt(digits || '0', 10) / 100;
@@ -132,10 +126,10 @@ export function useCaptainCreateTrip() {
   }
 
   function selectOrigin(suggestion: LocationSuggestion) {
-    setOrigin(suggestion.label);
+    setOrigin(suggestion.name);
     setOriginLat(suggestion.lat);
     setOriginLng(suggestion.lng);
-    if (destination === suggestion.label) {
+    if (destination === suggestion.name) {
       setDestination('');
       setDestinationLat(undefined);
       setDestinationLng(undefined);
@@ -143,10 +137,10 @@ export function useCaptainCreateTrip() {
   }
 
   function selectDestination(suggestion: LocationSuggestion) {
-    setDestination(suggestion.label);
+    setDestination(suggestion.name);
     setDestinationLat(suggestion.lat);
     setDestinationLng(suggestion.lng);
-    if (origin === suggestion.label) {
+    if (origin === suggestion.name) {
       setOrigin('');
       setOriginLat(undefined);
       setOriginLng(undefined);

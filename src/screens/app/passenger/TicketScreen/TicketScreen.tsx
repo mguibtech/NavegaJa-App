@@ -213,7 +213,7 @@ export function TicketScreen({navigation, route}: Props) {
   };
 
   return (
-    <Box flex={1} backgroundColor="background">
+    <Box flex={1} mb='s24' backgroundColor="background">
       {/* Header */}
       <Box
         paddingHorizontal="s24"

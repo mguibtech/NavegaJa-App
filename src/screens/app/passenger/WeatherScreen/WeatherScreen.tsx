@@ -91,7 +91,8 @@ function ForecastCard({day}: {day: WeatherForecastDay}) {
 export function WeatherScreen({route}: WeatherScreenProps) {
   const {top} = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp<AppStackParamList>>();
-  const region: Region = route?.params?.region ?? 'manaus';
+  const regionParam = route?.params?.region ?? 'manaus';
+  const region: Region = (regionParam in REGION_COORDINATES ? regionParam : 'manaus') as Region;
   const coords = REGION_COORDINATES[region];
 
   const {forecast, fetchRegion, isLoading: isForecastLoading} = useWeatherForecast();

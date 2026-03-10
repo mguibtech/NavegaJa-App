@@ -13,13 +13,9 @@ import {normalizeFileUrl} from '@api/config';
 import {uploadService} from '../../../../infra/uploadService';
 
 import {AppStackParamList} from '@routes';
+import { AM_CITIES } from '@utils';
 
-export const AM_CITIES = [
-  'Manaus', 'Parintins', 'Itacoatiara', 'Tefé', 'Barreirinha', 'Coari',
-  'Maués', 'Tabatinga', 'Lábrea', 'Humaitá', 'Benjamin Constant',
-  'São Gabriel da Cachoeira', 'Borba', 'Autazes', 'Nova Olinda do Norte',
-  'Presidente Figueiredo', 'Iranduba', 'Manacapuru', 'Careiro', 'Anori',
-];
+
 
 export function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);

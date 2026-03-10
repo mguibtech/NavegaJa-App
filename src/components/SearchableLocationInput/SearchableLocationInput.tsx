@@ -1,4 +1,4 @@
-import React, {useState, useRef, useCallback} from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   TextInput as RNTextInput,
   Modal,
@@ -8,8 +8,9 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
-import {LocationSuggestion, locationAPI} from '@domain';
+import { Box, Icon, Text, TouchableOpacityBox } from '@components';
+import { LocationSuggestion, locationAPI } from '@domain';
+import { AM_CITIES } from '@utils';
 
 export interface SearchableLocationInputProps {
   value: string;
@@ -87,7 +88,7 @@ export function SearchableLocationInput({
         paddingVertical="s16"
         flexDirection="row"
         alignItems="center"
-        style={{elevation: 1}}>
+        style={{ elevation: 1 }}>
         <Icon name={iconName} size={20} color={value ? 'secondary' : 'textSecondary'} />
         <Text
           preset="paragraphMedium"
@@ -105,7 +106,7 @@ export function SearchableLocationInput({
         transparent={false}
         onRequestClose={handleClose}>
         <KeyboardAvoidingView
-          style={{flex: 1, backgroundColor: '#F8FAFC'}}
+          style={{ flex: 1, backgroundColor: '#F8FAFC' }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {/* Header */}
           <Box
@@ -113,9 +114,9 @@ export function SearchableLocationInput({
             paddingHorizontal="s16"
             paddingBottom="s12"
             backgroundColor="surface"
-            style={{elevation: 2}}>
+            style={{ elevation: 2 }}>
             {label && (
-              <Text preset="paragraphSmall" color="textSecondary" mb="s8">
+              <Text preset="headingSmall" color="textSecondary" mb="s8">
                 {label}
               </Text>
             )}
@@ -135,7 +136,7 @@ export function SearchableLocationInput({
                 onChangeText={handleQueryChange}
                 placeholder={placeholder}
                 placeholderTextColor="#9CA3AF"
-                style={{flex: 1, fontSize: 16, color: '#111827', marginLeft: 8}}
+                style={{ flex: 1, fontSize: 16, color: '#111827', marginLeft: 8 }}
                 allowFontScaling={false}
                 returnKeyType="search"
               />
@@ -155,7 +156,7 @@ export function SearchableLocationInput({
           ) : (
             <FlatList
               data={suggestions}
-              keyExtractor={(item, idx) => `${item.label}_${idx}`}
+              keyExtractor={(item, idx) => `${item.name}_${idx}`}
               keyboardShouldPersistTaps="handled"
               ListEmptyComponent={
                 query.length >= 2 && !isLoading ? (
@@ -165,9 +166,49 @@ export function SearchableLocationInput({
                       Nenhuma localização encontrada.{'\n'}Tente outro termo.
                     </Text>
                   </Box>
-                ) : null
+                ) : (
+                  <Box>
+                    {AM_CITIES.map(city => (
+                      <TouchableOpacityBox
+                        key={city}
+                        onPress={() =>
+                          handleSelect({
+                            name: city,
+                            city,
+                            state: 'AM',
+                            type: 'city',
+                          })
+                        }
+                        flexDirection="row"
+                        alignItems="center"
+                        paddingHorizontal="s16"
+                        paddingVertical="s14"
+                        borderBottomWidth={1}
+                        borderBottomColor="border"
+                        backgroundColor="surface">
+                        <Box
+                          width={36}
+                          height={36}
+                          borderRadius="s20"
+                          backgroundColor="secondaryBg"
+                          alignItems="center"
+                          justifyContent="center"
+                          mr="s12">
+                          <Icon name="location-city" size={18} color="secondary" />
+                        </Box>
+
+                        <Box flex={1}>
+                          <Text preset="paragraphMedium">{city}</Text>
+                          <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                            Amazonas, AM
+                          </Text>
+                        </Box>
+                      </TouchableOpacityBox>
+                    ))}
+                  </Box>
+                )
               }
-              renderItem={({item}) => (
+              renderItem={({ item }) => (
                 <TouchableOpacityBox
                   onPress={() => handleSelect(item)}
                   flexDirection="row"
@@ -193,7 +234,7 @@ export function SearchableLocationInput({
                   </Box>
                   <Box flex={1}>
                     <Text preset="paragraphMedium" color="text">
-                      {item.label}
+                      {item.name}
                     </Text>
                     {item.city && (
                       <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">

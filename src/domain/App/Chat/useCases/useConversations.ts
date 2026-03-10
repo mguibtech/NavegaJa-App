@@ -7,14 +7,17 @@ import {Conversation} from '../chatTypes';
 export function useConversations() {
   const query = useQuery<Conversation[], Error>({
     queryKey: queryKeys.chat.conversations(),
-    queryFn: () => chatService.getConversations(),
-    refetchInterval: 30_000,
+    queryFn: chatService.getConversations,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+    refetchOnMount: false,
   });
 
-  const totalUnread = (query.data ?? []).reduce((sum, c) => sum + c.unreadCount, 0);
+  const conversations = query.data ?? [];
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   return {
-    conversations: query.data ?? [],
+    conversations,
     totalUnread,
     isLoading: query.isLoading,
     error: query.error,

@@ -6,7 +6,8 @@ import {Box, Button, ConfirmationModal, Icon, MapLocationPicker, ScreenHeader, T
 import {apiImageSource} from '@api/config';
 import {Theme} from '@theme';
 
-import {AM_CITIES, useEditProfileScreen} from './useEditProfileScreen';
+import {useEditProfileScreen} from './useEditProfileScreen';
+import { AM_CITIES } from '@utils';
 
 export function EditProfileScreen() {
   const {colors} = useTheme<Theme>();
