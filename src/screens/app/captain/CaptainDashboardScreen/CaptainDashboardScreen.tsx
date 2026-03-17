@@ -472,7 +472,10 @@ export function CaptainDashboardScreen() {
               </TouchableOpacityBox>
             </Box>
           ) : (
-            <Box gap="s12">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 4, gap: 12 }}>
               {currentTrips.map((trip, index) => (
                 <TouchableOpacityBox
                   key={trip.id}
@@ -487,7 +490,7 @@ export function CaptainDashboardScreen() {
                   onPress={() =>
                     navigation.navigate('CaptainTripManage', { tripId: trip.id })
                   }
-                  style={{ elevation: 3 }}>
+                  style={{ elevation: 3, minWidth: 280 }}>
                   <Box flex={1} mr="s12">
                     <Box
                       flexDirection="row"
@@ -530,7 +533,7 @@ export function CaptainDashboardScreen() {
                   <Icon name="chevron-right" size={30} color="textSecondary" />
                 </TouchableOpacityBox>
               ))}
-            </Box>
+            </ScrollView>
           )}
         </Box>
 
