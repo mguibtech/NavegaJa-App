@@ -13,6 +13,8 @@ import {
   useCompleteTrip,
   useCancelTrip,
   useTripManage,
+  tripAcceptsShipments,
+  getTripShipmentPricePerKg,
   TripStatus,
   ShipmentStatus,
 } from '@domain';
@@ -133,6 +135,9 @@ export function useCaptainTripManage() {
 
   const passengers = manageData?.passageiros ?? [];
   const shipments = manageData?.encomendas ?? [];
+  const shipmentPolicySource = trip ?? manageData ?? null;
+  const acceptsShipments = tripAcceptsShipments(shipmentPolicySource);
+  const shipmentPricePerKg = getTripShipmentPricePerKg(shipmentPolicySource);
 
   return {
     // data
@@ -143,6 +148,8 @@ export function useCaptainTripManage() {
     manageError,
     passengers,
     shipments,
+    acceptsShipments,
+    shipmentPricePerKg,
     refreshing,
     completeLoading,
     isActionLoading,

@@ -248,6 +248,8 @@ export function CaptainBoatStaffScreen() {
                       onChangeText={handleAddPhoneChange}
                       keyboardType="phone-pad"
                       leftIcon="phone"
+                      leftIconColor="inputIcon"
+                      containerBackgroundColor="inputBackground"
                       maxLength={15}
                       errorMessage={lookupError || undefined}
                     />
@@ -259,6 +261,8 @@ export function CaptainBoatStaffScreen() {
                       onChangeText={handleAddCpfChange}
                       keyboardType="numeric"
                       leftIcon="badge"
+                      leftIconColor="inputIcon"
+                      containerBackgroundColor="inputBackground"
                       maxLength={14}
                       errorMessage={lookupError || undefined}
                     />

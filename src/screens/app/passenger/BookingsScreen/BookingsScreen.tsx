@@ -26,6 +26,7 @@ export function BookingsScreen() {
     onRefresh,
     handleConfirmCancel,
     getStatusBadge,
+    canCancelBooking,
     navigateToTicket,
     navigateToReview,
   } = useBookingsScreen();
@@ -152,7 +153,14 @@ export function BookingsScreen() {
             item.status === 'pending' ||
             item.status === 'confirmed' ||
             item.status === 'checked_in';
+          const canCancel = canCancelBooking(item.status);
           const badge = getStatusBadge(item.status);
+          const lockedCancelLabel =
+            item.status === 'checked_in'
+              ? 'Embarque realizado'
+              : item.status === 'completed'
+                ? 'Viagem concluída'
+                : null;
 
           return (
             <TouchableOpacityBox
@@ -280,16 +288,43 @@ export function BookingsScreen() {
                     </Text>
                   </TouchableOpacityBox>
 
-                  <TouchableOpacityBox
-                    width={48}
-                    height={48}
-                    borderRadius="s12"
-                    backgroundColor="dangerBg"
-                    alignItems="center"
-                    justifyContent="center"
-                    onPress={() => setBookingToCancel(item)}>
-                    <Icon name="close" size={20} color="danger" />
-                  </TouchableOpacityBox>
+                  {canCancel ? (
+                    <TouchableOpacityBox
+                      width={48}
+                      height={48}
+                      borderRadius="s12"
+                      backgroundColor="dangerBg"
+                      alignItems="center"
+                      justifyContent="center"
+                      onPress={() => setBookingToCancel(item)}>
+                      <Icon name="close" size={20} color="danger" />
+                    </TouchableOpacityBox>
+                  ) : (
+                    <Box
+                      paddingHorizontal="s12"
+                      borderRadius="s12"
+                      backgroundColor="infoBg"
+                      alignItems="center"
+                      justifyContent="center">
+                      <Text preset="paragraphCaptionSmall" color="info" bold textAlign="center">
+                        Embarque realizado
+                      </Text>
+                    </Box>
+                  )}
+                </Box>
+              )}
+
+              {!isActive && lockedCancelLabel && (
+                <Box
+                  mt="s16"
+                  paddingVertical="s12"
+                  paddingHorizontal="s16"
+                  borderRadius="s12"
+                  backgroundColor="background"
+                  alignItems="center">
+                  <Text preset="paragraphSmall" color="textSecondary" bold>
+                    {lockedCancelLabel}
+                  </Text>
                 </Box>
               )}
 

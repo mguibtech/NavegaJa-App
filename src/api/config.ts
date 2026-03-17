@@ -13,7 +13,28 @@
  * - Produção: https://api.navegaja.com.br
  */
 
+import {Platform} from 'react-native';
+
 import {API_BASE_URL as ENV_API_URL, API_TIMEOUT as ENV_API_TIMEOUT} from '@env';
+
+type FilePreviewLike =
+  | string
+  | null
+  | undefined
+  | {
+      id?: string | number | null;
+      url?: string | null;
+      uri?: string | null;
+      path?: string | null;
+      photoUrl?: string | null;
+      imageUrl?: string | null;
+      fileUrl?: string | null;
+      src?: string | null;
+    };
+
+type FilePreviewOptions = {
+  folder?: string;
+};
 
 // Usa variável de ambiente ou fallback para desenvolvimento
 export const API_BASE_URL = ENV_API_URL || 'http://10.0.2.2:3000';
@@ -47,14 +68,10 @@ export const API_ENDPOINTS = {
   TRIPS: '/trips',
   TRIP_BY_ID: (id: string) => `/trips/${id}`,
   TRIPS_POPULAR: '/trips/popular',
-  TRIPS_MY: '/trips/my-trips',
   TRIPS_CAPTAIN_MY: '/trips/captain/my-trips',
   TRIP_STATUS: (id: string) => `/trips/${id}/status`,
   TRIP_LOCATION: (id: string) => `/trips/${id}/location`,
-  TRIP_START: (id: string) => `/trips/${id}/start`,
-  TRIP_COMPLETE: (id: string) => `/trips/${id}/complete`,
-  TRIP_PASSENGERS: (id: string) => `/trips/${id}/passengers`,
-  TRIP_SHIPMENTS: (id: string) => `/trips/${id}/shipments`,
+  TRIP_MANAGE: (id: string) => `/trips/${id}/manage`,
   TRIP_CARGO_MANIFEST: (id: string) => `/trips/${id}/cargo-manifest`,
 
   // ── Routes ────────────────────────────────────────────────────────────────
@@ -206,18 +223,102 @@ export const DEFAULT_HEADERS = {
  * Em devices físicos `localhost` aponta pro próprio celular → imagem falha.
  * Fix: substituir o host localhost/127.0.0.1 pelo API_BASE_URL configurado.
  */
+function extractFilePreviewPath(file: FilePreviewLike): string {
+  if (typeof file === 'string') {
+    return file;
+  }
+
+  if (!file || typeof file !== 'object') {
+    return '';
+  }
+
+  return (
+    file.url ||
+    file.uri ||
+    file.path ||
+    file.photoUrl ||
+    file.imageUrl ||
+    file.fileUrl ||
+    file.src ||
+    ''
+  );
+}
+
+function makeFileUrlWebSafe(url: string): string {
+  return url.replace(/ /g, '%20');
+}
+
 export function normalizeFileUrl(url: string | null | undefined): string {
   if (!url) {return '';}
+  const sanitizedUrl = String(url).trim().replace(/\\/g, '/');
+  if (!sanitizedUrl) {return '';}
   // Se a URL começa com http mas contém localhost/127.0.0.1, substitui pelo host real
   const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//;
-  if (localhostPattern.test(url)) {
-    return url.replace(localhostPattern, `${API_BASE_URL}/`);
+  if (localhostPattern.test(sanitizedUrl)) {
+    return makeFileUrlWebSafe(
+      sanitizedUrl.replace(localhostPattern, `${API_BASE_URL}/`),
+    );
   }
   // URL relativa → prefixar com base
-  if (!url.startsWith('http')) {
-    return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  if (!sanitizedUrl.startsWith('http')) {
+    return makeFileUrlWebSafe(
+      `${API_BASE_URL}${sanitizedUrl.startsWith('/') ? sanitizedUrl : `/${sanitizedUrl}`}`,
+    );
   }
-  return url;
+  return makeFileUrlWebSafe(sanitizedUrl);
+}
+
+export function getFilePreviewUri(file: FilePreviewLike): string {
+  return normalizeFileUrl(extractFilePreviewPath(file));
+}
+
+export function getFilePreviewCandidates(
+  file: FilePreviewLike,
+  options?: FilePreviewOptions,
+): string[] {
+  const rawPath = extractFilePreviewPath(file).trim().replace(/\\/g, '/');
+
+  if (!rawPath) {return [];}
+
+  const folder = options?.folder?.replace(/^\/+|\/+$/g, '') ?? '';
+  const strippedPath = rawPath.replace(/^\/+/, '');
+  const candidates = new Set<string>();
+
+  const addCandidate = (value: string | null | undefined) => {
+    const normalized = normalizeFileUrl(value);
+    if (normalized) {
+      candidates.add(normalized);
+    }
+  };
+
+  addCandidate(rawPath);
+
+  if (!/^https?:\/\//i.test(rawPath)) {
+    if (!/^uploads\//i.test(strippedPath)) {
+      addCandidate(`/uploads/${strippedPath}`);
+    }
+
+    if (folder && !new RegExp(`(?:^|/)${folder}(?:/|$)`, 'i').test(strippedPath)) {
+      const fileName = strippedPath.split('/').pop() || strippedPath;
+      addCandidate(`/uploads/${folder}/${fileName}`);
+    }
+  }
+
+  return Array.from(candidates);
+}
+
+function getImageRequestHeaders(uri: string) {
+  if (Platform.OS === 'web' || !__DEV__) {
+    return undefined;
+  }
+
+  // O header abaixo só é necessário para túneis ngrok em desenvolvimento.
+  // Em assets públicos normais ele não agrega valor e pode atrapalhar o carregamento.
+  if (!/ngrok/i.test(uri)) {
+    return undefined;
+  }
+
+  return {'ngrok-skip-browser-warning': 'true'};
 }
 
 /**
@@ -227,9 +328,11 @@ export function normalizeFileUrl(url: string | null | undefined): string {
  *
  * Uso: <Image source={apiImageSource(url)} />
  */
-export const apiImageSource = (uri: string | null | undefined) => ({
-  uri: normalizeFileUrl(uri),
-  headers: {
-    ...(__DEV__ && {'ngrok-skip-browser-warning': 'true'}),
-  },
+export const apiImageSource = (file: FilePreviewLike) => ({
+  uri: getFilePreviewUri(file),
+  ...(getImageRequestHeaders(getFilePreviewUri(file))
+    ? {
+        headers: getImageRequestHeaders(getFilePreviewUri(file)),
+      }
+    : {}),
 });

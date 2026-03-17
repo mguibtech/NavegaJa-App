@@ -6,9 +6,18 @@ import {queryKeys} from '@infra';
 export interface ReferralEntry {
   id: string;
   referredName: string;
+  referredAvatarUrl?: string | null;
   status: 'pending' | 'converted';
   createdAt: string;
   convertedAt?: string;
+}
+
+interface ReferralsApiResponse {
+  referralCode: string | null;
+  totalReferred: number;
+  totalConverted: number;
+  pendingConversions: number;
+  list: ReferralEntry[];
 }
 
 export interface ReferralsData {
@@ -20,15 +29,22 @@ export interface ReferralsData {
 }
 
 export function useReferrals() {
-  const query = useQuery<ReferralsData, Error>({
+  const query = useQuery<ReferralsApiResponse, Error>({
     queryKey: queryKeys.referrals.my(),
-    queryFn: () => api.get<ReferralsData>(API_ENDPOINTS.GAMIFICATION_REFERRALS),
+    queryFn: () =>
+      api.get<ReferralsApiResponse>(API_ENDPOINTS.GAMIFICATION_REFERRALS),
     staleTime: 5 * 60 * 1000,
   });
 
   return {
     referralsData: query.data
-      ? {...query.data, referrals: query.data.referrals ?? []}
+      ? {
+          referralCode: query.data.referralCode ?? '',
+          totalReferred: query.data.totalReferred ?? 0,
+          totalConverted: query.data.totalConverted ?? 0,
+          pendingConversion: query.data.pendingConversions ?? 0,
+          referrals: query.data.list ?? [],
+        }
       : null,
     isLoading: query.isLoading,
     refetch: query.refetch,

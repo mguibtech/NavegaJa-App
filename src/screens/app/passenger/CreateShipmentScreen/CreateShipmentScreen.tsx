@@ -24,6 +24,8 @@ export function CreateShipmentScreen() {
   const {
     // Data
     trip,
+    cargoPricePerKg,
+    acceptsShipments,
     isLoadingTrip,
     priceData,
     totalPrice,
@@ -117,6 +119,37 @@ export function CreateShipmentScreen() {
     );
   }
 
+  if (!acceptsShipments) {
+    return (
+      <Box
+        flex={1}
+        backgroundColor="background"
+        alignItems="center"
+        justifyContent="center"
+        padding="s24"
+        style={{paddingTop: top}}>
+        <Box
+          width={72}
+          height={72}
+          borderRadius="s48"
+          backgroundColor="dangerBg"
+          alignItems="center"
+          justifyContent="center">
+          <Icon name="block" size={36} color="danger" />
+        </Box>
+        <Text preset="headingSmall" color="text" mt="s16" textAlign="center" bold>
+          Esta viagem nao aceita encomendas
+        </Text>
+        <Text preset="paragraphMedium" color="textSecondary" mt="s8" textAlign="center">
+          O frete por kg nao foi configurado para {trip.origin} para {trip.destination}.
+        </Text>
+        <Box mt="s20" width="100%">
+          <Button title="Voltar" preset="outline" onPress={handleGoBack} />
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
@@ -164,23 +197,23 @@ export function CreateShipmentScreen() {
 
             {/* Cargo status chip no header */}
             <Box
-              backgroundColor={Number(trip.cargoPriceKg) > 0 ? 'successBg' : 'dangerBg'}
+              backgroundColor={acceptsShipments ? 'successBg' : 'dangerBg'}
               paddingHorizontal="s10"
               paddingVertical="s6"
               borderRadius="s8"
               flexDirection="row"
               alignItems="center">
               <Icon
-                name={Number(trip.cargoPriceKg) > 0 ? 'inventory' : 'block'}
+                name={acceptsShipments ? 'inventory' : 'block'}
                 size={14}
-                color={Number(trip.cargoPriceKg) > 0 ? 'success' : 'danger'}
+                color={acceptsShipments ? 'success' : 'danger'}
               />
               <Text
                 preset="paragraphCaptionSmall"
-                color={Number(trip.cargoPriceKg) > 0 ? 'success' : 'danger'}
+                color={acceptsShipments ? 'success' : 'danger'}
                 bold
                 ml="s4">
-                {Number(trip.cargoPriceKg) > 0 ? 'Aceita carga' : 'Sem carga'}
+                {acceptsShipments ? 'Aceita carga' : 'Sem carga'}
               </Text>
             </Box>
           </Box>
@@ -193,8 +226,8 @@ export function CreateShipmentScreen() {
 
           {/* Card: Info de carga da viagem */}
           {(() => {
-            const cargoPrice = Number(trip.cargoPriceKg);
-            const acceptsCargo = cargoPrice > 0;
+            const cargoPrice = cargoPricePerKg ?? 0;
+            const acceptsCargo = acceptsShipments;
             return (
               <Box
                 backgroundColor={acceptsCargo ? 'successBg' : 'dangerBg'}

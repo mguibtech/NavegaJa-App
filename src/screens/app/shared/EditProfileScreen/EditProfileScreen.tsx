@@ -56,6 +56,14 @@ export function EditProfileScreen() {
     handleSuccessClose,
   } = useEditProfileScreen();
 
+  const parsedHomeLat = Number(homeLat);
+  const parsedHomeLng = Number(homeLng);
+  const hasValidCoordinates =
+    Number.isFinite(parsedHomeLat) && Number.isFinite(parsedHomeLng);
+  const formattedCoordinates = hasValidCoordinates
+    ? `${parsedHomeLat.toFixed(5)}, ${parsedHomeLng.toFixed(5)}`
+    : null;
+
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const pendingNavAction = useRef<any>(null);
 
@@ -283,9 +291,9 @@ export function EditProfileScreen() {
                       color={homeCommunityLabel ? 'text' : 'textSecondary'}>
                       {homeCommunityLabel || 'Marcar localidade no mapa'}
                     </Text>
-                    {homeLat != null && homeLng != null && (
+                    {formattedCoordinates && (
                       <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
-                        {homeLat.toFixed(5)}, {homeLng.toFixed(5)}
+                        {formattedCoordinates}
                       </Text>
                     )}
                   </Box>

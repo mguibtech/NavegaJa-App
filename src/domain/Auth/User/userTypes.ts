@@ -35,8 +35,8 @@ export interface User {
   // Location community
   homeCommunity?: string | null;
   homeMunicipio?: string | null;
-  homeLat?: number | null;
-  homeLng?: number | null;
+  homeLat?: number | string | null;
+  homeLng?: number | string | null;
   locationUpdatedAt?: string | null;
   rating: string | number; // Backend retorna como string
   totalTrips: number;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, {useState, useRef, useCallback} from 'react';
 import {
   TextInput as RNTextInput,
   Modal,
@@ -6,10 +6,12 @@ import {
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
+  StyleSheet,
 } from 'react-native';
 
 import { Box, Icon, Text, TouchableOpacityBox } from '@components';
 import { LocationSuggestion, locationAPI } from '@domain';
+import {useAppTheme} from '@hooks';
 import { AM_CITIES } from '@utils';
 
 export interface SearchableLocationInputProps {
@@ -27,6 +29,7 @@ export function SearchableLocationInput({
   iconName = 'place',
   label,
 }: SearchableLocationInputProps) {
+  const {colors} = useAppTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
@@ -106,7 +109,7 @@ export function SearchableLocationInput({
         transparent={false}
         onRequestClose={handleClose}>
         <KeyboardAvoidingView
-          style={{ flex: 1, backgroundColor: '#F8FAFC' }}
+          style={[styles.modalContainer, {backgroundColor: colors.background}]}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {/* Header */}
           <Box
@@ -123,26 +126,29 @@ export function SearchableLocationInput({
             <Box
               flexDirection="row"
               alignItems="center"
-              backgroundColor="background"
+              backgroundColor="inputBackground"
               borderRadius="s12"
               borderWidth={1}
               borderColor="border"
               paddingHorizontal="s12"
               paddingVertical="s12">
-              <Icon name="search" size={20} color="textSecondary" />
+              <Icon name="search" size={20} color="inputIcon" />
               <RNTextInput
                 autoFocus
                 value={query}
                 onChangeText={handleQueryChange}
                 placeholder={placeholder}
-                placeholderTextColor="#9CA3AF"
-                style={{ flex: 1, fontSize: 16, color: '#111827', marginLeft: 8 }}
+                placeholderTextColor={colors.inputPlaceholder}
+                style={[styles.searchInput, {color: colors.text}]}
                 allowFontScaling={false}
                 returnKeyType="search"
+                cursorColor={colors.text}
+                selectionColor={colors.primaryLight}
+                underlineColorAndroid="transparent"
               />
               {query.length > 0 && (
                 <TouchableOpacityBox onPress={() => { setQuery(''); setSuggestions([]); }}>
-                  <Icon name="close" size={20} color="textSecondary" />
+                  <Icon name="close" size={20} color="inputIcon" />
                 </TouchableOpacityBox>
               )}
             </Box>
@@ -151,7 +157,7 @@ export function SearchableLocationInput({
           {/* Suggestions */}
           {isLoading ? (
             <Box flex={1} alignItems="center" justifyContent="center">
-              <ActivityIndicator size="large" color="#0B5D8A" />
+              <ActivityIndicator size="large" color={colors.primary} />
             </Box>
           ) : (
             <FlatList
@@ -269,3 +275,14 @@ export function SearchableLocationInput({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 8,
+  },
+});

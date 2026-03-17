@@ -12,23 +12,35 @@ export function PermissionsRequest() {
   const {requestAllPermissions} = useAppPermissions();
 
   useEffect(() => {
-    checkIfShouldShowPermissions();
-  }, []);
+    let isMounted = true;
+    let visibilityTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  async function checkIfShouldShowPermissions() {
-    try {
-      const hasRequested = await AsyncStorage.getItem(PERMISSIONS_REQUESTED_KEY);
+    async function checkIfShouldShowPermissions() {
+      try {
+        const hasRequested = await AsyncStorage.getItem(PERMISSIONS_REQUESTED_KEY);
 
-      if (!hasRequested) {
-        // Delay para mostrar depois da tela de login
-        setTimeout(() => {
-          setIsVisible(true);
-        }, 1000);
+        if (!hasRequested && isMounted) {
+          // Delay para mostrar depois da tela de login
+          visibilityTimeout = setTimeout(() => {
+            if (isMounted) {
+              setIsVisible(true);
+            }
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
       }
-    } catch (error) {
-      console.error('Error checking permissions:', error);
     }
-  }
+
+    checkIfShouldShowPermissions();
+
+    return () => {
+      isMounted = false;
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
+      }
+    };
+  }, []);
 
   async function handleRequestPermissions() {
     try {

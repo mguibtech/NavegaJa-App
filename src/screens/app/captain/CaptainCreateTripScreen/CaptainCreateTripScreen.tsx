@@ -4,11 +4,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  StyleSheet,
+  Switch,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader, SearchableLocationInput} from '@components';
 import {Boat} from '@domain';
+import {useAppTheme} from '@hooks';
 
 import {
   useCaptainCreateTrip,
@@ -17,6 +20,7 @@ import {
 } from './useCaptainCreateTrip';
 
 export function CaptainCreateTripScreen() {
+  const {colors} = useAppTheme();
   const {
     canCreateTrips,
     isPending,
@@ -37,6 +41,8 @@ export function CaptainCreateTripScreen() {
     tempDate,
     price,
     setPrice,
+    acceptsShipments,
+    onAcceptsShipmentsChange,
     cargoPriceKg,
     setCargoPriceKg,
     totalSeats,
@@ -53,6 +59,7 @@ export function CaptainCreateTripScreen() {
     navigateToCreateBoat,
     navigateToEditProfile,
   } = useCaptainCreateTrip();
+  const createTripInputBackground = colors.background === '#090F18' ? 'primaryBg' : 'surface';
 
   // Guard: bloqueia se capabilities existem e canCreateTrips=false
   if (!canCreateTrips) {
@@ -182,10 +189,13 @@ export function CaptainCreateTripScreen() {
             <Box mb="s12">
               <TextInput
                 placeholder="Preço por passageiro (ex: 85,00)"
+                placeholderPreset="paragraphMedium"
                 value={formatMoney(price)}
                 onChangeText={t => onMoneyChange(t, setPrice)}
                 keyboardType="numeric"
                 leftIcon="attach-money"
+                containerBackgroundColor={createTripInputBackground}
+                style={styles.largeInput}
               />
             </Box>
             <Box mb={selectedBoat ? 's4' : 's12'}>
@@ -195,10 +205,13 @@ export function CaptainCreateTripScreen() {
                     ? `Número de assentos (máx. ${selectedBoat.capacity})`
                     : 'Número de assentos'
                 }
+                placeholderPreset="paragraphMedium"
                 value={totalSeats}
                 onChangeText={v => setTotalSeats(v.replace(/\D/g, ''))}
                 keyboardType="numeric"
                 leftIcon="event-seat"
+                containerBackgroundColor={createTripInputBackground}
+                style={styles.largeInput}
               />
             </Box>
             {selectedBoat && (
@@ -210,13 +223,49 @@ export function CaptainCreateTripScreen() {
               </Box>
             )}
             <Box mb="s24">
-              <TextInput
-                placeholder="Frete por kg (ex: 2,50) — opcional"
-                value={formatMoney(cargoPriceKg)}
-                onChangeText={t => onMoneyChange(t, setCargoPriceKg)}
-                keyboardType="numeric"
-                leftIcon="inventory"
-              />
+              <Box
+                backgroundColor="surface"
+                borderRadius="s12"
+                borderWidth={1}
+                borderColor="border"
+                padding="s16">
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between">
+                  <Box flex={1} mr="s12">
+                    <Text preset="paragraphMedium" color="text" bold>
+                      Aceita encomendas
+                    </Text>
+                    <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                      {acceptsShipments
+                        ? 'Informe o valor cobrado por kg para habilitar o frete.'
+                        : 'Ative para cobrar frete por kg nesta viagem.'}
+                    </Text>
+                  </Box>
+                  <Switch
+                    value={acceptsShipments}
+                    onValueChange={onAcceptsShipmentsChange}
+                    trackColor={{false: '#D1D5DB', true: '#93C5FD'}}
+                    thumbColor={acceptsShipments ? '#0A6FBD' : '#F9FAFB'}
+                  />
+                </Box>
+
+                {acceptsShipments && (
+                  <Box mt="s16">
+                    <TextInput
+                      placeholder="Frete por kg (ex: 2,50)"
+                      placeholderPreset="paragraphMedium"
+                      value={formatMoney(cargoPriceKg)}
+                      onChangeText={t => onMoneyChange(t, setCargoPriceKg)}
+                      keyboardType="numeric"
+                      leftIcon="inventory"
+                      containerBackgroundColor={createTripInputBackground}
+                      style={styles.largeInput}
+                    />
+                  </Box>
+                )}
+              </Box>
             </Box>
 
             {/* Embarcação */}
@@ -436,3 +485,9 @@ export function CaptainCreateTripScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  largeInput: {
+    fontSize: 18,
+  },
+});

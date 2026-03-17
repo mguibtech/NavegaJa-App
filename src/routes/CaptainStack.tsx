@@ -5,7 +5,7 @@ import {useTheme} from '@shopify/restyle';
 
 import {CaptainTabBar, Icon} from '@components';
 import {Theme} from '@theme';
-import {useConversations} from '@domain';
+import {TripStatus, useCaptainTrips, useConversations} from '@domain';
 
 import {
   // Tabs
@@ -59,6 +59,14 @@ const CaptainTab = createBottomTabNavigator<CaptainTabsParamList>();
 
 function CaptainTabs() {
   const {totalUnread} = useConversations();
+  const {trips} = useCaptainTrips();
+
+  const activeOperationsCount = trips.filter(
+    trip =>
+      trip.status === TripStatus.SCHEDULED ||
+      trip.status === TripStatus.IN_PROGRESS,
+  ).length;
+
   return (
     <CaptainTab.Navigator
       tabBar={props => <CaptainTabBar {...props} />}
@@ -81,6 +89,8 @@ function CaptainTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="directions-boat" size={size} color={color} />
           ),
+          tabBarBadge:
+            activeOperationsCount > 0 ? activeOperationsCount : undefined,
         }}
       />
       <CaptainTab.Screen

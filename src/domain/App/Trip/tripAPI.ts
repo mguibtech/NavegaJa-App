@@ -1,8 +1,7 @@
 import {api} from '@api';
 
-import {CreateTripData, SearchTripsParams, Trip, TripManageData, TripPassenger} from './tripTypes';
+import {CreateTripData, SearchTripsParams, Trip, TripManageData} from './tripTypes';
 import {PopularDestinationsResponse} from './popularRoutesTypes';
-import {Shipment} from '../Shipment/shipmentTypes';
 
 async function search(params: SearchTripsParams): Promise<Trip[]> {
   const response = await api.get<Trip[]>('/trips', {params});
@@ -35,27 +34,7 @@ async function getPopular(): Promise<PopularDestinationsResponse> {
 
 // Captain-specific endpoints
 async function getMyTrips(): Promise<Trip[]> {
-  const response = await api.get<Trip[]>('/trips/my-trips');
-  return response;
-}
-
-async function start(id: string): Promise<Trip> {
-  const response = await api.patch<Trip>(`/trips/${id}/start`);
-  return response;
-}
-
-async function complete(id: string): Promise<Trip> {
-  const response = await api.patch<Trip>(`/trips/${id}/complete`);
-  return response;
-}
-
-async function getPassengers(id: string): Promise<TripPassenger[]> {
-  const response = await api.get<TripPassenger[]>(`/trips/${id}/passengers`);
-  return response;
-}
-
-async function getTripShipments(id: string): Promise<Shipment[]> {
-  const response = await api.get<Shipment[]>(`/trips/${id}/shipments`);
+  const response = await api.get<Trip[]>('/trips/captain/my-trips');
   return response;
 }
 
@@ -72,9 +51,5 @@ export const tripAPI = {
   delete: deleteTrip,
   getPopular,
   getMyTrips,
-  start,
-  complete,
-  getPassengers,
-  getTripShipments,
   getTripManage,
 };

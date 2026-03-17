@@ -1,20 +1,27 @@
 import React from 'react';
 import {FlatList, RefreshControl} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, ScreenHeader, Text, TouchableOpacityBox} from '@components';
 import {useConversations, Conversation} from '@domain';
 
 import {AppStackParamList} from '@routes';
 
 export function ConversationsScreen() {
-  const {top} = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const {conversations, isLoading, refetch} = useConversations();
+
+  function handleGoBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('HomeTabs');
+  }
 
   function formatDate(iso: string): string {
     const date = new Date(iso);
@@ -119,18 +126,7 @@ export function ConversationsScreen() {
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        borderBottomWidth={1}
-        borderBottomColor="border"
-        style={{paddingTop: top + 12}}>
-        <Text preset="headingMedium" color="text" bold>
-          Mensagens
-        </Text>
-      </Box>
+      <ScreenHeader title="Mensagens" onBack={handleGoBack} />
 
       {isLoading && conversations.length === 0 ? (
         <Box flex={1} alignItems="center" justifyContent="center">

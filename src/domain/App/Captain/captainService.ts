@@ -1,5 +1,5 @@
 import {captainAPI} from './captainAPI';
-import {Trip, TripPassenger, CreateTripData} from '../Trip/tripTypes';
+import {Trip, CreateTripData} from '../Trip/tripTypes';
 import {Shipment} from '../Shipment/shipmentTypes';
 import {Boat, CreateBoatData} from '../Boat/boatTypes';
 import {
@@ -29,14 +29,6 @@ async function updateTripStatus(
 
 async function updateTripLocation(id: string, lat: number, lng: number): Promise<Trip> {
   return captainAPI.updateTripLocation(id, lat, lng);
-}
-
-async function getPassengers(tripId: string): Promise<TripPassenger[]> {
-  return captainAPI.getPassengers(tripId);
-}
-
-async function getTripShipments(tripId: string): Promise<Shipment[]> {
-  return captainAPI.getTripShipments(tripId);
 }
 
 // ─── Boats ────────────────────────────────────────────────────────────────
@@ -109,8 +101,6 @@ export const captainService = {
   createTrip,
   updateTripStatus,
   updateTripLocation,
-  getPassengers,
-  getTripShipments,
   getMyBoats,
   createBoat,
   updateBoat,

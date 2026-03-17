@@ -381,7 +381,7 @@ export function ProfileScreen() {
         iconColor="danger"
         confirmText="Sair"
         cancelText="Cancelar"
-        confirmPreset="outline"
+        confirmPreset="primary"
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
       />

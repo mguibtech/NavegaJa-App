@@ -1,4 +1,9 @@
-import {normalizeFileUrl, API_BASE_URL} from '../../api/config';
+import {
+  normalizeFileUrl,
+  getFilePreviewUri,
+  getFilePreviewCandidates,
+  API_BASE_URL,
+} from '../../api/config';
 
 describe('normalizeFileUrl', () => {
   it('retorna string vazia para null', () => {
@@ -53,5 +58,40 @@ describe('normalizeFileUrl', () => {
   it('não altera URL com host real (não localhost)', () => {
     const url = `${API_BASE_URL}/uploads/foto.jpg`;
     expect(normalizeFileUrl(url)).toBe(url);
+  });
+
+  it('normaliza barras invertidas em caminhos relativos', () => {
+    const result = normalizeFileUrl('uploads\\boats\\foto.jpg');
+    expect(result).toBe(`${API_BASE_URL}/uploads/boats/foto.jpg`);
+  });
+});
+
+describe('getFilePreviewUri', () => {
+  it('resolve objeto com campo url', () => {
+    expect(getFilePreviewUri({url: '/uploads/foto.jpg'})).toBe(
+      `${API_BASE_URL}/uploads/foto.jpg`,
+    );
+  });
+
+  it('resolve objeto com campo path', () => {
+    expect(getFilePreviewUri({path: 'uploads\\boats\\foto.jpg'})).toBe(
+      `${API_BASE_URL}/uploads/boats/foto.jpg`,
+    );
+  });
+});
+
+describe('getFilePreviewCandidates', () => {
+  it('inclui fallback da pasta quando recebe apenas nome do arquivo', () => {
+    expect(getFilePreviewCandidates('foto 01.jpg', {folder: 'boats'})).toEqual([
+      `${API_BASE_URL}/foto%2001.jpg`,
+      `${API_BASE_URL}/uploads/foto%2001.jpg`,
+      `${API_BASE_URL}/uploads/boats/foto%2001.jpg`,
+    ]);
+  });
+
+  it('não duplica a pasta quando o caminho já inclui a pasta alvo', () => {
+    expect(getFilePreviewCandidates('/uploads/documents/doc.pdf', {folder: 'documents'})).toEqual([
+      `${API_BASE_URL}/uploads/documents/doc.pdf`,
+    ]);
   });
 });

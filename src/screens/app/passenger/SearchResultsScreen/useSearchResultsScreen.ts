@@ -3,7 +3,8 @@ import {useEffect, useState} from 'react';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {Trip, useSearchTrips} from '@domain';
+import {Trip, tripAcceptsShipments, useSearchTrips} from '@domain';
+import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
 import {logSearch} from '@services';
 
@@ -14,6 +15,7 @@ export function useSearchResultsScreen() {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'SearchResults'>>();
   const {routeId, origin, destination, date, promotion, context} = route.params;
+  const toast = useToast();
 
   const {trips, search, isLoading, error} = useSearchTrips();
   const [sortBy, setSortBy] = useState<SortOption>('price');
@@ -77,6 +79,7 @@ export function useSearchResultsScreen() {
     if (boatType && trip.boat?.type !== boatType) {return false;}
     if (onlyAvailable && trip.availableSeats === 0) {return false;}
     if (onlyVerified && !trip.boat?.isVerified) {return false;}
+    if (context === 'shipment' && !tripAcceptsShipments(trip)) {return false;}
     return true;
   });
 
@@ -101,8 +104,13 @@ export function useSearchResultsScreen() {
     setSortedTrips(sorted);
   };
 
-  const handleTripPress = (tripId: string) => {
-    navigation.navigate('TripDetails', {tripId, promotion, context});
+  const handleTripPress = (trip: Trip) => {
+    if (context === 'shipment' && !tripAcceptsShipments(trip)) {
+      toast.showWarning('Esta viagem nao aceita encomendas.');
+      return;
+    }
+
+    navigation.navigate('TripDetails', {tripId: trip.id, promotion, context});
   };
 
   const handleGoBack = () => navigation.goBack();

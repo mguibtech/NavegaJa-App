@@ -4,7 +4,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {useCaptainTrips, useMyBoats, useBoatStaff, TripStatus} from '@domain';
+import {useCaptainTrips, useMyBoats, useBoatStaff, Trip, TripStatus} from '@domain';
 import {useAuthStore} from '@store';
 
 import {AppStackParamList} from '@routes';
@@ -35,6 +35,10 @@ export function useCaptainOperations() {
     return ownedBoats;
   }, [isBoatManager, staff, ownedBoats]);
 
+  const boatsById = useMemo(() => {
+    return new Map(boats.map(boat => [boat.id, boat]));
+  }, [boats]);
+
   useEffect(() => {
     fetchMyTrips();
     if (isBoatManager) {
@@ -56,6 +60,19 @@ export function useCaptainOperations() {
 
   const recentTrips = trips.filter(t => t.status !== TripStatus.CANCELLED).slice(0, 3);
 
+  function getTripBoatSummary(trip: Trip): string | null {
+    const tripBoat = trip.boat ?? boatsById.get(trip.boatId);
+    if (!tripBoat) {
+      return null;
+    }
+
+    if (tripBoat.name && tripBoat.type) {
+      return `${tripBoat.name} · ${tripBoat.type}`;
+    }
+
+    return tripBoat.name || tripBoat.type || null;
+  }
+
   function formatDepartureStr(departureAt: string): string {
     try {
       return format(new Date(departureAt), "dd/MM/yy 'às' HH:mm", {locale: ptBR});
@@ -73,6 +90,7 @@ export function useCaptainOperations() {
     recentTrips,
     onRefresh,
     formatDepartureStr,
+    getTripBoatSummary,
     STATUS_CONFIG,
   };
 }

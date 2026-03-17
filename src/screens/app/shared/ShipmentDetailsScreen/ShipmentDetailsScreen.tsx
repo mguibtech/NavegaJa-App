@@ -49,6 +49,7 @@ export function ShipmentDetailsScreen() {
     showValidationPIN,
     pinIsForDelivery,
     canCancel,
+    lockedCancellationLabel,
     canReview,
     getPaymentMethodLabel,
     resolvePhotoUri,
@@ -542,6 +543,31 @@ export function ShipmentDetailsScreen() {
                 leftIcon="cancel"
                 onPress={handleCancel}
               />
+            )}
+
+            {!canCancel && lockedCancellationLabel && (
+              <Box
+                paddingVertical="s16"
+                paddingHorizontal="s16"
+                backgroundColor={
+                  shipment.status === ShipmentStatus.DELIVERED
+                    ? 'successBg'
+                    : 'infoBg'
+                }
+                borderRadius="s12"
+                alignItems="center">
+                <Text
+                  preset="paragraphMedium"
+                  color={
+                    shipment.status === ShipmentStatus.DELIVERED
+                      ? 'success'
+                      : 'info'
+                  }
+                  bold
+                  textAlign="center">
+                  {lockedCancellationLabel}
+                </Text>
+              </Box>
             )}
 
             {canReview && (

@@ -38,6 +38,9 @@ export const theme = createTheme({
     border: '#E2E8ED',
     background: '#F5F7F8',
     surface: '#FFFFFF',
+    inputBackground: '#F5F7F8',
+    inputPlaceholder: '#7A8D9C',
+    inputIcon: '#3D5468',
 
     // Utilitários (para componentes)
     disabled: '#E2E8ED',
@@ -174,6 +177,9 @@ export const darkTheme = {
     border: '#1C3040',
     background: '#090F18',
     surface: '#0D1A28',
+    inputBackground: '#0A2030',
+    inputPlaceholder: '#8AA4B8',
+    inputIcon: '#8AA4B8',
 
     // Utilitários
     disabled: '#1C3040',

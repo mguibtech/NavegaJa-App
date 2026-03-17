@@ -20,8 +20,9 @@ describe('gamificationService.getHistory', () => {
 
     const result = await gamificationService.getHistory();
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('1');
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe('1');
+    expect(result.page).toBe(1);
   });
 
   it('deriva type="earned" para pontos positivos', async () => {
@@ -30,7 +31,7 @@ describe('gamificationService.getHistory', () => {
       total: 1, page: 1, lastPage: 1,
     });
 
-    const [item] = await gamificationService.getHistory();
+    const {data: [item]} = await gamificationService.getHistory();
 
     expect(item.type).toBe('earned');
   });
@@ -41,7 +42,7 @@ describe('gamificationService.getHistory', () => {
       total: 1, page: 1, lastPage: 1,
     });
 
-    const [item] = await gamificationService.getHistory();
+    const {data: [item]} = await gamificationService.getHistory();
 
     expect(item.type).toBe('spent');
   });
@@ -52,7 +53,7 @@ describe('gamificationService.getHistory', () => {
       total: 1, page: 1, lastPage: 1,
     });
 
-    const [item] = await gamificationService.getHistory();
+    const {data: [item]} = await gamificationService.getHistory();
 
     expect(item.points).toBe(30);
   });
@@ -63,7 +64,7 @@ describe('gamificationService.getHistory', () => {
       total: 1, page: 1, lastPage: 1,
     });
 
-    const [item] = await gamificationService.getHistory();
+    const {data: [item]} = await gamificationService.getHistory();
 
     expect(item.points).toBe(10);
   });
@@ -73,7 +74,29 @@ describe('gamificationService.getHistory', () => {
 
     const result = await gamificationService.getHistory();
 
-    expect(result).toHaveLength(0);
+    expect(result.data).toHaveLength(0);
+  });
+
+  it('preserva userId e referenceId quando enviados pela API', async () => {
+    mockAPI.getHistory.mockResolvedValue({
+      data: [{
+        id: '5',
+        userId: 'user-1',
+        action: 'boat_owner_shipment_delivered',
+        points: 15,
+        description: 'Entrega concluída',
+        referenceId: 'shipment-9',
+        createdAt: '2024-01-01',
+      }],
+      total: 1,
+      page: 1,
+      lastPage: 1,
+    });
+
+    const {data: [item]} = await gamificationService.getHistory();
+
+    expect(item.userId).toBe('user-1');
+    expect(item.referenceId).toBe('shipment-9');
   });
 });
 

@@ -1,13 +1,13 @@
 import React from 'react';
-import {ScrollView, RefreshControl} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { ScrollView, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {Box, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
+import { Box, Icon, InfoModal, Text, TouchableOpacityBox } from '@components';
 
-import {useCaptainDashboard} from './useCaptainDashboard';
+import { useCaptainDashboard } from './useCaptainDashboard';
 
 export function CaptainDashboardScreen() {
-  const {top} = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets();
   const {
     navigation,
     user,
@@ -42,13 +42,13 @@ export function CaptainDashboardScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
-        style={{paddingTop: top + 16}}>
+        style={{ paddingTop: top + 16 }}>
         <Box flexDirection="row" alignItems="center" justifyContent="space-between">
           <Box flex={1}>
-            <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.7)'}}>
+            <Text preset="paragraphSmall" style={{ color: 'rgba(255,255,255,0.7)' }}>
               {isBoatManager ? 'Bem-vindo, Gestor' : 'Bem-vindo, Capitão'}
             </Text>
-            <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+            <Text preset="headingMedium" bold style={{ color: '#FFFFFF' }}>
               {user?.name || (isBoatManager ? 'Gestor' : 'Capitão')}
             </Text>
           </Box>
@@ -61,7 +61,7 @@ export function CaptainDashboardScreen() {
             borderRadius="s24"
             alignItems="center"
             justifyContent="center"
-            style={{backgroundColor: 'rgba(255,255,255,0.15)'}}>
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
             <Icon name="notifications" size={24} color={'#FFFFFF' as any} />
             {unreadNotifications > 0 && (
               <Box
@@ -82,7 +82,7 @@ export function CaptainDashboardScreen() {
                 <Text
                   preset="paragraphCaptionSmall"
                   bold
-                  style={{color: '#FFFFFF', fontSize: 10, lineHeight: 14}}>
+                  style={{ color: '#FFFFFF', fontSize: 10, lineHeight: 14 }}>
                   {unreadNotifications > 99 ? '99+' : unreadNotifications}
                 </Text>
               </Box>
@@ -104,8 +104,8 @@ export function CaptainDashboardScreen() {
               backgroundColor: isRejected
                 ? 'rgba(239,68,68,0.25)'
                 : isPending
-                ? 'rgba(59,130,246,0.25)'
-                : 'rgba(245,158,11,0.25)',
+                  ? 'rgba(59,130,246,0.25)'
+                  : 'rgba(245,158,11,0.25)',
             }}>
             <Icon
               name={isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock'}
@@ -114,8 +114,8 @@ export function CaptainDashboardScreen() {
                 isRejected
                   ? ('#FCA5A5' as any)
                   : isPending
-                  ? ('#93C5FD' as any)
-                  : ('#FCD34D' as any)
+                    ? ('#93C5FD' as any)
+                    : ('#FCD34D' as any)
               }
             />
             <Text
@@ -128,15 +128,15 @@ export function CaptainDashboardScreen() {
               {isRejected
                 ? 'Documentação rejeitada'
                 : isPending
-                ? 'Documentação em análise'
-                : 'Verificação pendente'}
+                  ? 'Documentação em análise'
+                  : 'Verificação pendente'}
             </Text>
           </Box>
         )}
       </Box>
 
       <ScrollView
-        contentContainerStyle={{paddingBottom: 100}}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }>
@@ -156,7 +156,7 @@ export function CaptainDashboardScreen() {
                 alignItems="center"
                 borderLeftWidth={4}
                 borderLeftColor="danger"
-                onPress={() => navigation.navigate('KycSubmit', {rejected: true, reason: user?.rejectionReason ?? undefined})}>
+                onPress={() => navigation.navigate('KycSubmit', { rejected: true, reason: user?.rejectionReason ?? undefined })}>
                 <Box
                   width={40}
                   height={40}
@@ -165,7 +165,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{flexShrink: 0}}>
+                  style={{ flexShrink: 0 }}>
                   <Icon name="cancel" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -207,7 +207,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{flexShrink: 0}}>
+                  style={{ flexShrink: 0 }}>
                   <Icon name="upload-file" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -241,7 +241,7 @@ export function CaptainDashboardScreen() {
                     alignItems="center"
                     justifyContent="center"
                     mr="s12"
-                    style={{flexShrink: 0}}>
+                    style={{ flexShrink: 0 }}>
                     <Icon name="hourglass-top" size={20} color="surface" />
                   </Box>
                   <Box flex={1}>
@@ -261,10 +261,10 @@ export function CaptainDashboardScreen() {
                     justifyContent="center"
                     paddingVertical="s8"
                     borderRadius="s8"
-                    style={{backgroundColor: 'rgba(37,99,235,0.15)', borderWidth: 1, borderColor: '#3B82F6'}}
+                    style={{ backgroundColor: 'rgba(37,99,235,0.15)', borderWidth: 1, borderColor: '#3B82F6' }}
                     onPress={() => navigation.navigate('KycSubmit')}>
                     <Icon name="upload-file" size={16} color={'#3B82F6' as any} />
-                    <Text preset="paragraphSmall" bold ml="s6" style={{color: '#3B82F6'}}>
+                    <Text preset="paragraphSmall" bold ml="s6" style={{ color: '#3B82F6' }}>
                       Enviar docs
                     </Text>
                   </TouchableOpacityBox>
@@ -283,7 +283,7 @@ export function CaptainDashboardScreen() {
                       size={16}
                       color={'#FFFFFF' as any}
                     />
-                    <Text preset="paragraphSmall" bold ml="s6" style={{color: '#FFFFFF'}}>
+                    <Text preset="paragraphSmall" bold ml="s6" style={{ color: '#FFFFFF' }}>
                       {isRefreshingStatus ? 'Verificando...' : 'Verificar status'}
                     </Text>
                   </TouchableOpacityBox>
@@ -301,7 +301,7 @@ export function CaptainDashboardScreen() {
             padding="s16"
             borderRadius="s16"
             alignItems="center"
-            style={{elevation: 2}}>
+            style={{ elevation: 2 }}>
             <Text preset="headingMedium" color="secondary" bold>
               {trips.length}
             </Text>
@@ -315,7 +315,7 @@ export function CaptainDashboardScreen() {
             padding="s16"
             borderRadius="s16"
             alignItems="center"
-            style={{elevation: 2}}>
+            style={{ elevation: 2 }}>
             <Text preset="headingMedium" color="success" bold>
               {completedToday}
             </Text>
@@ -349,7 +349,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{flexShrink: 0}}>
+                  style={{ flexShrink: 0 }}>
                   <Icon name="sailing" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -384,7 +384,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{flexShrink: 0}}>
+                  style={{ flexShrink: 0 }}>
                   <Icon name="error" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -424,7 +424,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{flexShrink: 0}}>
+                  style={{ flexShrink: 0 }}>
                   <Icon name="hourglass-top" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -455,43 +455,48 @@ export function CaptainDashboardScreen() {
               padding="s20"
               borderLeftWidth={4}
               borderLeftColor="secondary"
+              flexDirection='row'
+              justifyContent='space-between'
+              alignItems='center'
               onPress={() =>
-                navigation.navigate('CaptainTripManage', {tripId: activeTrip.id})
+                navigation.navigate('CaptainTripManage', { tripId: activeTrip.id })
               }
-              style={{elevation: 3}}>
-              <Box
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="center"
-                mb="s12">
+              style={{ elevation: 3 }}>
+              <Box>
                 <Box
-                  backgroundColor={STATUS_CONFIG[activeTrip.status].bg}
-                  paddingHorizontal="s12"
-                  paddingVertical="s6"
-                  borderRadius="s8">
-                  <Text
-                    preset="paragraphCaptionSmall"
-                    color={STATUS_CONFIG[activeTrip.status].color}
-                    bold>
-                    {STATUS_CONFIG[activeTrip.status].label}
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb="s12">
+                  <Box
+                    backgroundColor={STATUS_CONFIG[activeTrip.status].bg}
+                    paddingHorizontal="s12"
+                    paddingVertical="s6"
+                    borderRadius="s8">
+                    <Text
+                      preset="paragraphCaptionSmall"
+                      color={STATUS_CONFIG[activeTrip.status].color}
+                      bold>
+                      {STATUS_CONFIG[activeTrip.status].label}
+                    </Text>
+                  </Box>
+                </Box>
+
+                <Box flexDirection="row" alignItems="center" mb="s8">
+                  <Icon name="directions-boat" size={20} color="secondary" />
+                  <Text preset="paragraphMedium" color="text" bold ml="s8">
+                    {activeTrip.origin} → {activeTrip.destination}
                   </Text>
                 </Box>
-                <Icon name="chevron-right" size={20} color="textSecondary" />
-              </Box>
 
-              <Box flexDirection="row" alignItems="center" mb="s8">
-                <Icon name="directions-boat" size={20} color="secondary" />
-                <Text preset="paragraphMedium" color="text" bold ml="s8">
-                  {activeTrip.origin} → {activeTrip.destination}
-                </Text>
+                <Box flexDirection="row" alignItems="center">
+                  <Icon name="schedule" size={16} color="textSecondary" />
+                  <Text preset="paragraphSmall" color="textSecondary" ml="s6">
+                    {formatDeparture(activeTrip)}
+                  </Text>
+                </Box>
               </Box>
-
-              <Box flexDirection="row" alignItems="center">
-                <Icon name="schedule" size={16} color="textSecondary" />
-                <Text preset="paragraphSmall" color="textSecondary" ml="s6">
-                  {formatDeparture(activeTrip)}
-                </Text>
-              </Box>
+              <Icon name="chevron-right" size={30} color="textSecondary" />
             </TouchableOpacityBox>
           </Box>
         ) : (
@@ -501,7 +506,7 @@ export function CaptainDashboardScreen() {
               borderRadius="s16"
               padding="s20"
               alignItems="center"
-              style={{elevation: 2}}>
+              style={{ elevation: 2 }}>
               <Icon name="directions-boat" size={48} color="textSecondary" />
               <Text preset="paragraphMedium" color="textSecondary" mt="s12" textAlign="center">
                 Nenhuma viagem em andamento
@@ -524,8 +529,8 @@ export function CaptainDashboardScreen() {
               padding="s20"
               alignItems="center"
               onPress={() => canOperate ? navigation.navigate('CaptainCreateTrip') : handleBlockedAction()}
-              style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
-              <Box style={{position: 'relative'}}>
+              style={{ elevation: 2, opacity: canOperate ? 1 : 0.5 }}>
+              <Box style={{ position: 'relative' }}>
                 <Box
                   width={48}
                   height={48}
@@ -560,7 +565,7 @@ export function CaptainDashboardScreen() {
               padding="s20"
               alignItems="center"
               onPress={() => navigation.navigate('CaptainMyTrips')}
-              style={{elevation: 2}}>
+              style={{ elevation: 2 }}>
               <Box
                 width={48}
                 height={48}
@@ -587,8 +592,8 @@ export function CaptainDashboardScreen() {
                 padding="s20"
                 alignItems="center"
                 onPress={() => canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction()}
-                style={{elevation: 2, opacity: canOperate ? 1 : 0.5}}>
-                <Box style={{position: 'relative'}}>
+                style={{ elevation: 2, opacity: canOperate ? 1 : 0.5 }}>
+                <Box style={{ position: 'relative' }}>
                   <Box
                     width={48}
                     height={48}
@@ -624,7 +629,7 @@ export function CaptainDashboardScreen() {
               padding="s20"
               alignItems="center"
               onPress={() => navigation.navigate('SosAlert', {})}
-              style={{elevation: 2}}>
+              style={{ elevation: 2 }}>
               <Box
                 width={48}
                 height={48}
@@ -649,15 +654,15 @@ export function CaptainDashboardScreen() {
           isRejected
             ? 'Documentação rejeitada'
             : isPending
-            ? 'Documentação em análise'
-            : 'Verificação pendente'
+              ? 'Documentação em análise'
+              : 'Verificação pendente'
         }
         message={
           isRejected
             ? `Sua documentação foi reprovada: "${user?.rejectionReason || 'verifique seu perfil'}". Corrija os documentos e reenvie para continuar operando.`
             : isPending
-            ? 'Seus documentos estão sendo analisados pelo NavegaJá. Você será notificado assim que a conta for aprovada e poderá criar viagens e cadastrar embarcações.'
-            : 'Envie sua licença de navegação e certificado de habilitação para que sua conta seja verificada e você possa criar viagens e embarcações.'
+              ? 'Seus documentos estão sendo analisados pelo NavegaJá. Você será notificado assim que a conta for aprovada e poderá criar viagens e cadastrar embarcações.'
+              : 'Envie sua licença de navegação e certificado de habilitação para que sua conta seja verificada e você possa criar viagens e embarcações.'
         }
         icon={isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock'}
         iconColor={isRejected ? 'danger' : isPending ? 'info' : 'warning'}

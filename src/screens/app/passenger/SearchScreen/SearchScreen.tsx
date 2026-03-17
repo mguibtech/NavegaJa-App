@@ -150,6 +150,8 @@ export function SearchScreen({navigation, route}: Props) {
                 value={origin}
                 onChangeText={setOrigin}
                 leftIcon="my-location"
+                leftIconColor="inputIcon"
+                containerBackgroundColor="inputBackground"
               />
             </Box>
 
@@ -181,6 +183,8 @@ export function SearchScreen({navigation, route}: Props) {
                 value={destination}
                 onChangeText={setDestination}
                 leftIcon="place"
+                leftIconColor="inputIcon"
+                containerBackgroundColor="inputBackground"
               />
             </Box>
 

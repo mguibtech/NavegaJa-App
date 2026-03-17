@@ -23,6 +23,8 @@ export function CaptainTripManageScreen() {
     manageError,
     passengers,
     shipments,
+    acceptsShipments,
+    shipmentPricePerKg,
     refreshing,
     completeLoading,
     isActionLoading,
@@ -156,6 +158,31 @@ export function CaptainTripManageScreen() {
                   </Text>
                 </Box>
               </Box>
+
+              <Box
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                paddingTop="s12"
+                mt="s12"
+                borderTopWidth={1}
+                borderTopColor="border">
+                <Box flexDirection="row" alignItems="center" flex={1} mr="s8">
+                  <Icon
+                    name={acceptsShipments ? 'inventory-2' : 'inventory'}
+                    size={16}
+                    color={acceptsShipments ? 'secondary' : 'textSecondary'}
+                  />
+                  <Text preset="paragraphSmall" color="text" ml="s6">
+                    {acceptsShipments ? 'Aceita encomendas' : 'Não aceita encomendas'}
+                  </Text>
+                </Box>
+                {acceptsShipments && shipmentPricePerKg != null && (
+                  <Text preset="paragraphCaptionSmall" color="textSecondary">
+                    {`${formatBRL(shipmentPricePerKg)}/kg`}
+                  </Text>
+                )}
+              </Box>
             </Box>
 
             {/* Passengers */}
@@ -207,6 +234,8 @@ export function CaptainTripManageScreen() {
                 <Box>
                   {passengers.map(p => {
                     const checkedIn = !!p.checkedInAt;
+                    const passengerName = p.passenger?.name ?? 'Passageiro indisponível';
+                    const passengerPhone = p.passenger?.phone ?? 'Telefone indisponível';
                     return (
                       <Box
                         key={p.bookingId}
@@ -236,10 +265,10 @@ export function CaptainTripManageScreen() {
                         </Box>
                         <Box flex={1}>
                           <Text preset="paragraphSmall" color="text" bold>
-                            {p.passenger.name}
+                            {passengerName}
                           </Text>
                           <Text preset="paragraphCaptionSmall" color="textSecondary">
-                            {p.passenger.phone} · {p.seats}{' '}
+                            {passengerPhone} · {p.seats}{' '}
                             {p.seats === 1 ? 'assento' : 'assentos'}
                           </Text>
                           {p.childrenCount != null && p.childrenCount > 0 && (
@@ -280,7 +309,7 @@ export function CaptainTripManageScreen() {
                             backgroundColor="primaryBg"
                             alignItems="center"
                             justifyContent="center"
-                            onPress={() => navigateToChat(p.bookingId, p.passenger.name)}>
+                            onPress={() => navigateToChat(p.bookingId, p.passenger?.name)}>
                             <Icon name="chat" size={16} color="primary" />
                           </TouchableOpacityBox>
                         </Box>
@@ -292,94 +321,96 @@ export function CaptainTripManageScreen() {
             </Box>
 
             {/* Shipments */}
-            <Box mb="s16">
-              <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
-                <Text preset="paragraphMedium" color="text" bold>
-                  Encomendas ({shipments.length})
-                </Text>
-                {shipments.length > 0 && (
-                  <TouchableOpacityBox
-                    flexDirection="row"
-                    alignItems="center"
-                    onPress={() =>
-                      download(
-                        `/trips/${trip.id}/cargo-manifest`,
-                        `manifesto-${trip.id.slice(0, 8)}.pdf`,
-                      )
-                    }
-                    disabled={isDownloading}>
-                    <Icon name="picture-as-pdf" size={16} color="secondary" />
-                    <Text preset="paragraphCaptionSmall" color="secondary" ml="s4" bold>
-                      {isDownloading ? 'Baixando...' : 'Manifesto'}
-                    </Text>
-                  </TouchableOpacityBox>
-                )}
-              </Box>
-              {manageLoading && shipments.length === 0 ? (
-                <Box
-                  backgroundColor="surface"
-                  borderRadius="s12"
-                  padding="s20"
-                  alignItems="center">
-                  <ActivityIndicator size="small" color="#0a6fbd" />
-                </Box>
-              ) : manageError ? null : shipments.length === 0 ? (
-                <Box
-                  backgroundColor="surface"
-                  borderRadius="s12"
-                  padding="s20"
-                  alignItems="center">
-                  <Icon name="inventory" size={32} color="textSecondary" />
-                  <Text preset="paragraphSmall" color="textSecondary" mt="s8">
-                    Sem encomendas nesta viagem
+            {acceptsShipments && (
+              <Box mb="s16">
+                <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
+                  <Text preset="paragraphMedium" color="text" bold>
+                    Encomendas ({shipments.length})
                   </Text>
+                  {shipments.length > 0 && (
+                    <TouchableOpacityBox
+                      flexDirection="row"
+                      alignItems="center"
+                      onPress={() =>
+                        download(
+                          `/trips/${trip.id}/cargo-manifest`,
+                          `manifesto-${trip.id.slice(0, 8)}.pdf`,
+                        )
+                      }
+                      disabled={isDownloading}>
+                      <Icon name="picture-as-pdf" size={16} color="secondary" />
+                      <Text preset="paragraphCaptionSmall" color="secondary" ml="s4" bold>
+                        {isDownloading ? 'Baixando...' : 'Manifesto'}
+                      </Text>
+                    </TouchableOpacityBox>
+                  )}
                 </Box>
-              ) : (
-                <Box>
-                  {shipments.map((shipment, index) => {
-                    const canCollect = shipment.status === ShipmentStatus.PAID;
-                    const canDeliver = shipment.status === ShipmentStatus.ARRIVED;
-                    const isActionable = canCollect || canDeliver;
-                    const key = shipment.id ?? shipment.trackingCode ?? String(index);
-                    return (
-                      <TouchableOpacityBox
-                        key={key}
-                        backgroundColor="surface"
-                        borderRadius="s12"
-                        padding="s16"
-                        mb="s8"
-                        flexDirection="row"
-                        alignItems="center"
-                        onPress={() => shipment.id && navigateToShipmentCollect(shipment.id, shipment.validationCode)}>
-                        <Icon name="inventory-2" size={20} color="primary" />
-                        <Box flex={1} mx="s12">
-                          <Text preset="paragraphSmall" color="text" bold>
-                            {shipment.trackingCode}
-                          </Text>
-                          <Text preset="paragraphCaptionSmall" color="textSecondary">
-                            {shipment.recipientName} ·{' '}
-                            {SHIPMENT_STATUS_LABELS[shipment.status] || shipment.status}
-                          </Text>
-                        </Box>
-                        {isActionable ? (
-                          <Box
-                            backgroundColor={canCollect ? 'secondary' : 'info'}
-                            paddingHorizontal="s10"
-                            paddingVertical="s6"
-                            style={{borderRadius: 8}}>
-                            <Text preset="paragraphCaptionSmall" color="surface" bold>
-                              {canCollect ? 'Coletar' : 'Entregar'}
+                {manageLoading && shipments.length === 0 ? (
+                  <Box
+                    backgroundColor="surface"
+                    borderRadius="s12"
+                    padding="s20"
+                    alignItems="center">
+                    <ActivityIndicator size="small" color="#0a6fbd" />
+                  </Box>
+                ) : manageError ? null : shipments.length === 0 ? (
+                  <Box
+                    backgroundColor="surface"
+                    borderRadius="s12"
+                    padding="s20"
+                    alignItems="center">
+                    <Icon name="inventory" size={32} color="textSecondary" />
+                    <Text preset="paragraphSmall" color="textSecondary" mt="s8">
+                      Sem encomendas nesta viagem
+                    </Text>
+                  </Box>
+                ) : (
+                  <Box>
+                    {shipments.map((shipment, index) => {
+                      const canCollect = shipment.status === ShipmentStatus.PAID;
+                      const canDeliver = shipment.status === ShipmentStatus.ARRIVED;
+                      const isActionable = canCollect || canDeliver;
+                      const key = shipment.id ?? shipment.trackingCode ?? String(index);
+                      return (
+                        <TouchableOpacityBox
+                          key={key}
+                          backgroundColor="surface"
+                          borderRadius="s12"
+                          padding="s16"
+                          mb="s8"
+                          flexDirection="row"
+                          alignItems="center"
+                          onPress={() => shipment.id && navigateToShipmentCollect(shipment.id, shipment.validationCode ?? undefined)}>
+                          <Icon name="inventory-2" size={20} color="primary" />
+                          <Box flex={1} mx="s12">
+                            <Text preset="paragraphSmall" color="text" bold>
+                              {shipment.trackingCode}
+                            </Text>
+                            <Text preset="paragraphCaptionSmall" color="textSecondary">
+                              {shipment.recipientName} ·{' '}
+                              {SHIPMENT_STATUS_LABELS[shipment.status] || shipment.status}
                             </Text>
                           </Box>
-                        ) : (
-                          <Icon name="chevron-right" size={18} color="textSecondary" />
-                        )}
-                      </TouchableOpacityBox>
-                    );
-                  })}
-                </Box>
-              )}
-            </Box>
+                          {isActionable ? (
+                            <Box
+                              backgroundColor={canCollect ? 'secondary' : 'info'}
+                              paddingHorizontal="s10"
+                              paddingVertical="s6"
+                              style={{borderRadius: 8}}>
+                              <Text preset="paragraphCaptionSmall" color="surface" bold>
+                                {canCollect ? 'Coletar' : 'Entregar'}
+                              </Text>
+                            </Box>
+                          ) : (
+                            <Icon name="chevron-right" size={18} color="textSecondary" />
+                          )}
+                        </TouchableOpacityBox>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Box>
+            )}
 
             {/* Action Buttons */}
             {trip.status === TripStatus.SCHEDULED && (

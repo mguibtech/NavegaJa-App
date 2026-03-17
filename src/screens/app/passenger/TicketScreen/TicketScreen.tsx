@@ -6,7 +6,16 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, InfoModal, ConfirmationModal} from '@components';
-import {Booking, bookingAPI, BookingStatus, Trip, tripAPI, PaymentMethod} from '@domain';
+import {
+  Booking,
+  bookingAPI,
+  BookingStatus,
+  Trip,
+  tripAPI,
+  PaymentMethod,
+  canCancelBooking,
+  getBookingLockedCancellationLabel,
+} from '@domain';
 import {usePdfDownload} from '@hooks';
 
 import {AppStackParamList} from '@routes';
@@ -30,6 +39,7 @@ export function TicketScreen({navigation, route}: Props) {
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
   const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
   const [showCancelErrorModal, setShowCancelErrorModal] = useState(false);
+  const [cancelErrorMessage, setCancelErrorMessage] = useState('Não foi possível cancelar a reserva');
 
   useEffect(() => {
     loadBookingData();
@@ -145,7 +155,8 @@ export function TicketScreen({navigation, route}: Props) {
     try {
       await bookingAPI.cancel(booking.id);
       setShowCancelSuccessModal(true);
-    } catch {
+    } catch (error: any) {
+      setCancelErrorMessage(error?.message || 'Não foi possível cancelar a reserva');
       setShowCancelErrorModal(true);
     }
   };
@@ -191,6 +202,8 @@ export function TicketScreen({navigation, route}: Props) {
   };
 
   const statusConfig = getStatusConfig(ticketStatus);
+  const canCancelCurrentBooking = canCancelBooking(booking.status);
+  const lockedCancellationLabel = getBookingLockedCancellationLabel(booking.status);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('pt-BR', {
@@ -605,16 +618,18 @@ export function TicketScreen({navigation, route}: Props) {
               leftIcon="picture-as-pdf"
             />
 
-            <TouchableOpacityBox
-              paddingVertical="s16"
-              borderRadius="s12"
-              backgroundColor="dangerBg"
-              alignItems="center"
-              onPress={handleCancelBooking}>
-              <Text preset="paragraphMedium" color="danger" bold>
-                Cancelar Reserva
-              </Text>
-            </TouchableOpacityBox>
+            {canCancelCurrentBooking && (
+              <TouchableOpacityBox
+                paddingVertical="s16"
+                borderRadius="s12"
+                backgroundColor="dangerBg"
+                alignItems="center"
+                onPress={handleCancelBooking}>
+                <Text preset="paragraphMedium" color="danger" bold>
+                  Cancelar Reserva
+                </Text>
+              </TouchableOpacityBox>
+            )}
           </Box>
         )}
 
@@ -637,6 +652,30 @@ export function TicketScreen({navigation, route}: Props) {
               loading={isDownloading}
               leftIcon="picture-as-pdf"
             />
+            <Box
+              paddingVertical="s16"
+              paddingHorizontal="s16"
+              backgroundColor="infoBg"
+              borderRadius="s12"
+              alignItems="center">
+              <Text preset="paragraphMedium" color="info" bold textAlign="center">
+                Embarque realizado
+              </Text>
+            </Box>
+          </Box>
+        )}
+
+        {ticketStatus === 'completed' && lockedCancellationLabel && (
+          <Box
+            paddingVertical="s16"
+            paddingHorizontal="s16"
+            backgroundColor="background"
+            borderRadius="s12"
+            alignItems="center"
+            mb="s24">
+            <Text preset="paragraphMedium" color="textSecondary" bold textAlign="center">
+              {lockedCancellationLabel}
+            </Text>
           </Box>
         )}
 
@@ -696,11 +735,14 @@ export function TicketScreen({navigation, route}: Props) {
       <InfoModal
         visible={showCancelErrorModal}
         title="Erro"
-        message="Não foi possível cancelar a reserva"
+        message={cancelErrorMessage}
         icon="error"
         iconColor="danger"
         buttonText="Entendi"
-        onClose={() => setShowCancelErrorModal(false)}
+        onClose={() => {
+          setShowCancelErrorModal(false);
+          setCancelErrorMessage('Não foi possível cancelar a reserva');
+        }}
       />
     </Box>
   );

@@ -1,15 +1,16 @@
 import {useState, useEffect, useRef} from 'react';
+import type {RefObject} from 'react';
 import {View} from 'react-native';
 
 import {useNavigation} from '@react-navigation/native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {captureRef} from 'react-native-view-shot';
-import RNShare from 'react-native-share';
 
 import {
   ShipmentStatus,
   PaymentMethod,
+  canCancelShipment,
+  getShipmentLockedCancellationLabel,
   useConfirmPayment,
   useCollectShipment,
   useOutForDelivery,
@@ -21,6 +22,43 @@ import {useAuthStore} from '@store';
 import {API_BASE_URL} from '@api/config';
 
 import {AppStackParamList} from '@routes';
+
+type CaptureRefFn = (
+  target: RefObject<View> | View,
+  options: {
+    format: 'png';
+    quality: number;
+    result: 'tmpfile';
+  },
+) => Promise<string>;
+
+type NativeShareModule = {
+  open: (options: {
+    url: string;
+    type: string;
+    title: string;
+    message: string;
+    failOnCancel: boolean;
+  }) => Promise<void>;
+};
+
+function getCaptureRef(): CaptureRefFn | null {
+  try {
+    const viewShotModule = require('react-native-view-shot');
+    return viewShotModule.captureRef ?? viewShotModule.default?.captureRef ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getNativeShare(): NativeShareModule | null {
+  try {
+    const shareModule = require('react-native-share');
+    return shareModule.default ?? shareModule;
+  } catch {
+    return null;
+  }
+}
 
 export function useShipmentDetailsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -89,13 +127,22 @@ export function useShipmentDetailsScreen() {
 
   async function handleShare() {
     if (!shipment || !shareCardRef.current) {return;}
+
+    const captureRef = getCaptureRef();
+    const nativeShare = getNativeShare();
+
+    if (!captureRef || !nativeShare?.open) {
+      toast.showError('NÃ£o foi possÃ­vel compartilhar. Tente novamente.');
+      return;
+    }
+
     try {
       const uri = await captureRef(shareCardRef, {
         format: 'png',
         quality: 1,
         result: 'tmpfile',
       });
-      await RNShare.open({
+      await nativeShare.open({
         url: uri,
         type: 'image/png',
         title: `Encomenda ${shipment.trackingCode}`,
@@ -205,9 +252,10 @@ export function useShipmentDetailsScreen() {
     shipment?.status !== ShipmentStatus.DELIVERED &&
     shipment?.status !== ShipmentStatus.CANCELLED;
   const pinIsForDelivery = shipment?.status === ShipmentStatus.OUT_FOR_DELIVERY;
-  const canCancel =
-    shipment?.status === ShipmentStatus.PENDING ||
-    shipment?.status === ShipmentStatus.PAID;
+  const canCancel = canCancelShipment(shipment?.status);
+  const lockedCancellationLabel = getShipmentLockedCancellationLabel(
+    shipment?.status,
+  );
   const canReview = shipment?.status === ShipmentStatus.DELIVERED;
 
   function resolvePhotoUri(photoUrl: string): string {
@@ -247,6 +295,7 @@ export function useShipmentDetailsScreen() {
     showValidationPIN,
     pinIsForDelivery,
     canCancel,
+    lockedCancellationLabel,
     canReview,
     getPaymentMethodLabel,
     resolvePhotoUri,

@@ -18,6 +18,22 @@ jest.mock('@react-native-firebase/messaging', () => {
   return {__esModule: true, default: messaging};
 });
 
+// Mock @react-native-firebase/analytics
+jest.mock('@react-native-firebase/analytics', () => {
+  const analytics = jest.fn(() => ({
+    logLogin: jest.fn(() => Promise.resolve()),
+    logSignUp: jest.fn(() => Promise.resolve()),
+    logSearch: jest.fn(() => Promise.resolve()),
+    logSelectContent: jest.fn(() => Promise.resolve()),
+    logBeginCheckout: jest.fn(() => Promise.resolve()),
+    logPurchase: jest.fn(() => Promise.resolve()),
+    logEvent: jest.fn(() => Promise.resolve()),
+    logScreenView: jest.fn(() => Promise.resolve()),
+  }));
+
+  return {__esModule: true, default: analytics};
+});
+
 // Mock react-native-keychain
 jest.mock('react-native-keychain', () => ({
   setGenericPassword: jest.fn(() => Promise.resolve(true)),

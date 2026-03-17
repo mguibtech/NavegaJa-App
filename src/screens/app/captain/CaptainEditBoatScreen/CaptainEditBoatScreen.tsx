@@ -195,7 +195,7 @@ export function CaptainEditBoatScreen() {
               <Box flexDirection="row" flexWrap="wrap" gap="s8">
                 {savedPhotos.map((url, index) => (
                   <Box
-                    key={index}
+                    key={`${url}-${index}`}
                     width={88}
                     height={88}
                     borderRadius="s8"
@@ -259,7 +259,7 @@ export function CaptainEditBoatScreen() {
               <Box flexDirection="row" flexWrap="wrap" gap="s8">
                 {savedDocPhotos.map((url, index) => (
                   <Box
-                    key={index}
+                    key={`${url}-${index}`}
                     width={88}
                     height={88}
                     borderRadius="s8"

@@ -51,14 +51,11 @@ export function useCaptainCreateTrip() {
   }, [isBoatManager, staff, ownedBoats]);
 
   const [origin, setOrigin] = useState('');
-  const [originLat, setOriginLat] = useState<number | undefined>();
-  const [originLng, setOriginLng] = useState<number | undefined>();
   const [destination, setDestination] = useState('');
-  const [destinationLat, setDestinationLat] = useState<number | undefined>();
-  const [destinationLng, setDestinationLng] = useState<number | undefined>();
   const [departureDate, setDepartureDate] = useState<Date | null>(null);
   const [arrivalDate, setArrivalDate] = useState<Date | null>(null);
   const [price, setPrice] = useState('');
+  const [acceptsShipments, setAcceptsShipments] = useState(false);
   const [cargoPriceKg, setCargoPriceKg] = useState('');
   const [totalSeats, setTotalSeats] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState<string | null>(null);
@@ -127,23 +124,15 @@ export function useCaptainCreateTrip() {
 
   function selectOrigin(suggestion: LocationSuggestion) {
     setOrigin(suggestion.name);
-    setOriginLat(suggestion.lat);
-    setOriginLng(suggestion.lng);
     if (destination === suggestion.name) {
       setDestination('');
-      setDestinationLat(undefined);
-      setDestinationLng(undefined);
     }
   }
 
   function selectDestination(suggestion: LocationSuggestion) {
     setDestination(suggestion.name);
-    setDestinationLat(suggestion.lat);
-    setDestinationLng(suggestion.lng);
     if (origin === suggestion.name) {
       setOrigin('');
-      setOriginLat(undefined);
-      setOriginLng(undefined);
     }
   }
 
@@ -165,7 +154,17 @@ export function useCaptainCreateTrip() {
     if (boat && seats > boat.capacity) {
       return `Assentos não pode exceder a capacidade da embarcação (${boat.capacity} lugares)`;
     }
+    if (acceptsShipments && (!cargoPriceKg || digitsToFloat(cargoPriceKg) <= 0)) {
+      return 'Informe um valor de frete por kg';
+    }
     return null;
+  }
+
+  function onAcceptsShipmentsChange(value: boolean) {
+    setAcceptsShipments(value);
+    if (!value) {
+      setCargoPriceKg('');
+    }
   }
 
   async function handleSubmit() {
@@ -176,17 +175,26 @@ export function useCaptainCreateTrip() {
     }
 
     try {
+      // console.log({ origin: origin.trim(),
+      //   destination: destination.trim(),
+      //   departureTime: departureDate!.toISOString(),
+      //   arrivalTime: arrivalDate!.toISOString(),
+      //   price: digitsToFloat(price),
+      //   cargoPriceKg: cargoPriceKg ? digitsToFloat(cargoPriceKg) : undefined,
+      //   totalSeats: Number(totalSeats),
+      //   boatId: selectedBoatId!,
       await createTrip({
         origin: origin.trim(),
         destination: destination.trim(),
         departureTime: departureDate!.toISOString(),
         arrivalTime: arrivalDate!.toISOString(),
         price: digitsToFloat(price),
-        cargoPriceKg: cargoPriceKg ? digitsToFloat(cargoPriceKg) : undefined,
+        cargoPriceKg:
+          acceptsShipments && cargoPriceKg
+            ? digitsToFloat(cargoPriceKg)
+            : undefined,
         totalSeats: Number(totalSeats),
         boatId: selectedBoatId!,
-        ...(originLat != null && originLng != null ? {originLat, originLng} : {}),
-        ...(destinationLat != null && destinationLng != null ? {destinationLat, destinationLng} : {}),
       });
       toast.showSuccess('Viagem criada com sucesso!');
       navigation.goBack();
@@ -244,6 +252,8 @@ export function useCaptainCreateTrip() {
     // price/seats form
     price,
     setPrice,
+    acceptsShipments,
+    onAcceptsShipmentsChange,
     cargoPriceKg,
     setCargoPriceKg,
     totalSeats,

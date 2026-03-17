@@ -3,22 +3,22 @@ import {useInfiniteQuery} from '@tanstack/react-query';
 import {queryKeys} from '@infra';
 
 import {gamificationService} from '../../gamificationService';
-import {GamificationTransaction} from '../../gamificationTypes';
+import {PaginatedGamificationHistory} from '../../gamificationTypes';
 
 const PAGE_SIZE = 20;
 
 export function useGamificationHistory() {
-  const query = useInfiniteQuery<GamificationTransaction[], Error>({
+  const query = useInfiniteQuery<PaginatedGamificationHistory, Error>({
     queryKey: queryKeys.gamification.history(),
     queryFn: ({pageParam}) => gamificationService.getHistory(pageParam as number, PAGE_SIZE),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-      (lastPage as GamificationTransaction[]).length === PAGE_SIZE
-        ? (lastPageParam as number) + 1
+    getNextPageParam: lastPage =>
+      lastPage.page < lastPage.lastPage
+        ? lastPage.page + 1
         : undefined,
   });
 
-  const history = query.data?.pages.flat() ?? [];
+  const history = query.data?.pages.flatMap(page => page.data) ?? [];
 
   return {
     history,

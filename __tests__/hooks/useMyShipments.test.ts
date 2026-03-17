@@ -2,7 +2,9 @@
  * @format
  */
 
+import React from 'react';
 import {renderHook, act, waitFor} from '@testing-library/react-native';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 
 import {useMyShipments} from '../../src/domain/App/Shipment/useCases/useMyShipments';
 import {shipmentService} from '../../src/domain/App/Shipment/shipmentService';
@@ -10,6 +12,17 @@ import {ShipmentStatus, PaymentMethod} from '../../src/domain';
 
 // Mock shipmentService
 jest.mock('../../src/domain/App/Shipment/shipmentService');
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {retry: false},
+    },
+  });
+
+  return ({children}: {children: React.ReactNode}) =>
+    React.createElement(QueryClientProvider, {client: queryClient}, children);
+};
 
 describe('useMyShipments', () => {
   const mockShipments = [
@@ -53,31 +66,33 @@ describe('useMyShipments', () => {
     jest.clearAllMocks();
   });
 
-  it('should start with empty shipments', () => {
-    const {result} = renderHook(() => useMyShipments());
+  it('should start with empty shipments while loading', () => {
+    (shipmentService.getMyShipments as jest.Mock).mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.shipments).toEqual([]);
-    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isLoading).toBe(true);
     expect(result.current.error).toBeNull();
   });
 
   it('should fetch shipments successfully', async () => {
     (shipmentService.getMyShipments as jest.Mock).mockResolvedValue(mockShipments);
 
-    const {result} = renderHook(() => useMyShipments());
-
-    expect(result.current.isLoading).toBe(false);
-
-    await act(async () => {
-      await result.current.fetch();
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
     });
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.shipments).toEqual(mockShipments);
     });
 
-    expect(result.current.shipments).toEqual(mockShipments);
     expect(result.current.shipments).toHaveLength(2);
+    expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
@@ -86,10 +101,8 @@ describe('useMyShipments', () => {
       () => new Promise(resolve => setTimeout(() => resolve(mockShipments), 100)),
     );
 
-    const {result} = renderHook(() => useMyShipments());
-
-    act(() => {
-      result.current.fetch();
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
     });
 
     expect(result.current.isLoading).toBe(true);
@@ -103,14 +116,12 @@ describe('useMyShipments', () => {
     const mockError = new Error('Network error');
     (shipmentService.getMyShipments as jest.Mock).mockRejectedValue(mockError);
 
-    const {result} = renderHook(() => useMyShipments());
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
+    });
 
-    await act(async () => {
-      try {
-        await result.current.fetch();
-      } catch {
-        // Expected to throw
-      }
+    await waitFor(() => {
+      expect(result.current.error?.message).toBe('Network error');
     });
 
     expect(result.current.error?.message).toBe('Network error');
@@ -122,27 +133,24 @@ describe('useMyShipments', () => {
     const mockError = new Error('First error');
     (shipmentService.getMyShipments as jest.Mock).mockRejectedValueOnce(mockError);
 
-    const {result} = renderHook(() => useMyShipments());
-
-    // First fetch fails
-    await act(async () => {
-      try {
-        await result.current.fetch();
-      } catch {
-        // Expected
-      }
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
     });
 
-    expect(result.current.error?.message).toBe('First error');
+    await waitFor(() => {
+      expect(result.current.error?.message).toBe('First error');
+    });
 
-    // Second fetch succeeds
     (shipmentService.getMyShipments as jest.Mock).mockResolvedValue(mockShipments);
 
     await act(async () => {
       await result.current.fetch();
     });
 
-    expect(result.current.error).toBeNull();
+    await waitFor(() => {
+      expect(result.current.error).toBeNull();
+    });
+
     expect(result.current.shipments).toEqual(mockShipments);
   });
 
@@ -152,20 +160,22 @@ describe('useMyShipments', () => {
 
     (shipmentService.getMyShipments as jest.Mock).mockResolvedValueOnce(firstBatch);
 
-    const {result} = renderHook(() => useMyShipments());
+    const {result} = renderHook(() => useMyShipments(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.shipments).toHaveLength(1);
+    });
+
+    (shipmentService.getMyShipments as jest.Mock).mockResolvedValue(secondBatch);
 
     await act(async () => {
       await result.current.fetch();
     });
 
-    expect(result.current.shipments).toHaveLength(1);
-
-    (shipmentService.getMyShipments as jest.Mock).mockResolvedValueOnce(secondBatch);
-
-    await act(async () => {
-      await result.current.fetch();
+    await waitFor(() => {
+      expect(result.current.shipments).toHaveLength(2);
     });
-
-    expect(result.current.shipments).toHaveLength(2);
   });
 });

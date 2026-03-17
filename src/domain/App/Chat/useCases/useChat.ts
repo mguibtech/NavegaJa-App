@@ -34,7 +34,7 @@ export function useChat(bookingId: string) {
       .catch(() => { setLoadError(true); })
       .finally(() => setIsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId]);
+  }, [bookingId, queryClient]);
 
   // Busca mensagens novas desde o último fetch
   const fetchNew = useCallback(async () => {
@@ -57,7 +57,7 @@ export function useChat(bookingId: string) {
     } catch {
       // falha silenciosa no polling
     }
-  }, [bookingId]);
+  }, [bookingId, queryClient]);
 
   // Polling a cada 10s
   useEffect(() => {

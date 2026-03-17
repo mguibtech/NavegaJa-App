@@ -4,8 +4,10 @@ import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {
+  getTripShipmentPricePerKg,
   useTripDetails,
   PaymentMethod,
+  tripAcceptsShipments,
   useCreateShipment,
   useCalculateShipmentPrice,
   CreateShipmentData,
@@ -51,6 +53,8 @@ export function useCreateShipmentScreen() {
   const toast = useToast();
 
   const {trip, isLoading: isLoadingTrip, error: tripError} = useTripDetails(tripId);
+  const cargoPricePerKg = getTripShipmentPricePerKg(trip);
+  const acceptsShipments = tripAcceptsShipments(trip);
 
   // Modal states
   const [showLoadTripErrorModal, setShowLoadTripErrorModal] = useState(false);
@@ -108,17 +112,17 @@ export function useCreateShipmentScreen() {
 
   // Calculate price whenever weight/dimensions/coupon changes
   useEffect(() => {
-    if (trip && weight && parseFloat(weight) > 0) {
+    if (trip && acceptsShipments && weight && parseFloat(weight) > 0) {
       setPriceErrorMessage('');
       calculatePrice();
     } else {
       setPriceErrorMessage('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip, weight, length, width, heightDim, couponValidation.state]);
+  }, [trip, acceptsShipments, weight, length, width, heightDim, couponValidation.state]);
 
   async function calculatePrice() {
-    if (!trip || !weight) return;
+    if (!trip || !acceptsShipments || !weight) return;
 
     const weightNum = parseFloat(weight);
     if (isNaN(weightNum) || weightNum <= 0) return;
@@ -243,9 +247,13 @@ export function useCreateShipmentScreen() {
   const isPIX = paymentMethod === PaymentMethod.PIX;
   const isRecipientPays = paidBy === 'recipient';
   const canSubmit =
-    isFormValid() && !isCreatingShipment && (isRecipientPays || !isPIX || totalPrice > 0);
+    acceptsShipments &&
+    isFormValid() &&
+    !isCreatingShipment &&
+    (isRecipientPays || !isPIX || totalPrice > 0);
 
   function getButtonTitle(): string {
+    if (!acceptsShipments) return 'Viagem sem envio de encomenda';
     if (isCreatingShipment) return 'Criando encomenda...';
     if (isCalculatingPrice) return 'Calculando preço...';
     if (!hasWeight) return 'Informe o peso para calcular';
@@ -255,8 +263,13 @@ export function useCreateShipmentScreen() {
   }
 
   async function handleCreateShipment() {
-    if (!validateForm()) return;
     if (!trip) return;
+    if (!acceptsShipments) {
+      setCreateErrorMessage('Esta viagem nao aceita encomendas.');
+      setShowCreateErrorModal(true);
+      return;
+    }
+    if (!validateForm()) return;
 
     // PIX requer preço calculado para processar pagamento
     if (isPIX && totalPrice <= 0) {
@@ -346,6 +359,8 @@ export function useCreateShipmentScreen() {
   return {
     // Data
     trip,
+    cargoPricePerKg,
+    acceptsShipments,
     isLoadingTrip,
     priceData,
     totalPrice,

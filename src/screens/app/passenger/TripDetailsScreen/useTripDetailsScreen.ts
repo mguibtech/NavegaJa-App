@@ -3,7 +3,15 @@ import {useEffect, useState} from 'react';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {FavoriteType, useMyFavorites, useToggleFavorite, useTripDetails} from '@domain';
+import {
+  FavoriteType,
+  getTripShipmentPricePerKg,
+  tripAcceptsShipments,
+  useMyFavorites,
+  useToggleFavorite,
+  useTripDetails,
+} from '@domain';
+import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
 import {logTripView} from '@services';
 
@@ -12,6 +20,7 @@ export function useTripDetailsScreen() {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'TripDetails'>>();
   const {tripId, promotion, context} = route.params;
+  const toast = useToast();
 
   const {trip, getTripById, isLoading, error} = useTripDetails(tripId);
 
@@ -80,9 +89,13 @@ export function useTripDetailsScreen() {
   };
 
   const handleCreateShipment = () => {
-    if (trip) {
-      navigation.navigate('CreateShipment', {tripId: trip.id});
+    if (!trip) return;
+    if (!tripAcceptsShipments(trip)) {
+      toast.showWarning('Esta viagem nao aceita encomendas.');
+      return;
     }
+
+    navigation.navigate('CreateShipment', {tripId: trip.id});
   };
 
   const handleToggleFavorite = async () => {
@@ -209,13 +222,8 @@ export function useTripDetailsScreen() {
     trip?.captain?.name ||
     (trip ? `Capitão ${trip.captainId.slice(0, 8)}` : 'Capitão');
 
-  // Cargo price per kg (0 means "A combinar")
-  const cargoPrice = trip
-    ? typeof trip.cargoPriceKg === 'number'
-      ? trip.cargoPriceKg
-      : parseFloat(String(trip.cargoPriceKg)) || 0
-    : 0;
-  const hasCargoPrice = cargoPrice > 0;
+  const cargoPrice = getTripShipmentPricePerKg(trip) ?? 0;
+  const acceptsShipments = tripAcceptsShipments(trip);
 
   return {
     trip,
@@ -236,7 +244,7 @@ export function useTripDetailsScreen() {
     boatName,
     captainName,
     cargoPrice,
-    hasCargoPrice,
+    acceptsShipments,
     handleBooking,
     handleCreateShipment,
     handleToggleFavorite,

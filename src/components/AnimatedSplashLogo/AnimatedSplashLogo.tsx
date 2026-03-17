@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import Svg, {
   Rect,
   Circle,
@@ -31,22 +31,23 @@ interface AnimatedSplashLogoProps {
 }
 
 export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
-  // Animação do glow pulsante
-  const glowProgress = useSharedValue(0);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Animações do barco (fade-in sequencial)
+  const glowProgress = useSharedValue(0);
   const boatOpacity = useSharedValue(0);
   const cabinOpacity = useSharedValue(0);
   const windowOpacity = useSharedValue(0);
   const mastProgress = useSharedValue(0);
   const flagOpacity = useSharedValue(0);
   const textOpacity = useSharedValue(0);
-
-  // Animação da bandeira (rotação)
   const flagRotation = useSharedValue(0);
 
   useEffect(() => {
-    // Glow pulsante infinito
+    const schedule = (callback: () => void, delay: number) => {
+      const timeout = setTimeout(callback, delay);
+      timeoutsRef.current.push(timeout);
+    };
+
     glowProgress.value = withRepeat(
       withSequence(
         withTiming(1, {duration: 2000, easing: Easing.inOut(Easing.ease)}),
@@ -56,31 +57,29 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
       false,
     );
 
-    // Animações sequenciais do barco
     boatOpacity.value = withTiming(1, {duration: 1000});
 
-    setTimeout(() => {
+    schedule(() => {
       cabinOpacity.value = withTiming(1, {duration: 1000});
     }, 300);
 
-    setTimeout(() => {
+    schedule(() => {
       windowOpacity.value = withTiming(0.3, {duration: 1000});
     }, 500);
 
-    setTimeout(() => {
+    schedule(() => {
       mastProgress.value = withTiming(1, {duration: 1000});
     }, 500);
 
-    setTimeout(() => {
+    schedule(() => {
       flagOpacity.value = withTiming(1, {duration: 500});
     }, 1000);
 
-    setTimeout(() => {
+    schedule(() => {
       textOpacity.value = withTiming(1, {duration: 500});
     }, 1500);
 
-    // Animação da bandeira (começa após 1.5s)
-    setTimeout(() => {
+    schedule(() => {
       flagRotation.value = withRepeat(
         withSequence(
           withTiming(5, {duration: 500, easing: Easing.inOut(Easing.ease)}),
@@ -91,21 +90,23 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         false,
       );
     }, 1500);
+
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Props animadas para o glow
   const glowAnimatedProps = useAnimatedProps(() => ({
     r: interpolate(glowProgress.value, [0, 1], [140, 150]),
     opacity: interpolate(glowProgress.value, [0, 1], [0.5, 0.8]),
   }));
 
-  // Props animadas para o mastro
   const mastAnimatedProps = useAnimatedProps(() => ({
     y2: interpolate(mastProgress.value, [0, 1], [-18, -45]),
   }));
 
-  // Props animadas para a bandeira
   const flagAnimatedProps = useAnimatedProps(() => ({
     opacity: flagOpacity.value,
   }));
@@ -114,7 +115,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
 
   return (
     <Svg width={size} height={size} viewBox="0 0 300 300">
-      {/* Gradientes */}
       <Defs>
         <RadialGradient id="glowGradient">
           <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15" />
@@ -122,7 +122,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         </RadialGradient>
       </Defs>
 
-      {/* Glow effect pulsante */}
       <AnimatedCircle
         cx="150"
         cy="150"
@@ -130,7 +129,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         animatedProps={glowAnimatedProps}
       />
 
-      {/* Ondas (estáticas para simplicidade) */}
       <G>
         <Path
           d="M 30 150 Q 90 120, 150 150 T 270 150"
@@ -148,9 +146,7 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         />
       </G>
 
-      {/* Barco */}
       <G transform="translate(150, 135)">
-        {/* Casco */}
         <AnimatedPath
           d="M -50 0 L -42 30 L 42 30 L 50 0 Z"
           fill="white"
@@ -159,7 +155,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           }))}
         />
 
-        {/* Cabine */}
         <AnimatedRect
           x={-25}
           y={-18}
@@ -172,7 +167,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           }))}
         />
 
-        {/* Janelas */}
         <AnimatedRect
           x={-18}
           y={-13}
@@ -196,7 +190,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           }))}
         />
 
-        {/* Mastro */}
         <AnimatedLine
           x1={0}
           y1={-18}
@@ -206,7 +199,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           animatedProps={mastAnimatedProps}
         />
 
-        {/* Bandeira */}
         <AnimatedPath
           d="M 0 -45 L 20 -36 L 0 -27 Z"
           fill="#E8960C"
@@ -215,7 +207,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
           animatedProps={flagAnimatedProps}
         />
 
-        {/* Círculo no topo do mastro */}
         <AnimatedCircle
           cx={0}
           cy={-45}
@@ -227,7 +218,6 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         />
       </G>
 
-      {/* Texto NavegaJá */}
       <AnimatedSvgText
         x="150"
         y="240"
@@ -237,8 +227,7 @@ export function AnimatedSplashLogo({size = 300}: AnimatedSplashLogoProps) {
         textAnchor="middle"
         animatedProps={useAnimatedProps(() => ({
           opacity: textOpacity.value,
-        }))}
-      >
+        }))}>
         NavegaJá
       </AnimatedSvgText>
     </Svg>

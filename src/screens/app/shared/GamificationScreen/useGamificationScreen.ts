@@ -4,6 +4,8 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {
+  getGamificationHistoryCategory,
+  getGamificationTransactionIcon,
   useGamificationStats,
   useGamificationHistory,
   useLeaderboard,
@@ -15,46 +17,38 @@ import {AppStackParamList} from '@routes';
 export type ActiveTab = 'history' | 'leaderboard';
 export type HistoryFilter = 'all' | 'trip' | 'delivery' | 'review' | 'referral' | 'bonus';
 
-export const HISTORY_FILTER_CONFIG: Record<HistoryFilter, {label: string; icon: string; keywords: string[]}> = {
-  all:      {label: 'Todos',      icon: 'list',           keywords: []},
-  trip:     {label: 'Viagens',    icon: 'directions-boat', keywords: ['trip', 'viagem', 'booking']},
-  delivery: {label: 'Entregas',   icon: 'local-shipping',  keywords: ['shipment', 'entrega', 'cargo', 'carga']},
-  review:   {label: 'Avaliações', icon: 'star',            keywords: ['review', 'avali']},
-  referral: {label: 'Indicações', icon: 'person-add',      keywords: ['referral', 'indica']},
-  bonus:    {label: 'Bônus',      icon: 'card-giftcard',   keywords: ['bonus', 'promo', 'first']},
+export const HISTORY_FILTER_CONFIG: Record<HistoryFilter, {label: string; icon: string}> = {
+  all: {label: 'Todos', icon: 'list'},
+  trip: {label: 'Viagens', icon: 'directions-boat'},
+  delivery: {label: 'Entregas', icon: 'local-shipping'},
+  review: {label: 'Avaliações', icon: 'star'},
+  referral: {label: 'Indicações', icon: 'person-add'},
+  bonus: {label: 'Bônus', icon: 'card-giftcard'},
 };
 
 export const LEVEL_THRESHOLDS: Record<string, number> = {
   Marinheiro: 0,
   Navegador: 100,
-  Capitão: 500,
+  'Capitão': 500,
+  Capitao: 500,
   Almirante: 1500,
 };
 
 export const LEVEL_INFO = [
-  {level: 'Marinheiro', points: 0,    discount: 0,  icon: 'anchor'},
-  {level: 'Navegador',  points: 100,  discount: 5,  icon: 'explore'},
-  {level: 'Capitão',    points: 500,  discount: 10, icon: 'directions-boat'},
-  {level: 'Almirante',  points: 1500, discount: 15, icon: 'military-tech'},
+  {level: 'Marinheiro', points: 0, discount: 0, icon: 'anchor'},
+  {level: 'Navegador', points: 100, discount: 5, icon: 'explore'},
+  {level: 'Capitão', points: 500, discount: 10, icon: 'directions-boat'},
+  {level: 'Almirante', points: 1500, discount: 15, icon: 'military-tech'},
 ] as const;
 
 export function getLevelColor(level: string | undefined | null): 'textSecondary' | 'primary' | 'secondary' | 'warning' {
   if (level === 'Navegador') return 'primary';
-  if (level === 'Capitão') return 'secondary';
+  if (level === 'Capitao' || level === 'Capitão') return 'secondary';
   if (level === 'Almirante') return 'warning';
   return 'textSecondary';
 }
 
-export function getTransactionIcon(action: string | undefined | null): string {
-  if (!action) return 'monetization-on';
-  const a = action.toLowerCase();
-  if (a.includes('trip') || a.includes('viagem') || a.includes('booking')) return 'directions-boat';
-  if (a.includes('review') || a.includes('avali')) return 'star';
-  if (a.includes('shipment') || a.includes('entrega') || a.includes('cargo') || a.includes('carga')) return 'local-shipping';
-  if (a.includes('referral') || a.includes('indica')) return 'person-add';
-  if (a.includes('bonus') || a.includes('promo') || a.includes('first')) return 'card-giftcard';
-  return 'monetization-on';
-}
+export const getTransactionIcon = getGamificationTransactionIcon;
 
 export function formatDate(dateStr: string | undefined | null): string {
   if (!dateStr) return '';
@@ -124,14 +118,9 @@ export function useGamificationScreen() {
 
   const filteredHistory = historyFilter === 'all'
     ? history
-    : history.filter(item => {
-        const keywords = HISTORY_FILTER_CONFIG[historyFilter]?.keywords ?? [];
-        const action = item.action?.toLowerCase() ?? '';
-        return keywords.some(kw => action.includes(kw));
-      });
+    : history.filter(item => getGamificationHistoryCategory(item.action) === historyFilter);
 
-  // Position of current user in the leaderboard (if present)
-  const myLeaderboardPosition = leaderboard.find(e => e.userId === user?.id);
+  const myLeaderboardPosition = leaderboard.find(entry => entry.userId === user?.id);
 
   function handleCopyCode() {
     if (referralCode) {
@@ -149,7 +138,7 @@ export function useGamificationScreen() {
         title: 'Indicação NavegaJá',
       });
     } catch {
-      // user cancelled or error — ignore
+      // User cancelled or share failed.
     }
   }
 

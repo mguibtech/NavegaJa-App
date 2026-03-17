@@ -155,7 +155,11 @@ describe('useBookingsScreen — cancelamento', () => {
   });
 
   it('exibe toast de erro quando cancelamento falha', async () => {
-    mockCancel.mockRejectedValueOnce(new Error('Network error'));
+    mockCancel.mockRejectedValueOnce(
+      new Error(
+        'Cancelamento não permitido: o passageiro já realizou check-in/embarque.',
+      ),
+    );
     mockBookings = [makeBooking('booking-1', 'confirmed')];
     const {result} = renderHook(() => useBookingsScreen());
 
@@ -165,7 +169,9 @@ describe('useBookingsScreen — cancelamento', () => {
       await result.current.handleConfirmCancel();
     });
 
-    expect(mockShowError).toHaveBeenCalledWith('Não foi possível cancelar. Tente novamente.');
+    expect(mockShowError).toHaveBeenCalledWith(
+      'Cancelamento não permitido: o passageiro já realizou check-in/embarque.',
+    );
     expect(result.current.bookingToCancel).toBeNull();
   });
 

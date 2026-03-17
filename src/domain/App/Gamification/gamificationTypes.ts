@@ -15,6 +15,7 @@ export interface GamificationStats {
 // Raw shape returned by the API
 export interface GamificationTransactionRaw {
   id: string;
+  userId?: string;
   action: string;
   points: number;
   description: string;
@@ -32,11 +33,20 @@ export interface HistoryApiResponse {
 // Normalized shape used by the UI (type derived from points sign)
 export interface GamificationTransaction {
   id: string;
+  userId?: string;
   type: 'earned' | 'spent';
   points: number;
   description: string;
   action: string;
+  referenceId?: string;
   createdAt: string;
+}
+
+export interface PaginatedGamificationHistory {
+  data: GamificationTransaction[];
+  total: number;
+  page: number;
+  lastPage: number;
 }
 
 // Raw shape returned by the API

@@ -1,15 +1,3 @@
-// Passenger info (returned by GET /trips/:id/passengers)
-export interface TripPassenger {
-  id: string;        // booking ID
-  userId: string;
-  name: string;      // passenger name
-  phone: string;     // passenger phone
-  quantity: number;  // seats booked
-  status: string;    // booking status string
-  checkedInAt: string | null;
-  createdAt: string;
-}
-
 // Captain info (populated from backend)
 export interface TripCaptain {
   id: string;
@@ -55,7 +43,11 @@ export interface Trip {
   departureAt: string;  // Changed from departureTime
   estimatedArrivalAt: string;  // Changed from arrivalTime
   price: number | string;  // Can be string from backend
-  cargoPriceKg: number | string;
+  cargoPriceKg: number | string | null;
+  acceptsShipments?: boolean;
+  shipmentPricePerKg?: number | string | null;
+  shipmentCapacityKg?: number | null;
+  availableShipmentCapacityKg?: number | null;
   availableSeats: number;
   totalSeats: number;
   status: TripStatus;
@@ -98,8 +90,9 @@ export interface TripManagePassenger {
   status: string;
   paymentStatus?: string;
   seats: number;
-  seatNumber?: number;
+  seatNumber?: number | null;
   totalPrice: number;
+  createdAt?: string;
   checkedInAt?: string | null;
   childrenCount?: number;
   childrenAges?: number[] | null;
@@ -109,21 +102,25 @@ export interface TripManagePassenger {
     phone: string;
     avatarUrl?: string | null;
     passengerRating?: number | null;
-  };
+  } | null;
 }
 
 export interface TripManageShipment {
   id?: string;
   trackingCode: string;
-  validationCode?: string;
+  validationCode?: string | null;
   status: string;
-  description?: string;
+  description?: string | null;
   weightKg?: number;
   recipientName?: string;
   recipientPhone?: string;
+  recipientAddress?: string | null;
   senderName?: string;
   totalPrice?: number;
-  paidBy?: 'sender' | 'recipient';
+  paidBy?: 'sender' | 'recipient' | string;
+  collectionPhotoUrl?: string | null;
+  deliveryPhotoUrl?: string | null;
+  createdAt?: string;
 }
 
 export interface TripManageData {
@@ -133,7 +130,11 @@ export interface TripManageData {
   departureAt: string;
   estimatedArrivalAt: string;
   price: number | string;
-  cargoPriceKg?: number | string;
+  cargoPriceKg?: number | string | null;
+  acceptsShipments?: boolean;
+  shipmentPricePerKg?: number | string | null;
+  shipmentCapacityKg?: number | null;
+  availableShipmentCapacityKg?: number | null;
   availableSeats: number;
   totalSeats: number;
   status: TripStatus;
@@ -165,9 +166,4 @@ export interface CreateTripData {
   cargoPriceKg?: number;
   totalSeats: number;
   boatId: string;
-  // Geocoding coordinates — sent when origin/destination have real coords
-  originLat?: number;
-  originLng?: number;
-  destinationLat?: number;
-  destinationLng?: number;
 }

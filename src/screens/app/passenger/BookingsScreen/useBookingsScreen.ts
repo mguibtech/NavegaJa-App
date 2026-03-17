@@ -3,7 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useFocusEffect} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
-import {useMyBookings, useCancelBooking, Booking} from '@domain';
+import {useMyBookings, useCancelBooking, Booking, canCancelBooking} from '@domain';
 import {useToast, useVirtualPagination} from '@hooks';
 import type {AppStackParamList} from '@routes';
 
@@ -53,9 +53,9 @@ export function useBookingsScreen() {
       setBookingToCancel(null);
       toast.showSuccess('Reserva cancelada com sucesso.');
       await fetchBookings();
-    } catch {
+    } catch (error: any) {
       setBookingToCancel(null);
-      toast.showError('Não foi possível cancelar. Tente novamente.');
+      toast.showError(error?.message || 'Não foi possível cancelar. Tente novamente.');
     }
   }
 
@@ -104,6 +104,7 @@ export function useBookingsScreen() {
     onRefresh,
     handleConfirmCancel,
     getStatusBadge,
+    canCancelBooking,
     navigateToTicket,
     navigateToReview,
   };

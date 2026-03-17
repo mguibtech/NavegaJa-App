@@ -4,7 +4,8 @@ import {useNavigation} from '@react-navigation/native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {useUpdateBoat, useGetBoatById} from '@domain';
+import {BoatFileReference, useUpdateBoat, useGetBoatById} from '@domain';
+import {getFilePreviewUri} from '@api/config';
 import {useToast} from '@hooks';
 import {uploadService} from '../../../../infra/uploadService';
 
@@ -20,6 +21,14 @@ export const BOAT_TYPES = [
   'Ferry',
   'Outro',
 ];
+
+function normalizeSavedFileUrls(
+  files?: BoatFileReference[] | null,
+): string[] {
+  return (files ?? [])
+    .map(getFilePreviewUri)
+    .filter((uri): uri is string => !!uri);
+}
 
 export function useCaptainEditBoat() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -47,8 +56,8 @@ export function useCaptainEditBoat() {
       setType(boat.type);
       setCapacity(String(boat.capacity));
       setRegistrationNum(boat.registrationNum ?? '');
-      setSavedPhotos(boat.photos ?? []);
-      setSavedDocPhotos(boat.documentPhotos ?? []);
+      setSavedPhotos(normalizeSavedFileUrls(boat.photos));
+      setSavedDocPhotos(normalizeSavedFileUrls(boat.documentPhotos));
       setRejectionReason(boat.rejectionReason ?? null);
     }
   }, [boat]);

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Dimensions, PermissionsAndroid, Platform, Pressable} from 'react-native';
+import {Dimensions, Pressable} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Carousel from 'react-native-reanimated-carousel';
 
@@ -36,34 +36,7 @@ export function OnboardingScreen({onComplete}: OnboardingScreenProps) {
   const isLastSlide = currentIndex === slides.length - 1;
 
   async function handleComplete() {
-    if (Platform.OS === 'android') {
-      // Localização (necessária para SOS e rastreamento)
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Permissão de Localização',
-          message:
-            'O NavegaJá usa a sua localização para rastreamento de viagens e alertas SOS.',
-          buttonNeutral: 'Perguntar depois',
-          buttonNegative: 'Não permitir',
-          buttonPositive: 'Permitir',
-        },
-      );
-      // Notificações (Android 13+)
-      if (Number(Platform.Version) >= 33) {
-        await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-          {
-            title: 'Permissão de Notificações',
-            message:
-              'Receba alertas de viagens, SOS e atualizações importantes.',
-            buttonNeutral: 'Perguntar depois',
-            buttonNegative: 'Não permitir',
-            buttonPositive: 'Permitir',
-          },
-        );
-      }
-    }
+    // Permissões sensíveis são solicitadas sob demanda, quando a funcionalidade é usada.
     await AsyncStorage.setItem(ONBOARDED_KEY, 'true');
     onComplete();
   }

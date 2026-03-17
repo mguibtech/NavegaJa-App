@@ -28,7 +28,7 @@ export function TripDetailsScreen() {
     boatName,
     captainName,
     cargoPrice,
-    hasCargoPrice,
+    acceptsShipments,
     handleBooking,
     handleCreateShipment,
     handleToggleFavorite,
@@ -449,13 +449,13 @@ export function TripDetailsScreen() {
             )}
             <Box flexDirection="row" alignItems="baseline" gap="s8">
               {context === 'shipment' ? (
-                hasCargoPrice ? (
+                acceptsShipments ? (
                   <Text preset="headingLarge" color="primary" bold>
                     {formatBRL(cargoPrice)}{'/kg'}
                   </Text>
                 ) : (
                   <Text preset="headingLarge" color="textSecondary" bold>
-                    A combinar
+                    Indisponivel
                   </Text>
                 )
               ) : (
@@ -464,10 +464,24 @@ export function TripDetailsScreen() {
                 </Text>
               )}
               {context === 'shipment' ? (
-                <Box flexDirection="row" alignItems="center" backgroundColor="successBg" paddingHorizontal="s12" paddingVertical="s6" borderRadius="s8">
-                  <Icon name="inventory" size={16} color="success" />
-                  <Text preset="paragraphSmall" color="success" bold ml="s4">
-                    Aceita cargas
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  backgroundColor={acceptsShipments ? 'successBg' : 'dangerBg'}
+                  paddingHorizontal="s12"
+                  paddingVertical="s6"
+                  borderRadius="s8">
+                  <Icon
+                    name={acceptsShipments ? 'inventory' : 'block'}
+                    size={16}
+                    color={acceptsShipments ? 'success' : 'danger'}
+                  />
+                  <Text
+                    preset="paragraphSmall"
+                    color={acceptsShipments ? 'success' : 'danger'}
+                    bold
+                    ml="s4">
+                    {acceptsShipments ? 'Aceita encomendas' : 'Nao aceita encomendas'}
                   </Text>
                 </Box>
               ) : (
@@ -480,11 +494,20 @@ export function TripDetailsScreen() {
         </Box>
 
         {context === 'shipment' ? (
-          <Button
-            title="Enviar Encomenda"
-            onPress={handleCreateShipment}
-            rightIcon="local-shipping"
-          />
+          acceptsShipments ? (
+            <Button
+              title="Enviar Encomenda"
+              onPress={handleCreateShipment}
+              rightIcon="local-shipping"
+            />
+          ) : (
+            <Button
+              title="Voltar"
+              onPress={handleGoBack}
+              preset="outline"
+              leftIcon="arrow-back"
+            />
+          )
         ) : (
           <Button
             title="Reservar Agora"

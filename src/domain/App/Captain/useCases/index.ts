@@ -12,8 +12,6 @@ export * from './useDeleteBoat';
 export * from './useGetOrCreateChecklist';
 export * from './useUpdateChecklist';
 export * from './useGetChecklistStatus';
-export * from './useGetTripPassengers';
-export * from './useGetTripShipments';
 export * from './useGetCaptainShipment';
 export * from './useCaptainCollect';
 export * from './useCaptainOutForDelivery';

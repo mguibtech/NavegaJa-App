@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {FlatList, Image, RefreshControl, ScrollView, ImageBackground, Linking, Dimensions} from 'react-native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, ImageBackground, Linking, Dimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
@@ -13,7 +13,14 @@ import {apiImageSource} from '@api/config';
 import {useAuthStore} from '@store';
 import {useToast} from '@hooks';
 import {useMyBookings} from '@domain';
-import {usePopularRoutes} from '@domain';
+import {
+  getTripShipmentPricePerKg,
+  usePopularRoutes,
+  tripService,
+  Trip,
+  TripStatus,
+  tripAcceptsShipments,
+} from '@domain';
 import {useMyFavorites, FavoriteType} from '@domain';
 import {usePromotions} from '@domain';
 import {useSosAlert} from '@domain';
@@ -48,6 +55,76 @@ const POPULAR_ROUTES = [
   },
 ];
 
+type PopularRouteCardItem = {
+  id?: string;
+  routeId?: string | null;
+  origin?: string;
+  destination?: string;
+  tripsCount?: number;
+  minPrice?: number;
+  avgPrice?: number;
+  image?: string;
+  price?: number;
+  from?: string;
+  to?: string;
+  originCity?: string;
+  destinationCity?: string;
+  departure?: string;
+  arrival?: string;
+  count?: number;
+  total?: number;
+};
+
+function normalizePopularRoute(item: PopularRouteCardItem) {
+  const origin = item.origin || item.from || item.originCity || item.departure || '';
+  const destination =
+    item.destination || item.to || item.destinationCity || item.arrival || '';
+
+  return {
+    key: item.id || item.routeId || `${origin}-${destination}`,
+    routeId: item.routeId ?? null,
+    origin,
+    destination,
+    price: item.minPrice ?? item.avgPrice ?? item.price ?? 0,
+    image:
+      item.image ??
+      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400',
+    tripsCount: item.tripsCount ?? item.count ?? item.total ?? 0,
+  };
+}
+
+function getBestShipmentTrip(trips: Trip[]) {
+  return trips
+    .filter(trip => {
+      const departureTime = new Date(trip.departureAt).getTime();
+      const isUpcoming = Number.isNaN(departureTime) || departureTime >= Date.now();
+
+      return (
+        trip.status === TripStatus.SCHEDULED &&
+        isUpcoming &&
+        tripAcceptsShipments(trip)
+      );
+    })
+    .sort((firstTrip, secondTrip) => {
+      const firstDeparture = new Date(firstTrip.departureAt).getTime();
+      const secondDeparture = new Date(secondTrip.departureAt).getTime();
+      const safeFirstDeparture = Number.isNaN(firstDeparture)
+        ? Number.MAX_SAFE_INTEGER
+        : firstDeparture;
+      const safeSecondDeparture = Number.isNaN(secondDeparture)
+        ? Number.MAX_SAFE_INTEGER
+        : secondDeparture;
+
+      if (safeFirstDeparture !== safeSecondDeparture) {
+        return safeFirstDeparture - safeSecondDeparture;
+      }
+
+      return (
+        (getTripShipmentPricePerKg(firstTrip) ?? Number.MAX_SAFE_INTEGER) -
+        (getTripShipmentPricePerKg(secondTrip) ?? Number.MAX_SAFE_INTEGER)
+      );
+    })[0];
+}
 
 export function HomeScreen({navigation}: Props) {
   const {top} = useSafeAreaInsets();
@@ -55,6 +132,8 @@ export function HomeScreen({navigation}: Props) {
   const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
+  const [shipmentRouteLoadingKey, setShipmentRouteLoadingKey] = useState<string | null>(null);
+  const [shipmentAvailabilityByRouteKey, setShipmentAvailabilityByRouteKey] = useState<Record<string, boolean>>({});
 
   const {bookings, fetch: fetchBookings} = useMyBookings();
   const {data: popularData, fetch: fetchPopular} = usePopularRoutes();
@@ -66,11 +145,54 @@ export function HomeScreen({navigation}: Props) {
   const weatherRegion = user?.city
     ? user.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     : 'manaus';
+  const popularRoutes = useMemo(
+    () => (popularData?.routes || POPULAR_ROUTES).map(normalizePopularRoute),
+    [popularData?.routes],
+  );
   // Buscar dados ao carregar a tela
   useEffect(() => {
     loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadShipmentAvailability() {
+      if (popularRoutes.length === 0) {
+        if (isActive) {
+          setShipmentAvailabilityByRouteKey({});
+        }
+        return;
+      }
+
+      const entries = await Promise.all(
+        popularRoutes.map(async popularRoute => {
+          try {
+            const trips = await tripService.searchTrips({
+              routeId: popularRoute.routeId,
+              origin: popularRoute.origin,
+              destination: popularRoute.destination,
+            });
+
+            return [popularRoute.key, !!getBestShipmentTrip(trips)] as const;
+          } catch {
+            return [popularRoute.key, false] as const;
+          }
+        }),
+      );
+
+      if (isActive) {
+        setShipmentAvailabilityByRouteKey(Object.fromEntries(entries));
+      }
+    }
+
+    loadShipmentAvailability();
+
+    return () => {
+      isActive = false;
+    };
+  }, [popularRoutes]);
 
   async function loadData() {
     const results = await Promise.allSettled([
@@ -100,34 +222,73 @@ export function HomeScreen({navigation}: Props) {
     return 'Boa noite';
   };
 
-  const renderPopularRoute = ({item}: {item: any}) => {
-    // Normaliza campos de rota (backend pode usar nomes diferentes)
-    const origin =
-      item.origin || item.from || item.originCity || item.departure || '';
-    const destination =
-      item.destination || item.to || item.destinationCity || item.arrival || '';
-    // Use minPrice from API (PopularRoute) or price from mock data
-    const price = item.minPrice ?? item.avgPrice ?? item.price ?? 0;
-    const image = item.image ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400';
-    const tripsCount = item.tripsCount ?? item.count ?? item.total;
+  function handlePopularRouteBooking(item: PopularRouteCardItem) {
+    const popularRoute = normalizePopularRoute(item);
+
+    navigation.navigate('SearchResults', {
+      routeId: popularRoute.routeId,
+      origin: popularRoute.origin,
+      destination: popularRoute.destination,
+    });
+  }
+
+  async function handlePopularRouteShipment(item: PopularRouteCardItem) {
+    const popularRoute = normalizePopularRoute(item);
+
+    setShipmentRouteLoadingKey(popularRoute.key);
+
+    try {
+      const trips = await tripService.searchTrips({
+        routeId: popularRoute.routeId,
+        origin: popularRoute.origin,
+        destination: popularRoute.destination,
+      });
+
+      const selectedTrip = getBestShipmentTrip(trips);
+
+      if (selectedTrip) {
+        navigation.navigate('CreateShipment', {tripId: selectedTrip.id});
+        return;
+      }
+
+      toast.showInfo(
+        'Essas são as viagens disponíveis para encomenda.',
+      );
+      navigation.navigate('SearchResults', {
+        routeId: popularRoute.routeId,
+        origin: popularRoute.origin,
+        destination: popularRoute.destination,
+        context: 'shipment',
+      });
+    } catch {
+      toast.showWarning(
+        'Nao foi possivel abrir a encomenda direto. Mostrando as viagens da rota.',
+      );
+      navigation.navigate('SearchResults', {
+        routeId: popularRoute.routeId,
+        origin: popularRoute.origin,
+        destination: popularRoute.destination,
+        context: 'shipment',
+      });
+    } finally {
+      setShipmentRouteLoadingKey(currentKey =>
+        currentKey === popularRoute.key ? null : currentKey,
+      );
+    }
+  }
+
+  const renderPopularRoute = ({item}: {item: PopularRouteCardItem}) => {
+    const popularRoute = normalizePopularRoute(item);
+    const isShipmentLoading = shipmentRouteLoadingKey === popularRoute.key;
+    const canShowShipmentAction = shipmentAvailabilityByRouteKey[popularRoute.key] === true;
 
     return (
-      <TouchableOpacityBox
+      <Box
         mr="s16"
         backgroundColor="surface"
         borderRadius="s20"
         overflow="hidden"
-        width={190}
-        onPress={() => {
-          // @ts-ignore - navigation will be typed properly with CompositeNavigationProp
-          navigation.navigate('SearchResults', {
-            routeId: item.routeId ?? null,
-            origin,
-            destination,
-          });
-        }}
-        accessibilityLabel={`${origin || 'Origem'} para ${destination || 'Destino'}. A partir de ${formatBRL(price)}`}
-        accessibilityRole="button"
+        width={220}
         style={{
           shadowColor: '#000',
           shadowOffset: {width: 0, height: 4},
@@ -136,7 +297,7 @@ export function HomeScreen({navigation}: Props) {
           elevation: 5,
         }}>
         <Image
-          source={apiImageSource(image)}
+          source={apiImageSource(popularRoute.image)}
           style={{width: '100%', height: 110}}
           resizeMode="cover"
         />
@@ -146,7 +307,7 @@ export function HomeScreen({navigation}: Props) {
           <Box mb="s12">
             <Box flexDirection="row" alignItems="center" mb="s6">
               <Text preset="paragraphMedium" color="text" bold numberOfLines={1} flexShrink={1}>
-                {origin || 'Origem'}
+                {popularRoute.origin || 'Origem'}
               </Text>
             </Box>
             <Box flexDirection="row" alignItems="center">
@@ -154,7 +315,7 @@ export function HomeScreen({navigation}: Props) {
                 <Icon name="arrow-forward" size={14} color="primary" />
               </Box>
               <Text preset="paragraphMedium" color="text" bold ml="s6" numberOfLines={1} flexShrink={1}>
-                {destination || 'Destino'}
+                {popularRoute.destination || 'Destino'}
               </Text>
             </Box>
           </Box>
@@ -166,11 +327,11 @@ export function HomeScreen({navigation}: Props) {
                 A partir de
               </Text>
               <Text preset="headingSmall" color="primary" bold numberOfLines={1}>
-                {formatBRL(price)}
+                {formatBRL(popularRoute.price)}
               </Text>
             </Box>
 
-            {!!tripsCount && (
+            {!!popularRoute.tripsCount && (
               <Box
                 backgroundColor="successBg"
                 paddingHorizontal="s8"
@@ -178,13 +339,63 @@ export function HomeScreen({navigation}: Props) {
                 borderRadius="s8"
                 flexShrink={0}>
                 <Text preset="paragraphCaptionSmall" color="success" bold>
-                  {String(tripsCount)}
+                  {String(popularRoute.tripsCount)}
                 </Text>
               </Box>
             )}
           </Box>
+
+          <Box
+            mt="s16"
+            pt="s16"
+            borderTopWidth={1}
+            borderTopColor="border"
+            gap="s8">
+            <TouchableOpacityBox
+              height={44}
+              borderRadius="s12"
+              backgroundColor="primary"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center"
+              onPress={() => handlePopularRouteBooking(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Reservar viagem de ${popularRoute.origin} para ${popularRoute.destination}`}>
+              <Icon name="confirmation-number" size={18} color="surface" />
+              <Text preset="paragraphSmall" color="surface" bold ml="s8">
+                Reservar viagem
+              </Text>
+            </TouchableOpacityBox>
+
+            {canShowShipmentAction && (
+              <TouchableOpacityBox
+                height={44}
+                borderRadius="s12"
+                borderWidth={1}
+                borderColor="primary"
+                backgroundColor="primaryBg"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                onPress={() => handlePopularRouteShipment(item)}
+                disabled={isShipmentLoading}
+                accessibilityRole="button"
+                accessibilityLabel={`Adicionar encomenda para a rota ${popularRoute.origin} para ${popularRoute.destination}`}>
+                {isShipmentLoading ? (
+                  <ActivityIndicator color="#0B5D8A" />
+                ) : (
+                  <>
+                    <Icon name="inventory" size={18} color="primary" />
+                    <Text preset="paragraphSmall" color="primary" bold ml="s8">
+                      Enviar encomenda
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacityBox>
+            )}
+          </Box>
         </Box>
-      </TouchableOpacityBox>
+      </Box>
     );
   };
 
@@ -668,7 +879,7 @@ export function HomeScreen({navigation}: Props) {
             </TouchableOpacityBox>
           </Box>
 
-          {(popularData?.routes || POPULAR_ROUTES).length === 0 ? (
+          {popularRoutes.length === 0 ? (
             <Box
               mx="s24"
               backgroundColor="surface"
@@ -690,8 +901,10 @@ export function HomeScreen({navigation}: Props) {
           ) : (
             <FlatList
               horizontal
-              data={popularData?.routes || POPULAR_ROUTES}
-              keyExtractor={(item, index) => (item as any).id || `${item.origin}-${item.destination}-${index}`}
+              data={popularRoutes}
+              keyExtractor={(item, index) =>
+                normalizePopularRoute(item).key || `${item.origin}-${item.destination}-${index}`
+              }
               renderItem={renderPopularRoute}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{paddingHorizontal: 24}}

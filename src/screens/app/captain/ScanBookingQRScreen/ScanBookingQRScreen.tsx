@@ -218,11 +218,11 @@ export function ScanBookingQRScreen() {
                 {matchedPassenger ? 'Passageiro identificado' : 'Reserva encontrada'}
               </Text>
               <Text preset="paragraphMedium" color="text" bold>
-                {matchedPassenger?.passenger.name || scannedBookingId?.slice(0, 8).toUpperCase()}
+                {matchedPassenger?.passenger?.name || scannedBookingId?.slice(0, 8).toUpperCase()}
               </Text>
               {matchedPassenger && (
                 <Text preset="paragraphCaptionSmall" color="textSecondary">
-                  {matchedPassenger.seats} {matchedPassenger.seats === 1 ? 'assento' : 'assentos'} · {matchedPassenger.passenger.phone}
+                  {matchedPassenger.seats} {matchedPassenger.seats === 1 ? 'assento' : 'assentos'} · {matchedPassenger.passenger?.phone || 'Telefone indisponível'}
                 </Text>
               )}
             </Box>
@@ -273,7 +273,7 @@ export function ScanBookingQRScreen() {
       <InfoModal
         visible={showAlreadyCheckedIn}
         title="Já Embarcou"
-        message={`${matchedPassenger?.passenger.name || 'Este passageiro'} já realizou check-in nesta viagem.`}
+        message={`${matchedPassenger?.passenger?.name || 'Este passageiro'} já realizou check-in nesta viagem.`}
         icon="check-circle"
         iconColor="success"
         buttonText="OK"

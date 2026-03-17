@@ -10,7 +10,6 @@ import {
   useWeatherAlerts,
   REGION_COORDINATES,
   Region,
-  AlertSeverity,
   formatTemperature,
   WeatherForecastDay,
 } from '@domain';

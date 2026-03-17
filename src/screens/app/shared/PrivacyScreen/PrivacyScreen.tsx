@@ -14,12 +14,12 @@ export function PrivacyScreen() {
 
       {/* Content */}
       <ScrollView
-        contentContainerStyle={{padding: 24}}
+        contentContainerStyle={{padding: 16}}
         showsVerticalScrollIndicator={false}>
         <Box
           backgroundColor="surface"
           borderRadius="s16"
-          padding="s24"
+          padding="s8"
           mb="s24"
           style={{
             shadowColor: '#000',

@@ -16,6 +16,7 @@ export function CaptainOperationsScreen() {
     recentTrips,
     onRefresh,
     formatDepartureStr,
+    getTripBoatSummary,
     STATUS_CONFIG,
   } = useCaptainOperations();
 
@@ -80,6 +81,7 @@ export function CaptainOperationsScreen() {
             {recentTrips.map(trip => {
               const cfg = STATUS_CONFIG[trip.status];
               const departureStr = formatDepartureStr(trip.departureAt);
+              const boatSummary = getTripBoatSummary(trip);
               return (
                 <TouchableOpacityBox
                   key={trip.id}
@@ -96,9 +98,16 @@ export function CaptainOperationsScreen() {
                     justifyContent="space-between"
                     alignItems="center"
                     mb="s8">
-                    <Text preset="paragraphMedium" color="text" bold flex={1} mr="s8">
-                      {trip.origin} → {trip.destination}
-                    </Text>
+                    <Box flex={1} mr="s8">
+                      <Text preset="paragraphMedium" color="text" bold>
+                        {trip.origin} → {trip.destination}
+                      </Text>
+                      {boatSummary && (
+                        <Text preset="paragraphSmall" color="textSecondary" mt="s4">
+                          {boatSummary}
+                        </Text>
+                      )}
+                    </Box>
                     <Box
                       backgroundColor={cfg.bg}
                       paddingHorizontal="s10"

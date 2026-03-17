@@ -1,19 +1,20 @@
 import React from 'react';
-import {FlatList, RefreshControl, Modal, ScrollView, ImageBackground, Switch} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, Modal, ScrollView, ImageBackground, Switch } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton} from '@components';
+import { Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton } from '@components';
+import { getTripShipmentPricePerKg, tripAcceptsShipments } from '@domain';
 
-import {formatBRL} from '@utils';
+import { formatBRL } from '@utils';
 
-import {useSearchResultsScreen} from './useSearchResultsScreen';
+import { useSearchResultsScreen } from './useSearchResultsScreen';
 
 const FILTER_BOAT_TYPES = [
-  {value: 'Lancha', label: 'Lancha'},
-  {value: 'Barco regional', label: 'Barco regional'},
-  {value: 'Barco de linha', label: 'Barco de linha'},
-  {value: 'Canoa motorizada', label: 'Canoa'},
-  {value: 'Ferry', label: 'Ferry'},
+  { value: 'Lancha', label: 'Lancha' },
+  { value: 'Barco regional', label: 'Barco regional' },
+  { value: 'Barco de linha', label: 'Barco de linha' },
+  { value: 'Canoa motorizada', label: 'Canoa' },
+  { value: 'Ferry', label: 'Ferry' },
 ];
 
 function calculateDuration(departure: string, arrival: string): string {
@@ -36,14 +37,14 @@ function formatTime(dateString: string): string {
     if (!dateString) return '--:--';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '--:--';
-    return date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   } catch {
     return '--:--';
   }
 }
 
 export function SearchResultsScreen() {
-  const {top} = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets();
   const {
     origin,
     destination,
@@ -92,7 +93,7 @@ export function SearchResultsScreen() {
         style={{
           paddingTop: top + 16,
           shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
+          shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 3,
@@ -124,7 +125,7 @@ export function SearchResultsScreen() {
                 {destination || 'Qualquer destino'}
               </Text>
             </Box>
-            <Text preset="paragraphSmall" color="textSecondary" style={{marginTop: 2}}>
+            <Text preset="paragraphSmall" color="textSecondary" style={{ marginTop: 2 }}>
               {dateLabel}
             </Text>
           </Box>
@@ -149,7 +150,7 @@ export function SearchResultsScreen() {
                 backgroundColor="danger"
                 alignItems="center"
                 justifyContent="center"
-                style={{position: 'absolute', top: -4, right: -4}}>
+                style={{ position: 'absolute', top: -4, right: -4 }}>
                 <Text preset="paragraphCaptionSmall" color="surface" bold>
                   {String(activeFiltersCount)}
                 </Text>
@@ -198,15 +199,15 @@ export function SearchResultsScreen() {
             overflow="hidden"
             style={{
               shadowColor: '#000',
-              shadowOffset: {width: 0, height: 6},
+              shadowOffset: { width: 0, height: 6 },
               shadowOpacity: 0.15,
               shadowRadius: 16,
               elevation: 8,
             }}>
             <ImageBackground
-              source={{uri: promotion.imageUrl}}
-              style={{width: '100%', minHeight: 160}}
-              imageStyle={{borderRadius: 20}}
+              source={{ uri: promotion.imageUrl }}
+              style={{ width: '100%', minHeight: 160 }}
+              imageStyle={{ borderRadius: 20 }}
               resizeMode="cover">
               <Box
                 flex={1}
@@ -256,7 +257,7 @@ export function SearchResultsScreen() {
         <FlatList
           data={sortedTrips}
           keyExtractor={item => item.id}
-          contentContainerStyle={{padding: 20, paddingBottom: 32}}
+          contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
           refreshControl={
             <RefreshControl refreshing={isLoading} onRefresh={loadTrips} />
           }
@@ -274,12 +275,17 @@ export function SearchResultsScreen() {
               )}
             </Box>
           }
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             const depTime = formatTime(item.departureAt);
             const arrTime = formatTime(item.estimatedArrivalAt);
             const duration = calculateDuration(item.departureAt, item.estimatedArrivalAt);
 
             const departureDate = new Date(item.departureAt).toLocaleDateString('pt-BR', {
+              day: 'numeric',
+              month: 'short',
+            });
+
+            const arrivalDate = new Date(item.estimatedArrivalAt).toLocaleDateString('pt-BR', {
               day: 'numeric',
               month: 'short',
             });
@@ -317,10 +323,10 @@ export function SearchResultsScreen() {
                 backgroundColor="surface"
                 borderRadius="s16"
                 overflow="hidden"
-                onPress={() => handleTripPress(item.id)}
+                onPress={() => handleTripPress(item)}
                 style={{
                   shadowColor: '#000',
-                  shadowOffset: {width: 0, height: 2},
+                  shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
                   shadowRadius: 8,
                   elevation: 3,
@@ -333,11 +339,19 @@ export function SearchResultsScreen() {
                   paddingHorizontal="s20"
                   paddingVertical="s12"
                   backgroundColor="primaryBg">
-                  <Box flexDirection="row" alignItems="center" gap="s8">
-                    <Icon name="event" size={16} color="primary" />
-                    <Text preset="paragraphSmall" color="primary" bold>
-                      {departureDate}
-                    </Text>
+                  <Box flex={1} flexDirection="row" justifyContent='space-between' gap="s8">
+                    <Box flexDirection="row" alignItems="center" gap="s4">
+                      <Icon name="event" size={16} color="primary" />
+                      <Text preset="paragraphSmall" color="primary" bold>
+                        {departureDate}
+                      </Text>
+                    </Box>
+                    <Box flexDirection="row" alignItems="center" gap="s4">
+                      <Icon name="event" size={16} color="primary" />
+                      <Text preset="paragraphSmall" color="primary" bold>
+                        {arrivalDate}
+                      </Text>
+                    </Box>
                   </Box>
                   {isUrgent && (
                     <Box
@@ -367,7 +381,7 @@ export function SearchResultsScreen() {
                   {/* Horários */}
                   <Box flexDirection="row" alignItems="center" mb="s16">
                     <Box flex={1}>
-                      <Text preset="paragraphSmall" color="textSecondary" style={{marginBottom: 2}}>
+                      <Text preset="paragraphSmall" color="textSecondary" style={{ marginBottom: 2 }}>
                         Saída
                       </Text>
                       <Text preset="headingSmall" color="text" bold>
@@ -386,7 +400,7 @@ export function SearchResultsScreen() {
                         <Box
                           width={6}
                           height={6}
-                          style={{borderRadius: 3}}
+                          style={{ borderRadius: 3 }}
                           backgroundColor="primary"
                         />
                         <Box flex={1} height={1} backgroundColor="primary" mx="s4" />
@@ -395,7 +409,7 @@ export function SearchResultsScreen() {
                         <Box
                           width={6}
                           height={6}
-                          style={{borderRadius: 3}}
+                          style={{ borderRadius: 3 }}
                           backgroundColor="primary"
                         />
                       </Box>
@@ -405,7 +419,7 @@ export function SearchResultsScreen() {
                     </Box>
 
                     <Box flex={1} alignItems="flex-end">
-                      <Text preset="paragraphSmall" color="textSecondary" style={{marginBottom: 2}}>
+                      <Text preset="paragraphSmall" color="textSecondary" style={{ marginBottom: 2 }}>
                         Chegada
                       </Text>
                       <Text preset="headingSmall" color="text" bold>
@@ -462,13 +476,13 @@ export function SearchResultsScreen() {
                           <Text
                             preset="paragraphSmall"
                             color="textSecondary"
-                            style={{textDecorationLine: 'line-through'}}>
+                            style={{ textDecorationLine: 'line-through' }}>
                             {formatBRL(basePrice)}
                           </Text>
                         </Box>
                       )}
                       <Box flexDirection="row" alignItems="baseline" gap="s4">
-                        {context === 'shipment' && Number(item.cargoPriceKg) <= 0 ? (
+                        {context === 'shipment' && !tripAcceptsShipments(item) ? (
                           <Text preset="paragraphMedium" color="textSecondary">
                             Preço sob consulta
                           </Text>
@@ -476,7 +490,7 @@ export function SearchResultsScreen() {
                           <>
                             <Text preset="headingMedium" color="primary" bold>
                               {context === 'shipment'
-                                ? formatBRL(Number(item.cargoPriceKg))
+                                ? formatBRL(getTripShipmentPricePerKg(item) ?? 0)
                                 : formatBRL(displayPrice)}
                             </Text>
                             <Text preset="paragraphSmall" color="textSecondary">
@@ -508,8 +522,8 @@ export function SearchResultsScreen() {
                       borderRadius="s12"
                       alignItems="center"
                       justifyContent="center"
-                      style={{flexShrink: 0}}
-                      onPress={() => !isFull && handleTripPress(item.id)}>
+                      style={{ flexShrink: 0 }}
+                      onPress={() => !isFull && handleTripPress(item)}>
                       <Text preset="paragraphSmall" color={isFull ? 'textSecondary' : 'surface'} bold>
                         {isFull ? 'Esgotado' : context === 'shipment' ? 'Enviar' : 'Reservar'}
                       </Text>
@@ -524,7 +538,7 @@ export function SearchResultsScreen() {
               <Box
                 width={80}
                 height={80}
-                style={{borderRadius: 40}}
+                style={{ borderRadius: 40 }}
                 backgroundColor="background"
                 alignItems="center"
                 justifyContent="center"
@@ -537,8 +551,8 @@ export function SearchResultsScreen() {
               <Text preset="paragraphMedium" color="textSecondary" textAlign="center" mb="s24">
                 {error
                   ? ((error as any)?.statusCode === 429
-                      ? 'Muitas requisições. Aguarde um momento e tente novamente.'
-                      : 'Erro de conexão. Verifique sua internet e tente novamente.')
+                    ? 'Muitas requisições. Aguarde um momento e tente novamente.'
+                    : 'Erro de conexão. Verifique sua internet e tente novamente.')
                   : 'Não encontramos viagens para essa rota. Tente outra data ou destino.'}
               </Text>
               {error && (
@@ -567,7 +581,7 @@ export function SearchResultsScreen() {
         transparent
         animationType="slide"
         onRequestClose={() => setShowFilters(false)}>
-        <Box flex={1} justifyContent="flex-end" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+        <Box flex={1} justifyContent="flex-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Box
             backgroundColor="surface"
             borderTopLeftRadius="s20"
@@ -598,7 +612,7 @@ export function SearchResultsScreen() {
               </TouchableOpacityBox>
             </Box>
 
-            <ScrollView contentContainerStyle={{padding: 24}} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
               {/* Faixa de Preço */}
               <Box mb="s24">
                 <Text preset="paragraphMedium" color="text" bold mb="s12">
@@ -633,9 +647,9 @@ export function SearchResultsScreen() {
                 </Text>
                 <Box flexDirection="row" gap="s8">
                   {[
-                    {value: 'morning' as const, label: 'Manhã', sub: '6h-12h', icon: 'wb-sunny'},
-                    {value: 'afternoon' as const, label: 'Tarde', sub: '12h-18h', icon: 'wb-twilight'},
-                    {value: 'night' as const, label: 'Noite', sub: '18h-6h', icon: 'nightlight'},
+                    { value: 'morning' as const, label: 'Manhã', sub: '6h-12h', icon: 'wb-sunny' },
+                    { value: 'afternoon' as const, label: 'Tarde', sub: '12h-18h', icon: 'wb-twilight' },
+                    { value: 'night' as const, label: 'Noite', sub: '18h-6h', icon: 'nightlight' },
                   ].map(opt => (
                     <TouchableOpacityBox
                       key={opt.value}
@@ -662,7 +676,7 @@ export function SearchResultsScreen() {
                         mt="s4">
                         {opt.label}
                       </Text>
-                      <Text preset="paragraphCaptionSmall" color="textSecondary" style={{marginTop: 2}}>
+                      <Text preset="paragraphCaptionSmall" color="textSecondary" style={{ marginTop: 2 }}>
                         {opt.sub}
                       </Text>
                     </TouchableOpacityBox>
@@ -750,7 +764,7 @@ export function SearchResultsScreen() {
                   <Switch
                     value={onlyAvailable}
                     onValueChange={setOnlyAvailable}
-                    trackColor={{false: '#D1D5DB', true: '#BFDBFE'}}
+                    trackColor={{ false: '#D1D5DB', true: '#BFDBFE' }}
                     thumbColor={onlyAvailable ? '#0B5D8A' : '#9CA3AF'}
                   />
                 </Box>
@@ -770,7 +784,7 @@ export function SearchResultsScreen() {
                   <Switch
                     value={onlyVerified}
                     onValueChange={setOnlyVerified}
-                    trackColor={{false: '#D1D5DB', true: '#BFDBFE'}}
+                    trackColor={{ false: '#D1D5DB', true: '#BFDBFE' }}
                     thumbColor={onlyVerified ? '#0B5D8A' : '#9CA3AF'}
                   />
                 </Box>

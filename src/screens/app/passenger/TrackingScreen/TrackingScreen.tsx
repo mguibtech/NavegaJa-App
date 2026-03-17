@@ -81,7 +81,6 @@ export function TrackingScreen() {
     handleRefresh,
     handleCallCaptain,
     handleEmergency,
-    handleSosPress,
     handleSosMarkerPress,
     handleSafetyOverlayPress,
     calculateNearbyAlerts,

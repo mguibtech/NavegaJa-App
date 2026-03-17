@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, Image} from 'react-native';
 
-import {Box, Icon, Text, TouchableOpacityBox, ScreenHeader} from '@components';
+import {Box, Icon, Text, ScreenHeader} from '@components';
 import {Review} from '@domain';
 import {apiImageSource} from '@api/config';
 

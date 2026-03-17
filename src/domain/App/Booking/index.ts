@@ -1,5 +1,6 @@
 // Types
 export * from './bookingTypes';
+export * from './bookingStatus';
 
 // API
 export {bookingAPI} from './bookingAPI';

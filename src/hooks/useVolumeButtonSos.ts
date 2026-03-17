@@ -1,8 +1,6 @@
 import {useEffect, useRef} from 'react';
 import {Platform} from 'react-native';
 
-import VolumeManager from 'react-native-volume-manager';
-
 interface UseVolumeButtonSosOptions {
   /** Called when the required number of volume-down presses is reached */
   onTrigger: () => void;
@@ -14,6 +12,38 @@ interface UseVolumeButtonSosOptions {
   windowMs?: number;
   /** Whether the listener is active. Default: true */
   enabled?: boolean;
+}
+
+interface VolumeChangeResult {
+  volume: number;
+}
+
+interface VolumeSubscription {
+  remove: () => void;
+}
+
+interface VolumeManagerModule {
+  addVolumeListener: (
+    listener: (result: VolumeChangeResult) => void,
+  ) => VolumeSubscription;
+  showNativeVolumeUI: (options: {enabled: boolean}) => void;
+  getVolume: () => Promise<VolumeChangeResult>;
+  setVolume: (volume: number) => void | Promise<void>;
+}
+
+function getVolumeManager(): VolumeManagerModule | null {
+  try {
+    const volumeManagerModule = require('react-native-volume-manager');
+    const volumeManager = volumeManagerModule?.default ?? volumeManagerModule;
+
+    if (!volumeManager || typeof volumeManager.addVolumeListener !== 'function') {
+      return null;
+    }
+
+    return volumeManager as VolumeManagerModule;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -47,19 +77,21 @@ export function useVolumeButtonSos({
       return;
     }
 
+    const volumeManager = getVolumeManager();
+
     // Guard: native module not linked until the app is rebuilt
-    if (!VolumeManager || typeof VolumeManager.addVolumeListener !== 'function') {
+    if (!volumeManager) {
       return;
     }
 
-    VolumeManager.showNativeVolumeUI({enabled: true});
+    volumeManager.showNativeVolumeUI({enabled: true});
 
     // Store initial volume as reference
-    VolumeManager.getVolume().then(result => {
+    volumeManager.getVolume().then(result => {
       prevVolumeRef.current = result.volume;
     });
 
-    const subscription = VolumeManager.addVolumeListener(result => {
+    const subscription = volumeManager.addVolumeListener(result => {
       const prev = prevVolumeRef.current;
       const curr = result.volume;
 
@@ -77,7 +109,7 @@ export function useVolumeButtonSos({
       if (curr < prev - 0.01) {
         // Volume DOWN detectado — restaura para não alterar o som
         isRestoringRef.current = true;
-        VolumeManager.setVolume(prev);
+        volumeManager.setVolume(prev);
 
         pressCountRef.current += 1;
         const remaining = pressesRequired - pressCountRef.current;

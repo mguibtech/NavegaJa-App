@@ -72,6 +72,8 @@ describe('PaymentScreen', () => {
 
   describe('PIX Payment Flow', () => {
     it('should render PIX payment screen with QR code', async () => {
+      jest.useRealTimers();
+
       const mockBooking = {
         id: 'booking-123',
         tripId: 'trip-1',

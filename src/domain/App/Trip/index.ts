@@ -1,6 +1,7 @@
 // Types
 export * from './tripTypes';
 export * from './popularRoutesTypes';
+export * from './tripCargo';
 
 // API
 export {tripAPI} from './tripAPI';

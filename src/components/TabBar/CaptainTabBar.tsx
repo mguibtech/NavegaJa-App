@@ -33,7 +33,7 @@ export function CaptainTabBar({state, descriptors, navigation}: BottomTabBarProp
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const isFocused = state.index === index;
 
-          const badgeCount: number | undefined = undefined;
+          const badgeCount = options.tabBarBadge as number | undefined;
 
           const onPress = () => {
             const event = navigation.emit({

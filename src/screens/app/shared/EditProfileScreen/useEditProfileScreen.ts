@@ -16,6 +16,22 @@ import {AppStackParamList} from '@routes';
 import { AM_CITIES } from '@utils';
 
 
+function parseCoordinate(value: number | string | null | undefined): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {return null;}
+
+    const parsed = Number(trimmed.replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 
 export function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -58,8 +74,8 @@ export function useEditProfileScreen() {
   );
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [homeCommunityLabel, setHomeCommunityLabel] = useState(user?.homeCommunity || '');
-  const [homeLat, setHomeLat] = useState<number | null>(user?.homeLat ?? null);
-  const [homeLng, setHomeLng] = useState<number | null>(user?.homeLng ?? null);
+  const [homeLat, setHomeLat] = useState<number | null>(parseCoordinate(user?.homeLat));
+  const [homeLng, setHomeLng] = useState<number | null>(parseCoordinate(user?.homeLng));
 
   const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(
     normalizeFileUrl(user?.licensePhotoUrl) || null,
@@ -298,6 +314,9 @@ export function useEditProfileScreen() {
   );
 
   async function handleSave() {
+    const normalizedHomeLat = parseCoordinate(homeLat);
+    const normalizedHomeLng = parseCoordinate(homeLng);
+
     try {
       const updatedUser = await updateProfile({
         name: name.trim(),
@@ -310,8 +329,8 @@ export function useEditProfileScreen() {
         certificatePhotoUrl: certificatePhotoUrl ?? undefined,
         homeCommunity: homeCommunityLabel.trim() || null,
         homeMunicipio: city.trim() || null,
-        homeLat: homeLat ?? undefined,
-        homeLng: homeLng ?? undefined,
+        homeLat: normalizedHomeLat,
+        homeLng: normalizedHomeLng,
       });
 
       updateUser({

@@ -31,6 +31,13 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    return () => {
+      queryClient.cancelQueries();
+      queryClient.clear();
+    };
+  }, []);
+
   const isDark =
     themeMode === 'dark' || (themeMode === 'system' && colorScheme === 'dark');
   const activeTheme = isDark ? darkTheme : theme;

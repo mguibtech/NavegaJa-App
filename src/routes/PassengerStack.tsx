@@ -5,7 +5,7 @@ import {useTheme} from '@shopify/restyle';
 
 import {CustomTabBar, Icon} from '@components';
 import {Theme} from '@theme';
-import {useConversations} from '@domain';
+import {BookingStatus, ShipmentStatus, useConversations, useMyBookings, useMyShipments} from '@domain';
 
 import {
   // Tabs
@@ -59,6 +59,25 @@ const Tab = createBottomTabNavigator<TabsParamList>();
 
 function PassengerTabs() {
   const {totalUnread} = useConversations();
+  const {bookings} = useMyBookings();
+  const {shipments} = useMyShipments();
+
+  const activeBookingsCount = bookings.filter(
+    booking =>
+      booking.status === BookingStatus.PENDING ||
+      booking.status === BookingStatus.CONFIRMED ||
+      booking.status === BookingStatus.CHECKED_IN,
+  ).length;
+
+  const activeShipmentsCount = shipments.filter(
+    shipment =>
+      shipment.status === ShipmentStatus.PENDING ||
+      shipment.status === ShipmentStatus.PAID ||
+      shipment.status === ShipmentStatus.COLLECTED ||
+      shipment.status === ShipmentStatus.IN_TRANSIT ||
+      shipment.status === ShipmentStatus.ARRIVED ||
+      shipment.status === ShipmentStatus.OUT_FOR_DELIVERY,
+  ).length;
 
   return (
     <Tab.Navigator
@@ -92,7 +111,7 @@ function PassengerTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="receipt-long" size={size} color={color} />
           ),
-          // badge gerenciado via setOptions em useBookingsScreen
+          tabBarBadge: activeBookingsCount > 0 ? activeBookingsCount : undefined,
         }}
       />
       <Tab.Screen
@@ -103,6 +122,7 @@ function PassengerTabs() {
           tabBarIcon: ({color, size}) => (
             <Icon name="inventory" size={size} color={color} />
           ),
+          tabBarBadge: activeShipmentsCount > 0 ? activeShipmentsCount : undefined,
         }}
       />
       <Tab.Screen
