@@ -250,10 +250,11 @@ export function CaptainEditBoatScreen() {
               photos={photos}
               onPhotosChange={setPhotos}
               maxPhotos={Math.max(0, 10 - savedPhotos.length)}
+              label="Fotos adicionais (opcional)"
               description={
                 savedPhotos.length > 0
-                  ? 'Adicione mais fotos para complementar'
-                  : 'Adicione fotos da embarcação'
+                  ? 'Adicione mais registros visuais para complementar'
+                  : 'Envie imagens que representem melhor a embarcação'
               }
             />
           </Box>
