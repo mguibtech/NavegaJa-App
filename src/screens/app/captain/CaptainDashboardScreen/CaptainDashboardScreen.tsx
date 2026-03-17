@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Box, Icon, InfoModal, Text, TouchableOpacityBox } from '@components';
 
 import { useCaptainDashboard } from './useCaptainDashboard';
+import { TripCard } from './TripCard';
 
 export function CaptainDashboardScreen() {
   const { top } = useSafeAreaInsets();
@@ -31,8 +32,6 @@ export function CaptainDashboardScreen() {
     handleRefresh,
     handleCheckStatus,
     handleBlockedAction,
-    formatDeparture,
-    STATUS_CONFIG,
   } = useCaptainDashboard();
 
   return (
@@ -475,63 +474,17 @@ export function CaptainDashboardScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 4, gap: 12 }}>
+              contentContainerStyle={{ paddingBottom: 4 }}>
               {currentTrips.map((trip, index) => (
-                <TouchableOpacityBox
+                <TripCard
                   key={trip.id}
-                  backgroundColor="surface"
-                  borderRadius="s16"
-                  padding="s20"
-                  borderLeftWidth={4}
-                  borderLeftColor="secondary"
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
+                  trip={trip}
+                  index={index}
+                  isMultiple={currentTrips.length > 1}
                   onPress={() =>
                     navigation.navigate('CaptainTripManage', { tripId: trip.id })
                   }
-                  style={{ elevation: 3, minWidth: 280 }}>
-                  <Box flex={1} mr="s12">
-                    <Box
-                      flexDirection="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      mb="s12">
-                      <Box
-                        backgroundColor={STATUS_CONFIG[trip.status].bg}
-                        paddingHorizontal="s12"
-                        paddingVertical="s6"
-                        borderRadius="s8">
-                        <Text
-                          preset="paragraphCaptionSmall"
-                          color={STATUS_CONFIG[trip.status].color}
-                          bold>
-                          {STATUS_CONFIG[trip.status].label}
-                        </Text>
-                      </Box>
-                      {currentTrips.length > 1 && (
-                        <Text preset="paragraphCaptionSmall" color="textSecondary" bold>
-                          #{index + 1}
-                        </Text>
-                      )}
-                    </Box>
-
-                    <Box flexDirection="row" alignItems="center" mb="s8">
-                      <Icon name="directions-boat" size={20} color="secondary" />
-                      <Text preset="paragraphMedium" color="text" bold ml="s8">
-                        {trip.origin} → {trip.destination}
-                      </Text>
-                    </Box>
-
-                    <Box flexDirection="row" alignItems="center">
-                      <Icon name="schedule" size={16} color="textSecondary" />
-                      <Text preset="paragraphSmall" color="textSecondary" ml="s6">
-                        {formatDeparture(trip)}
-                      </Text>
-                    </Box>
-                  </Box>
-                  <Icon name="chevron-right" size={30} color="textSecondary" />
-                </TouchableOpacityBox>
+                />
               ))}
             </ScrollView>
           )}
