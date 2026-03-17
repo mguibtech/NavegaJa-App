@@ -102,13 +102,13 @@ export function useCaptainDashboard() {
   const pendingBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !b.rejectionReason);
   const rejectedBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !!b.rejectionReason);
 
-  function formatDeparture(trip: Trip) {
-    try {
-      return format(new Date(trip.departureAt), "dd/MM 'às' HH:mm", {locale: ptBR});
-    } catch {
-      return trip.departureAt;
-    }
+export function formatDeparture(trip: Trip) {
+  try {
+    return format(new Date(trip.departureAt), "dd/MM 'às' HH:mm", {locale: ptBR});
+  } catch {
+    return trip.departureAt;
   }
+}
 
   return {
     navigation,
