@@ -7,21 +7,28 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {Box, Button, Icon, PhotoPicker, Text, TextInput, TouchableOpacityBox} from '@components';
 import {useKycSubmit} from '@domain';
 import {useToast} from '@hooks';
-import {api} from '@api';
+import {uploadService} from '@infra';
 
 import {CaptainStackParamList} from '@routes';
 
 type Photo = {uri: string; type: string; name: string};
 
-async function uploadPhoto(photo: Photo): Promise<string> {
+function buildFormData(photo: Photo): FormData {
   const formData = new FormData();
   formData.append('file', {
     uri: photo.uri,
     type: photo.type,
     name: photo.name,
   } as any);
-  const result = await api.upload<{url: string}>('/upload/image', formData);
-  return result.url;
+  return formData;
+}
+
+async function uploadSelfie(photo: Photo): Promise<string> {
+  return uploadService.uploadImage(buildFormData(photo), 'captains');
+}
+
+async function uploadCaptainDocument(photo: Photo): Promise<string> {
+  return uploadService.uploadDocument(buildFormData(photo), 'documents');
 }
 
 export function KycSubmitScreen() {
@@ -55,15 +62,15 @@ export function KycSubmitScreen() {
       setIsUploading(true);
 
       // 1. Upload selfie
-      const selfieUrl = await uploadPhoto(selfiePhotos[0]);
+      const selfieUrl = await uploadSelfie(selfiePhotos[0]);
 
       // 2. Upload licença náutica
-      const licensePhotoUrl = await uploadPhoto(licensePhotos[0]);
+      const licensePhotoUrl = await uploadCaptainDocument(licensePhotos[0]);
 
       // 3. Upload certificado (opcional)
       let certificatePhotoUrl: string | undefined;
       if (certificatePhotos.length > 0) {
-        certificatePhotoUrl = await uploadPhoto(certificatePhotos[0]);
+        certificatePhotoUrl = await uploadCaptainDocument(certificatePhotos[0]);
       }
 
       setIsUploading(false);
@@ -76,7 +83,7 @@ export function KycSubmitScreen() {
         rnaqNumber: rnaqNumber.trim() || undefined,
       });
 
-      toast.showSuccess('Documentos enviados! Aguarde a análise.');
+      toast.showSuccess('Sua solicitação será enviada para análise do administrador.');
       navigation.navigate('KycStatus');
     } catch (err: any) {
       setIsUploading(false);
@@ -185,7 +192,14 @@ export function KycSubmitScreen() {
               Licença náutica <Text preset="paragraphMedium" color="danger" bold>*</Text>
             </Text>
           </Box>
-          <PhotoPicker photos={licensePhotos} onPhotosChange={setLicensePhotos} maxPhotos={1} />
+          <PhotoPicker
+            photos={licensePhotos}
+            onPhotosChange={setLicensePhotos}
+            maxPhotos={1}
+            allowPdf
+            label="Licença náutica"
+            description="Envie imagem ou PDF da sua licença de navegação."
+          />
         </Box>
 
         {/* RNAQ Number */}
@@ -223,7 +237,14 @@ export function KycSubmitScreen() {
               </Text>
             </Box>
           </Box>
-          <PhotoPicker photos={certificatePhotos} onPhotosChange={setCertificatePhotos} maxPhotos={1} />
+          <PhotoPicker
+            photos={certificatePhotos}
+            onPhotosChange={setCertificatePhotos}
+            maxPhotos={1}
+            allowPdf
+            label="Certificado de segurança"
+            description="Envie imagem ou PDF do certificado de segurança, se possuir."
+          />
         </Box>
 
         <Button

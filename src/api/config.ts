@@ -63,6 +63,10 @@ export const API_ENDPOINTS = {
   USER_BY_ID: (id: string) => `/users/${id}`,
   KYC_STATUS: '/users/kyc/status',
   KYC_SUBMIT: '/users/kyc/submit',
+  DOCUMENT_CHANGE_REQUESTS: '/document-change-request',
+  DOCUMENT_CHANGE_REQUEST_BY_ID: (id: string) => `/document-change-request/${id}`,
+  DOCUMENT_CHANGE_REQUEST_APPROVE: (id: string) => `/document-change-request/${id}/approve`,
+  DOCUMENT_CHANGE_REQUEST_REJECT: (id: string) => `/document-change-request/${id}/reject`,
 
   // ── Trips ─────────────────────────────────────────────────────────────────
   TRIPS: '/trips',
@@ -248,28 +252,100 @@ function makeFileUrlWebSafe(url: string): string {
   return url.replace(/ /g, '%20');
 }
 
-export function normalizeFileUrl(url: string | null | undefined): string {
-  if (!url) {return '';}
-  const sanitizedUrl = String(url).trim().replace(/\\/g, '/');
+function stripTrailingSlashFromFileUrl(url: string): string {
+  return url.replace(/(\.[a-z0-9]{2,8})\/+(?=($|[?#]))/i, '$1');
+}
+
+function isDirectDeviceFileUri(url: string): boolean {
+  return /^(file|content|ph|assets-library|asset|data|blob):/i.test(url);
+}
+
+function isLocalOrPrivateHost(hostname: string): boolean {
+  return (
+    /^(localhost|127\.0\.0\.1|10\.0\.2\.2)$/i.test(hostname) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)
+  );
+}
+
+type ParsedHttpUrl = {
+  origin: string;
+  hostname: string;
+  pathname: string;
+  search: string;
+  hash: string;
+};
+
+function parseHttpUrl(url: string): ParsedHttpUrl | null {
+  const match = url.match(/^(https?:\/\/[^/?#]+)(\/[^?#]*)?(\?[^#]*)?(#.*)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  const hostMatch = match[1].match(/^https?:\/\/([^/:?#]+)/i);
+  return {
+    origin: match[1],
+    hostname: hostMatch?.[1] ?? '',
+    pathname: match[2] ?? '/',
+    search: match[3] ?? '',
+    hash: match[4] ?? '',
+  };
+}
+
+function getApiBaseOrigin(): string {
+  return parseHttpUrl(API_BASE_URL)?.origin ?? API_BASE_URL.replace(/\/+$/, '');
+}
+
+function shouldReplaceFileUrlOrigin(parsedUrl: ParsedHttpUrl): boolean {
+  const normalizedPath = parsedUrl.pathname.replace(/\\/g, '/');
+  const apiBaseOrigin = getApiBaseOrigin();
+
+  if (!apiBaseOrigin || parsedUrl.origin === apiBaseOrigin) {
+    return false;
+  }
+
+  if (!/^\/uploads(?:\/|$)/i.test(normalizedPath)) {
+    return false;
+  }
+
+  return isLocalOrPrivateHost(parsedUrl.hostname);
+}
+
+export function normalizeFileUrl(file: FilePreviewLike): string {
+  const rawPath = extractFilePreviewPath(file);
+  if (!rawPath) {return '';}
+  const sanitizedUrl = stripTrailingSlashFromFileUrl(
+    String(rawPath).trim().replace(/\\/g, '/'),
+  );
   if (!sanitizedUrl) {return '';}
-  // Se a URL começa com http mas contém localhost/127.0.0.1, substitui pelo host real
-  const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//;
-  if (localhostPattern.test(sanitizedUrl)) {
-    return makeFileUrlWebSafe(
-      sanitizedUrl.replace(localhostPattern, `${API_BASE_URL}/`),
-    );
+  if (isDirectDeviceFileUri(sanitizedUrl)) {
+    return sanitizedUrl;
   }
+
+  if (/^https?:\/\//i.test(sanitizedUrl)) {
+    const parsedUrl = parseHttpUrl(sanitizedUrl);
+    if (!parsedUrl) {
+      return makeFileUrlWebSafe(sanitizedUrl);
+    }
+
+    if (shouldReplaceFileUrlOrigin(parsedUrl)) {
+      return makeFileUrlWebSafe(
+        `${getApiBaseOrigin()}${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`,
+      );
+    }
+
+    return makeFileUrlWebSafe(sanitizedUrl);
+  }
+
   // URL relativa → prefixar com base
-  if (!sanitizedUrl.startsWith('http')) {
-    return makeFileUrlWebSafe(
-      `${API_BASE_URL}${sanitizedUrl.startsWith('/') ? sanitizedUrl : `/${sanitizedUrl}`}`,
-    );
-  }
-  return makeFileUrlWebSafe(sanitizedUrl);
+  return makeFileUrlWebSafe(
+    `${API_BASE_URL}${sanitizedUrl.startsWith('/') ? sanitizedUrl : `/${sanitizedUrl}`}`,
+  );
 }
 
 export function getFilePreviewUri(file: FilePreviewLike): string {
-  return normalizeFileUrl(extractFilePreviewPath(file));
+  return normalizeFileUrl(file);
 }
 
 export function getFilePreviewCandidates(
@@ -279,6 +355,9 @@ export function getFilePreviewCandidates(
   const rawPath = extractFilePreviewPath(file).trim().replace(/\\/g, '/');
 
   if (!rawPath) {return [];}
+  if (isDirectDeviceFileUri(rawPath)) {
+    return [rawPath];
+  }
 
   const folder = options?.folder?.replace(/^\/+|\/+$/g, '') ?? '';
   const strippedPath = rawPath.replace(/^\/+/, '');

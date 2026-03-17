@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, ActivityIndicator, Image, FlatList} from 'react-native';
 
-import {Box, Icon, Text, ScreenHeader} from '@components';
+import {Box, Icon, Text, ScreenHeader, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer} from '@components';
 import {Review} from '@domain';
 import {apiImageSource} from '@api/config';
 
@@ -36,6 +36,7 @@ function RatingBar({label, value}: {label: string; value: number}) {
 }
 
 export function BoatDetailScreen() {
+  const {openViewer, viewerProps} = usePhotoViewer();
   const {
     navigation,
     boat,
@@ -83,12 +84,26 @@ export function BoatDetailScreen() {
                 showsHorizontalScrollIndicator={false}
                 data={galleryPhotos}
                 keyExtractor={(item, i) => `gallery-${i}`}
-                renderItem={({item: photoUrl}) => (
-                  <Image
-                    source={apiImageSource(photoUrl)}
-                    style={{width: 327, height: 220}}
-                    resizeMode="cover"
-                  />
+                renderItem={({item: photoUrl, index}) => (
+                  <TouchableOpacityBox
+                    activeOpacity={0.92}
+                    onPress={() =>
+                      openViewer(
+                        galleryPhotos.map((uri, photoIndex) => ({
+                          id: `boat-photo-${photoIndex}`,
+                          uri,
+                          title: boat?.name || 'Foto da embarcação',
+                        })),
+                        index,
+                        boat?.name || 'Fotos da embarcação',
+                      )
+                    }>
+                    <Image
+                      source={apiImageSource(photoUrl)}
+                      style={{width: 327, height: 220}}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacityBox>
                 )}
               />
             ) : (
@@ -337,12 +352,25 @@ export function BoatDetailScreen() {
                         showsHorizontalScrollIndicator={false}
                         data={review.boatPhotos}
                         keyExtractor={(item, i) => `${review.id}-photo-${i}`}
-                        renderItem={({item: photoUrl}) => (
-                          <Image
-                            source={apiImageSource(photoUrl)}
-                            style={{width: 80, height: 80, borderRadius: 8, marginRight: 8}}
-                            resizeMode="cover"
-                          />
+                        renderItem={({item: photoUrl, index: photoIndex}) => (
+                          <TouchableOpacityBox
+                            onPress={() =>
+                              openViewer(
+                                review.boatPhotos!.map((uri, itemIndex) => ({
+                                  id: `${review.id}-viewer-${itemIndex}`,
+                                  uri,
+                                  title: `Avaliação de ${reviewerName}`,
+                                })),
+                                photoIndex,
+                                `Fotos da avaliação de ${reviewerName}`,
+                              )
+                            }>
+                            <Image
+                              source={apiImageSource(photoUrl)}
+                              style={{width: 80, height: 80, borderRadius: 8, marginRight: 8}}
+                              resizeMode="cover"
+                            />
+                          </TouchableOpacityBox>
                         )}
                         style={{marginBottom: 8}}
                       />
@@ -377,6 +405,8 @@ export function BoatDetailScreen() {
           </Box>
         </Box>
       </ScrollView>
+
+      <PhotoViewerModal {...viewerProps} />
     </Box>
   );
 }

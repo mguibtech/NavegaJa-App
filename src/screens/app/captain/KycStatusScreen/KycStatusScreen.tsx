@@ -1,11 +1,24 @@
 import React from 'react';
-import {ScrollView, Image} from 'react-native';
+import {Alert, Image, Linking, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
-import {useKycStatus} from '@domain';
+import {
+  Box,
+  Button,
+  Icon,
+  PhotoViewerModal,
+  Text,
+  TouchableOpacityBox,
+  usePhotoViewer,
+} from '@components';
+import {
+  CaptainDocumentType,
+  DocumentChangeRequestStatus,
+  getLatestDocumentChangeRequest,
+  useKycStatus,
+} from '@domain';
 import {apiImageSource} from '@api/config';
 
 import {CaptainStackParamList} from '@routes';
@@ -23,7 +36,7 @@ const STATUS_CONFIG = {
     color: '#3B82F6',
     bg: '#EFF6FF',
     label: 'Em análise',
-    description: 'Seus documentos foram recebidos e estão sendo analisados pela equipe NavegaJá.',
+    description: 'Sua solicitação foi recebida e está em análise pelo administrador.',
   },
   under_review: {
     icon: 'manage-search' as const,
@@ -48,17 +61,123 @@ const STATUS_CONFIG = {
   },
 };
 
+const REQUEST_STATUS_CONFIG: Record<
+  DocumentChangeRequestStatus,
+  {label: string; bg: string; color: string}
+> = {
+  PENDING: {
+    label: 'PENDENTE',
+    bg: '#EFF6FF',
+    color: '#2563EB',
+  },
+  APPROVED: {
+    label: 'APROVADO',
+    bg: '#ECFDF5',
+    color: '#059669',
+  },
+  REJECTED: {
+    label: 'REJEITADO',
+    bg: '#FEF2F2',
+    color: '#DC2626',
+  },
+};
+
+const DOCUMENT_LABELS: Record<CaptainDocumentType, string> = {
+  SELFIE: 'Selfie com documento',
+  LICENCA_NAVEGACAO: 'Licença náutica',
+  CERTIFICADO_SEGURANCA: 'Certificado de segurança',
+};
+
+type ViewerImage = {
+  id: string;
+  uri: string;
+  title: string;
+};
+
+function isPdfUrl(url: string | null | undefined): boolean {
+  if (!url) {return false;}
+  return /\.pdf(?:$|[?#])/i.test(url);
+}
+
 export function KycStatusScreen() {
+  const {openViewer, viewerProps} = usePhotoViewer();
   const {top} = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<CaptainStackParamList>>();
   const {kyc, isLoading, refetch} = useKycStatus();
 
   const status = kyc?.kycStatus ?? 'none';
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+  const documentRequests = kyc?.documentRequests ?? [];
+
+  const documentCards = ([
+    {
+      id: 'selfie',
+      documentType: 'SELFIE' as const,
+      officialUrl: kyc?.selfieUrl ?? null,
+    },
+    {
+      id: 'license',
+      documentType: 'LICENCA_NAVEGACAO' as const,
+      officialUrl: kyc?.licensePhotoUrl ?? null,
+    },
+    {
+      id: 'certificate',
+      documentType: 'CERTIFICADO_SEGURANCA' as const,
+      officialUrl: kyc?.certificatePhotoUrl ?? null,
+    },
+  ])
+    .map(item => {
+      const latestRequest = getLatestDocumentChangeRequest(
+        documentRequests,
+        item.documentType,
+      );
+      const requestPreviewUrl =
+        latestRequest && latestRequest.status !== 'APPROVED'
+          ? latestRequest.newDocumentUrl
+          : null;
+      const previewUrl =
+        requestPreviewUrl ||
+        item.officialUrl ||
+        latestRequest?.newDocumentUrl ||
+        null;
+
+      return {
+        ...item,
+        title: DOCUMENT_LABELS[item.documentType],
+        latestRequest,
+        previewUrl,
+      };
+    })
+    .filter(item => !!item.previewUrl);
+
+  const viewerImages: ViewerImage[] = documentCards
+    .filter(item => item.previewUrl && !isPdfUrl(item.previewUrl))
+    .map(item => ({
+      id: item.id,
+      uri: item.previewUrl!,
+      title: item.title,
+    }));
+
+  async function handleDocumentPress(card: (typeof documentCards)[number]) {
+    if (!card.previewUrl) {return;}
+
+    if (isPdfUrl(card.previewUrl)) {
+      try {
+        await Linking.openURL(card.previewUrl);
+      } catch {
+        Alert.alert('Erro', 'Não foi possível abrir o documento.');
+      }
+      return;
+    }
+
+    const index = viewerImages.findIndex(image => image.id === card.id);
+    if (index >= 0) {
+      openViewer(viewerImages, index, 'Documentos enviados');
+    }
+  }
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
       <Box
         paddingHorizontal="s20"
         paddingBottom="s16"
@@ -82,7 +201,6 @@ export function KycStatusScreen() {
           </Box>
         ) : (
           <>
-            {/* Status Card */}
             <Box
               borderRadius="s16"
               padding="s24"
@@ -111,7 +229,6 @@ export function KycStatusScreen() {
               </Text>
             </Box>
 
-            {/* Rejection reason */}
             {status === 'rejected' && kyc?.rejectionReason && (
               <Box
                 backgroundColor="dangerBg"
@@ -129,7 +246,6 @@ export function KycStatusScreen() {
               </Box>
             )}
 
-            {/* Approved info */}
             {status === 'approved' && kyc?.verifiedAt && (
               <Box
                 backgroundColor="successBg"
@@ -150,42 +266,108 @@ export function KycStatusScreen() {
               </Box>
             )}
 
-            {/* Document Thumbnails */}
-            {(kyc?.selfieUrl || kyc?.licensePhotoUrl) && (
+            {documentCards.length > 0 && (
               <Box mb="s24">
                 <Text preset="paragraphMedium" color="text" bold mb="s12">
-                  Documentos enviados
+                  Documentos e solicitações
                 </Text>
-                <Box flexDirection="row" gap="s12">
-                  {kyc?.selfieUrl && (
-                    <Box flex={1}>
-                      <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s6">
-                        Selfie com documento
-                      </Text>
-                      <Box borderRadius="s12" overflow="hidden" style={{height: 120, backgroundColor: '#F3F4F6'}}>
-                        <Image
-                          source={apiImageSource(kyc.selfieUrl)}
-                          style={{width: '100%', height: '100%'}}
-                          resizeMode="cover"
+
+                <Box gap="s12">
+                  {documentCards.map(card => {
+                    const requestStatus = card.latestRequest?.status ?? null;
+                    const requestConfig = requestStatus
+                      ? REQUEST_STATUS_CONFIG[requestStatus]
+                      : null;
+                    const isPdf = isPdfUrl(card.previewUrl);
+
+                    return (
+                      <TouchableOpacityBox
+                        key={card.id}
+                        onPress={() => handleDocumentPress(card)}
+                        backgroundColor="surface"
+                        borderRadius="s12"
+                        padding="s12"
+                        flexDirection="row"
+                        alignItems="center"
+                        style={{elevation: 1}}>
+                        <Box
+                          width={72}
+                          height={72}
+                          borderRadius="s12"
+                          overflow="hidden"
+                          alignItems="center"
+                          justifyContent="center"
+                          style={{backgroundColor: '#F3F4F6'}}>
+                          {isPdf ? (
+                            <>
+                              <Icon
+                                name="picture-as-pdf"
+                                size={30}
+                                color={'#DC2626' as any}
+                              />
+                              <Text
+                                preset="paragraphCaptionSmall"
+                                color="textSecondary"
+                                mt="s4">
+                                PDF
+                              </Text>
+                            </>
+                          ) : (
+                            <Image
+                              source={apiImageSource(card.previewUrl!)}
+                              style={{width: '100%', height: '100%'}}
+                              resizeMode="cover"
+                            />
+                          )}
+                        </Box>
+
+                        <Box flex={1} ml="s12">
+                          <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            mb="s6">
+                            <Text preset="paragraphMedium" color="text" bold flex={1}>
+                              {card.title}
+                            </Text>
+                            {requestConfig && (
+                              <Box
+                                borderRadius="s12"
+                                paddingHorizontal="s8"
+                                paddingVertical="s4"
+                                style={{backgroundColor: requestConfig.bg}}>
+                                <Text
+                                  preset="paragraphCaptionSmall"
+                                  bold
+                                  style={{color: requestConfig.color}}>
+                                  {requestConfig.label}
+                                </Text>
+                              </Box>
+                            )}
+                          </Box>
+
+                          <Text preset="paragraphSmall" color="textSecondary">
+                            {card.latestRequest?.status === 'PENDING'
+                              ? 'Sua solicitação será enviada para análise do administrador.'
+                              : card.latestRequest?.status === 'REJECTED'
+                                ? card.latestRequest.rejectionReason ||
+                                  'A última solicitação foi rejeitada.'
+                                : card.officialUrl
+                                  ? 'Documento oficial disponível.'
+                                  : 'Documento enviado.'}
+                          </Text>
+                        </Box>
+
+                        <Icon
+                          name={isPdf ? 'open-in-new' : 'zoom-in'}
+                          size={20}
+                          color="textSecondary"
                         />
-                      </Box>
-                    </Box>
-                  )}
-                  {kyc?.licensePhotoUrl && (
-                    <Box flex={1}>
-                      <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s6">
-                        Licença náutica
-                      </Text>
-                      <Box borderRadius="s12" overflow="hidden" style={{height: 120, backgroundColor: '#F3F4F6'}}>
-                        <Image
-                          source={apiImageSource(kyc.licensePhotoUrl)}
-                          style={{width: '100%', height: '100%'}}
-                          resizeMode="cover"
-                        />
-                      </Box>
-                    </Box>
-                  )}
+                      </TouchableOpacityBox>
+                    );
+                  })}
                 </Box>
+
                 {kyc?.rnaqNumber && (
                   <Box
                     mt="s12"
@@ -203,7 +385,6 @@ export function KycStatusScreen() {
               </Box>
             )}
 
-            {/* Actions */}
             <Box gap="s12">
               {(status === 'rejected' || status === 'none') && (
                 <Button
@@ -226,6 +407,8 @@ export function KycStatusScreen() {
           </>
         )}
       </ScrollView>
+
+      <PhotoViewerModal {...viewerProps} />
     </Box>
   );
 }

@@ -27,6 +27,8 @@ export {Skeleton, TripCardSkeleton, TripListSkeleton, TripDetailsSkeleton, Booki
 export type {SkeletonProps} from './Skeleton/Skeleton';
 export {ShipmentCard} from './ShipmentCard/ShipmentCard';
 export {PhotoPicker} from './PhotoPicker/PhotoPicker';
+export {PhotoViewerModal, usePhotoViewer} from './PhotoViewerModal/PhotoViewerModal';
+export type {PhotoViewerItem, PhotoViewerModalProps} from './PhotoViewerModal/PhotoViewerModal';
 export {ShipmentPriceBreakdown} from './ShipmentPriceBreakdown/ShipmentPriceBreakdown';
 export {PermissionsRequest} from './PermissionsRequest/PermissionsRequest';
 export {ConfirmationModal} from './ConfirmationModal/ConfirmationModal';

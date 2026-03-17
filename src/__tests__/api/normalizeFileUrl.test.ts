@@ -40,6 +40,28 @@ describe('normalizeFileUrl', () => {
     expect(result).toContain('/uploads/foto.jpg');
   });
 
+  it('substitui IP privado divergente pelo host atual da API para arquivos em uploads', () => {
+    const url = 'http://192.168.190.15:3000/uploads/documents/foto.jpg';
+    const result = normalizeFileUrl(url);
+    expect(result).toBe(`${API_BASE_URL}/uploads/documents/foto.jpg`);
+  });
+
+  it('remove barra extra no final de URL de arquivo', () => {
+    const url = 'http://192.168.190.120:3000/uploads/foto.jpg/';
+    const result = normalizeFileUrl(url);
+    expect(result).toBe('http://192.168.190.120:3000/uploads/foto.jpg');
+  });
+
+  it('preserva file uri local sem prefixar API_BASE_URL', () => {
+    const url = 'file:///storage/emulated/0/Pictures/foto.jpg';
+    expect(normalizeFileUrl(url)).toBe(url);
+  });
+
+  it('preserva content uri local sem prefixar API_BASE_URL', () => {
+    const url = 'content://media/external/images/media/12345';
+    expect(normalizeFileUrl(url)).toBe(url);
+  });
+
   it('não altera URL externa válida', () => {
     const url = 'https://example.com/images/foto.jpg';
     expect(normalizeFileUrl(url)).toBe(url);
@@ -92,6 +114,12 @@ describe('getFilePreviewCandidates', () => {
   it('não duplica a pasta quando o caminho já inclui a pasta alvo', () => {
     expect(getFilePreviewCandidates('/uploads/documents/doc.pdf', {folder: 'documents'})).toEqual([
       `${API_BASE_URL}/uploads/documents/doc.pdf`,
+    ]);
+  });
+
+  it('retorna file uri local como único candidato', () => {
+    expect(getFilePreviewCandidates('file:///storage/emulated/0/Pictures/foto.jpg')).toEqual([
+      'file:///storage/emulated/0/Pictures/foto.jpg',
     ]);
   });
 });

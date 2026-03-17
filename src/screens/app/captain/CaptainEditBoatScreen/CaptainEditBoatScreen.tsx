@@ -7,7 +7,7 @@ import {
   Image,
 } from 'react-native';
 
-import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader} from '@components';
+import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader, PhotoViewerModal, usePhotoViewer} from '@components';
 import {apiImageSource} from '@api/config';
 
 import {useCaptainEditBoat, BOAT_TYPES} from './useCaptainEditBoat';
@@ -17,6 +17,7 @@ function isPdfUrl(url: string) {
 }
 
 export function CaptainEditBoatScreen() {
+  const {openViewer, viewerProps} = usePhotoViewer();
   const {
     isLoadingBoat,
     isSaving,
@@ -39,6 +40,8 @@ export function CaptainEditBoatScreen() {
     savedPhotos,
     savedDocPhotos,
     rejectionReason,
+    canEditBoatDocuments,
+    boatDocumentsLockedMessage,
     handleSubmit,
     handleRemoveSavedPhoto,
     handleRemoveSavedDocPhoto,
@@ -201,11 +204,24 @@ export function CaptainEditBoatScreen() {
                     borderRadius="s8"
                     overflow="hidden"
                     style={{position: 'relative'}}>
-                    <Image
-                      source={apiImageSource(url)}
-                      style={{width: 88, height: 88}}
-                      resizeMode="cover"
-                    />
+                    <TouchableOpacityBox
+                      onPress={() =>
+                        openViewer(
+                          savedPhotos.map((uri, itemIndex) => ({
+                            id: `boat-saved-${itemIndex}`,
+                            uri,
+                            title: name || 'Foto da embarcação',
+                          })),
+                          index,
+                          'Fotos da embarcação',
+                        )
+                      }>
+                      <Image
+                        source={apiImageSource(url)}
+                        style={{width: 88, height: 88}}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacityBox>
                     {/* Botão remover */}
                     <TouchableOpacityBox
                       style={{
@@ -250,6 +266,21 @@ export function CaptainEditBoatScreen() {
             Licença, registro, DPEM etc. Aceita imagens e PDF.
           </Text>
 
+          {!canEditBoatDocuments && boatDocumentsLockedMessage && (
+            <Box
+              backgroundColor="infoBg"
+              borderRadius="s12"
+              padding="s12"
+              mb="s12"
+              flexDirection="row"
+              alignItems="flex-start">
+              <Icon name="lock" size={18} color="info" />
+              <Text preset="paragraphCaptionSmall" color="info" ml="s8" flex={1}>
+                {boatDocumentsLockedMessage}
+              </Text>
+            </Box>
+          )}
+
           {/* Galeria de documentos já salvos */}
           {savedDocPhotos.length > 0 && (
             <Box mb="s12">
@@ -280,11 +311,27 @@ export function CaptainEditBoatScreen() {
                         </Text>
                       </Box>
                     ) : (
-                      <Image
-                        source={apiImageSource(url)}
-                        style={{width: 88, height: 88}}
-                        resizeMode="cover"
-                      />
+                      <TouchableOpacityBox
+                        onPress={() => {
+                          const imageDocs = savedDocPhotos.filter(item => !isPdfUrl(item));
+                          const imageIndex = imageDocs.findIndex(item => item === url);
+                          if (imageIndex < 0) {return;}
+                          openViewer(
+                            imageDocs.map((uri, itemIndex) => ({
+                              id: `boat-doc-${itemIndex}`,
+                              uri,
+                              title: 'Documento da embarcação',
+                            })),
+                            imageIndex,
+                            'Documentos da embarcação',
+                          );
+                        }}>
+                        <Image
+                          source={apiImageSource(url)}
+                          style={{width: 88, height: 88}}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacityBox>
                     )}
                     {/* Botão remover */}
                     <TouchableOpacityBox
@@ -299,7 +346,9 @@ export function CaptainEditBoatScreen() {
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
-                      onPress={() => handleRemoveSavedDocPhoto(index)}>
+                      onPress={() => handleRemoveSavedDocPhoto(index)}
+                      disabled={!canEditBoatDocuments}
+                      activeOpacity={canEditBoatDocuments ? 0.8 : 1}>
                       <Icon name="close" size={14} color={'#fff' as any} />
                     </TouchableOpacityBox>
                   </Box>
@@ -315,6 +364,8 @@ export function CaptainEditBoatScreen() {
               onPhotosChange={setDocPhotos}
               maxPhotos={Math.max(0, 5 - savedDocPhotos.length)}
               allowPdf
+              readOnly={!canEditBoatDocuments}
+              readOnlyMessage={boatDocumentsLockedMessage ?? undefined}
               description={
                 savedDocPhotos.length > 0
                   ? 'Ao adicionar novos documentos, a embarcação volta para análise'
@@ -335,6 +386,8 @@ export function CaptainEditBoatScreen() {
           )}
         </ScrollView>
       </Box>
+
+      <PhotoViewerModal {...viewerProps} />
     </KeyboardAvoidingView>
   );
 }

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Image, Alert, Modal} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {Box, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, Icon, Text, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer} from '@components';
 import {pickDocument, isDocumentPickerCancelled} from '../../native/documentPicker';
 
 interface PhotoPickerProps {
@@ -11,6 +11,8 @@ interface PhotoPickerProps {
   label?: string;
   description?: string;
   allowPdf?: boolean;
+  readOnly?: boolean;
+  readOnlyMessage?: string;
 }
 
 export function PhotoPicker({
@@ -20,10 +22,17 @@ export function PhotoPicker({
   label = 'Fotos da Encomenda (Opcional)',
   description,
   allowPdf = false,
+  readOnly = false,
+  readOnlyMessage = 'Estes documentos estão bloqueados para edição até a revisão do administrador.',
 }: PhotoPickerProps) {
   const [showPicker, setShowPicker] = useState(false);
+  const {openViewer, viewerProps} = usePhotoViewer();
 
   const handlePickPhoto = () => {
+    if (readOnly) {
+      Alert.alert('Edição bloqueada', readOnlyMessage);
+      return;
+    }
     if (photos.length >= maxPhotos) {
       Alert.alert('Limite Atingido', `Você pode adicionar no máximo ${maxPhotos} arquivos`);
       return;
@@ -120,11 +129,23 @@ export function PhotoPicker({
   };
 
   const removePhoto = (index: number) => {
+    if (readOnly) {
+      Alert.alert('Edição bloqueada', readOnlyMessage);
+      return;
+    }
     onPhotosChange(photos.filter((_, i) => i !== index));
   };
 
   const isPdf = (item: {type: string}) =>
     item.type === 'application/pdf' || item.type?.includes('pdf');
+
+  const viewerImages = photos
+    .filter(photo => !isPdf(photo))
+    .map((photo, index) => ({
+      id: `${photo.name}-${index}`,
+      uri: photo.uri,
+      title: photo.name,
+    }));
 
   return (
     <Box>
@@ -165,11 +186,19 @@ export function PhotoPicker({
                 </Text>
               </Box>
             ) : (
-              <Image
-                source={{uri: photo.uri}}
-                style={{width: '100%', height: '100%', borderRadius: 12}}
-                resizeMode="cover"
-              />
+              <TouchableOpacityBox
+                onPress={() => {
+                  const imageIndex = photos
+                    .slice(0, index + 1)
+                    .filter(item => !isPdf(item)).length - 1;
+                  openViewer(viewerImages, imageIndex, label);
+                }}>
+                <Image
+                  source={{uri: photo.uri}}
+                  style={{width: '100%', height: '100%', borderRadius: 12}}
+                  resizeMode="cover"
+                />
+              </TouchableOpacityBox>
             )}
             <TouchableOpacityBox
               onPress={() => removePhoto(index)}
@@ -194,6 +223,7 @@ export function PhotoPicker({
         {photos.length < maxPhotos && (
           <TouchableOpacityBox
             onPress={handlePickPhoto}
+            disabled={readOnly}
             width={100}
             height={100}
             borderRadius="s12"
@@ -202,7 +232,8 @@ export function PhotoPicker({
             borderStyle="dashed"
             alignItems="center"
             justifyContent="center"
-            backgroundColor="background">
+            backgroundColor="background"
+            style={{opacity: readOnly ? 0.45 : 1}}>
             <Icon name={allowPdf ? 'upload-file' : 'add-a-photo'} size={32} color="textSecondary" />
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Adicionar
@@ -215,6 +246,12 @@ export function PhotoPicker({
       <Text preset="paragraphSmall" color="textSecondary">
         {photos.length} de {maxPhotos} {allowPdf ? 'arquivos' : 'fotos'}
       </Text>
+
+      {readOnly && (
+        <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s8">
+          {readOnlyMessage}
+        </Text>
+      )}
 
       {/* Bottom sheet — seleção */}
       <Modal
@@ -353,6 +390,8 @@ export function PhotoPicker({
           </TouchableOpacityBox>
         </Box>
       </Modal>
+
+      <PhotoViewerModal {...viewerProps} />
     </Box>
   );
 }

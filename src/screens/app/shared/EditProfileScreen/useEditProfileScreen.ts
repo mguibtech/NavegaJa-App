@@ -1,20 +1,28 @@
-import {useState, useEffect} from 'react';
-import {Platform, Alert, ActionSheetIOS} from 'react-native';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import {useEffect, useState} from 'react';
+import {ActionSheetIOS, Alert, Platform} from 'react-native';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {useAuthStore} from '@store';
-import {useUpdateProfile, useUpdateAvatar, useUpdatePassword} from '@domain';
-import {useToast} from '@hooks';
+import {
+  CaptainDocumentType,
+  getLatestDocumentChangeRequest,
+  hasPendingDocumentChangeRequest,
+  useCreateDocumentChangeRequest,
+  useDocumentChangeRequests,
+  useUpdateAvatar,
+  useUpdatePassword,
+  useUpdateProfile,
+} from '@domain';
 import {pickDocument, isDocumentPickerCancelled} from '@native/documentPicker';
 import {normalizeFileUrl} from '@api/config';
+import {useToast} from '@hooks';
+import {useAuthStore} from '@store';
 import {uploadService} from '../../../../infra/uploadService';
 
 import {AppStackParamList} from '@routes';
-import { AM_CITIES } from '@utils';
-
+import {AM_CITIES} from '@utils';
 
 function parseCoordinate(value: number | string | null | undefined): number | null {
   if (typeof value === 'number') {
@@ -32,6 +40,14 @@ function parseCoordinate(value: number | string | null | undefined): number | nu
   return null;
 }
 
+function getFileKind(url: string | null): 'image' | 'pdf' {
+  return url?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image';
+}
+
+function hasValidUploadedDocument(url: string | null): boolean {
+  if (!url) {return false;}
+  return /^(https?:\/\/|file:|content:)/i.test(url);
+}
 
 export function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -43,25 +59,41 @@ export function formatCPF(value: string): string {
 
 export function useEditProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('blur', () => {
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
-    });
-    return unsubscribe;
-  }, [navigation]);
   const toast = useToast();
   const {user, updateUser} = useAuthStore();
-  const {updateProfile, isLoading} = useUpdateProfile();
+  const {updateProfile, isLoading: isUpdatingProfile} = useUpdateProfile();
   const {updateAvatar} = useUpdateAvatar();
   const {updatePassword: doUpdatePassword} = useUpdatePassword();
 
   const isCaptain = user?.role === 'captain';
+  const {requests: documentChangeRequests} = useDocumentChangeRequests(isCaptain);
+  const {
+    createDocumentChangeRequest,
+    isLoading: isCreatingDocumentChangeRequest,
+  } = useCreateDocumentChangeRequest();
 
-  const originalLicenseUrl = user?.licensePhotoUrl ?? null;
-  const originalCertificateUrl = user?.certificatePhotoUrl ?? null;
+  const originalLicenseUrl = normalizeFileUrl(user?.licensePhotoUrl) || null;
+  const originalCertificateUrl = normalizeFileUrl(user?.certificatePhotoUrl) || null;
+  const originalLicenseType = getFileKind(originalLicenseUrl);
+  const originalCertificateType = getFileKind(originalCertificateUrl);
+
+  const licenseRequest = getLatestDocumentChangeRequest(
+    documentChangeRequests,
+    'LICENCA_NAVEGACAO',
+  );
+  const certificateRequest = getLatestDocumentChangeRequest(
+    documentChangeRequests,
+    'CERTIFICADO_SEGURANCA',
+  );
+
+  const canEditLicenseDocument = !hasPendingDocumentChangeRequest(
+    documentChangeRequests,
+    'LICENCA_NAVEGACAO',
+  );
+  const canEditCertificateDocument = !hasPendingDocumentChangeRequest(
+    documentChangeRequests,
+    'CERTIFICADO_SEGURANCA',
+  );
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -77,18 +109,10 @@ export function useEditProfileScreen() {
   const [homeLat, setHomeLat] = useState<number | null>(parseCoordinate(user?.homeLat));
   const [homeLng, setHomeLng] = useState<number | null>(parseCoordinate(user?.homeLng));
 
-  const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(
-    normalizeFileUrl(user?.licensePhotoUrl) || null,
-  );
-  const [licensePhotoType, setLicensePhotoType] = useState<'image' | 'pdf'>(
-    user?.licensePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
-  );
-  const [certificatePhotoUrl, setCertificatePhotoUrl] = useState<string | null>(
-    normalizeFileUrl(user?.certificatePhotoUrl) || null,
-  );
-  const [certificatePhotoType, setCertificatePhotoType] = useState<'image' | 'pdf'>(
-    user?.certificatePhotoUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
-  );
+  const [licensePhotoUrl, setLicensePhotoUrl] = useState<string | null>(originalLicenseUrl);
+  const [licensePhotoType, setLicensePhotoType] = useState<'image' | 'pdf'>(originalLicenseType);
+  const [certificatePhotoUrl, setCertificatePhotoUrl] = useState<string | null>(originalCertificateUrl);
+  const [certificatePhotoType, setCertificatePhotoType] = useState<'image' | 'pdf'>(originalCertificateType);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
@@ -102,23 +126,66 @@ export function useEditProfileScreen() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [showDocPicker, setShowDocPicker] = useState(false);
   const [docPickerField, setDocPickerField] = useState<'license' | 'certificate' | null>(null);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  function canEditCaptainDocument(field: 'license' | 'certificate'): boolean {
+    return field === 'license'
+      ? canEditLicenseDocument
+      : canEditCertificateDocument;
+  }
+
+  function getPendingRequestMessage(field: 'license' | 'certificate'): string {
+    return field === 'license'
+      ? 'Já existe uma solicitação pendente para a licença de navegação.'
+      : 'Já existe uma solicitação pendente para o certificado de segurança.';
+  }
+
+  function getDocumentRequestStatusLabel(field: 'license' | 'certificate'): string | null {
+    const request = field === 'license' ? licenseRequest : certificateRequest;
+    if (!request) {return null;}
+
+    if (request.status === 'PENDING') {return 'PENDENTE';}
+    if (request.status === 'APPROVED') {return 'APROVADO';}
+    return 'REJEITADO';
+  }
+
+  function getDocumentRequestMessage(field: 'license' | 'certificate'): string | null {
+    const request = field === 'license' ? licenseRequest : certificateRequest;
+    if (!request) {return null;}
+
+    if (request.status === 'PENDING') {
+      return 'Sua solicitação será enviada para análise do administrador.';
+    }
+
+    if (request.status === 'APPROVED') {
+      return 'A última solicitação deste documento foi aprovada.';
+    }
+
+    return request.rejectionReason || 'A última solicitação deste documento foi rejeitada.';
+  }
+
   function handleLocationConfirm(lat: number, lng: number, label: string, geocodedCity?: string) {
     setHomeLat(lat);
     setHomeLng(lng);
     setHomeCommunityLabel(label);
     setShowLocationPicker(false);
-    // Auto-preenche município a partir do reverse geocode
     if (geocodedCity) {
       const normalised = geocodedCity.trim();
-      const match = AM_CITIES.find(
-        c => c.toLowerCase() === normalised.toLowerCase(),
-      );
+      const match = AM_CITIES.find(c => c.toLowerCase() === normalised.toLowerCase());
       if (match) {
         setCity(match);
         setCityIsCustom(false);
@@ -137,23 +204,32 @@ export function useEditProfileScreen() {
     const options = ['Tirar foto', 'Escolher da galeria', 'Cancelar'];
     const cancelIdx = 2;
     if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions({options, cancelButtonIndex: cancelIdx}, idx => {
-        if (idx === 0) {pickAvatarFrom('camera');}
-        if (idx === 1) {pickAvatarFrom('gallery');}
-      });
-    } else {
-      Alert.alert('Alterar foto', 'Escolha uma opção', [
-        {text: 'Tirar foto', onPress: () => pickAvatarFrom('camera')},
-        {text: 'Galeria', onPress: () => pickAvatarFrom('gallery')},
-        {text: 'Cancelar', style: 'cancel'},
-      ]);
+      ActionSheetIOS.showActionSheetWithOptions(
+        {options, cancelButtonIndex: cancelIdx},
+        idx => {
+          if (idx === 0) {pickAvatarFrom('camera');}
+          if (idx === 1) {pickAvatarFrom('gallery');}
+        },
+      );
+      return;
     }
+
+    Alert.alert('Alterar foto', 'Escolha uma opção', [
+      {text: 'Tirar foto', onPress: () => pickAvatarFrom('camera')},
+      {text: 'Galeria', onPress: () => pickAvatarFrom('gallery')},
+      {text: 'Cancelar', style: 'cancel'},
+    ]);
   }
 
   async function pickAvatarFrom(source: 'camera' | 'gallery') {
     setIsUploadingAvatar(true);
     try {
-      const opts = {mediaType: 'photo' as const, quality: 0.8 as const, maxWidth: 512, maxHeight: 512};
+      const opts = {
+        mediaType: 'photo' as const,
+        quality: 0.8 as const,
+        maxWidth: 512,
+        maxHeight: 512,
+      };
       const result = source === 'camera'
         ? await launchCamera(opts)
         : await launchImageLibrary(opts);
@@ -162,10 +238,13 @@ export function useEditProfileScreen() {
 
       const asset = result.assets[0];
       const formData = new FormData();
-      formData.append('file', {uri: asset.uri ?? '', type: asset.type ?? 'image/jpeg', name: asset.fileName ?? 'avatar.jpg'} as any);
+      formData.append('file', {
+        uri: asset.uri ?? '',
+        type: asset.type ?? 'image/jpeg',
+        name: asset.fileName ?? 'avatar.jpg',
+      } as any);
 
       const url = await uploadService.uploadImage(formData, 'avatars');
-
       await updateAvatar(url);
       setAvatarUrl(url);
       updateUser({...user!, avatarUrl: url});
@@ -193,6 +272,11 @@ export function useEditProfileScreen() {
   }
 
   function uploadCaptainDoc(field: 'license' | 'certificate') {
+    if (!canEditCaptainDocument(field)) {
+      toast.showError(getPendingRequestMessage(field));
+      return;
+    }
+
     setDocPickerField(field);
     setShowDocPicker(true);
   }
@@ -202,18 +286,28 @@ export function useEditProfileScreen() {
     setShowDocPicker(false);
     setDocPickerField(null);
     if (!field) {return;}
-    const setter = field === 'license' ? setIsUploadingLicense : setIsUploadingCertificate;
+
+    const setter = field === 'license'
+      ? setIsUploadingLicense
+      : setIsUploadingCertificate;
+
     if (option === 'pdf') {
       pickCaptainDocFromPdf(field, setter);
-    } else {
-      pickCaptainDocFrom(option, field, setter);
+      return;
     }
+
+    pickCaptainDocFrom(option, field, setter);
   }
 
   async function pickCaptainDocFromPdf(
     field: 'license' | 'certificate',
     setter: (v: boolean) => void,
   ) {
+    if (!canEditCaptainDocument(field)) {
+      toast.showError(getPendingRequestMessage(field));
+      return;
+    }
+
     setter(true);
     try {
       const doc = await pickDocument(['application/pdf']);
@@ -235,8 +329,7 @@ export function useEditProfileScreen() {
       }
     } catch (error: any) {
       if (!isDocumentPickerCancelled(error)) {
-        const msg = error?.message ?? 'Não foi possível fazer o upload do PDF';
-        toast.showError(msg);
+        toast.showError(error?.message ?? 'Não foi possível fazer o upload do PDF');
       }
     } finally {
       setter(false);
@@ -248,9 +341,19 @@ export function useEditProfileScreen() {
     field: 'license' | 'certificate',
     setter: (v: boolean) => void,
   ) {
+    if (!canEditCaptainDocument(field)) {
+      toast.showError(getPendingRequestMessage(field));
+      return;
+    }
+
     setter(true);
     try {
-      const opts = {mediaType: 'photo' as const, quality: 0.8 as const, maxWidth: 1920, maxHeight: 1920};
+      const opts = {
+        mediaType: 'photo' as const,
+        quality: 0.8 as const,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      };
       const result = source === 'camera'
         ? await launchCamera(opts)
         : await launchImageLibrary(opts);
@@ -293,6 +396,7 @@ export function useEditProfileScreen() {
       toast.showError('As senhas não conferem.');
       return;
     }
+
     setIsChangingPassword(true);
     try {
       await doUpdatePassword({currentPassword, newPassword});
@@ -313,41 +417,120 @@ export function useEditProfileScreen() {
     certificatePhotoUrl !== originalCertificateUrl
   );
 
+  const profileChanged =
+    name.trim() !== (user?.name ?? '') ||
+    email.trim() !== (user?.email ?? '') ||
+    cpf.replace(/\D/g, '') !== (user?.cpf ?? '') ||
+    city.trim() !== (user?.city ?? '') ||
+    gender !== (user?.gender ?? null) ||
+    (homeCommunityLabel.trim() || '') !== (user?.homeCommunity ?? '') ||
+    parseCoordinate(homeLat) !== parseCoordinate(user?.homeLat) ||
+    parseCoordinate(homeLng) !== parseCoordinate(user?.homeLng);
+
   async function handleSave() {
     const normalizedHomeLat = parseCoordinate(homeLat);
     const normalizedHomeLng = parseCoordinate(homeLng);
 
     try {
-      const updatedUser = await updateProfile({
-        name: name.trim(),
-        email: email.trim() || undefined,
-        cpf: cpf.replace(/\D/g, '') || undefined,
-        city: city.trim() || undefined,
-        state: 'AM',
-        gender: gender ?? undefined,
-        licensePhotoUrl: licensePhotoUrl ?? undefined,
-        certificatePhotoUrl: certificatePhotoUrl ?? undefined,
-        homeCommunity: homeCommunityLabel.trim() || null,
-        homeMunicipio: city.trim() || null,
-        homeLat: normalizedHomeLat,
-        homeLng: normalizedHomeLng,
-      });
+      const documentRequestsToCreate: Array<{
+        field: 'license' | 'certificate';
+        documentType: CaptainDocumentType;
+        newDocumentUrl: string;
+      }> = [];
 
-      updateUser({
-        ...user!,
-        ...updatedUser,
-        capabilities: updatedUser.capabilities !== undefined
-          ? updatedUser.capabilities
-          : (user?.capabilities ?? null),
-        rejectionReason: updatedUser.rejectionReason !== undefined
-          ? updatedUser.rejectionReason
-          : (user?.rejectionReason ?? null),
-      });
+      if (isCaptain && licensePhotoUrl !== originalLicenseUrl) {
+        if (!canEditLicenseDocument) {
+          toast.showError(getPendingRequestMessage('license'));
+          return;
+        }
+        if (!hasValidUploadedDocument(licensePhotoUrl)) {
+          toast.showError('Envie uma licença de navegação válida antes de salvar.');
+          return;
+        }
+        documentRequestsToCreate.push({
+          field: 'license',
+          documentType: 'LICENCA_NAVEGACAO',
+          newDocumentUrl: licensePhotoUrl!,
+        });
+      }
+
+      if (isCaptain && certificatePhotoUrl !== originalCertificateUrl) {
+        if (!canEditCertificateDocument) {
+          toast.showError(getPendingRequestMessage('certificate'));
+          return;
+        }
+        if (!hasValidUploadedDocument(certificatePhotoUrl)) {
+          toast.showError('Envie um certificado válido antes de salvar.');
+          return;
+        }
+        documentRequestsToCreate.push({
+          field: 'certificate',
+          documentType: 'CERTIFICADO_SEGURANCA',
+          newDocumentUrl: certificatePhotoUrl!,
+        });
+      }
+
+      if (!profileChanged && documentRequestsToCreate.length === 0) {
+        toast.showError('Nenhuma alteração para salvar.');
+        return;
+      }
+
+      if (profileChanged) {
+        const updatedUser = await updateProfile({
+          name: name.trim(),
+          email: email.trim() || undefined,
+          cpf: cpf.replace(/\D/g, '') || undefined,
+          city: city.trim() || undefined,
+          state: 'AM',
+          gender: gender ?? undefined,
+          homeCommunity: homeCommunityLabel.trim() || null,
+          homeMunicipio: city.trim() || null,
+          homeLat: normalizedHomeLat,
+          homeLng: normalizedHomeLng,
+        });
+
+        updateUser({
+          ...user!,
+          ...updatedUser,
+          licensePhotoUrl: user?.licensePhotoUrl ?? null,
+          certificatePhotoUrl: user?.certificatePhotoUrl ?? null,
+          capabilities: updatedUser.capabilities !== undefined
+            ? updatedUser.capabilities
+            : (user?.capabilities ?? null),
+          rejectionReason: updatedUser.rejectionReason !== undefined
+            ? updatedUser.rejectionReason
+            : (user?.rejectionReason ?? null),
+        });
+      }
+
+      if (documentRequestsToCreate.length > 0) {
+        for (const request of documentRequestsToCreate) {
+          await createDocumentChangeRequest({
+            documentType: request.documentType,
+            newDocumentUrl: request.newDocumentUrl,
+          });
+
+          if (request.field === 'license') {
+            setLicensePhotoUrl(originalLicenseUrl);
+            setLicensePhotoType(originalLicenseType);
+          } else {
+            setCertificatePhotoUrl(originalCertificateUrl);
+            setCertificatePhotoType(originalCertificateType);
+          }
+        }
+      }
+
+      setSuccessMessage(
+        profileChanged && documentRequestsToCreate.length > 0
+          ? 'Perfil atualizado. Sua solicitação será enviada para análise do administrador.'
+          : documentRequestsToCreate.length > 0
+            ? 'Sua solicitação será enviada para análise do administrador.'
+            : 'Perfil atualizado com sucesso!',
+      );
       setShowSuccessModal(true);
     } catch (err: any) {
       setErrorMessage(
-        err?.message ||
-          'Não foi possível atualizar o perfil. Tente novamente.',
+        err?.message || 'Não foi possível atualizar o perfil. Tente novamente.',
       );
       setShowErrorModal(true);
     }
@@ -356,6 +539,22 @@ export function useEditProfileScreen() {
   function handleSuccessClose() {
     setShowSuccessModal(false);
     navigation.goBack();
+  }
+
+  function handleRemoveCaptainDoc(field: 'license' | 'certificate') {
+    if (!canEditCaptainDocument(field)) {
+      toast.showError(getPendingRequestMessage(field));
+      return;
+    }
+
+    if (field === 'license') {
+      setLicensePhotoUrl(originalLicenseUrl);
+      setLicensePhotoType(originalLicenseType);
+      return;
+    }
+
+    setCertificatePhotoUrl(originalCertificateUrl);
+    setCertificatePhotoType(originalCertificateType);
   }
 
   return {
@@ -373,10 +572,10 @@ export function useEditProfileScreen() {
     homeCommunityLabel,
     homeLat, homeLng,
     handleLocationConfirm,
-    licensePhotoUrl, setLicensePhotoUrl,
-    licensePhotoType, setLicensePhotoType,
-    certificatePhotoUrl, setCertificatePhotoUrl,
-    certificatePhotoType, setCertificatePhotoType,
+    licensePhotoUrl,
+    licensePhotoType,
+    certificatePhotoUrl,
+    certificatePhotoType,
     avatarUrl,
     isUploadingAvatar,
     showAvatarEditor, setShowAvatarEditor,
@@ -388,15 +587,23 @@ export function useEditProfileScreen() {
     isChangingPassword,
     showPasswordSection, setShowPasswordSection,
     showSuccessModal,
+    successMessage,
     showErrorModal, setShowErrorModal,
     errorMessage,
     showDocPicker, setShowDocPicker,
     docsChanged,
-    isLoading,
+    profileChanged,
+    canEditLicenseDocument,
+    canEditCertificateDocument,
+    successLoading: isCreatingDocumentChangeRequest,
+    isLoading: isUpdatingProfile || isCreatingDocumentChangeRequest,
     handleCpfChange,
+    getDocumentRequestStatusLabel,
+    getDocumentRequestMessage,
     handleChangeAvatar,
     handleSaveDiceBearAvatar,
     uploadCaptainDoc,
+    handleRemoveCaptainDoc,
     handleDocPickerOption,
     handleChangePassword,
     handleSave,

@@ -1,9 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, Dimensions, View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image, Alert, ActivityIndicator} from 'react-native';
 import {useTheme} from '@shopify/restyle';
 
-import {Box, Button, ConfirmationModal, Icon, MapLocationPicker, ScreenHeader, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal} from '@components';
-import {apiImageSource} from '@api/config';
+import {Box, Button, ConfirmationModal, Icon, MapLocationPicker, ScreenHeader, Text, TextInput, TouchableOpacityBox, InfoModal, UserAvatar, AvatarEditorModal, PhotoViewerModal, usePhotoViewer} from '@components';
+import {apiImageSource, getFilePreviewCandidates} from '@api/config';
 import {Theme} from '@theme';
 
 import {useEditProfileScreen} from './useEditProfileScreen';
@@ -26,10 +26,10 @@ export function EditProfileScreen() {
     homeCommunityLabel,
     homeLat, homeLng,
     handleLocationConfirm,
-    licensePhotoUrl, setLicensePhotoUrl,
-    licensePhotoType, setLicensePhotoType,
-    certificatePhotoUrl, setCertificatePhotoUrl,
-    certificatePhotoType, setCertificatePhotoType,
+    licensePhotoUrl,
+    licensePhotoType,
+    certificatePhotoUrl,
+    certificatePhotoType,
     avatarUrl,
     isUploadingAvatar,
     showAvatarEditor, setShowAvatarEditor,
@@ -41,15 +41,22 @@ export function EditProfileScreen() {
     isChangingPassword,
     showPasswordSection, setShowPasswordSection,
     showSuccessModal,
+    successMessage,
     showErrorModal, setShowErrorModal,
     errorMessage,
     showDocPicker, setShowDocPicker,
     docsChanged,
+    profileChanged,
+    canEditLicenseDocument,
+    canEditCertificateDocument,
     isLoading,
     handleCpfChange,
+    getDocumentRequestStatusLabel,
+    getDocumentRequestMessage,
     handleChangeAvatar,
     handleSaveDiceBearAvatar,
     uploadCaptainDoc,
+    handleRemoveCaptainDoc,
     handleDocPickerOption,
     handleChangePassword,
     handleSave,
@@ -68,9 +75,8 @@ export function EditProfileScreen() {
   const pendingNavAction = useRef<any>(null);
 
   const hasUnsavedChanges =
-    name !== (user?.name ?? '') ||
-    email !== (user?.email ?? '') ||
-    city !== (user?.city ?? '') ||
+    profileChanged ||
+    docsChanged ||
     currentPassword.length > 0 ||
     newPassword.length > 0 ||
     confirmNewPassword.length > 0;
@@ -113,7 +119,7 @@ export function EditProfileScreen() {
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView
-            contentContainerStyle={{padding: 24, paddingBottom: 40}}
+            contentContainerStyle={{padding: 24, paddingBottom: 96}}
             keyboardShouldPersistTaps="handled">
             {/* Avatar */}
             <Box alignItems="center" mb="s32">
@@ -376,17 +382,23 @@ export function EditProfileScreen() {
                     photoUrl={licensePhotoUrl}
                     isPdf={licensePhotoType === 'pdf'}
                     isUploading={isUploadingLicense}
+                    canEdit={canEditLicenseDocument}
+                    requestStatus={getDocumentRequestStatusLabel('license')}
+                    requestMessage={getDocumentRequestMessage('license')}
                     onPress={() => uploadCaptainDoc('license')}
-                    onRemove={() => { setLicensePhotoUrl(null); setLicensePhotoType('image'); }}
+                    onRemove={() => handleRemoveCaptainDoc('license')}
                   />
 
                   <CaptainDocField
-                    label="Certificado de Habilitação"
+                    label="Certificado de Segurança"
                     photoUrl={certificatePhotoUrl}
                     isPdf={certificatePhotoType === 'pdf'}
                     isUploading={isUploadingCertificate}
+                    canEdit={canEditCertificateDocument}
+                    requestStatus={getDocumentRequestStatusLabel('certificate')}
+                    requestMessage={getDocumentRequestMessage('certificate')}
                     onPress={() => uploadCaptainDoc('certificate')}
-                    onRemove={() => { setCertificatePhotoUrl(null); setCertificatePhotoType('image'); }}
+                    onRemove={() => handleRemoveCaptainDoc('certificate')}
                   />
                 </Box>
               )}
@@ -689,11 +701,7 @@ export function EditProfileScreen() {
       <InfoModal
         visible={showSuccessModal}
         title="Sucesso"
-        message={
-          docsChanged
-            ? 'Perfil atualizado! Seus documentos serão reanalisados pelo NavegaJá. Você será notificado após a aprovação.'
-            : 'Perfil atualizado com sucesso!'
-        }
+        message={successMessage}
         icon="check-circle"
         iconColor="success"
         buttonText="OK"
@@ -729,6 +737,9 @@ function CaptainDocField({
   photoUrl,
   isPdf,
   isUploading,
+  canEdit,
+  requestStatus,
+  requestMessage,
   onPress,
   onRemove,
 }: {
@@ -736,13 +747,56 @@ function CaptainDocField({
   photoUrl: string | null;
   isPdf: boolean;
   isUploading: boolean;
+  canEdit: boolean;
+  requestStatus?: string | null;
+  requestMessage?: string | null;
   onPress: () => void;
   onRemove: () => void;
 }) {
-  const [showPreview, setShowPreview] = React.useState(false);
-  const [previewLoading, setPreviewLoading] = React.useState(true);
-  const [previewError, setPreviewError] = React.useState(false);
+  const [thumbLoading, setThumbLoading] = React.useState(false);
+  const [thumbError, setThumbError] = React.useState(false);
+  const [imageCandidateIndex, setImageCandidateIndex] = React.useState(0);
+  const {openViewer, viewerProps} = usePhotoViewer();
   const {colors} = useTheme<Theme>();
+  const imageCandidates = isPdf
+    ? []
+    : getFilePreviewCandidates(photoUrl, {folder: 'documents'});
+  const resolvedImageUrl = imageCandidates[imageCandidateIndex] || '';
+
+  React.useEffect(() => {
+    setThumbError(false);
+    setThumbLoading(!!photoUrl && !isPdf);
+    setImageCandidateIndex(0);
+
+    if (__DEV__ && photoUrl && !isPdf) {
+      const candidates = getFilePreviewCandidates(photoUrl, {folder: 'documents'});
+      console.log('IMAGE URL:', photoUrl);
+      console.log(`[CaptainDocField:${label}] image candidates:`, candidates);
+    }
+  }, [isPdf, label, photoUrl]);
+
+  function moveToNextCandidate() {
+    const nextIndex = imageCandidateIndex + 1;
+
+    if (nextIndex < imageCandidates.length) {
+      const nextUrl = imageCandidates[nextIndex];
+      console.log(
+        `[CaptainDocField:${label}] thumb fallback ->`,
+        nextUrl,
+      );
+      setImageCandidateIndex(nextIndex);
+      setThumbError(false);
+      setThumbLoading(true);
+      return;
+    }
+
+    console.warn(
+      `[CaptainDocField:${label}] all image candidates failed`,
+      imageCandidates,
+    );
+    setThumbLoading(false);
+    setThumbError(true);
+  }
 
   function handlePreview() {
     if (!photoUrl) {return;}
@@ -752,17 +806,58 @@ function CaptainDocField({
         Alert.alert('Erro', 'Não foi possível abrir o documento'),
       );
     } else {
-      setPreviewLoading(true);
-      setPreviewError(false);
-      setShowPreview(true);
+      openViewer(
+        [
+          {
+            id: label,
+            uri: resolvedImageUrl || photoUrl,
+            title: label,
+          },
+        ],
+        0,
+        label,
+      );
     }
   }
 
   return (
     <Box mb="s16">
-      <Text preset="paragraphSmall" color="text" bold mb="s8">
-        {label}
-      </Text>
+      <Box flexDirection="row" alignItems="center" mb="s8" gap="s8">
+        <Text preset="paragraphSmall" color="text" bold flex={1}>
+          {label}
+        </Text>
+        {requestStatus && (
+          <Box
+            backgroundColor={
+              requestStatus === 'PENDENTE'
+                ? 'warningBg'
+                : requestStatus === 'APROVADO'
+                  ? 'successBg'
+                  : 'dangerBg'
+            }
+            paddingHorizontal="s8"
+            paddingVertical="s4"
+            borderRadius="s12">
+            <Text
+              preset="paragraphCaptionSmall"
+              color={
+                requestStatus === 'PENDENTE'
+                  ? 'warning'
+                  : requestStatus === 'APROVADO'
+                    ? 'success'
+                    : 'danger'
+              }
+              bold>
+              {requestStatus}
+            </Text>
+          </Box>
+        )}
+      </Box>
+      {requestMessage && (
+        <Text preset="paragraphCaptionSmall" color="textSecondary" mb="s8">
+          {requestMessage}
+        </Text>
+      )}
       {photoUrl ? (
         <Box flexDirection="row" alignItems="flex-start" gap="s12">
           {/* Thumbnail tappable — toca para abrir preview */}
@@ -784,11 +879,43 @@ function CaptainDocField({
                 </Text>
               </>
             ) : (
-              <Image
-                source={apiImageSource(photoUrl)}
-                style={{width: 80, height: 80}}
-                resizeMode="cover"
-              />
+              <>
+                {resolvedImageUrl && !thumbError ? (
+                  <Image
+                    key={resolvedImageUrl}
+                    source={apiImageSource(resolvedImageUrl)}
+                    style={{width: 80, height: 80}}
+                    resizeMode="cover"
+                    onLoadStart={() => setThumbLoading(true)}
+                    onLoad={() => setThumbLoading(false)}
+                    onError={moveToNextCandidate}
+                  />
+                ) : (
+                  <Box
+                    width={80}
+                    height={80}
+                    alignItems="center"
+                    justifyContent="center"
+                    backgroundColor="primaryBg">
+                    <Icon name="broken-image" size={24} color="textSecondary" />
+                    <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4">
+                      Sem preview
+                    </Text>
+                  </Box>
+                )}
+
+                {thumbLoading && !thumbError && (
+                  <Box
+                    position="absolute"
+                    width={80}
+                    height={80}
+                    alignItems="center"
+                    justifyContent="center"
+                    style={{backgroundColor: 'rgba(255,255,255,0.58)'}}>
+                    <ActivityIndicator color={colors.primary} />
+                  </Box>
+                )}
+              </>
             )}
             {/* Badge de preview no canto inferior */}
             <Box
@@ -831,12 +958,14 @@ function CaptainDocField({
             {/* Substituir */}
             <TouchableOpacityBox
               onPress={onPress}
+              disabled={!canEdit}
               backgroundColor="primaryBg"
               borderRadius="s8"
               paddingVertical="s8"
               paddingHorizontal="s12"
               flexDirection="row"
-              alignItems="center">
+              alignItems="center"
+              style={{opacity: canEdit ? 1 : 0.45}}>
               <Icon name="refresh" size={15} color="primary" />
               <Text preset="paragraphSmall" color="primary" bold ml="s4">
                 Substituir
@@ -846,12 +975,14 @@ function CaptainDocField({
             {/* Remover */}
             <TouchableOpacityBox
               onPress={onRemove}
+              disabled={!canEdit}
               backgroundColor="dangerBg"
               borderRadius="s8"
               paddingVertical="s8"
               paddingHorizontal="s12"
               flexDirection="row"
-              alignItems="center">
+              alignItems="center"
+              style={{opacity: canEdit ? 1 : 0.45}}>
               <Icon name="delete" size={15} color="danger" />
               <Text preset="paragraphSmall" color="danger" bold ml="s4">
                 Remover
@@ -861,7 +992,7 @@ function CaptainDocField({
         </Box>
       ) : (
         <TouchableOpacityBox
-          onPress={isUploading ? undefined : onPress}
+          onPress={isUploading || !canEdit ? undefined : onPress}
           borderWidth={2}
           borderColor="border"
           borderRadius="s12"
@@ -869,105 +1000,19 @@ function CaptainDocField({
           alignItems="center"
           justifyContent="center"
           backgroundColor="background"
-          style={{opacity: isUploading ? 0.5 : 1}}>
+          style={{opacity: isUploading || !canEdit ? 0.5 : 1}}>
           <Icon
             name={isUploading ? 'hourglass-empty' : 'upload-file'}
             size={32}
             color="textSecondary"
           />
           <Text preset="paragraphSmall" color="textSecondary" mt="s8">
-            {isUploading ? 'Enviando...' : 'Toque para selecionar'}
+            {isUploading ? 'Enviando...' : canEdit ? 'Toque para selecionar' : 'Bloqueado pelo admin'}
           </Text>
         </TouchableOpacityBox>
       )}
 
-      {/* Modal de preview em tela cheia (apenas para imagens) */}
-      <Modal
-        visible={showPreview}
-        transparent
-        statusBarTranslucent
-        animationType="fade"
-        onRequestClose={() => setShowPreview(false)}>
-        <View style={previewStyles.overlay}>
-          <TouchableOpacity
-            style={previewStyles.closeBtn}
-            onPress={() => setShowPreview(false)}>
-            <View style={previewStyles.closeBtnInner}>
-              <Icon name="close" size={24} color={'white' as any} />
-            </View>
-          </TouchableOpacity>
-
-          <Text
-            preset="paragraphSmall"
-            style={previewStyles.label}>
-            {label}
-          </Text>
-
-          {photoUrl && !previewError && (
-            <Image
-              source={apiImageSource(photoUrl)}
-              style={previewStyles.image}
-              resizeMode="contain"
-              onLoadStart={() => setPreviewLoading(true)}
-              onLoad={() => setPreviewLoading(false)}
-              onError={() => { setPreviewLoading(false); setPreviewError(true); }}
-            />
-          )}
-
-          {previewLoading && !previewError && (
-            <ActivityIndicator size="large" color="white" style={previewStyles.image} />
-          )}
-
-          {previewError && (
-            <View style={[previewStyles.image, {alignItems: 'center', justifyContent: 'center'}]}>
-              <Icon name="broken-image" size={48} color={'rgba(255,255,255,0.4)' as any} />
-              <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.5)', marginTop: 8, textAlign: 'center', paddingHorizontal: 16}}>
-                Não foi possível carregar a imagem.{'\n'}
-                {photoUrl}
-              </Text>
-            </View>
-          )}
-
-          <Text
-            preset="paragraphSmall"
-            style={previewStyles.hint}>
-            Toque em × para fechar
-          </Text>
-        </View>
-      </Modal>
+      <PhotoViewerModal {...viewerProps} />
     </Box>
   );
 }
-
-const {width: SW, height: SH} = Dimensions.get('window');
-const previewStyles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.93)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 52,
-    right: 20,
-    zIndex: 10,
-  },
-  closeBtnInner: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  label: {
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 12,
-  },
-  image: {
-    width: SW * 0.92,
-    height: SH * 0.68,
-  },
-  hint: {
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 16,
-  },
-});

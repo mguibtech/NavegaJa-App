@@ -86,6 +86,7 @@ export const queryKeys = {
   kyc: {
     all: ['kyc'] as const,
     status: () => [...queryKeys.kyc.all, 'status'] as const,
+    documentChangeRequests: () => [...queryKeys.kyc.all, 'document-change-requests'] as const,
   },
   analytics: {
     all: ['analytics'] as const,

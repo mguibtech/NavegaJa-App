@@ -11,6 +11,9 @@ export function useKycSubmit() {
     mutationFn: (data: KycSubmitData) => kycService.submit(data),
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: queryKeys.kyc.status()});
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.kyc.documentChangeRequests(),
+      });
     },
   });
 

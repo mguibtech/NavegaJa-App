@@ -7,7 +7,7 @@ import {ShipmentShareCard} from './ShipmentShareCard';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox} from '@components';
+import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer} from '@components';
 import {ShipmentStatus} from '@domain';
 
 import {useShipmentDetailsScreen} from './useShipmentDetailsScreen';
@@ -21,6 +21,7 @@ const ss = StyleSheet.create({
 });
 
 export function ShipmentDetailsScreen() {
+  const {openViewer, viewerProps} = usePhotoViewer();
   const {
     navigation,
     shipment,
@@ -452,11 +453,24 @@ export function ShipmentDetailsScreen() {
                       height={100}
                       borderRadius="s12"
                       backgroundColor="background">
-                      <Image
-                        source={{uri}}
-                        style={{width: '100%', height: '100%', borderRadius: 12}}
-                        resizeMode="cover"
-                      />
+                      <TouchableOpacityBox
+                        onPress={() =>
+                          openViewer(
+                            shipment.photos!.map((item, photoIndex) => ({
+                              id: `shipment-photo-${photoIndex}`,
+                              uri: resolvePhotoUri(item),
+                              title: shipment.description || 'Foto da encomenda',
+                            })),
+                            index,
+                            'Fotos da encomenda',
+                          )
+                        }>
+                        <Image
+                          source={{uri}}
+                          style={{width: '100%', height: '100%', borderRadius: 12}}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacityBox>
                     </Box>
                   );
                 })}
@@ -581,6 +595,8 @@ export function ShipmentDetailsScreen() {
           </Box>
         </Box>
       </ScrollView>
+
+      <PhotoViewerModal {...viewerProps} />
 
       {/* Load Error Modal */}
       <InfoModal

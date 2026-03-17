@@ -70,6 +70,16 @@ export function useCaptainEditBoat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadError]);
 
+  const hasSubmittedBoatDocuments = (boat?.documentPhotos?.length ?? 0) > 0;
+  const canEditBoatDocuments = !hasSubmittedBoatDocuments || !!boat?.rejectionReason;
+  const boatDocumentsBlockedFallback =
+    'Os documentos da embarcação estão bloqueados para edição até nova liberação do administrador.';
+  const boatDocumentsLockedMessage = canEditBoatDocuments
+    ? null
+    : boat?.isVerified
+      ? 'Os documentos da embarcação já foram aprovados e estão bloqueados para edição. Se precisar corrigir algo, solicite uma nova revisão ao administrador.'
+      : 'Os documentos da embarcação foram enviados e estão em análise. Eles só poderão ser alterados novamente se o administrador reprovar a documentação.';
+
   function validate(): string | null {
     if (!name.trim()) {return 'Informe o nome da embarcação';}
     if (!type.trim()) {return 'Selecione o tipo de embarcação';}
@@ -97,6 +107,9 @@ export function useCaptainEditBoat() {
   }
 
   async function uploadDocuments(items: PhotoItem[]): Promise<string[]> {
+    if (!canEditBoatDocuments) {
+      throw new Error(boatDocumentsLockedMessage || boatDocumentsBlockedFallback);
+    }
     const urls: string[] = [];
     for (let i = 0; i < items.length; i++) {
       setUploadLabel(`Enviando documento ${i + 1} de ${items.length}...`);
@@ -120,6 +133,11 @@ export function useCaptainEditBoat() {
     }
 
     try {
+      if (!canEditBoatDocuments && docPhotos.length > 0) {
+        toast.showError(boatDocumentsLockedMessage || boatDocumentsBlockedFallback);
+        return;
+      }
+
       const newPhotoUrls = photos.length > 0 ? await uploadImages(photos) : [];
       const newDocUrls = docPhotos.length > 0 ? await uploadDocuments(docPhotos) : [];
 
@@ -146,6 +164,10 @@ export function useCaptainEditBoat() {
   }
 
   function handleRemoveSavedDocPhoto(index: number) {
+    if (!canEditBoatDocuments) {
+      toast.showError(boatDocumentsLockedMessage || boatDocumentsBlockedFallback);
+      return;
+    }
     setSavedDocPhotos(prev => prev.filter((_, i) => i !== index));
   }
 
@@ -179,6 +201,8 @@ export function useCaptainEditBoat() {
     savedPhotos,
     savedDocPhotos,
     rejectionReason,
+    canEditBoatDocuments,
+    boatDocumentsLockedMessage,
     // handlers
     handleSubmit,
     handleRemoveSavedPhoto,
