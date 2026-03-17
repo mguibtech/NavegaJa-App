@@ -18,6 +18,14 @@ export const STATUS_CONFIG = {
   [TripStatus.CANCELLED]: {label: 'Cancelada', color: 'danger' as const, bg: 'dangerBg' as const},
 };
 
+export function formatDeparture(trip: Trip) {
+  try {
+    return format(new Date(trip.departureAt), "dd/MM 'às' HH:mm", {locale: ptBR});
+  } catch {
+    return trip.departureAt;
+  }
+}
+
 export function useCaptainDashboard() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const user = useAuthStore(s => s.user);
@@ -101,15 +109,6 @@ export function useCaptainDashboard() {
 
   const pendingBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !b.rejectionReason);
   const rejectedBoats = isBoatManager || isBoatsLoading ? [] : boats.filter(b => !b.isVerified && !!b.rejectionReason);
-
-export function formatDeparture(trip: Trip) {
-  try {
-    return format(new Date(trip.departureAt), "dd/MM 'às' HH:mm", {locale: ptBR});
-  } catch {
-    return trip.departureAt;
-  }
-}
-
   return {
     navigation,
     user,
