@@ -24,7 +24,7 @@ export function CaptainDashboardScreen() {
     isBlocked,
     isRejected,
     isPending,
-    activeTrip,
+    currentTrips,
     completedToday,
     pendingBoats,
     rejectedBoats,
@@ -443,64 +443,12 @@ export function CaptainDashboardScreen() {
           </>
         )}
 
-        {/* Active Trip Card */}
-        {activeTrip ? (
-          <Box paddingHorizontal="s20" mb="s20">
-            <Text preset="paragraphMedium" color="text" bold mb="s12">
-              Viagem atual
-            </Text>
-            <TouchableOpacityBox
-              backgroundColor="surface"
-              borderRadius="s16"
-              padding="s20"
-              borderLeftWidth={4}
-              borderLeftColor="secondary"
-              flexDirection='row'
-              justifyContent='space-between'
-              alignItems='center'
-              onPress={() =>
-                navigation.navigate('CaptainTripManage', { tripId: activeTrip.id })
-              }
-              style={{ elevation: 3 }}>
-              <Box>
-                <Box
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb="s12">
-                  <Box
-                    backgroundColor={STATUS_CONFIG[activeTrip.status].bg}
-                    paddingHorizontal="s12"
-                    paddingVertical="s6"
-                    borderRadius="s8">
-                    <Text
-                      preset="paragraphCaptionSmall"
-                      color={STATUS_CONFIG[activeTrip.status].color}
-                      bold>
-                      {STATUS_CONFIG[activeTrip.status].label}
-                    </Text>
-                  </Box>
-                </Box>
-
-                <Box flexDirection="row" alignItems="center" mb="s8">
-                  <Icon name="directions-boat" size={20} color="secondary" />
-                  <Text preset="paragraphMedium" color="text" bold ml="s8">
-                    {activeTrip.origin} → {activeTrip.destination}
-                  </Text>
-                </Box>
-
-                <Box flexDirection="row" alignItems="center">
-                  <Icon name="schedule" size={16} color="textSecondary" />
-                  <Text preset="paragraphSmall" color="textSecondary" ml="s6">
-                    {formatDeparture(activeTrip)}
-                  </Text>
-                </Box>
-              </Box>
-              <Icon name="chevron-right" size={30} color="textSecondary" />
-            </TouchableOpacityBox>
-          </Box>
-        ) : (
-          <Box paddingHorizontal="s20" mb="s20">
+        {/* Current Trip/W trips */}
+        <Box paddingHorizontal="s20" mb="s20">
+          <Text preset="paragraphMedium" color="text" bold mb="s12">
+            {currentTrips.length > 1 ? 'Viagens atuais' : 'Viagem atual'}
+          </Text>
+          {currentTrips.length === 0 ? (
             <Box
               backgroundColor="surface"
               borderRadius="s16"
@@ -509,11 +457,82 @@ export function CaptainDashboardScreen() {
               style={{ elevation: 2 }}>
               <Icon name="directions-boat" size={48} color="textSecondary" />
               <Text preset="paragraphMedium" color="textSecondary" mt="s12" textAlign="center">
-                Nenhuma viagem em andamento
+                Nenhuma viagem atual no momento
               </Text>
+              <TouchableOpacityBox
+                marginTop="s12"
+                paddingHorizontal="s16"
+                paddingVertical="s10"
+                borderRadius="s12"
+                backgroundColor="secondaryBg"
+                onPress={() => navigation.navigate('CaptainCreateTrip')}>
+                <Text preset="paragraphSmall" color="secondary" bold>
+                  Criar viagem
+                </Text>
+              </TouchableOpacityBox>
             </Box>
-          </Box>
-        )}
+          ) : (
+            <Box gap="s12">
+              {currentTrips.map((trip, index) => (
+                <TouchableOpacityBox
+                  key={trip.id}
+                  backgroundColor="surface"
+                  borderRadius="s16"
+                  padding="s20"
+                  borderLeftWidth={4}
+                  borderLeftColor="secondary"
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  onPress={() =>
+                    navigation.navigate('CaptainTripManage', { tripId: trip.id })
+                  }
+                  style={{ elevation: 3 }}>
+                  <Box flex={1} mr="s12">
+                    <Box
+                      flexDirection="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb="s12">
+                      <Box
+                        backgroundColor={STATUS_CONFIG[trip.status].bg}
+                        paddingHorizontal="s12"
+                        paddingVertical="s6"
+                        borderRadius="s8">
+                        <Text
+                          preset="paragraphCaptionSmall"
+                          color={STATUS_CONFIG[trip.status].color}
+                          bold>
+                          {STATUS_CONFIG[trip.status].label}
+                        </Text>
+                      </Box>
+                      {currentTrips.length > 1 && (
+                        <Text preset="paragraphCaptionSmall" color="textSecondary" bold>
+                          #{index + 1}
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Box flexDirection="row" alignItems="center" mb="s8">
+                      <Icon name="directions-boat" size={20} color="secondary" />
+                      <Text preset="paragraphMedium" color="text" bold ml="s8">
+                        {trip.origin} → {trip.destination}
+                      </Text>
+                    </Box>
+
+                    <Box flexDirection="row" alignItems="center">
+                      <Icon name="schedule" size={16} color="textSecondary" />
+                      <Text preset="paragraphSmall" color="textSecondary" ml="s6">
+                        {formatDeparture(trip)}
+                      </Text>
+                    </Box>
+                  </Box>
+                  <Icon name="chevron-right" size={30} color="textSecondary" />
+                </TouchableOpacityBox>
+              ))}
+            </Box>
+          )}
+        </Box>
 
         {/* Quick Actions */}
         <Box paddingHorizontal="s20">

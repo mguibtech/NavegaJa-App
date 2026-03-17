@@ -82,9 +82,16 @@ export function useCaptainDashboard() {
     setShowBlockedModal(true);
   }
 
-  const activeTrip = trips.find(
-    t => t.status === TripStatus.IN_PROGRESS || t.status === TripStatus.SCHEDULED,
-  );
+  // Trips with status SCHEDULED or IN_PROGRESS are considered “current”; keep array for plural handling.
+  const currentTrips = trips
+    .filter(t => t.status === TripStatus.IN_PROGRESS || t.status === TripStatus.SCHEDULED)
+    .sort((a, b) => {
+      try {
+        return new Date(a.departureAt).getTime() - new Date(b.departureAt).getTime();
+      } catch {
+        return 0;
+      }
+    });
 
   const completedToday = trips.filter(t => {
     if (t.status !== TripStatus.COMPLETED) return false;
@@ -119,7 +126,7 @@ export function useCaptainDashboard() {
     isBlocked,
     isRejected,
     isPending,
-    activeTrip,
+    currentTrips,
     completedToday,
     pendingBoats,
     rejectedBoats,
