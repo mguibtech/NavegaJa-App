@@ -3,6 +3,7 @@ import {StatusBar, useColorScheme} from 'react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '@shopify/restyle';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 import {theme, darkTheme} from '@theme';
 import {Router} from '@routes';
@@ -43,19 +44,21 @@ function App() {
   const activeTheme = isDark ? darkTheme : theme;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <ThemeProvider theme={activeTheme}>
-          <StatusBar
-            barStyle={isDark ? 'light-content' : 'dark-content'}
-            backgroundColor={activeTheme.colors.surface}
-          />
-          <Router />
-          <ToastContainer />
-          <PermissionsRequest />
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <ThemeProvider theme={activeTheme}>
+            <StatusBar
+              barStyle={isDark ? 'light-content' : 'dark-content'}
+              backgroundColor={activeTheme.colors.surface}
+            />
+            <Router />
+            <ToastContainer />
+            <PermissionsRequest />
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
