@@ -38,10 +38,7 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
   const boatName = trip.boat?.name ?? 'Sem embarcação';
   const departureLabel = formatDeparture(trip);
   const departureRelative = getDepartureStatus(trip);
-  const tripTitle = trip.name?.trim()
-    ? trip.name
-    : `${trip.origin ?? 'Origem'} → ${trip.destination ?? 'Destino'}`;
-
+  
   return (
     <TouchableOpacityBox
       onPress={onPress}
@@ -75,9 +72,6 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
           )}
         </Box>
 
-        <Text preset="headingSmall" color="text" bold numberOfLines={2}>
-          {tripTitle}
-        </Text>
 
         <Box flexDirection="row" alignItems="center" mt="s6" mb="s6">
           <Icon name="directions-boat" size={18} color="secondary" />
