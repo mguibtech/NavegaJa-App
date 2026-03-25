@@ -13,6 +13,8 @@ import {
   CreateShipmentData,
   useCouponValidation,
   useCepLookup,
+  ShipmentValidator,
+  SHIPMENT_VALIDATION_RULES,
 } from '@domain';
 import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
@@ -171,48 +173,67 @@ export function useCreateShipmentScreen() {
   }
 
   function validateForm(): boolean {
-    // Validar destinatário
-    if (!recipientName.trim() || recipientName.trim().length < 3) {
-      setShowRecipientNameErrorModal(true);
-      return false;
-    }
+    const data: CreateShipmentData = {
+      recipientName: recipientName.trim(),
+      recipientPhone: recipientPhone.replace(/\D/g, ''),
+      recipientAddress: recipientAddress.trim(),
+      description: description.trim(),
+      weight: parseFloat(weight) || 0,
+      tripId: trip?.id || '',
+      paymentMethod,
+      paidBy,
+    };
 
-    if (!isPhoneComplete(recipientPhone)) {
-      setShowPhoneErrorModal(true);
-      return false;
-    }
-
-    if (!recipientAddress.trim() || recipientAddress.trim().length < 10) {
-      setShowAddressErrorModal(true);
-      return false;
-    }
-
-    // Validar encomenda
-    if (!description.trim() || description.trim().length < 5) {
-      setShowDescriptionErrorModal(true);
-      return false;
-    }
-
-    const weightNum = parseFloat(weight);
-    if (!weight || isNaN(weightNum) || weightNum < 0.1 || weightNum > 50) {
-      setShowWeightErrorModal(true);
-      return false;
-    }
-
-    // Validar dimensões se fornecidas
     if (length || width || heightDim) {
-      const l = parseFloat(length);
-      const w = parseFloat(width);
-      const h = parseFloat(heightDim);
+      data.dimensions = {
+        length: parseFloat(length) || 0,
+        width: parseFloat(width) || 0,
+        height: parseFloat(heightDim) || 0,
+      };
+    }
 
-      if (!length || !width || !heightDim || isNaN(l) || isNaN(w) || isNaN(h)) {
-        setShowDimensionsIncompleteModal(true);
+    // Usamos o validador do domínio para regras de negócio
+    const {isValid} = ShipmentValidator.validate(data);
+
+    if (!isValid) {
+      // Mapeamos para os modais específicos da UI para manter UX consistente
+      if (!data.recipientName || data.recipientName.length < SHIPMENT_VALIDATION_RULES.RECIPIENT_NAME_MIN_LENGTH) {
+        setShowRecipientNameErrorModal(true);
         return false;
       }
 
-      if (l > 200 || w > 200 || h > 200) {
-        setShowDimensionsMaxModal(true);
+      if (!ShipmentValidator.isValidPhone(data.recipientPhone)) {
+        setShowPhoneErrorModal(true);
         return false;
+      }
+
+      if (!data.recipientAddress || data.recipientAddress.length < SHIPMENT_VALIDATION_RULES.RECIPIENT_ADDRESS_MIN_LENGTH) {
+        setShowAddressErrorModal(true);
+        return false;
+      }
+
+      if (!data.description || data.description.length < SHIPMENT_VALIDATION_RULES.DESCRIPTION_MIN_LENGTH) {
+        setShowDescriptionErrorModal(true);
+        return false;
+      }
+
+      if (data.weight < SHIPMENT_VALIDATION_RULES.MIN_WEIGHT || data.weight > SHIPMENT_VALIDATION_RULES.MAX_WEIGHT) {
+        setShowWeightErrorModal(true);
+        return false;
+      }
+
+      if (data.dimensions) {
+        const {length: l, width: w, height: h} = data.dimensions;
+        if (!length || !width || !heightDim) {
+          setShowDimensionsIncompleteModal(true);
+          return false;
+        }
+        if (l > SHIPMENT_VALIDATION_RULES.MAX_DIMENSION || 
+            w > SHIPMENT_VALIDATION_RULES.MAX_DIMENSION || 
+            h > SHIPMENT_VALIDATION_RULES.MAX_DIMENSION) {
+          setShowDimensionsMaxModal(true);
+          return false;
+        }
       }
     }
 
@@ -221,23 +242,27 @@ export function useCreateShipmentScreen() {
 
   // Pure check sem side effects (para não causar re-render loop)
   function isFormValid(): boolean {
-    if (!recipientName.trim() || recipientName.trim().length < 3) return false;
-    if (!isPhoneComplete(recipientPhone)) return false;
-    if (!recipientAddress.trim() || recipientAddress.trim().length < 10)
-      return false;
-    if (!description.trim() || description.trim().length < 5) return false;
-    const weightNum = parseFloat(weight);
-    if (!weight || isNaN(weightNum) || weightNum < 0.1 || weightNum > 50)
-      return false;
-    if (length || width || heightDim) {
-      const l = parseFloat(length);
-      const w = parseFloat(width);
-      const h = parseFloat(heightDim);
-      if (!length || !width || !heightDim || isNaN(l) || isNaN(w) || isNaN(h))
-        return false;
-      if (l > 200 || w > 200 || h > 200) return false;
+    const weightNum = parseFloat(weight) || 0;
+    const data: CreateShipmentData = {
+      recipientName: recipientName.trim(),
+      recipientPhone: recipientPhone.replace(/\D/g, ''),
+      recipientAddress: recipientAddress.trim(),
+      description: description.trim(),
+      weight: weightNum,
+      tripId: trip?.id || '',
+      paymentMethod,
+      paidBy,
+    };
+
+    if (length && width && heightDim) {
+      data.dimensions = {
+        length: parseFloat(length) || 0,
+        width: parseFloat(width) || 0,
+        height: parseFloat(heightDim) || 0,
+      };
     }
-    return true;
+
+    return ShipmentValidator.validate(data).isValid;
   }
 
   const totalPrice = priceData?.finalPrice || 0;
