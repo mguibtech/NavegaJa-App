@@ -72,15 +72,21 @@ async function saveToCache<T>(key: string, data: T): Promise<void> {
 
 /**
  * Carrega dados do cache
+ * @param ignoreExpiration Se verdadeiro, retorna o dado mesmo se expirado (útil para offline-first)
  */
-async function loadFromCache<T>(key: string): Promise<T | null> {
+async function loadFromCache<T>(
+  key: string,
+  ignoreExpiration = false,
+): Promise<T | null> {
   try {
     const stored = await AsyncStorage.getItem(key);
-    if (!stored) return null;
+    if (!stored) {
+      return null;
+    }
 
     const cached: CachedData<T> = JSON.parse(stored);
 
-    if (!isCacheValid(cached.timestamp)) {
+    if (!ignoreExpiration && !isCacheValid(cached.timestamp)) {
       // Cache expirado, remover
       await AsyncStorage.removeItem(key);
       return null;
@@ -88,7 +94,6 @@ async function loadFromCache<T>(key: string): Promise<T | null> {
 
     return cached.data;
   } catch {
-    console.error('Error loading from cache:', error);
     return null;
   }
 }
@@ -309,12 +314,20 @@ async function getRiverLevels(): Promise<RiverLevel[]> {
     await saveToCache(cacheKey, levels);
     return levels;
   } catch {
-    const cached = await loadFromCache<RiverLevel[]>(cacheKey);
+    const cached = await loadFromCache<RiverLevel[]>(cacheKey, true);
     if (cached) {
       return cached;
     }
     return [];
   }
+}
+
+/**
+ * Carrega níveis dos rios do cache offline (mesmo se expirado)
+ */
+async function loadRiverLevelsOffline(): Promise<RiverLevel[]> {
+  const cached = await loadFromCache<RiverLevel[]>(RIVER_LEVELS_CACHE_KEY, true);
+  return cached || [];
 }
 
 /**
@@ -387,6 +400,7 @@ export const weatherService = {
   getTripWeather,
   getRiverLevels,
   getRiverLevel,
+  loadRiverLevelsOffline,
   clearCache,
   clearExpiredCache,
 };
