@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Modal, Animated, StyleSheet, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
 import {useTheme} from '@shopify/restyle';
-import {BarChart} from 'react-native-chart-kit';
+import {BarChart, LineChart} from 'react-native-chart-kit';
 
 import {Box, Button, Icon, Text} from '@components';
 import {Theme} from '@theme';
@@ -12,6 +12,9 @@ import {
   useRiverLevel,
   weatherAPI,
   WeatherForecastDay,
+  useFloodForecast,
+  useGaugeForecast,
+  REGION_COORDINATES,
 } from '@domain';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -91,6 +94,9 @@ export function RiverDetailModal({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const {fetch: fetchFresh, isLoading} = useRiverLevel();
+  const {fetch: fetchFloodStatus} = useFloodForecast();
+  const {fetch: fetchGaugeForecast, data: gaugeForecast} = useGaugeForecast();
+
   const [current, setCurrent] = useState<RiverLevel | null>(initialLevel);
   const [forecast, setForecast] = useState<WeatherForecastDay[]>([]);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
@@ -101,14 +107,35 @@ export function RiverDetailModal({
   }, [initialLevel]);
 
   useEffect(() => {
-    if (visible) {
-      // Buscar previsão de precipitação (Manaus como referência da bacia amazônica)
+    if (visible && current) {
+      // 1. Buscar previsão de precipitação (5 dias)
+      // Tenta achar coordenadas reais baseadas na estação para ser mais preciso
+      const cityName = current.station.split(' ')[0].toLowerCase();
+      const coords = Object.values(REGION_COORDINATES).find(r => 
+        r.name.toLowerCase().includes(cityName) || 
+        current.station.toLowerCase().includes(r.name.toLowerCase())
+      ) || REGION_COORDINATES.manaus;
+
       setIsForecastLoading(true);
       weatherAPI
-        .getForecast(-3.119, -60.0217, 5)
+        .getForecast(coords.lat, coords.lng, 5)
         .then(data => setForecast(data.forecast.slice(0, 5)))
         .catch(() => {})
         .finally(() => setIsForecastLoading(false));
+
+      // 2. Buscar previsão de nível (7 dias — FloodHub Fase 2)
+      fetchFloodStatus(coords.lat, coords.lng, 30).then(floodData => {
+        if (floodData && floodData.gauges.length > 0) {
+          // Busca o gauge que mais combina com o rio atual ou pega o primeiro
+          const matchingGauge = floodData.gauges.find(g => 
+            g.river.toLowerCase().includes(current.river.toLowerCase())
+          ) || floodData.gauges[0];
+
+          if (matchingGauge) {
+            fetchGaugeForecast(matchingGauge.gaugeId, 7);
+          }
+        }
+      });
 
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -351,7 +378,83 @@ export function RiverDetailModal({
                   </Box>
                 )}
                 <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s6">
-                  Fonte: OpenWeatherMap · Região de Manaus
+                  Fonte: OpenWeatherMap
+                </Text>
+              </Box>
+            );
+          })()}
+
+          {/* Gráfico de Previsão de Nível (7 dias — Flood Hub) */}
+          {(() => {
+            if (!gaugeForecast || gaugeForecast.points.length === 0) return null;
+
+            const chartLabels = gaugeForecast.points.map((p, i) =>
+              i === 0 ? 'Hoje' : formatShortDate(p.time),
+            );
+            const chartData = gaugeForecast.points.map(p => p.value);
+            const unitLabel = gaugeForecast.unit === 'METERS' ? 'm' : 'm³/s';
+            const chartWidth = SCREEN_WIDTH - 48;
+
+            return (
+              <Box mb="s24">
+                <Box flexDirection="row" alignItems="center" mb="s8">
+                  <Text
+                    preset="paragraphCaptionSmall"
+                    color="textSecondary"
+                    bold
+                    flex={1}>
+                    PREVISÃO DE NÍVEL (7 DIAS)
+                  </Text>
+                  <Box
+                    paddingHorizontal="s6"
+                    paddingVertical="s2"
+                    borderRadius="s4"
+                    backgroundColor="primary">
+                    <Text
+                      preset="paragraphCaptionSmall"
+                      bold
+                      style={{color: '#FFF', fontSize: 10}}>
+                      FLOOD HUB
+                    </Text>
+                  </Box>
+                </Box>
+
+                <Box
+                  backgroundColor="surface"
+                  borderRadius="s12"
+                  overflow="hidden"
+                  style={{elevation: 2}}>
+                  <LineChart
+                    data={{
+                      labels: chartLabels,
+                      datasets: [{data: chartData}],
+                    }}
+                    width={chartWidth}
+                    height={160}
+                    yAxisLabel=""
+                    yAxisSuffix={` ${unitLabel}`}
+                    chartConfig={{
+                      backgroundColor: '#FFFFFF',
+                      backgroundGradientFrom: '#FFFFFF',
+                      backgroundGradientTo: '#FFFFFF',
+                      decimalPlaces: 1,
+                      color: () => '#0B5D8A',
+                      labelColor: () => '#6B7280',
+                      style: {borderRadius: 12},
+                      propsForDots: {
+                        r: '4',
+                        strokeWidth: '2',
+                        stroke: '#0B5D8A',
+                      },
+                    }}
+                    style={{borderRadius: 12}}
+                    bezier
+                    withInnerLines={false}
+                    fromZero={false}
+                  />
+                </Box>
+                <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s6">
+                  Fonte: Google Flood Forecasting API
                 </Text>
               </Box>
             );
