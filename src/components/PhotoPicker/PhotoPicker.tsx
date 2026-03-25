@@ -51,7 +51,7 @@ export function PhotoPicker({
     try {
       const result = await launchCamera({
         mediaType: 'photo',
-        quality: 0.7,
+        quality: 0.5,
         maxWidth: 1280,
         maxHeight: 1280,
         includeBase64: false,
@@ -82,7 +82,7 @@ export function PhotoPicker({
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        quality: 0.7,
+        quality: 0.5,
         maxWidth: 1280,
         maxHeight: 1280,
         includeBase64: false,
