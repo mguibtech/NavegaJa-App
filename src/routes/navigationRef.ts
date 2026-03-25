@@ -1,4 +1,4 @@
 import {createNavigationContainerRef} from '@react-navigation/native';
-import {AppStackParamList} from './AppStack';
+import type {AppStackParamList} from './navigationTypes';
 
 export const navigationRef = createNavigationContainerRef<AppStackParamList>();
