@@ -14,12 +14,17 @@ async function getPaymentStatus(id: string): Promise<PaymentStatusResponse> {
 }
 
 async function getMyBookings(): Promise<Booking[]> {
-  const bookings = await bookingAPI.getMyBookings();
+  try {
+    const bookings = await bookingAPI.getMyBookings();
 
-  // Save offline
-  await saveOffline(bookings);
+    // Save offline
+    await saveOffline(bookings);
 
-  return bookings;
+    return bookings;
+  } catch (error) {
+    console.warn('Failed to fetch bookings from API, loading from cache');
+    return await loadOffline();
+  }
 }
 
 async function createBooking(data: CreateBookingData): Promise<Booking> {
