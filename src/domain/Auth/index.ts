@@ -1,20 +1,9 @@
-// Shared types
 export * from './authTypes';
-
-// Login
+export * from './authValidator';
 export * from './Login';
-
-// Register
 export * from './Register';
-
-// Forgot Password
-export * from './ForgotPassword';
-
-// Reset Password
-export * from './ResetPassword';
-
-// Logout
 export * from './Logout';
-
-// User
+export * from './ForgotPassword';
+export * from './ResetPassword';
+export * from './RefreshToken';
 export * from './User';
