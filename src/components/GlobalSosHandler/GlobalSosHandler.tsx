@@ -23,8 +23,8 @@ const SOS_BG_FLAG_KEY = '@navegaja:sos_bg_triggered';
 const {SosVolumeModule} = NativeModules;
 const isAndroid = Platform.OS === 'android';
 
-// TODO: SOS por botão de volume em standby até resolução do conflito de som
-const VOLUME_SOS_ENABLED = false;
+// SOS por botão de volume habilitado para Android
+const VOLUME_SOS_ENABLED = true;
 
 /**
  * Componente global montado na raiz do AppStack.
@@ -151,9 +151,9 @@ export function GlobalSosHandler() {
         const unlinked = contacts.filter(c => !c.linkedUserId);
         setUnlinkedContacts(unlinked);
         setShowResultModal(true);
-        toast.showWarning('Alerta SOS já está activo.');
+        toast.showWarning('Alerta SOS já está ativo.');
       } else {
-        toast.showError(err?.message ?? 'Erro ao enviar SOS. Verifique a sua ligação.');
+        toast.showError(err?.message ?? 'Erro ao enviar SOS. Verifique sua conexão.');
       }
     } finally {
       setSosTriggering(false);
@@ -166,7 +166,7 @@ export function GlobalSosHandler() {
       const lat = sosLocation.latitude.toFixed(6);
       const lng = sosLocation.longitude.toFixed(6);
       const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
-      msg += ` A minha localização: ${mapsUrl}`;
+      msg += ` Minha localização: ${mapsUrl}`;
     }
     Linking.openURL(
       `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(msg)}`,
@@ -175,12 +175,12 @@ export function GlobalSosHandler() {
     });
   }
 
-  // Volume ↓ 3× — activo apenas em foreground (background usa o serviço nativo)
+  // Volume ↓ 3× — ativo apenas em foreground (background usa o serviço nativo)
   useVolumeButtonSos({
     onTrigger: handleSosTrigger,
     onHint: remaining =>
       toast.showInfo(
-        `SOS: prima mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume ↓`,
+        `SOS: pressione mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume ↓`,
       ),
     enabled: VOLUME_SOS_ENABLED && isActive && !sosTriggering,
   });
@@ -221,8 +221,8 @@ export function GlobalSosHandler() {
               mt="s8"
               style={{textAlign: 'center'}}>
               {unlinkedContacts.length > 0
-                ? 'A equipa NavegaJá foi notificada. Notifique os restantes contactos via WhatsApp:'
-                : 'A equipa NavegaJá e os seus contactos foram notificados.'}
+                ? 'A equipe NavegaJá foi notificada. Notifique os demais contatos via WhatsApp:'
+                : 'A equipe NavegaJá e seus contatos foram notificados.'}
             </Text>
           </Box>
 
