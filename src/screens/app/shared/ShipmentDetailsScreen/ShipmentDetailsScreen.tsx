@@ -7,7 +7,7 @@ import {ShipmentShareCard} from './ShipmentShareCard';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 
-import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer} from '@components';
+import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer, ShipmentDetailsSkeleton} from '@components';
 import {ShipmentStatus} from '@domain';
 
 import {useShipmentDetailsScreen} from './useShipmentDetailsScreen';
@@ -70,11 +70,21 @@ export function ShipmentDetailsScreen() {
 
   if (isLoading || !shipment || !statusConfig) {
     return (
-      <Box flex={1} backgroundColor="background" alignItems="center" justifyContent="center">
-        <ActivityIndicator size="large" color="#007BFF" />
-        <Text preset="paragraphMedium" color="text" mt="s16">
-          Carregando encomenda...
-        </Text>
+      <Box flex={1} backgroundColor="background">
+        {/* Header simple placeholder */}
+        <Box
+          paddingHorizontal="s20"
+          paddingVertical="s16"
+          backgroundColor="surface"
+          style={{paddingTop: 48, elevation: 2}}
+          flexDirection="row"
+          alignItems="center">
+          <TouchableOpacityBox onPress={() => navigation.goBack()} mr="s16">
+            <Icon name="arrow-back" size={24} color="text" />
+          </TouchableOpacityBox>
+          <Text preset="headingSmall" bold>Encomenda</Text>
+        </Box>
+        <ShipmentDetailsSkeleton />
       </Box>
     );
   }

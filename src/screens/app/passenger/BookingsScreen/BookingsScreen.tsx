@@ -101,7 +101,7 @@ export function BookingsScreen() {
       )}
 
       <FlatList
-        data={filteredBookings}
+        data={isLoadingBookings && filteredBookings.length === 0 ? [] : filteredBookings}
         keyExtractor={item => item.id}
         contentContainerStyle={{padding: 24}}
         onEndReached={loadMoreBookings}
@@ -357,7 +357,7 @@ export function BookingsScreen() {
         }}
         ListEmptyComponent={
           isLoadingBookings ? (
-            <Box paddingTop="s8">
+            <Box>
               <BookingCardSkeleton />
               <BookingCardSkeleton />
               <BookingCardSkeleton />

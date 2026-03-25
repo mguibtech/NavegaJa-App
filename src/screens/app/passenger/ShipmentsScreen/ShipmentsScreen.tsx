@@ -93,7 +93,7 @@ export function ShipmentsScreen() {
       )}
 
       <FlatList
-        data={filteredShipments}
+        data={isLoadingShipments && filteredShipments.length === 0 ? [] : filteredShipments}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
           <Box paddingHorizontal="s20">
@@ -115,7 +115,7 @@ export function ShipmentsScreen() {
         }
         ListEmptyComponent={
           isLoadingShipments ? (
-            <Box paddingTop="s8">
+            <Box>
               <ShipmentCardSkeleton />
               <ShipmentCardSkeleton />
               <ShipmentCardSkeleton />
