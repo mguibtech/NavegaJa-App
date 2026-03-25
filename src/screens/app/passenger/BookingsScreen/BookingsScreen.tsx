@@ -1,15 +1,11 @@
 import React from 'react';
-import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
-import {Box, BookingCardSkeleton, ConfirmationModal, Icon, Text, TouchableOpacityBox} from '@components';
+import {Box, BookingCardSkeleton, ConfirmationModal, Icon, Text, TouchableOpacityBox, ScreenList} from '@components';
 import {Booking} from '@domain';
 import {formatBRL} from '@utils';
 
 import {useBookingsScreen} from './useBookingsScreen';
 
 export function BookingsScreen() {
-  const {top} = useSafeAreaInsets();
   const {
     selectedTab,
     setSelectedTab,
@@ -17,12 +13,9 @@ export function BookingsScreen() {
     bookingToCancel,
     setBookingToCancel,
     bookingsError,
-    fetchBookings,
     isCancelling,
     isLoadingBookings,
     filteredBookings,
-    hasMoreBookings,
-    loadMoreBookings,
     onRefresh,
     handleConfirmCancel,
     getStatusBadge,
@@ -31,91 +24,27 @@ export function BookingsScreen() {
     navigateToReview,
   } = useBookingsScreen();
 
+  const tabs = [
+    {id: 'active', label: 'Ativas'},
+    {id: 'completed', label: 'Concluídas'},
+  ];
+
   return (
-    <Box flex={1} backgroundColor="background">
-      {/* Header */}
-      <Box
-        paddingHorizontal="s20"
-        paddingBottom="s16"
-        backgroundColor="surface"
-        style={{
-          paddingTop: top + 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Text preset="headingMedium" color="text" bold mb="s16">
-          Minhas Reservas
-        </Text>
-
-        <Box flexDirection="row" gap="s12">
-          <TouchableOpacityBox
-            flex={1}
-            paddingVertical="s12"
-            borderRadius="s12"
-            backgroundColor={selectedTab === 'active' ? 'primary' : 'background'}
-            alignItems="center"
-            onPress={() => setSelectedTab('active')}>
-            <Text
-              preset="paragraphMedium"
-              color={selectedTab === 'active' ? 'surface' : 'text'}
-              bold>
-              Ativas
-            </Text>
-          </TouchableOpacityBox>
-
-          <TouchableOpacityBox
-            flex={1}
-            paddingVertical="s12"
-            borderRadius="s12"
-            backgroundColor={selectedTab === 'completed' ? 'primary' : 'background'}
-            alignItems="center"
-            onPress={() => setSelectedTab('completed')}>
-            <Text
-              preset="paragraphMedium"
-              color={selectedTab === 'completed' ? 'surface' : 'text'}
-              bold>
-              Concluídas
-            </Text>
-          </TouchableOpacityBox>
-        </Box>
-      </Box>
-
-      {bookingsError && (
-        <Box
-          flexDirection="row"
-          alignItems="center"
-          paddingHorizontal="s16"
-          paddingVertical="s12"
-          style={{backgroundColor: '#FEF3C7', borderBottomWidth: 1, borderBottomColor: '#FDE68A'}}>
-          <Icon name="wifi-off" size={16} color="warning" />
-          <Text preset="paragraphSmall" color="text" ml="s8" flex={1}>
-            Sem conexão. Exibindo dados em cache.
-          </Text>
-          <TouchableOpacityBox onPress={() => fetchBookings().catch(() => {})} pl="s12">
-            <Text preset="paragraphSmall" color="primary" bold>Tentar</Text>
-          </TouchableOpacityBox>
-        </Box>
-      )}
-
-      <FlatList
-        data={isLoadingBookings && filteredBookings.length === 0 ? [] : filteredBookings}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{padding: 24}}
-        onEndReached={loadMoreBookings}
-        onEndReachedThreshold={0.3}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListFooterComponent={
-          hasMoreBookings ? (
-            <Box paddingVertical="s16" alignItems="center">
-              <ActivityIndicator />
-            </Box>
-          ) : null
-        }
+    <Box flex={1}>
+      <ScreenList
+        title="Minhas Reservas"
+        data={filteredBookings}
+        isLoading={isLoadingBookings}
+        error={bookingsError}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        tabs={tabs}
+        selectedTab={selectedTab}
+        onTabChange={setSelectedTab}
+        SkeletonComponent={BookingCardSkeleton}
+        emptyIcon={selectedTab === 'active' ? 'receipt-long' : 'check-circle'}
+        emptyTitle={`Nenhuma reserva ${selectedTab === 'active' ? 'ativa' : 'concluída'}`}
+        emptyDescription={selectedTab === 'active' ? 'Suas próximas viagens aparecerão aqui' : 'Seu histórico de viagens aparecerá aqui'}
         renderItem={({item}: {item: Booking}) => {
           const origin = item.trip?.origin || 'Origem desconhecida';
           const destination = item.trip?.destination || 'Destino desconhecido';
@@ -155,12 +84,6 @@ export function BookingsScreen() {
             item.status === 'checked_in';
           const canCancel = canCancelBooking(item.status);
           const badge = getStatusBadge(item.status);
-          const lockedCancelLabel =
-            item.status === 'checked_in'
-              ? 'Embarque realizado'
-              : item.status === 'completed'
-                ? 'Viagem concluída'
-                : null;
 
           return (
             <TouchableOpacityBox
@@ -176,6 +99,7 @@ export function BookingsScreen() {
                 shadowRadius: 8,
                 elevation: 3,
               }}>
+              {/* Card Header */}
               <Box
                 flexDirection="row"
                 alignItems="center"
@@ -198,6 +122,7 @@ export function BookingsScreen() {
                 </Box>
               </Box>
 
+              {/* Trip Info */}
               <Box flexDirection="row" alignItems="center" mb="s16">
                 <Box flex={1}>
                   <Text preset="paragraphSmall" color="textSecondary" mb="s4">Origem</Text>
@@ -243,6 +168,7 @@ export function BookingsScreen() {
                 </Text>
               </Box>
 
+              {/* Price & Seats */}
               <Box
                 flexDirection="row"
                 alignItems="center"
@@ -264,9 +190,6 @@ export function BookingsScreen() {
                   <Icon name="confirmation-number" size={18} color="primary" />
                   <Text preset="paragraphSmall" color="primary" bold ml="s8">
                     {seats} {seats === 1 ? 'passagem' : 'passagens'}
-                    {(item as Booking).childrenCount
-                      ? ` · ${(item as Booking).childrenCount} criança${(item as Booking).childrenCount! > 1 ? 's' : ''}`
-                      : ''}
                   </Text>
                 </Box>
               </Box>
@@ -288,7 +211,7 @@ export function BookingsScreen() {
                     </Text>
                   </TouchableOpacityBox>
 
-                  {canCancel ? (
+                  {canCancel && (
                     <TouchableOpacityBox
                       width={48}
                       height={48}
@@ -299,32 +222,7 @@ export function BookingsScreen() {
                       onPress={() => setBookingToCancel(item)}>
                       <Icon name="close" size={20} color="danger" />
                     </TouchableOpacityBox>
-                  ) : (
-                    <Box
-                      paddingHorizontal="s12"
-                      borderRadius="s12"
-                      backgroundColor="infoBg"
-                      alignItems="center"
-                      justifyContent="center">
-                      <Text preset="paragraphCaptionSmall" color="info" bold textAlign="center">
-                        Embarque realizado
-                      </Text>
-                    </Box>
                   )}
-                </Box>
-              )}
-
-              {!isActive && lockedCancelLabel && (
-                <Box
-                  mt="s16"
-                  paddingVertical="s12"
-                  paddingHorizontal="s16"
-                  borderRadius="s12"
-                  backgroundColor="background"
-                  alignItems="center">
-                  <Text preset="paragraphSmall" color="textSecondary" bold>
-                    {lockedCancelLabel}
-                  </Text>
                 </Box>
               )}
 
@@ -355,35 +253,6 @@ export function BookingsScreen() {
             </TouchableOpacityBox>
           );
         }}
-        ListEmptyComponent={
-          isLoadingBookings ? (
-            <Box>
-              <BookingCardSkeleton />
-              <BookingCardSkeleton />
-              <BookingCardSkeleton />
-            </Box>
-          ) : (
-            <Box alignItems="center" paddingVertical="s48">
-              <Icon
-                name={selectedTab === 'active' ? 'receipt-long' : 'check-circle'}
-                size={64}
-                color="border"
-              />
-              <Text preset="headingSmall" color="textSecondary" mt="s16">
-                Nenhuma reserva {selectedTab === 'active' ? 'ativa' : 'concluída'}
-              </Text>
-              <Text
-                preset="paragraphMedium"
-                color="textSecondary"
-                mt="s8"
-                textAlign="center">
-                {selectedTab === 'active'
-                  ? 'Suas próximas viagens aparecerão aqui'
-                  : 'Seu histórico de viagens aparecerá aqui'}
-              </Text>
-            </Box>
-          )
-        }
       />
 
       <ConfirmationModal

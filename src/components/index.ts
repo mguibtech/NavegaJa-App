@@ -23,7 +23,7 @@ export {CouponInputV2} from './CouponInput/CouponInputV2';
 export type {CouponInputV2Props} from './CouponInput/CouponInputV2';
 export {PriceBreakdown} from './PriceBreakdown/PriceBreakdown';
 export type {PriceBreakdownProps} from './PriceBreakdown/PriceBreakdown';
-export {Skeleton, TripCardSkeleton, TripListSkeleton, TripDetailsSkeleton, BookingCardSkeleton, ShipmentCardSkeleton, WeatherWidgetSkeleton, ForecastCardSkeleton, RiverLevelsSkeleton, WeatherAlertCardSkeleton} from './Skeleton/Skeleton';
+export {Skeleton, TripCardSkeleton, TripListSkeleton, TripDetailsSkeleton, ShipmentDetailsSkeleton, BookingCardSkeleton, ShipmentCardSkeleton, WeatherWidgetSkeleton, ForecastCardSkeleton, RiverLevelsSkeleton, WeatherAlertCardSkeleton} from './Skeleton/Skeleton';
 export type {SkeletonProps} from './Skeleton/Skeleton';
 export {ShipmentCard} from './ShipmentCard/ShipmentCard';
 export {PhotoPicker} from './PhotoPicker/PhotoPicker';
@@ -59,6 +59,7 @@ export {RiverDetailModal} from './RiverDetailModal/RiverDetailModal';
 
 export {KycBanner} from './KycBanner/KycBanner';
 export {ScreenHeader} from './ScreenHeader/ScreenHeader';
+export {ScreenList} from './ScreenList/ScreenList';
 
 export {GlobalSosHandler} from './GlobalSosHandler/GlobalSosHandler';
 

@@ -170,6 +170,10 @@ class ApiClient {
           error: error.response?.data?.error || 'Internal Server Error',
         };
 
+        // Normaliza a mensagem para o usuário
+        const {ApiErrorHandler} = require('./apiErrorHandler');
+        apiError.message = ApiErrorHandler.handle(apiError);
+
         return Promise.reject(apiError);
       },
     );
