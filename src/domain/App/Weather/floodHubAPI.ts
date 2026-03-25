@@ -11,7 +11,12 @@
 // source:'flood_hub' → dados reais do Google Flood Hub.
 
 import {api} from '@api';
-import {FloodForecastData, FloodGaugeModel, FloodInundationData} from './floodHubTypes';
+import {
+  FloodForecastData,
+  FloodGaugeModel,
+  FloodInundationData,
+  FloodGaugeForecast,
+} from './floodHubTypes';
 
 async function getFloodStatus(
   lat: number,
@@ -27,6 +32,18 @@ async function getGaugeModel(gaugeId: string): Promise<FloodGaugeModel> {
   return api.get<FloodGaugeModel>(`/weather/flood/gauge/${gaugeId}/model`);
 }
 
+async function getGaugeForecast(
+  gaugeId: string,
+  days = 7,
+): Promise<FloodGaugeForecast> {
+  return api.get<FloodGaugeForecast>(
+    `/weather/flood/gauge/${gaugeId}/forecast`,
+    {
+      params: {days},
+    },
+  );
+}
+
 async function getInundation(
   lat: number,
   lng: number,
@@ -40,5 +57,6 @@ async function getInundation(
 export const floodHubAPI = {
   getFloodStatus,
   getGaugeModel,
+  getGaugeForecast,
   getInundation,
 };

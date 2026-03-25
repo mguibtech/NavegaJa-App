@@ -129,6 +129,20 @@ export interface FloodInundationData {
   lastUpdated: string;
 }
 
+// ─── Phase 2 — Gauge Forecast ────────────────────────────────────────────────
+
+export interface FloodForecastPoint {
+  time: string;   // ISO 8601
+  value: number;  // meters ou cubic meters per second
+}
+
+export interface FloodGaugeForecast {
+  gaugeId: string;
+  unit: 'METERS' | 'CUBIC_METERS_PER_SECOND';
+  points: FloodForecastPoint[];
+  generatedAt: string;
+}
+
 export const RISK_FILL: Record<FloodRiskLevel, string> = {
   HIGH:   'rgba(220, 38, 38, 0.25)',
   MEDIUM: 'rgba(245, 158, 11, 0.20)',
