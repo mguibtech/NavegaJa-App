@@ -23,8 +23,8 @@ const SOS_BG_FLAG_KEY = '@navegaja:sos_bg_triggered';
 const {SosVolumeModule} = NativeModules;
 const isAndroid = Platform.OS === 'android';
 
-// SOS por botão de volume habilitado para Android
-const VOLUME_SOS_ENABLED = true;
+// SOS por botão de volume desativado para evitar disparos acidentais
+const VOLUME_SOS_ENABLED = false;
 
 /**
  * Componente global montado na raiz do AppStack.
