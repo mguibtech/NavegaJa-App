@@ -71,4 +71,5 @@ export const AM_CITIES_FALLBACK: string[] = [
   'São Gabriel da Cachoeira',
   'Tabatinga',
   'Tefé',
+  'Tapauá',
 ];

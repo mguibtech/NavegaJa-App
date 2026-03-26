@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidingView, Platform, Modal, FlatList} from 'react-native';
+import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidingView, Platform, Modal, FlatList, ActivityIndicator} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -7,7 +7,8 @@ import {Box, Button, Icon, Logo, Text, TextInput, TouchableOpacityBox} from '@co
 import {useTheme} from '@shopify/restyle';
 import {Theme} from '@theme';
 import {useAuthStore} from '@store';
-import {formatPhone, unformatPhone, formatEmail} from '@utils';
+import {useCities} from '@domain';
+import {AM_CITIES, formatPhone, unformatPhone, formatEmail} from '@utils';
 import {useToast} from '@hooks';
 import {logSignUp} from '@services';
 
@@ -39,33 +40,12 @@ function isValidCPF(cpf: string): boolean {
   return parseInt(clean[10], 10) === d2;
 }
 
-const AM_CITIES = [
-  'Manaus',
-  'Parintins',
-  'Itacoatiara',
-  'Tefé',
-  'Barreirinha',
-  'Coari',
-  'Maués',
-  'Tabatinga',
-  'Lábrea',
-  'Humaitá',
-  'Benjamin Constant',
-  'São Gabriel da Cachoeira',
-  'Borba',
-  'Autazes',
-  'Nova Olinda do Norte',
-  'Presidente Figueiredo',
-  'Iranduba',
-  'Manacapuru',
-  'Careiro',
-  'Anori',
-];
-
 export function RegisterScreen({navigation}: Props) {
   const {register, isLoading} = useAuthStore();
+  const {cityNames, isLoading: isLoadingCities} = useCities();
   const {colors} = useTheme<Theme>();
   const toast = useToast();
+  const availableCities = cityNames.length > 0 ? cityNames : AM_CITIES;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -465,8 +445,18 @@ export function RegisterScreen({navigation}: Props) {
             </TouchableOpacityBox>
           </Box>
           <FlatList
-            data={AM_CITIES}
+            data={availableCities}
             keyExtractor={item => item}
+            ListHeaderComponent={
+              isLoadingCities ? (
+                <Box flexDirection="row" alignItems="center" justifyContent="center" paddingVertical="s12">
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text preset="paragraphSmall" color="textSecondary" ml="s8">
+                    Carregando cidades...
+                  </Text>
+                </Box>
+              ) : null
+            }
             renderItem={({item}) => (
               <TouchableOpacityBox
                 onPress={() => {
