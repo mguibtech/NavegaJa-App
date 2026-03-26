@@ -1,4 +1,5 @@
 import React from 'react';
+import {StyleSheet} from 'react-native';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
 import {formatDistance} from './fluvialNavigationUtils';
@@ -55,7 +56,7 @@ export function NavigationHUD({
     <>
       {/* ── Floating controls (right side) ─────────────────────── */}
       <Box
-        style={{position: 'absolute', right: 16, bottom: bottom + 200}}
+        style={[styles.floatingControls, {bottom: bottom + 200}]}
         alignItems="center">
         {/* Map mode toggle */}
         <TouchableOpacityBox
@@ -67,13 +68,7 @@ export function NavigationHUD({
           justifyContent="center"
           mb="s8"
           onPress={onToggleMapMode}
-          style={{
-            elevation: 4,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-          }}>
+          style={styles.floatingButton}>
           <Icon
             name={mapMode === 'standard' ? 'satellite' : 'map'}
             size={22}
@@ -90,13 +85,7 @@ export function NavigationHUD({
           alignItems="center"
           justifyContent="center"
           onPress={onToggleCameraLock}
-          style={{
-            elevation: 4,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-          }}>
+          style={styles.floatingButton}>
           <Icon
             name={isCameraLocked ? 'navigation' : 'explore'}
             size={22}
@@ -108,23 +97,12 @@ export function NavigationHUD({
       {/* ── Off-route banner ──────────────────────────────────────────── */}
       {isOffRoute && (
         <Box
-          style={{
-            position: 'absolute',
-            bottom: bottom + 220,
-            left: 16,
-            right: 70,
-            backgroundColor: '#EF4444',
-            borderRadius: 12,
-            padding: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            elevation: 6,
-          }}>
+          style={[styles.alertBanner, {bottom: bottom + 220, backgroundColor: '#EF4444'}]}>
           <Icon name="navigation" size={20} color="surface" />
           <Text
             preset="paragraphSmall"
             bold
-            style={{color: '#fff', marginLeft: 8, flex: 1}}>
+            style={styles.alertText}>
             Fora da rota — retorne ao canal principal
           </Text>
         </Box>
@@ -133,32 +111,27 @@ export function NavigationHUD({
       {/* ── Danger zone alert banner ──────────────────────────────────── */}
       {!isOffRoute && closestZone && (
         <Box
-          style={{
-            position: 'absolute',
-            bottom: bottom + 220,
-            left: 16,
-            right: 70,
-            backgroundColor: DANGER_ZONE_COLOR[closestZone.zone.severity],
-            borderRadius: 12,
-            padding: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            elevation: 6,
-          }}>
+          style={[
+            styles.alertBanner,
+            {
+              bottom: bottom + 220,
+              backgroundColor: DANGER_ZONE_COLOR[closestZone.zone.severity],
+            },
+          ]}>
           <Icon
             name={DANGER_ZONE_ICON[closestZone.zone.type]}
             size={20}
             color="surface"
           />
-          <Box flex={1} style={{marginLeft: 8}}>
-            <Text preset="paragraphSmall" bold style={{color: '#fff'}}>
+          <Box flex={1} style={styles.dangerTextWrapper}>
+            <Text preset="paragraphSmall" bold style={styles.alertText}>
               {closestZone.distanceM < 100
                 ? `⚠ Área de risco — ${closestZone.zone.name}`
                 : `⚠ Perigo em ${Math.round(closestZone.distanceM / 100) * 100} m — ${closestZone.zone.name}`}
             </Text>
             <Text
               preset="paragraphCaptionSmall"
-              style={{color: 'rgba(255,255,255,0.85)', marginTop: 2}}
+              style={styles.alertCaption}
               numberOfLines={1}>
               {closestZone.zone.description}
             </Text>
@@ -169,22 +142,7 @@ export function NavigationHUD({
       {/* ── Main HUD panel ──────────────────────────────────────────────── */}
       <Box
         backgroundColor="surface"
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          paddingTop: 16,
-          paddingHorizontal: 20,
-          paddingBottom: bottom + 16,
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: -4},
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-        }}>
+        style={[styles.hudPanel, {paddingBottom: bottom + 16}]}>
 
         {/* Drag handle */}
         <Box
@@ -193,7 +151,7 @@ export function NavigationHUD({
           height={4}
           backgroundColor="border"
           mb="s12"
-          style={{borderRadius: 2}}
+          style={styles.dragHandle}
         />
 
         {/* Route label */}
@@ -201,7 +159,7 @@ export function NavigationHUD({
           <Box
             width={10}
             height={10}
-            style={{borderRadius: 5, backgroundColor: '#16a34a', marginRight: 6}}
+            style={[styles.routeDot, styles.routeDotStart]}
           />
           <Text
             preset="paragraphCaptionSmall"
@@ -214,7 +172,7 @@ export function NavigationHUD({
           <Box
             width={10}
             height={10}
-            style={{borderRadius: 5, backgroundColor: '#dc2626', marginLeft: 6, marginRight: 6}}
+            style={[styles.routeDot, styles.routeDotEnd]}
           />
           <Text
             preset="paragraphCaptionSmall"
@@ -228,11 +186,7 @@ export function NavigationHUD({
         <Box flexDirection="row" alignItems="flex-end" mb="s12">
           {/* Distance remaining */}
           <Box flex={1}>
-            <Text
-              preset="headingSmall"
-              color="text"
-              bold
-              style={{fontSize: 32, lineHeight: 36}}>
+            <Text preset="headingSmall" color="text" bold style={styles.distanceText}>
               {formatDistance(distanceRemaining)}
             </Text>
             <Text preset="paragraphCaptionSmall" color="textSecondary">
@@ -245,7 +199,7 @@ export function NavigationHUD({
               preset="headingSmall"
               color="secondary"
               bold
-              style={{fontSize: 22}}>
+              style={styles.speedText}>
               {Math.round(speed)}
             </Text>
             <Text preset="paragraphCaptionSmall" color="textSecondary">
@@ -260,11 +214,11 @@ export function NavigationHUD({
           backgroundColor="border"
           mb="s16"
           overflow="hidden"
-          style={{borderRadius: 3}}>
+          style={styles.progressTrack}>
           <Box
             height={6}
             backgroundColor="secondary"
-            style={{borderRadius: 3, width: `${progressPct}%`}}
+            style={[styles.progressFill, {width: `${progressPct}%`}]}
           />
         </Box>
 
@@ -279,7 +233,7 @@ export function NavigationHUD({
             justifyContent="center"
             mr="s8"
             onPress={onSOS}
-            style={{backgroundColor: '#dc2626'}}>
+            style={[styles.actionButton, styles.sosButton]}>
             <Icon name="sos" size={24} color="surface" />
           </TouchableOpacityBox>
 
@@ -294,10 +248,11 @@ export function NavigationHUD({
             mr="s8"
             onPress={onCompleteTrip}
             disabled={isCompletingTrip}
-            style={{
-              backgroundColor: progress >= 0.8 ? '#16a34a' : '#0a6fbd',
-              opacity: isCompletingTrip ? 0.6 : 1,
-            }}>
+            style={[
+              styles.completeButton,
+              progress >= 0.8 ? styles.completeReady : styles.completeDefault,
+              isCompletingTrip && styles.disabledButton,
+            ]}>
             <Icon
               name={isCompletingTrip ? 'hourglass-top' : 'flag-circle'}
               size={22}
@@ -306,7 +261,7 @@ export function NavigationHUD({
             <Text
               preset="paragraphSmall"
               bold
-              style={{color: '#fff', marginLeft: 6}}>
+              style={styles.completeButtonText}>
               {isCompletingTrip
                 ? 'Encerrando...'
                 : progress >= 0.8
@@ -323,7 +278,8 @@ export function NavigationHUD({
             backgroundColor="background"
             alignItems="center"
             justifyContent="center"
-            onPress={onRecenter}>
+            onPress={onRecenter}
+            style={styles.actionButton}>
             <Icon name="my-location" size={24} color="secondary" />
           </TouchableOpacityBox>
         </Box>
@@ -331,3 +287,112 @@ export function NavigationHUD({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  floatingControls: {
+    position: 'absolute',
+    right: 16,
+  },
+  floatingButton: {
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  alertBanner: {
+    position: 'absolute',
+    left: 16,
+    right: 70,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 6,
+  },
+  alertText: {
+    color: '#fff',
+    marginLeft: 8,
+    flex: 1,
+  },
+  dangerTextWrapper: {
+    marginLeft: 8,
+  },
+  alertCaption: {
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
+  hudPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  dragHandle: {
+    borderRadius: 2,
+  },
+  routeDot: {
+    borderRadius: 5,
+  },
+  routeDotStart: {
+    backgroundColor: '#16a34a',
+    marginRight: 6,
+  },
+  routeDotEnd: {
+    backgroundColor: '#dc2626',
+    marginLeft: 6,
+    marginRight: 6,
+  },
+  distanceText: {
+    fontSize: 32,
+    lineHeight: 36,
+  },
+  speedText: {
+    fontSize: 22,
+  },
+  progressTrack: {
+    borderRadius: 3,
+  },
+  progressFill: {
+    borderRadius: 3,
+  },
+  actionButton: {
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  sosButton: {
+    backgroundColor: '#dc2626',
+  },
+  completeButton: {
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  completeDefault: {
+    backgroundColor: '#0a6fbd',
+  },
+  completeReady: {
+    backgroundColor: '#16a34a',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  completeButtonText: {
+    color: '#fff',
+    marginLeft: 6,
+  },
+});

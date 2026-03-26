@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator} from 'react-native';
+import {ScrollView, ActivityIndicator, StyleSheet} from 'react-native';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal, ScreenHeader} from '@components';
 
@@ -26,7 +26,7 @@ export function PaymentMethodsScreen() {
 
       {/* Content */}
       <ScrollView
-        contentContainerStyle={{padding: 24}}
+        contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>
         {/* PIX Section */}
         <Box mb="s24">
@@ -38,13 +38,7 @@ export function PaymentMethodsScreen() {
             backgroundColor="surface"
             borderRadius="s16"
             padding="s20"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 1},
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 2,
-            }}>
+            style={styles.shadowCard}>
             <Box flexDirection="row" alignItems="center">
               <Box
                 width={56}
@@ -105,13 +99,7 @@ export function PaymentMethodsScreen() {
             padding="s24"
             alignItems="center"
             mb="s24"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 1},
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 2,
-            }}>
+            style={styles.shadowCard}>
             <Icon name="credit-card-off" size={48} color="border" />
             <Text preset="paragraphMedium" color="textSecondary" mt="s12" textAlign="center">
               Nenhum cartão cadastrado
@@ -129,13 +117,7 @@ export function PaymentMethodsScreen() {
                 borderRadius="s12"
                 padding="s16"
                 mb="s12"
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: {width: 0, height: 1},
-                  shadowOpacity: 0.05,
-                  shadowRadius: 4,
-                  elevation: 2,
-                }}>
+                style={styles.shadowCard}>
                 <Box flexDirection="row" alignItems="center" mb="s12">
                   <Box
                     width={48}
@@ -200,10 +182,7 @@ export function PaymentMethodsScreen() {
           backgroundColor="infoBg"
           borderRadius="s12"
           padding="s16"
-          style={{
-            borderLeftWidth: 4,
-            borderLeftColor: '#2196F3',
-          }}>
+          style={styles.infoBox}>
           <Box flexDirection="row" alignItems="flex-start">
             <Icon name="security" size={20} color="info" />
             <Box flex={1} ml="s8">
@@ -239,3 +218,20 @@ export function PaymentMethodsScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    padding: 24,
+  },
+  shadowCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  infoBox: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+});

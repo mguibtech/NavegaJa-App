@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {StatusBar, useColorScheme} from 'react-native';
+import {StatusBar, useColorScheme, StyleSheet} from 'react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '@shopify/restyle';
@@ -44,7 +44,7 @@ function App() {
   const activeTheme = isDark ? darkTheme : theme;
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <ThemeProvider theme={activeTheme}>
@@ -63,3 +63,9 @@ function App() {
 }
 
 export default App;
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

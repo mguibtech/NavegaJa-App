@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
+import {ScrollView, RefreshControl, ActivityIndicator, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
@@ -57,7 +57,7 @@ export function CaptainTripManageScreen() {
           paddingBottom="s12"
           borderBottomWidth={1}
           borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
+          style={[styles.header, {paddingTop: top + 12}]}>
           <Box flexDirection="row" alignItems="center" justifyContent="center">
             <TouchableOpacityBox
               width={40}
@@ -65,7 +65,7 @@ export function CaptainTripManageScreen() {
               alignItems="center"
               justifyContent="center"
               onPress={goBack}
-              style={{position: 'absolute', left: 0}}>
+              style={styles.backButton}>
               <Icon name="arrow-back" size={22} color="text" />
             </TouchableOpacityBox>
             <Text preset="headingSmall" color="text" bold>
@@ -87,7 +87,7 @@ export function CaptainTripManageScreen() {
           </Box>
         ) : (
           <ScrollView
-            contentContainerStyle={{padding: 20, paddingBottom: 120}}
+            contentContainerStyle={styles.scrollContent}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }>
@@ -97,7 +97,7 @@ export function CaptainTripManageScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{elevation: 3}}>
+              style={styles.elevatedCard}>
               <Box
                 flexDirection="row"
                 justifyContent="space-between"
@@ -237,18 +237,18 @@ export function CaptainTripManageScreen() {
                     const passengerName = p.passenger?.name ?? 'Passageiro indisponível';
                     const passengerPhone = p.passenger?.phone ?? 'Telefone indisponível';
                     return (
-                      <Box
-                        key={p.bookingId}
-                        backgroundColor="surface"
-                        borderRadius="s12"
-                        padding="s16"
-                        mb="s8"
-                        flexDirection="row"
-                        alignItems="center"
-                        style={{
-                          borderLeftWidth: 3,
-                          borderLeftColor: checkedIn ? '#22C55E' : '#64748B',
-                        }}>
+                        <Box
+                          key={p.bookingId}
+                          backgroundColor="surface"
+                          borderRadius="s12"
+                          padding="s16"
+                          mb="s8"
+                          flexDirection="row"
+                          alignItems="center"
+                          style={[
+                            styles.passengerCard,
+                            {borderLeftColor: checkedIn ? '#22C55E' : '#64748B'},
+                          ]}>
                         <Box
                           width={40}
                           height={40}
@@ -286,7 +286,7 @@ export function CaptainTripManageScreen() {
                               backgroundColor="successBg"
                               paddingHorizontal="s8"
                               paddingVertical="s4"
-                              style={{borderRadius: 6}}>
+                              style={styles.statusBadge}>
                               <Text preset="paragraphCaptionSmall" color="success" bold>
                                 Embarcou
                               </Text>
@@ -296,7 +296,7 @@ export function CaptainTripManageScreen() {
                               backgroundColor="warningBg"
                               paddingHorizontal="s8"
                               paddingVertical="s4"
-                              style={{borderRadius: 6}}>
+                              style={styles.statusBadge}>
                               <Text preset="paragraphCaptionSmall" color="warning" bold>
                                 Pendente
                               </Text>
@@ -393,10 +393,12 @@ export function CaptainTripManageScreen() {
                           </Box>
                           {isActionable ? (
                             <Box
-                              backgroundColor={canCollect ? 'secondary' : 'info'}
+                              style={[
+                                styles.shipmentActionBadge,
+                                {backgroundColor: canCollect ? '#16a34a' : '#3b82f6'},
+                              ]}
                               paddingHorizontal="s10"
-                              paddingVertical="s6"
-                              style={{borderRadius: 8}}>
+                              paddingVertical="s6">
                               <Text preset="paragraphCaptionSmall" color="surface" bold>
                                 {canCollect ? 'Coletar' : 'Entregar'}
                               </Text>
@@ -479,3 +481,29 @@ export function CaptainTripManageScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingTop: 0,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  elevatedCard: {
+    elevation: 3,
+  },
+  passengerCard: {
+    borderLeftWidth: 3,
+  },
+  statusBadge: {
+    borderRadius: 6,
+  },
+  shipmentActionBadge: {
+    borderRadius: 8,
+  },
+});

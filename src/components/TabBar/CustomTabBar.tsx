@@ -110,17 +110,15 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
       style={styles.tabItem}>
       <Box alignItems="center">
         {/* Container do ícone */}
-        <Box position="relative" mb="s6" style={{overflow: 'visible'}}>
+        <Box position="relative" mb="s6" style={styles.visibleOverflow}>
           <Animated.View
             style={[
               styles.iconContainer,
+              styles.iconShadow,
+              isFocused ? styles.iconShadowFocused : styles.iconShadowFlat,
               {
                 transform: [{scale: scaleAnim}, {translateY: translateYAnim}],
                 shadowColor: theme.colors.primary,
-                shadowOffset: {width: 0, height: 8},
-                shadowOpacity: isFocused ? 0.3 : 0,
-                shadowRadius: 16,
-                elevation: isFocused ? 8 : 0,
               },
             ]}>
             {/* Background com gradiente para item ativo */}
@@ -146,20 +144,8 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
 
           {/* Badge de notificação */}
           {badgeCount !== undefined && badgeCount > 0 && (
-            <Box
-              position="absolute"
-              top={-4}
-              right={-4}
-              minWidth={20}
-              height={20}
-              borderRadius="s12"
-              backgroundColor="danger"
-              alignItems="center"
-              justifyContent="center"
-              paddingHorizontal="s4">
-              <Text
-                style={{fontSize: 10, fontWeight: '700'}}
-                color="surface">
+            <Box style={styles.badge}>
+              <Text style={styles.badgeText} color="surface">
                 {badgeCount > 99 ? '99+' : `${badgeCount}`}
               </Text>
             </Box>
@@ -168,10 +154,7 @@ function TabItem({isFocused, label, badgeCount, options, onPress}: TabItemProps)
 
         {/* Label */}
         <Text
-          style={{
-            fontSize: 10,
-            fontWeight: isFocused ? '700' : '500',
-          }}
+          style={[styles.label, isFocused ? styles.labelFocused : undefined]}
           color={textColor}
           numberOfLines={1}>
           {label}
@@ -216,5 +199,43 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
+  },
+  visibleOverflow: {
+    overflow: 'visible',
+  },
+  iconShadow: {
+    shadowOffset: {width: 0, height: 8},
+    shadowRadius: 16,
+  },
+  iconShadowFocused: {
+    shadowOpacity: 0.3,
+    elevation: 8,
+  },
+  iconShadowFlat: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 12,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  labelFocused: {
+    fontWeight: '700',
   },
 });

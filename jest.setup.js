@@ -194,13 +194,14 @@ jest.mock('react-native-gesture-handler', () => {
     PanGestureHandler: View,
     PinchGestureHandler: View,
     RotationGestureHandler: View,
-    RawButton: View,
-    BaseButton: View,
-    RectButton: View,
-    BorderlessButton: View,
-    FlatList: View,
-    gestureHandlerRootHOC: (component) => component,
-    Directions: {},
+  RawButton: View,
+  BaseButton: View,
+  RectButton: View,
+  BorderlessButton: View,
+  FlatList: View,
+  GestureHandlerRootView: View,
+  gestureHandlerRootHOC: (component) => component,
+  Directions: {},
   };
 });
 

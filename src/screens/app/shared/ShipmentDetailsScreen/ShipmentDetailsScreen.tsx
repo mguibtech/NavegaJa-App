@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, Image, Modal, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, View} from 'react-native';
+import {ScrollView, Image, Modal, KeyboardAvoidingView, Platform, StyleSheet, View} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import {ShipmentShareCard} from './ShipmentShareCard';
@@ -11,14 +11,6 @@ import {Box, Button, Icon, Text, TextInput, ConfirmationModal, InfoModal, Toucha
 import {ShipmentStatus} from '@domain';
 
 import {useShipmentDetailsScreen} from './useShipmentDetailsScreen';
-
-const ss = StyleSheet.create({
-  offScreen: {
-    position: 'absolute',
-    top: -5000,
-    left: 0,
-  },
-});
 
 export function ShipmentDetailsScreen() {
   const {openViewer, viewerProps} = usePhotoViewer();
@@ -76,7 +68,7 @@ export function ShipmentDetailsScreen() {
           paddingHorizontal="s20"
           paddingVertical="s16"
           backgroundColor="surface"
-          style={{paddingTop: 48, elevation: 2}}
+          style={styles.headerElevation}
           flexDirection="row"
           alignItems="center">
           <TouchableOpacityBox onPress={() => navigation.goBack()} mr="s16">
@@ -116,13 +108,7 @@ export function ShipmentDetailsScreen() {
             padding="s24"
             alignItems="center"
             mb="s24"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
+            style={styles.cardShadow}>
             {shipment.trackingCode ? (
               <>
                 <QRCode
@@ -155,15 +141,7 @@ export function ShipmentDetailsScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{
-                shadowColor: '#007BFF',
-                shadowOffset: {width: 0, height: 4},
-                shadowOpacity: 0.2,
-                shadowRadius: 12,
-                elevation: 5,
-                borderWidth: 2,
-                borderColor: '#007BFF',
-              }}>
+              style={styles.validationCard}>
               <Box alignItems="center">
                 <Box mb="s12">
                   <Icon name="lock" size={40} color="primary" />
@@ -181,7 +159,7 @@ export function ShipmentDetailsScreen() {
                   paddingHorizontal="s24"
                   paddingVertical="s16"
                   borderRadius="s12">
-                  <Text preset="headingLarge" color="primary" bold style={{letterSpacing: 8}}>
+                  <Text preset="headingLarge" color="primary" bold style={styles.validationCodeText}>
                     {shipment.validationCode}
                   </Text>
                 </Box>
@@ -198,15 +176,7 @@ export function ShipmentDetailsScreen() {
                 borderRadius="s16"
                 padding="s20"
                 mb="s16"
-                style={{
-                  shadowColor: '#28A745',
-                  shadowOffset: {width: 0, height: 4},
-                  shadowOpacity: 0.2,
-                  shadowRadius: 12,
-                  elevation: 5,
-                  borderWidth: 2,
-                  borderColor: '#28A745',
-                }}>
+                style={styles.successCard}>
                 <Box alignItems="center" flexDirection="row" justifyContent="center">
                   <Box mr="s12">
                     <Icon name="stars" size={32} color="success" />
@@ -229,13 +199,7 @@ export function ShipmentDetailsScreen() {
             borderRadius="s16"
             padding="s20"
             mb="s16"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
+            style={styles.cardShadow}>
             <Text preset="paragraphMedium" color="text" bold mb="s16">
               Destinatário
             </Text>
@@ -268,13 +232,7 @@ export function ShipmentDetailsScreen() {
             borderRadius="s16"
             padding="s20"
             mb="s16"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
+            style={styles.cardShadow}>
             <Text preset="paragraphMedium" color="text" bold mb="s16">
               Detalhes
             </Text>
@@ -350,13 +308,7 @@ export function ShipmentDetailsScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}>
+              style={styles.cardShadow}>
               <Text preset="paragraphMedium" color="text" bold mb="s16">
                 Viagem
               </Text>
@@ -399,13 +351,7 @@ export function ShipmentDetailsScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s24"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}>
+              style={styles.cardShadow}>
               <Text preset="paragraphMedium" color="text" bold mb="s16">
                 Histórico
               </Text>
@@ -477,7 +423,7 @@ export function ShipmentDetailsScreen() {
                         }>
                         <Image
                           source={{uri}}
-                          style={{width: '100%', height: '100%', borderRadius: 12}}
+                          style={styles.photoThumbnail}
                           resizeMode="cover"
                         />
                       </TouchableOpacityBox>
@@ -686,25 +632,19 @@ export function ShipmentDetailsScreen() {
         animationType="fade"
         onRequestClose={() => setShowCollectPinModal(false)}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={styles.flexFill}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Box
             flex={1}
             justifyContent="center"
             alignItems="center"
-            style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+            style={styles.modalOverlay}>
             <Box
               backgroundColor="surface"
               borderRadius="s16"
               padding="s24"
               width="85%"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 8},
-                shadowOpacity: 0.2,
-                shadowRadius: 24,
-                elevation: 10,
-              }}>
+              style={styles.modalCard}>
               <Box flexDirection="row" alignItems="center" mb="s16">
                 <Icon name="inventory-2" size={24} color="primary" />
                 <Text preset="headingSmall" color="text" bold ml="s12">
@@ -818,10 +758,68 @@ export function ShipmentDetailsScreen() {
 
       {/* Share card — renderizado off-screen para captura de imagem */}
       {shipment && (
-        <View style={ss.offScreen} pointerEvents="none">
+        <View style={styles.offScreen} pointerEvents="none">
           <ShipmentShareCard ref={shareCardRef} shipment={shipment} />
         </View>
       )}
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  offScreen: {
+    position: 'absolute',
+    top: -5000,
+    left: 0,
+  },
+  headerElevation: {
+    paddingTop: 48,
+    elevation: 2,
+  },
+  cardShadow: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  validationCard: {
+    shadowColor: '#007BFF',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#007BFF',
+  },
+  successCard: {
+    shadowColor: '#28A745',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#28A745',
+  },
+  validationCodeText: {
+    letterSpacing: 8,
+  },
+  photoThumbnail: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  flexFill: {
+    flex: 1,
+  },
+  modalOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+});

@@ -652,7 +652,7 @@ export function HomeScreen({navigation}: Props) {
               <Box
                 width={8}
                 height={8}
-                borderRadius="s8"
+                borderRadius="s12"
                 backgroundColor="danger"
                 style={{position: 'absolute', top: 8, right: 8}}
               />
@@ -764,14 +764,14 @@ export function HomeScreen({navigation}: Props) {
         )}
 
         {/* Quick Stats */}
-        <Box paddingHorizontal="s24" mt="s24" mb="s24">
+        <Box paddingHorizontal="s24" mt="s24" mb="s10">
           <Box flexDirection="row" gap="s12">
             {/* Total Trips */}
             <Box
               flex={1}
               backgroundColor="surface"
               borderRadius="s16"
-              padding="s16"
+              padding="s8"
               alignItems="center"
               style={{
                 shadowColor: '#000',
@@ -794,7 +794,7 @@ export function HomeScreen({navigation}: Props) {
               flex={1}
               backgroundColor="surface"
               borderRadius="s16"
-              padding="s16"
+              padding="s8"
               alignItems="center"
               style={{
                 shadowColor: '#000',
@@ -817,7 +817,7 @@ export function HomeScreen({navigation}: Props) {
               flex={1}
               backgroundColor="surface"
               borderRadius="s16"
-              padding="s16"
+              padding="s8"
               alignItems="center"
               style={{
                 shadowColor: '#000',
@@ -827,7 +827,7 @@ export function HomeScreen({navigation}: Props) {
                 elevation: 2,
               }}>
               <Icon name="military-tech" size={28} color="secondary" />
-              <Text preset="headingSmall" color="text" bold mt="s8" numberOfLines={1}>
+              <Text preset="paragraphMedium" color="text" bold mt="s8" numberOfLines={1}>
                 {user?.level || 'N/A'}
               </Text>
               <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s4" textAlign="center">

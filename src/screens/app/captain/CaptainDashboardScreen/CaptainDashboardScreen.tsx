@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, RefreshControl } from 'react-native';
+import { ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box, Icon, InfoModal, Text, TouchableOpacityBox } from '@components';
@@ -34,6 +34,20 @@ export function CaptainDashboardScreen() {
     handleBlockedAction,
   } = useCaptainDashboard();
 
+  const statusBackgroundColor = isRejected
+    ? 'rgba(239,68,68,0.25)'
+    : isPending
+      ? 'rgba(59,130,246,0.25)'
+      : 'rgba(245,158,11,0.25)';
+  const statusIconName = isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock';
+  const statusIconColor = isRejected ? '#FCA5A5' : isPending ? '#93C5FD' : '#FCD34D';
+  const statusTextColor = statusIconColor;
+  const statusMessage = isRejected
+    ? 'Documentação rejeitada'
+    : isPending
+      ? 'Documentação em análise'
+      : 'Verificação pendente';
+
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
@@ -41,13 +55,13 @@ export function CaptainDashboardScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
-        style={{ paddingTop: top + 16 }}>
+        style={[styles.header, {paddingTop: top + 16}]}>
         <Box flexDirection="row" alignItems="center" justifyContent="space-between">
           <Box flex={1}>
-            <Text preset="paragraphSmall" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <Text preset="paragraphSmall" style={styles.headerCaption}>
               {isBoatManager ? 'Bem-vindo, Gestor' : 'Bem-vindo, Capitão'}
             </Text>
-            <Text preset="headingMedium" bold style={{ color: '#FFFFFF' }}>
+            <Text preset="headingMedium" bold style={styles.headerTitle}>
               {user?.name || (isBoatManager ? 'Gestor' : 'Capitão')}
             </Text>
           </Box>
@@ -60,28 +74,15 @@ export function CaptainDashboardScreen() {
             borderRadius="s24"
             alignItems="center"
             justifyContent="center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+            style={styles.notificationsButton}>
             <Icon name="notifications" size={24} color={'#FFFFFF' as any} />
             {unreadNotifications > 0 && (
               <Box
-                style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  backgroundColor: '#EF4444',
-                  borderRadius: 10,
-                  minWidth: 18,
-                  height: 18,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingHorizontal: 4,
-                  borderWidth: 1.5,
-                  borderColor: '#0B5D8A',
-                }}>
+                style={styles.notificationsBadge}>
                 <Text
                   preset="paragraphCaptionSmall"
                   bold
-                  style={{ color: '#FFFFFF', fontSize: 10, lineHeight: 14 }}>
+                  style={styles.notificationsBadgeText}>
                   {unreadNotifications > 99 ? '99+' : unreadNotifications}
                 </Text>
               </Box>
@@ -99,43 +100,21 @@ export function CaptainDashboardScreen() {
             paddingHorizontal="s12"
             paddingVertical="s6"
             borderRadius="s20"
-            style={{
-              backgroundColor: isRejected
-                ? 'rgba(239,68,68,0.25)'
-                : isPending
-                  ? 'rgba(59,130,246,0.25)'
-                  : 'rgba(245,158,11,0.25)',
-            }}>
-            <Icon
-              name={isRejected ? 'cancel' : isPending ? 'hourglass-top' : 'lock'}
-              size={14}
-              color={
-                isRejected
-                  ? ('#FCA5A5' as any)
-                  : isPending
-                    ? ('#93C5FD' as any)
-                    : ('#FCD34D' as any)
-              }
-            />
+            style={[styles.statusChip, {backgroundColor: statusBackgroundColor}]}>
+            <Icon name={statusIconName} size={14} color={statusIconColor as any} />
             <Text
               preset="paragraphCaptionSmall"
               bold
               ml="s6"
-              style={{
-                color: isRejected ? '#FCA5A5' : isPending ? '#93C5FD' : '#FCD34D',
-              }}>
-              {isRejected
-                ? 'Documentação rejeitada'
-                : isPending
-                  ? 'Documentação em análise'
-                  : 'Verificação pendente'}
+              style={[styles.statusText, {color: statusTextColor}]}>
+              {statusMessage}
             </Text>
           </Box>
         )}
       </Box>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }>
@@ -164,7 +143,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{ flexShrink: 0 }}>
+                  style={styles.iconCircle}>
                   <Icon name="cancel" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -206,7 +185,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{ flexShrink: 0 }}>
+                  style={styles.iconCircle}>
                   <Icon name="upload-file" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -240,7 +219,7 @@ export function CaptainDashboardScreen() {
                     alignItems="center"
                     justifyContent="center"
                     mr="s12"
-                    style={{ flexShrink: 0 }}>
+                    style={styles.iconCircle}>
                     <Icon name="hourglass-top" size={20} color="surface" />
                   </Box>
                   <Box flex={1}>
@@ -260,10 +239,10 @@ export function CaptainDashboardScreen() {
                     justifyContent="center"
                     paddingVertical="s8"
                     borderRadius="s8"
-                    style={{ backgroundColor: 'rgba(37,99,235,0.15)', borderWidth: 1, borderColor: '#3B82F6' }}
+                    style={styles.uploadButton}
                     onPress={() => navigation.navigate('KycSubmit')}>
                     <Icon name="upload-file" size={16} color={'#3B82F6' as any} />
-                    <Text preset="paragraphSmall" bold ml="s6" style={{ color: '#3B82F6' }}>
+                    <Text preset="paragraphSmall" bold ml="s6" style={styles.uploadText}>
                       Enviar docs
                     </Text>
                   </TouchableOpacityBox>
@@ -282,7 +261,7 @@ export function CaptainDashboardScreen() {
                       size={16}
                       color={'#FFFFFF' as any}
                     />
-                    <Text preset="paragraphSmall" bold ml="s6" style={{ color: '#FFFFFF' }}>
+                    <Text preset="paragraphSmall" bold ml="s6" style={styles.whiteText}>
                       {isRefreshingStatus ? 'Verificando...' : 'Verificar status'}
                     </Text>
                   </TouchableOpacityBox>
@@ -300,7 +279,7 @@ export function CaptainDashboardScreen() {
             padding="s16"
             borderRadius="s16"
             alignItems="center"
-            style={{ elevation: 2 }}>
+            style={styles.statCard}>
             <Text preset="headingMedium" color="secondary" bold>
               {trips.length}
             </Text>
@@ -314,7 +293,7 @@ export function CaptainDashboardScreen() {
             padding="s16"
             borderRadius="s16"
             alignItems="center"
-            style={{ elevation: 2 }}>
+            style={styles.statCard}>
             <Text preset="headingMedium" color="success" bold>
               {completedToday}
             </Text>
@@ -348,7 +327,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{ flexShrink: 0 }}>
+                  style={styles.iconCircle}>
                   <Icon name="sailing" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -383,7 +362,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{ flexShrink: 0 }}>
+                  style={styles.iconCircle}>
                   <Icon name="error" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -423,7 +402,7 @@ export function CaptainDashboardScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{ flexShrink: 0 }}>
+                  style={styles.iconCircle}>
                   <Icon name="hourglass-top" size={20} color="surface" />
                 </Box>
                 <Box flex={1}>
@@ -453,7 +432,7 @@ export function CaptainDashboardScreen() {
               borderRadius="s16"
               padding="s20"
               alignItems="center"
-              style={{ elevation: 2 }}>
+              style={styles.currentTripCard}>
               <Icon name="directions-boat" size={48} color="textSecondary" />
               <Text preset="paragraphMedium" color="textSecondary" mt="s12" textAlign="center">
                 Nenhuma viagem atual no momento
@@ -503,9 +482,9 @@ export function CaptainDashboardScreen() {
               borderRadius="s16"
               padding="s20"
               alignItems="center"
-              onPress={() => canOperate ? navigation.navigate('CaptainCreateTrip') : handleBlockedAction()}
-              style={{ elevation: 2, opacity: canOperate ? 1 : 0.5 }}>
-              <Box style={{ position: 'relative' }}>
+              onPress={() => (canOperate ? navigation.navigate('CaptainCreateTrip') : handleBlockedAction())}
+              style={[styles.quickActionCard, !canOperate && styles.quickActionDisabled]}>
+              <Box style={styles.relativeContainer}>
                 <Box
                   width={48}
                   height={48}
@@ -513,17 +492,12 @@ export function CaptainDashboardScreen() {
                   backgroundColor={canOperate ? 'secondaryBg' : 'border'}
                   alignItems="center"
                   justifyContent="center"
-                  mb="s12">
+                  mb="s12"
+                  style={styles.largeIconCircle}>
                   <Icon name="add" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
                 </Box>
                 {!canOperate && (
-                  <Box
-                    style={{
-                      position: 'absolute', top: -4, right: -4,
-                      backgroundColor: '#F59E0B',
-                      borderRadius: 10, width: 20, height: 20,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
+                  <Box style={styles.lockBadge}>
                     <Icon name="lock" size={12} color={'#FFFFFF' as any} />
                   </Box>
                 )}
@@ -540,7 +514,7 @@ export function CaptainDashboardScreen() {
               padding="s20"
               alignItems="center"
               onPress={() => navigation.navigate('CaptainMyTrips')}
-              style={{ elevation: 2 }}>
+              style={styles.quickActionCard}>
               <Box
                 width={48}
                 height={48}
@@ -566,9 +540,9 @@ export function CaptainDashboardScreen() {
                 borderRadius="s16"
                 padding="s20"
                 alignItems="center"
-                onPress={() => canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction()}
-                style={{ elevation: 2, opacity: canOperate ? 1 : 0.5 }}>
-                <Box style={{ position: 'relative' }}>
+                onPress={() => (canOperate ? navigation.navigate('CaptainMyBoats') : handleBlockedAction())}
+                style={[styles.quickActionCard, !canOperate && styles.quickActionDisabled]}>
+                <Box style={styles.relativeContainer}>
                   <Box
                     width={48}
                     height={48}
@@ -576,17 +550,12 @@ export function CaptainDashboardScreen() {
                     backgroundColor={canOperate ? 'secondaryBg' : 'border'}
                     alignItems="center"
                     justifyContent="center"
-                    mb="s12">
+                    mb="s12"
+                    style={styles.largeIconCircle}>
                     <Icon name="sailing" size={28} color={canOperate ? 'secondary' : 'textSecondary'} />
                   </Box>
                   {!canOperate && (
-                    <Box
-                      style={{
-                        position: 'absolute', top: -4, right: -4,
-                        backgroundColor: '#F59E0B',
-                        borderRadius: 10, width: 20, height: 20,
-                        alignItems: 'center', justifyContent: 'center',
-                      }}>
+                    <Box style={styles.lockBadge}>
                       <Icon name="lock" size={12} color={'#FFFFFF' as any} />
                     </Box>
                   )}
@@ -604,7 +573,7 @@ export function CaptainDashboardScreen() {
               padding="s20"
               alignItems="center"
               onPress={() => navigation.navigate('SosAlert', {})}
-              style={{ elevation: 2 }}>
+              style={styles.quickActionCard}>
               <Box
                 width={48}
                 height={48}
@@ -612,7 +581,8 @@ export function CaptainDashboardScreen() {
                 backgroundColor="dangerBg"
                 alignItems="center"
                 justifyContent="center"
-                mb="s12">
+                mb="s12"
+                style={styles.largeIconCircle}>
                 <Icon name="sos" size={28} color="danger" />
               </Box>
               <Text preset="paragraphSmall" color="text" bold textAlign="center">
@@ -652,3 +622,100 @@ export function CaptainDashboardScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingTop: 0,
+  },
+  headerCaption: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+  },
+  notificationsButton: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  notificationsBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#0B5D8A',
+  },
+  notificationsBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  statusChip: {
+    borderRadius: 20,
+  },
+  statusText: {
+    fontWeight: '700',
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  largeIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  uploadButton: {
+    backgroundColor: 'rgba(37,99,235,0.15)',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  uploadText: {
+    color: '#3B82F6',
+  },
+  whiteText: {
+    color: '#FFFFFF',
+  },
+  statCard: {
+    elevation: 2,
+  },
+  quickActionCard: {
+    elevation: 2,
+  },
+  quickActionDisabled: {
+    opacity: 0.5,
+  },
+  relativeContainer: {
+    position: 'relative',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#F59E0B',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  currentTripCard: {
+    elevation: 2,
+  },
+});

@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator, Image} from 'react-native';
+import {ScrollView, ActivityIndicator, Image, StyleSheet} from 'react-native';
 
 import {Box, Button, ScreenHeader, Text, Icon, TouchableOpacityBox, InfoModal} from '@components';
 import {PaymentMethod} from '@domain';
@@ -57,7 +57,7 @@ export function PaymentScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={{padding: 24}} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {paymentMethod === PaymentMethod.PIX && booking && (
           <>
             <Box
@@ -67,10 +67,10 @@ export function PaymentScreen() {
               mb="s24"
               flexDirection="row"
               alignItems="center"
-              style={{
-                borderLeftWidth: 4,
-                borderLeftColor: timeLeft < 300 ? '#EF4444' : '#2196F3',
-              }}>
+              style={[
+                styles.timerBorder,
+                timeLeft < 300 ? styles.timerBorderDanger : styles.timerBorderInfo,
+              ]}>
               <Icon name="schedule" size={24} color={timeLeft < 300 ? 'danger' : 'info'} />
               <Box flex={1} ml="s12">
                 <Text preset="paragraphMedium" color={timeLeft < 300 ? 'danger' : 'info'} bold>
@@ -88,7 +88,7 @@ export function PaymentScreen() {
               padding="s24"
               mb="s24"
               alignItems="center"
-              style={{elevation: 2}}>
+              style={styles.surfaceElevation}>
               <Text preset="paragraphMedium" color="textSecondary" mb="s8">
                 Valor a pagar
               </Text>
@@ -103,7 +103,7 @@ export function PaymentScreen() {
               padding="s24"
               mb="s24"
               alignItems="center"
-              style={{elevation: 2}}>
+              style={styles.surfaceElevation}>
               <Text preset="paragraphLarge" color="text" bold mb="s16">
                 Escaneie o QR Code
               </Text>
@@ -114,10 +114,10 @@ export function PaymentScreen() {
                   borderRadius="s16"
                   padding="s16"
                   mb="s16"
-                  style={{borderWidth: 2, borderColor: '#E0E0E0'}}>
+                  style={styles.qrBorder}>
                   <Image
                     source={{uri: booking.pixQrCodeImage}}
-                    style={{width: 220, height: 220}}
+                    style={styles.qrImage}
                     resizeMode="contain"
                   />
                 </Box>
@@ -148,7 +148,7 @@ export function PaymentScreen() {
                 borderRadius="s16"
                 padding="s20"
                 mb="s24"
-                style={{elevation: 2}}>
+                style={styles.surfaceElevation}>
                 <Text preset="paragraphMedium" color="text" bold mb="s12">
                   PIX Copia e Cola
                 </Text>
@@ -158,7 +158,7 @@ export function PaymentScreen() {
                   borderRadius="s12"
                   padding="s12"
                   mb="s16"
-                  style={{borderWidth: 1, borderColor: '#E0E0E0'}}>
+                  style={styles.pixCodeBorder}>
                   <Text preset="paragraphSmall" color="textSecondary" numberOfLines={3}>
                     {booking.pixQrCode}
                   </Text>
@@ -180,7 +180,7 @@ export function PaymentScreen() {
               borderRadius="s12"
               padding="s16"
               mb="s24"
-              style={{borderLeftWidth: 4, borderLeftColor: '#10B981'}}>
+              style={styles.instructionsBorder}>
               <Text preset="paragraphMedium" color="success" bold mb="s8">
                 Como pagar com PIX:
               </Text>
@@ -248,3 +248,37 @@ export function PaymentScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: 24,
+  },
+  timerBorder: {
+    borderLeftWidth: 4,
+  },
+  timerBorderDanger: {
+    borderLeftColor: '#EF4444',
+  },
+  timerBorderInfo: {
+    borderLeftColor: '#2196F3',
+  },
+  surfaceElevation: {
+    elevation: 2,
+  },
+  qrBorder: {
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  qrImage: {
+    width: 220,
+    height: 220,
+  },
+  pixCodeBorder: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  instructionsBorder: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
+  },
+});

@@ -140,11 +140,10 @@ export function CaptainTripLiveScreen() {
                   height={28}
                   alignItems="center"
                   justifyContent="center"
-                  style={{
-                    borderRadius: 14,
-                    backgroundColor: DANGER_ZONE_COLOR[zone.severity],
-                    elevation: 3,
-                  }}>
+                  style={[
+                    styles.zoneDot,
+                    {backgroundColor: DANGER_ZONE_COLOR[zone.severity]},
+                  ]}>
                   <Icon
                     name={DANGER_ZONE_ICON[zone.type]}
                     size={16}
@@ -167,11 +166,12 @@ export function CaptainTripLiveScreen() {
                 height={32}
                 alignItems="center"
                 justifyContent="center"
-                style={{
-                  borderRadius: 16,
-                  backgroundColor: ALERT_SEVERITY_COLORS[am.severity],
-                  elevation: 4,
-                }}>
+                style={[
+                  styles.weatherMarker,
+                  {
+                    backgroundColor: ALERT_SEVERITY_COLORS[am.severity],
+                  },
+                ]}>
                 <Icon name="warning" size={18} color="surface" />
               </Box>
             </Marker>
@@ -183,12 +183,12 @@ export function CaptainTripLiveScreen() {
               coordinate={originCoords}
               title={`Origem: ${origin}`}
               anchor={{x: 0.5, y: 0.5}}>
-              <Box
-                width={40}
-                height={40}
-                alignItems="center"
-                justifyContent="center"
-                style={{borderRadius: 20, backgroundColor: '#16a34a', elevation: 5}}>
+            <Box
+              width={40}
+              height={40}
+              alignItems="center"
+              justifyContent="center"
+              style={[styles.markerCircle, {backgroundColor: '#16a34a'}]}>
                 <Icon name="place" size={22} color="surface" />
               </Box>
             </Marker>
@@ -200,12 +200,12 @@ export function CaptainTripLiveScreen() {
               coordinate={destCoords}
               title={`Destino: ${destination}`}
               anchor={{x: 0.5, y: 0.5}}>
-              <Box
-                width={40}
-                height={40}
-                alignItems="center"
-                justifyContent="center"
-                style={{borderRadius: 20, backgroundColor: '#dc2626', elevation: 5}}>
+            <Box
+              width={40}
+              height={40}
+              alignItems="center"
+              justifyContent="center"
+              style={[styles.markerCircle, {backgroundColor: '#dc2626'}]}>
                 <Icon name="flag" size={22} color="surface" />
               </Box>
             </Marker>
@@ -224,7 +224,7 @@ export function CaptainTripLiveScreen() {
               backgroundColor="secondary"
               alignItems="center"
               justifyContent="center"
-              style={{elevation: 8}}>
+              style={styles.boatMarker}>
               <Icon name="directions-boat" size={26} color="surface" />
             </Box>
           </Marker>
@@ -253,22 +253,7 @@ export function CaptainTripLiveScreen() {
       {/* ── Floating header ────────────────────────────────────────────── */}
       <Box
         backgroundColor="surface"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          paddingTop: top + 8,
-          paddingBottom: 12,
-          paddingHorizontal: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-          elevation: 4,
-        }}>
+        style={[styles.headerBar, {paddingTop: top + 8}]}>
         <TouchableOpacityBox
           width={40}
           height={40}
@@ -289,7 +274,7 @@ export function CaptainTripLiveScreen() {
             <Box
               width={8}
               height={8}
-              style={{borderRadius: 4, backgroundColor: '#3b82f6', marginRight: 6}}
+              style={[styles.headerDot, {backgroundColor: '#3b82f6'}]}
             />
             <Text preset="paragraphCaptionSmall" color="textSecondary">
               Em andamento
@@ -297,10 +282,10 @@ export function CaptainTripLiveScreen() {
             {safetyAssessment && SAFETY_LEVEL_CONFIGS[safetyAssessment.level] && (
               <Text
                 preset="paragraphCaptionSmall"
-                style={{
-                  color: SAFETY_LEVEL_CONFIGS[safetyAssessment.level].color,
-                  marginLeft: 8,
-                }}>
+                style={[
+                  styles.headerStatusText,
+                  {color: SAFETY_LEVEL_CONFIGS[safetyAssessment.level].color},
+                ]}>
                 · {SAFETY_LEVEL_CONFIGS[safetyAssessment.level].label}
               </Text>
             )}
@@ -308,7 +293,7 @@ export function CaptainTripLiveScreen() {
               <Text
                 preset="paragraphCaptionSmall"
                 color="textSecondary"
-                style={{marginLeft: 8}}>
+                style={styles.headerTimestamp}>
                 · sync{' '}
                 {lastUpdate.toLocaleTimeString('pt-BR', {
                   hour: '2-digit',
@@ -349,3 +334,46 @@ export function CaptainTripLiveScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  zoneDot: {
+    borderRadius: 14,
+    elevation: 3,
+  },
+  weatherMarker: {
+    borderRadius: 16,
+    elevation: 4,
+  },
+  markerCircle: {
+    borderRadius: 20,
+    elevation: 5,
+  },
+  boatMarker: {
+    elevation: 8,
+  },
+  headerBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  headerDot: {
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  headerStatusText: {
+    marginLeft: 8,
+  },
+  headerTimestamp: {
+    marginLeft: 8,
+  },
+});

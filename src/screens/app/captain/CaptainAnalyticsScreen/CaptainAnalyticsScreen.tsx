@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, Dimensions, ActivityIndicator} from 'react-native';
+import {ScrollView, Dimensions, ActivityIndicator, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {LineChart} from 'react-native-chart-kit';
@@ -15,6 +15,25 @@ const PERIOD_OPTIONS: {label: string; value: AnalyticsPeriod}[] = [
   {label: '30 dias', value: '30d'},
   {label: '90 dias', value: '90d'},
 ];
+
+const styles = StyleSheet.create({
+  chartConfig: {
+    borderRadius: 12,
+  },
+  chartWrapper: {
+    borderRadius: 12,
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  elevated: {
+    elevation: 2,
+  },
+  lightElevation: {
+    elevation: 1,
+  },
+});
 
 function StatCard({
   label,
@@ -34,9 +53,9 @@ function StatCard({
       borderRadius="s12"
       padding="s16"
       alignItems="center"
-      style={{elevation: 2}}>
+      style={styles.elevated}>
       <Icon name={icon as any} size={24} color={color as any} />
-      <Text preset="headingSmall" bold mt="s8" style={{color}}>
+      <Text preset="headingSmall" bold mt="s8" color={color as any}>
         {value}
       </Text>
       <Text preset="paragraphCaptionSmall" color="textSecondary" textAlign="center" mt="s4">
@@ -65,17 +84,17 @@ export function CaptainAnalyticsScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
-        flexDirection='row' 
-        gap='s12'
-        style={{paddingTop: top + 16}}>
+        flexDirection="row"
+        gap="s12"
+        paddingTop={top + 16}>
         <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
           <Icon name="arrow-back" size={24} color={'#FFFFFF' as any} />
         </TouchableOpacityBox>
         <Box>
-        <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+        <Text preset="headingMedium" bold color="#FFFFFF">
           Analytics
         </Text>
-        <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.8)'}} mt="s4">
+        <Text preset="paragraphSmall" color="rgba(255,255,255,0.8)" mt="s4">
           Desempenho das suas operações
         </Text>
         </Box>
@@ -86,7 +105,7 @@ export function CaptainAnalyticsScreen() {
           <ActivityIndicator size="large" color="#0B5D8A" />
         </Box>
       ) : (
-        <ScrollView contentContainerStyle={{padding: 16, paddingBottom: 40}}>
+        <ScrollView contentContainerStyle={styles.contentContainer}>
           {/* Summary Cards */}
           {summary && (
             <>
@@ -122,7 +141,7 @@ export function CaptainAnalyticsScreen() {
           )}
 
           {/* Period selector */}
-          <Box flexDirection="row" backgroundColor="surface" borderRadius="s12" padding="s4" mb="s16" style={{elevation: 1}}>
+          <Box flexDirection="row" backgroundColor="surface" borderRadius="s12" padding="s4" mb="s16" style={styles.lightElevation}>
             {PERIOD_OPTIONS.map(opt => (
               <TouchableOpacityBox
                 key={opt.value}
@@ -152,7 +171,7 @@ export function CaptainAnalyticsScreen() {
                 backgroundColor="surface"
                 borderRadius="s12"
                 overflow="hidden"
-                style={{elevation: 2}}>
+                style={styles.elevated}>
                 <LineChart
                   data={{
                     labels: chartLabels.length > 7 ? chartLabels.filter((_, i) => i % Math.ceil(chartLabels.length / 7) === 0) : chartLabels,
@@ -168,11 +187,11 @@ export function CaptainAnalyticsScreen() {
                     decimalPlaces: 0,
                     color: () => '#0B5D8A',
                     labelColor: () => '#6B7280',
-                    style: {borderRadius: 12},
+                    style: styles.chartConfig,
                     propsForDots: {r: '4', strokeWidth: '2', stroke: '#0B5D8A'},
                   }}
                   bezier
-                  style={{borderRadius: 12}}
+                  style={styles.chartWrapper}
                   withInnerLines={false}
                 />
               </Box>
@@ -185,7 +204,7 @@ export function CaptainAnalyticsScreen() {
               <Text preset="paragraphMedium" color="text" bold mb="s12">
                 Rotas mais lucrativas
               </Text>
-              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={{elevation: 2}}>
+              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={styles.elevated}>
                 {routes.slice(0, 5).map((route, idx) => (
                   <Box
                     key={idx}
@@ -229,7 +248,7 @@ export function CaptainAnalyticsScreen() {
               <Text preset="paragraphMedium" color="text" bold mb="s12">
                 Passageiros fiéis
               </Text>
-              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={{elevation: 2}}>
+              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={styles.elevated}>
                 {passengers.slice(0, 5).map((p, idx) => (
                   <Box
                     key={p.userId}

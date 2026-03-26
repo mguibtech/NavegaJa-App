@@ -86,6 +86,8 @@ export async function getUnreadCount(): Promise<number> {
  * Configura listener de renovação automática do token.
  * Chamar após login/registro bem-sucedido.
  */
+let tokenRefreshUnsubscribe: (() => void) | null = null;
+
 export async function registerPushToken(): Promise<void> {
   try {
     // Android 13+ precisa de permissão explícita
@@ -117,7 +119,8 @@ export async function registerPushToken(): Promise<void> {
     await sendTokenToBackend(fcmToken);
 
     // Renovação automática do token FCM (ex: token revogado pelo Firebase)
-    messaging().onTokenRefresh(newToken => {
+    tokenRefreshUnsubscribe?.();
+    tokenRefreshUnsubscribe = messaging().onTokenRefresh(newToken => {
       sendTokenToBackend(newToken).catch(() => {});
     });
   } catch {
@@ -131,6 +134,8 @@ export async function registerPushToken(): Promise<void> {
  */
 export async function unregisterPushToken(): Promise<void> {
   try {
+    tokenRefreshUnsubscribe?.();
+    tokenRefreshUnsubscribe = null;
     await api.delete('/notifications/unregister-token');
     await messaging().deleteToken();
   } catch {

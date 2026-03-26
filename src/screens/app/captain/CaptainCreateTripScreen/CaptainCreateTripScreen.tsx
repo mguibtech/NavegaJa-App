@@ -73,10 +73,10 @@ export function CaptainCreateTripScreen() {
             alignItems="center" justifyContent="center" mb="s24">
             <Icon name={isPending ? 'hourglass-top' : 'lock'} size={40} color={isPending ? 'info' : 'warning'} />
           </Box>
-          <Text preset="headingSmall" color="text" bold mb="s12" style={{textAlign: 'center'}}>
+          <Text preset="headingSmall" color="text" bold mb="s12" style={styles.textCenter}>
             {isPending ? 'Conta em análise' : 'Conta pendente de verificação'}
           </Text>
-          <Text preset="paragraphMedium" color="textSecondary" style={{textAlign: 'center'}}>
+          <Text preset="paragraphMedium" color="textSecondary" style={styles.textCenter}>
             {isPending
               ? 'Seus documentos estão sendo analisados. Em breve você poderá criar viagens.'
               : 'Envie sua habilitação náutica para começar a criar viagens.'}
@@ -85,7 +85,7 @@ export function CaptainCreateTripScreen() {
             <Button
               title="Enviar documentos"
               onPress={navigateToEditProfile}
-              style={{marginTop: 32}}
+              style={styles.marginTop32}
             />
           )}
         </Box>
@@ -96,13 +96,13 @@ export function CaptainCreateTripScreen() {
   return (
     <>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={styles.flexFill}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Box flex={1} backgroundColor="background">
           <ScreenHeader title="Nova Viagem" onBack={goBack} />
 
           <ScrollView
-            contentContainerStyle={{padding: 20, paddingBottom: 120}}
+            contentContainerStyle={styles.formPadding}
             keyboardShouldPersistTaps="handled">
             {/* Rota */}
             <Text preset="paragraphMedium" color="text" bold mb="s12">
@@ -372,7 +372,10 @@ export function CaptainCreateTripScreen() {
                           backgroundColor={isSelected ? 'secondaryBg' : 'surface'}
                           borderTopWidth={idx > 0 ? 1 : 0}
                           borderTopColor="border"
-                          style={{opacity: isUnverified ? 0.5 : 1}}
+                          style={[
+                            styles.boatOption,
+                            isUnverified && styles.boatOptionDimmed,
+                          ]}
                           onPress={() => {
                             if (isUnverified) {return;}
                             setSelectedBoatId(boat.id);
@@ -414,11 +417,11 @@ export function CaptainCreateTripScreen() {
                               paddingHorizontal="s8"
                               paddingVertical="s4"
                               borderRadius="s8"
-                              style={{backgroundColor: '#FEF3C7'}}>
+                              style={styles.unverifiedBadge}>
                               <Text
                                 preset="paragraphCaptionSmall"
                                 bold
-                                style={{color: '#92400E'}}>
+                                style={styles.unverifiedText}>
                                 Em análise
                               </Text>
                             </Box>
@@ -489,5 +492,28 @@ export function CaptainCreateTripScreen() {
 const styles = StyleSheet.create({
   largeInput: {
     fontSize: 18,
+  },
+  textCenter: {
+    textAlign: 'center',
+  },
+  marginTop32: {
+    marginTop: 32,
+  },
+  flexFill: {
+    flex: 1,
+  },
+  formPadding: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  boatOption: {},
+  boatOptionDimmed: {
+    opacity: 0.5,
+  },
+  unverifiedBadge: {
+    backgroundColor: '#FEF3C7',
+  },
+  unverifiedText: {
+    color: '#92400E',
   },
 });

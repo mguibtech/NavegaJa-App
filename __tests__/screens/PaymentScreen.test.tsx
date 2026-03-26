@@ -1,9 +1,10 @@
-/**
+﻿/**
  * @format
  */
 
 import React from 'react';
 import {render, waitFor, act} from '@testing-library/react-native';
+import {Animated} from 'react-native';
 import {ThemeProvider} from '@shopify/restyle';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {PaymentScreen} from '../../src/screens/app/passenger/PaymentScreen/PaymentScreen';
@@ -46,6 +47,27 @@ jest.mock('../../src/hooks', () => ({
   useToast: () => mockToast,
 }));
 
+jest.mock('@components/InfoModal/InfoModal', () => {
+  const React = require('react');
+  const {View, Text} = require('react-native');
+
+  const InfoModal = ({visible, title, message, buttonText, onClose}: any) => {
+    if (!visible) return null;
+    return (
+      <View>
+        <Text>{title}</Text>
+        <Text>{message}</Text>
+        <Text onPress={onClose}>{buttonText}</Text>
+      </View>
+    );
+  };
+
+  return {
+    __esModule: true,
+    InfoModal,
+  };
+});
+
 // Helper to render with theme + QueryClient
 const renderWithTheme = (component: React.ReactElement) => {
   const queryClient = new QueryClient({
@@ -58,7 +80,46 @@ const renderWithTheme = (component: React.ReactElement) => {
   );
 };
 
+const advanceTime = async (ms: number) => {
+  await act(async () => {
+    jest.advanceTimersByTime(ms);
+    await Promise.resolve();
+  });
+};
+
+const ensurePixLoaded = async (getByText: (text: string | RegExp) => any) => {
+  await waitFor(() => {
+    expect(getByText('PIX Copia e Cola')).toBeTruthy();
+  });
+};
+
+const createMockAnimation = () => ({
+  start: (callback?: () => void) => {
+    callback?.();
+    return {stop: jest.fn()};
+  },
+  stop: jest.fn(),
+});
+
 describe('PaymentScreen', () => {
+  let parallelSpy: jest.SpyInstance;
+  let sequenceSpy: jest.SpyInstance;
+  let timingSpy: jest.SpyInstance;
+  let springSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    parallelSpy = jest.spyOn(Animated, 'parallel').mockImplementation(() => createMockAnimation());
+    sequenceSpy = jest.spyOn(Animated, 'sequence').mockImplementation(() => createMockAnimation());
+    timingSpy = jest.spyOn(Animated, 'timing').mockImplementation(() => createMockAnimation());
+    springSpy = jest.spyOn(Animated, 'spring').mockImplementation(() => createMockAnimation());
+  });
+
+  afterAll(() => {
+    parallelSpy.mockRestore();
+    sequenceSpy.mockRestore();
+    timingSpy.mockRestore();
+    springSpy.mockRestore();
+  });
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers({legacyFakeTimers: true});
@@ -134,7 +195,7 @@ describe('PaymentScreen', () => {
       });
     });
 
-    it.skip('should poll payment status every 5 seconds', async () => {
+    it('should poll payment status every 5 seconds', async () => {
       // TODO: Fix timer-based test - fake timers issue with setInterval in React Native Testing Library
       const mockBooking = {
         id: 'booking-123',
@@ -160,33 +221,33 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
       (bookingAPI.getPaymentStatus as jest.Mock).mockResolvedValue(mockPaymentStatus);
 
-      renderWithTheme(<PaymentScreen />);
+      const {getByText} = renderWithTheme(<PaymentScreen />);
 
       // Aguardar o booking ser carregado e o polling iniciar
       await waitFor(() => {
         expect(bookingAPI.getById).toHaveBeenCalled();
       });
+      await ensurePixLoaded(getByText);
+      await ensurePixLoaded(getByText);
+      await ensurePixLoaded(getByText);
+      await ensurePixLoaded(getByText);
 
       // Avançar 5 segundos para executar o primeiro polling
-      act(() => {
-        jest.advanceTimersByTime(5000);
-      });
+      await advanceTime(5000);
 
       await waitFor(() => {
         expect(bookingAPI.getPaymentStatus).toHaveBeenCalledWith('booking-123');
       });
 
       // Avançar mais 5 segundos
-      act(() => {
-        jest.advanceTimersByTime(5000);
-      });
+      await advanceTime(5000);
 
       await waitFor(() => {
         expect(bookingAPI.getPaymentStatus).toHaveBeenCalledTimes(2);
       });
     });
 
-    it.skip('should navigate to Ticket when payment is confirmed', async () => {
+    it('should navigate to Ticket when payment is confirmed', async () => {
       // TODO: Fix timer-based test - fake timers issue with setInterval in React Native Testing Library
       const mockBooking = {
         id: 'booking-123',
@@ -220,10 +281,15 @@ describe('PaymentScreen', () => {
       await waitFor(() => {
         expect(bookingAPI.getById).toHaveBeenCalled();
       });
+      await waitFor(() => {
+        expect(getByText('Valor a pagar')).toBeTruthy();
+      });
 
       // Polling detecta pagamento
-      act(() => {
-        jest.advanceTimersByTime(5000);
+      await advanceTime(5000);
+
+      await waitFor(() => {
+        expect(bookingAPI.getPaymentStatus).toHaveBeenCalledWith('booking-123');
       });
 
       await waitFor(() => {
@@ -231,7 +297,7 @@ describe('PaymentScreen', () => {
       });
     });
 
-    it.skip('should show expired modal when PIX expires', async () => {
+    it('should show expired modal when PIX expires', async () => {
       // TODO: Fix timer-based test - fake timers issue with setInterval in React Native Testing Library
       const mockBooking = {
         id: 'booking-123',
@@ -255,9 +321,7 @@ describe('PaymentScreen', () => {
       });
 
       // Avançar tempo para expirar
-      act(() => {
-        jest.advanceTimersByTime(2000);
-      });
+      await advanceTime(2000);
 
       await waitFor(() => {
         expect(getByText('Pagamento Expirado')).toBeTruthy();
@@ -312,7 +376,7 @@ describe('PaymentScreen', () => {
       });
     });
 
-    it.skip('should handle payment status check errors gracefully', async () => {
+    it('should handle payment status check errors gracefully', async () => {
       // TODO: Fix timer-based test - fake timers issue with setInterval in React Native Testing Library
       const mockBooking = {
         id: 'booking-123',
@@ -326,17 +390,18 @@ describe('PaymentScreen', () => {
       (bookingAPI.getById as jest.Mock).mockResolvedValue(mockBooking);
       (bookingAPI.getPaymentStatus as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      renderWithTheme(<PaymentScreen />);
+      const {getByText} = renderWithTheme(<PaymentScreen />);
 
       // Aguardar o booking ser carregado
       await waitFor(() => {
         expect(bookingAPI.getById).toHaveBeenCalled();
       });
+      await waitFor(() => {
+        expect(getByText('Valor a pagar')).toBeTruthy();
+      });
 
       // Polling deve continuar mesmo com erro
-      act(() => {
-        jest.advanceTimersByTime(5000);
-      });
+      await advanceTime(5000);
 
       await waitFor(() => {
         expect(bookingAPI.getPaymentStatus).toHaveBeenCalled();

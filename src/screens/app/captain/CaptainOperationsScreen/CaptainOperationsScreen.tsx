@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, RefreshControl} from 'react-native';
+import {ScrollView, RefreshControl, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
@@ -26,21 +26,14 @@ export function CaptainOperationsScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="surface"
-        style={{
-          paddingTop: top + 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={[styles.headerCard, {paddingTop: top + 16}]}>
         <Text preset="headingMedium" color="text" bold>
           Operações
         </Text>
       </Box>
 
       <ScrollView
-        contentContainerStyle={{padding: 20, paddingBottom: 100}}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
         }>
@@ -66,7 +59,8 @@ export function CaptainOperationsScreen() {
             borderRadius="s16"
             padding="s20"
             alignItems="center"
-            mb="s24">
+            mb="s24"
+            style={styles.placeholderCard}>
             <Icon name="directions-boat" size={40} color="textSecondary" />
             <Text
               preset="paragraphMedium"
@@ -92,7 +86,7 @@ export function CaptainOperationsScreen() {
                   onPress={() =>
                     navigation.navigate('CaptainTripManage', {tripId: trip.id})
                   }
-                  style={{elevation: 2}}>
+                  style={styles.elevatedCard}>
                   <Box
                     flexDirection="row"
                     justifyContent="space-between"
@@ -109,10 +103,10 @@ export function CaptainOperationsScreen() {
                       )}
                     </Box>
                     <Box
-                      backgroundColor={cfg.bg}
-                      paddingHorizontal="s10"
-                      paddingVertical="s4"
-                      borderRadius="s8">
+                      style={[
+                        styles.statusBadge,
+                        {backgroundColor: cfg.bg},
+                      ]}>
                       <Text preset="paragraphCaptionSmall" color={cfg.color} bold>
                         {cfg.label}
                       </Text>
@@ -140,7 +134,7 @@ export function CaptainOperationsScreen() {
           justifyContent="center"
           mb="s32"
           onPress={() => navigation.navigate('CaptainCreateTrip')}
-          style={{elevation: 3}}>
+          style={[styles.elevatedCard, styles.ctaCard]}>
           <Icon name="add-circle" size={24} color="surface" />
           <Text preset="paragraphMedium" color="surface" bold ml="s8">
             Criar Nova Viagem
@@ -190,7 +184,7 @@ export function CaptainOperationsScreen() {
                 padding="s16"
                 mb="s12"
                 onPress={() => navigation.navigate('CaptainMyBoats')}
-                style={{elevation: 2}}>
+                style={styles.elevatedCard}>
                 <Box flexDirection="row" alignItems="center">
                   <Box
                     width={44}
@@ -199,7 +193,8 @@ export function CaptainOperationsScreen() {
                     backgroundColor="secondaryBg"
                     alignItems="center"
                     justifyContent="center"
-                    mr="s12">
+                    mr="s12"
+                    style={styles.iconCircle}>
                     <Icon name="sailing" size={24} color="secondary" />
                   </Box>
                   <Box flex={1}>
@@ -220,3 +215,34 @@ export function CaptainOperationsScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  headerCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  elevatedCard: {
+    elevation: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  ctaCard: {
+    paddingHorizontal: 24,
+  },
+  placeholderCard: {
+    elevation: 2,
+  },
+  iconCircle: {
+    flexShrink: 0,
+  },
+});

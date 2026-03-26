@@ -237,37 +237,51 @@ async function getCurrentLocation(): Promise<SosLocation> {
   // 2. Tenta usar cache do SO (última posição do sistema, instantânea)
   try {
     const cached = await getPositionWithTimeout(false, 3000, 300000);
-    console.log('[SOS] Location from OS cache:', JSON.stringify(cached));
+    if (__DEV__) {
+      console.log('[SOS] Location from OS cache:', JSON.stringify(cached));
+    }
     await saveLastKnownLocation(cached);
     return cached;
   } catch {
-    console.log('[SOS] OS cache miss, trying network location...');
+    if (__DEV__) {
+      console.log('[SOS] OS cache miss, trying network location...');
+    }
   }
 
   // 3. Tenta localização por rede (rápida, sem GPS)
   try {
     const network = await getPositionWithTimeout(false, 8000, 0);
-    console.log('[SOS] Location from network:', JSON.stringify(network));
+    if (__DEV__) {
+      console.log('[SOS] Location from network:', JSON.stringify(network));
+    }
     await saveLastKnownLocation(network);
     return network;
   } catch {
-    console.log('[SOS] Network location failed, trying GPS...');
+    if (__DEV__) {
+      console.log('[SOS] Network location failed, trying GPS...');
+    }
   }
 
   // 4. Tenta GPS (alta precisão, mais lento)
   try {
     const gps = await getPositionWithTimeout(true, 15000, 0);
-    console.log('[SOS] Location from GPS:', JSON.stringify(gps));
+    if (__DEV__) {
+      console.log('[SOS] Location from GPS:', JSON.stringify(gps));
+    }
     await saveLastKnownLocation(gps);
     return gps;
   } catch {
-    console.log('[SOS] GPS failed, trying local cache...');
+    if (__DEV__) {
+      console.log('[SOS] GPS failed, trying local cache...');
+    }
   }
 
   // 5. Usa última posição salva localmente (fallback final)
   const lastKnown = await loadLastKnownLocation();
   if (lastKnown) {
-    console.log('[SOS] Using local cached location:', JSON.stringify(lastKnown));
+    if (__DEV__) {
+      console.log('[SOS] Using local cached location:', JSON.stringify(lastKnown));
+    }
     return lastKnown;
   }
 
@@ -282,7 +296,9 @@ async function getCurrentLocation(): Promise<SosLocation> {
 async function createSosAlert(data: CreateSosAlertData): Promise<SosAlert> {
   const alert = await safetyAPI.createSosAlert(data);
 
-  console.log('[SOS] Created alert from API:', JSON.stringify(alert));
+  if (__DEV__) {
+    console.log('[SOS] Created alert from API:', JSON.stringify(alert));
+  }
 
   // Normaliza formato de localização (lat/lng, GeoJSON Point, etc.)
   const normalizedLoc = normalizeLocation(alert.location as any);
@@ -311,7 +327,9 @@ async function getMySosAlerts(): Promise<SosAlert[]> {
   try {
     const alerts = await safetyAPI.getMySosAlerts();
 
-    console.log('[SOS] Alerts from API:', JSON.stringify(alerts));
+    if (__DEV__) {
+      console.log('[SOS] Alerts from API:', JSON.stringify(alerts));
+    }
 
     // Normaliza formato de localização e tipo (API pode retornar uppercase)
     const lastKnown = await loadLastKnownLocation();
@@ -443,7 +461,9 @@ async function getActiveAlert(): Promise<SosAlert | null> {
       // Primeiro tenta o cache local
       const cachedLocation = await loadLastKnownLocation();
       if (cachedLocation) {
-        console.log('[SOS] Using cached location for active alert');
+        if (__DEV__) {
+          console.log('[SOS] Using cached location for active alert');
+        }
         alert.location = cachedLocation;
       } else {
         // Se não tem cache, tenta obter localização rápida (cache do SO)
@@ -453,11 +473,15 @@ async function getActiveAlert(): Promise<SosAlert | null> {
             5000,
             300000,
           );
-          console.log('[SOS] Got fresh location for active alert:', JSON.stringify(freshLocation));
+          if (__DEV__) {
+            console.log('[SOS] Got fresh location for active alert:', JSON.stringify(freshLocation));
+          }
           await saveLastKnownLocation(freshLocation);
           alert.location = freshLocation;
         } catch {
-          console.log('[SOS] Could not get location for active alert');
+          if (__DEV__) {
+            console.log('[SOS] Could not get location for active alert');
+          }
         }
       }
     }

@@ -92,22 +92,17 @@ export function InfoModal({
           justifyContent="center"
           padding="s20">
           <Animated.View
-            style={{
-              transform: [{scale: scaleAnim}],
-              width: '100%',
-              maxWidth: 400,
-            }}>
+            style={[
+              styles.modalWrapper,
+              {
+                transform: [{scale: scaleAnim}],
+              },
+            ]}>
             <Box
               backgroundColor="surface"
               borderRadius="s24"
               padding="s32"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 8},
-                shadowOpacity: 0.3,
-                shadowRadius: 16,
-                elevation: 12,
-              }}>
+              style={styles.modalContent}>
               {/* Icon with bounce */}
               <Box alignItems="center" mb="s24">
                 <Animated.View
@@ -166,5 +161,16 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalWrapper: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalContent: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
 });

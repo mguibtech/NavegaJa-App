@@ -21,7 +21,7 @@ async function getMyBookings(): Promise<Booking[]> {
     await saveOffline(bookings);
 
     return bookings;
-  } catch (error) {
+  } catch {
     console.warn('Failed to fetch bookings from API, loading from cache');
     return await loadOffline();
   }

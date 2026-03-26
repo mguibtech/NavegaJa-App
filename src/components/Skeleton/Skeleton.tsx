@@ -260,6 +260,76 @@ export function ShipmentCardSkeleton() {
 }
 
 /**
+ * Skeleton para detalhes da encomenda
+ */
+export function ShipmentDetailsSkeleton() {
+  return (
+    <Box padding="s20">
+      {/* Status badge */}
+      <Skeleton width={140} height={40} borderRadius={12} mb="s20" />
+
+      {/* QR card */}
+      <Box
+        backgroundColor="surface"
+        borderRadius="s16"
+        padding="s24"
+        mb="s16"
+        alignItems="center"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Skeleton width={180} height={180} borderRadius={16} mb="s16" />
+        <Skeleton width={160} height={14} borderRadius={6} mb="s6" />
+        <Skeleton width={120} height={20} borderRadius={8} />
+      </Box>
+
+      {/* Recipient card */}
+      <Box
+        backgroundColor="surface"
+        borderRadius="s16"
+        padding="s20"
+        mb="s16"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Skeleton width={130} height={18} borderRadius={6} mb="s16" />
+        <Skeleton width="100%" height={16} borderRadius={6} mb="s10" />
+        <Skeleton width="70%" height={16} borderRadius={6} mb="s10" />
+        <Skeleton width="90%" height={16} borderRadius={6} />
+      </Box>
+
+      {/* Details card */}
+      <Box
+        backgroundColor="surface"
+        borderRadius="s16"
+        padding="s20"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+        <Skeleton width={90} height={18} borderRadius={6} mb="s16" />
+        <Skeleton width="100%" height={14} borderRadius={6} mb="s8" />
+        <Skeleton width="85%" height={14} borderRadius={6} mb="s8" />
+        <Skeleton width="70%" height={14} borderRadius={6} mb="s16" />
+        <Skeleton width="100%" height={1} borderRadius={1} mb="s12" />
+        <Skeleton width={120} height={24} borderRadius={8} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
  * Skeleton para o WeatherWidget (clima atual)
  */
 export function WeatherWidgetSkeleton() {
