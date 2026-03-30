@@ -141,7 +141,7 @@ export interface Captain {
 export interface Trip {
   id: string;
   captainId: string;
-  boatId: string;
+  boatId: string | null;
   routeId: string;
   departureAt: string;
   estimatedArrivalAt: string;
@@ -155,6 +155,8 @@ export interface Trip {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  boatImageUrl?: string | null;
+  boatImages?: string[];
   captain?: Captain;
   boat?: Boat;
   route?: Route;

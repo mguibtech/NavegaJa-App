@@ -17,6 +17,7 @@ import {
   SHIPMENT_VALIDATION_RULES,
 } from '@domain';
 import {useToast} from '@hooks';
+import {isOfflineQueuedError} from '@infra';
 import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
 import {logShipmentCreated} from '@services';
@@ -348,6 +349,12 @@ export function useCreateShipmentScreen() {
       // Navegar para detalhes da encomenda
       navigation.replace('ShipmentDetails', {shipmentId: shipment.id});
     } catch (error: any) {
+      if (isOfflineQueuedError(error)) {
+        toast.showInfo(error.message);
+        navigation.navigate('Shipments');
+        return;
+      }
+
       setCreateErrorMessage(
         error?.message || 'Não foi possível criar a encomenda. Tente novamente.',
       );
@@ -453,3 +460,4 @@ export function useCreateShipmentScreen() {
     priceErrorMessage,
   };
 }
+

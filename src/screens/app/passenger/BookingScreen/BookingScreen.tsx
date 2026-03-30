@@ -136,7 +136,7 @@ export function BookingScreen() {
             <Box flexDirection="row" alignItems="center">
               <Icon name="directions-boat" size={18} color="secondary" />
               <Text preset="paragraphSmall" color="text" ml="s8">
-                {`${(trip as any).boat?.name || `Barco ${trip.boatId.slice(0, 8)}`} • ${(trip as any).captain?.name || `Cap. ${trip.captainId.slice(0, 8)}`}`}
+                {`${(trip as any).boat?.name || `Barco ${trip.boatId?.slice(0, 8) || 'N/A'}`} • ${(trip as any).captain?.name || `Cap. ${trip.captainId.slice(0, 8)}`}`}
               </Text>
             </Box>
           </Box>

@@ -1,6 +1,12 @@
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import {queryKeys} from '../../../../infra/queryKeys';
+import {
+  enqueueConfirmShipmentPayment,
+  isLikelyOfflineError,
+  OfflineQueuedError,
+  queryKeys,
+  refreshOnlineState,
+} from '@infra';
 import {shipmentService} from '../shipmentService';
 import {ConfirmPaymentResponse} from '../shipmentTypes';
 
@@ -14,17 +20,44 @@ export function useConfirmPayment() {
 
   const mutation = useMutation<ConfirmPaymentResponse, Error, ConfirmPaymentParams>({
     mutationFn: async ({shipmentId, paymentProofUri}) => {
-      let paymentProof: string | undefined;
-      if (paymentProofUri) {
-        const photoData = {
-          uri: paymentProofUri,
-          type: 'image/jpeg',
-          name: `payment-proof-${Date.now()}.jpg`,
-        };
-        const urls = await shipmentService.uploadPhotosToS3([photoData]);
-        paymentProof = urls[0];
+      const buildQueuedError = (jobId: string) =>
+        new OfflineQueuedError(
+          'Sem internet. A confirmação de pagamento foi salva e sera sincronizada automaticamente quando a conexao voltar.',
+          jobId,
+        );
+
+      const isOnline = await refreshOnlineState();
+      if (!isOnline) {
+        const queuedJob = await enqueueConfirmShipmentPayment(
+          shipmentId,
+          paymentProofUri,
+        );
+        throw buildQueuedError(queuedJob.id);
       }
-      return shipmentService.confirmPayment(shipmentId, {paymentProof});
+
+      let paymentProof: string | undefined;
+      try {
+        if (paymentProofUri) {
+          const photoData = {
+            uri: paymentProofUri,
+            type: 'image/jpeg',
+            name: `payment-proof-${Date.now()}.jpg`,
+          };
+          const urls = await shipmentService.uploadPhotosToS3([photoData]);
+          paymentProof = urls[0];
+        }
+        return shipmentService.confirmPayment(shipmentId, {paymentProof});
+      } catch (error) {
+        if (isLikelyOfflineError(error)) {
+          const queuedJob = await enqueueConfirmShipmentPayment(
+            shipmentId,
+            paymentProofUri,
+          );
+          throw buildQueuedError(queuedJob.id);
+        }
+
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: queryKeys.shipments.my()});

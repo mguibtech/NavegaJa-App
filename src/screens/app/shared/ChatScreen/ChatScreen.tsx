@@ -165,6 +165,14 @@ export function ChatScreen({navigation, route}: Props) {
                         style={{color: isMe ? '#FFFFFF' : colors.text}}>
                         {item.content}
                       </Text>
+                      {item.syncStatus === 'queued' && (
+                        <Text
+                          preset="paragraphCaptionSmall"
+                          style={{color: isMe ? '#D1E8FF' : colors.textSecondary}}
+                          mt="s4">
+                          Envio pendente (offline)
+                        </Text>
+                      )}
                     </Box>
                   </Box>
                 </Box>

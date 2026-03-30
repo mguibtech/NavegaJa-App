@@ -4,6 +4,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import type {NavigationProp} from '@react-navigation/native';
 
 import {useMyBookings, useCancelBooking, Booking, canCancelBooking} from '@domain';
+import {isOfflineQueuedError} from '@infra';
 import {useToast, useVirtualPagination} from '@hooks';
 import type {AppStackParamList} from '@routes';
 
@@ -13,13 +14,18 @@ export function useBookingsScreen() {
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
-  const {bookings, fetch: fetchBookings, isLoading: isLoadingBookings, error: bookingsError} = useMyBookings();
+  const {
+    bookings,
+    fetch: fetchBookings,
+    isLoading: isLoadingBookings,
+    error: bookingsError,
+  } = useMyBookings();
   const {cancel, isLoading: isCancelling} = useCancelBooking();
 
   useFocusEffect(
     useCallback(() => {
       fetchBookings().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
@@ -55,30 +61,49 @@ export function useBookingsScreen() {
       await fetchBookings();
     } catch (error: any) {
       setBookingToCancel(null);
+      if (isOfflineQueuedError(error)) {
+        toast.showInfo(error.message);
+        await fetchBookings();
+        return;
+      }
+
       toast.showError(error?.message || 'Não foi possível cancelar. Tente novamente.');
     }
   }
 
   function getStatusBadge(status: string): {label: string; bg: string; textColor: string} {
     switch (status) {
-      case 'pending':    return {label: 'Ag. Pagamento', bg: '#FEF3C7', textColor: '#92400E'};
-      case 'confirmed':  return {label: 'Confirmada',    bg: '#D1FAE5', textColor: '#065F46'};
-      case 'checked_in': return {label: 'Embarcado',     bg: '#DBEAFE', textColor: '#1E40AF'};
-      case 'completed':  return {label: 'Concluída',     bg: '#F3F4F6', textColor: '#6B7280'};
-      case 'cancelled':  return {label: 'Cancelada',     bg: '#FEE2E2', textColor: '#991B1B'};
-      default:           return {label: status,          bg: '#F3F4F6', textColor: '#6B7280'};
+      case 'pending':
+        return {label: 'Ag. Pagamento', bg: '#FEF3C7', textColor: '#92400E'};
+      case 'confirmed':
+        return {label: 'Confirmada', bg: '#D1FAE5', textColor: '#065F46'};
+      case 'checked_in':
+        return {label: 'Embarcado', bg: '#DBEAFE', textColor: '#1E40AF'};
+      case 'completed':
+        return {label: 'Concluída', bg: '#F3F4F6', textColor: '#6B7280'};
+      case 'cancelled':
+        return {label: 'Cancelada', bg: '#FEE2E2', textColor: '#991B1B'};
+      default:
+        return {label: status, bg: '#F3F4F6', textColor: '#6B7280'};
     }
   }
 
   const filteredBookings = bookings.filter(booking => {
     if (selectedTab === 'active') {
-      return booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'checked_in';
+      return (
+        booking.status === 'pending' ||
+        booking.status === 'confirmed' ||
+        booking.status === 'checked_in'
+      );
     }
     return booking.status === 'completed' || booking.status === 'cancelled';
   });
 
-  const {visibleItems: visibleBookings, hasMore: hasMoreBookings, loadMore: loadMoreBookings} =
-    useVirtualPagination(filteredBookings);
+  const {
+    visibleItems: visibleBookings,
+    hasMore: hasMoreBookings,
+    loadMore: loadMoreBookings,
+  } = useVirtualPagination(filteredBookings);
 
   function navigateToTicket(bookingId: string) {
     navigation.navigate('Ticket', {bookingId});

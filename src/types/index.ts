@@ -86,7 +86,7 @@ export interface Trip {
   id: string;
   captainId: string;
   captain?: User;
-  boatId: string;
+  boatId: string | null;
   boat?: Boat;
   routeId: string;
   route?: Route;
@@ -102,6 +102,8 @@ export interface Trip {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  boatImageUrl?: string | null;
+  boatImages?: string[];
   bookings?: Booking[];
 }
 

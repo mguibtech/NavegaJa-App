@@ -73,7 +73,9 @@ export interface Trip {
   captain?: TripCaptain;  // Optional: populated when searching trips
   captainId: string;
   boat?: TripBoat;  // Optional: populated when searching trips
-  boatId: string;
+  boatId: string | null;
+  boatImageUrl?: string | null;
+  boatImages?: string[];
 }
 
 export enum TripStatus {

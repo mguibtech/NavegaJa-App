@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {locationAPI} from './locationAPI';
 import {CepResult, City, LocationLabel, AM_CITIES_FALLBACK} from './locationTypes';

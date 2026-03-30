@@ -9,6 +9,7 @@ export interface ChatMessage {
   senderName?: string;
   createdAt: string;
   readAt: string | null;
+  syncStatus?: 'queued' | 'sent' | 'failed';
 }
 
 export interface ChatParticipant {

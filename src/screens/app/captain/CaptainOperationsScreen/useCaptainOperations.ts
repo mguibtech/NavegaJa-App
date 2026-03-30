@@ -61,7 +61,7 @@ export function useCaptainOperations() {
   const recentTrips = trips.filter(t => t.status !== TripStatus.CANCELLED).slice(0, 3);
 
   function getTripBoatSummary(trip: Trip): string | null {
-    const tripBoat = trip.boat ?? boatsById.get(trip.boatId);
+    const tripBoat = trip.boat ?? (trip.boatId ? boatsById.get(trip.boatId) : undefined);
     if (!tripBoat) {
       return null;
     }

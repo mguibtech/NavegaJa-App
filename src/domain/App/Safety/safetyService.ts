@@ -5,7 +5,7 @@
 
 import {Platform, PermissionsAndroid} from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 import Geolocation from '@react-native-community/geolocation';
 
 import {safetyAPI} from './safetyAPI';

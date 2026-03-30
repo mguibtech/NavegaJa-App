@@ -9,9 +9,21 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {useCreateShipment} from '../../src/domain/App/Shipment/useCases/useCreateShipment';
 import {shipmentService} from '../../src/domain/App/Shipment/shipmentService';
 import {Shipment, ShipmentStatus, PaymentMethod} from '../../src/domain';
+import {
+  enqueueCreateShipment,
+  isLikelyOfflineError,
+  OFFLINE_QUEUED_ERROR_CODE,
+  refreshOnlineState,
+} from '@infra';
 
 // Mock shipmentService
 jest.mock('../../src/domain/App/Shipment/shipmentService');
+jest.mock('@infra', () => ({
+  ...jest.requireActual('@infra'),
+  enqueueCreateShipment: jest.fn(),
+  isLikelyOfflineError: jest.fn(),
+  refreshOnlineState: jest.fn(),
+}));
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -62,6 +74,9 @@ describe('useCreateShipment', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (refreshOnlineState as jest.Mock).mockResolvedValue(true);
+    (isLikelyOfflineError as jest.Mock).mockReturnValue(false);
+    (enqueueCreateShipment as jest.Mock).mockResolvedValue({id: 'offline-job-1'});
   });
 
   it('should start with initial state', () => {
@@ -212,6 +227,40 @@ describe('useCreateShipment', () => {
         await result.current.create(mockShipmentData, []);
       }),
     ).rejects.toThrow('Network error');
+  });
+
+  it('should queue shipment and throw offline queued error when device is offline', async () => {
+    (refreshOnlineState as jest.Mock).mockResolvedValue(false);
+
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
+
+    await expect(
+      act(async () => {
+        await result.current.create(mockShipmentData, mockPhotos);
+      }),
+    ).rejects.toMatchObject({
+      code: OFFLINE_QUEUED_ERROR_CODE,
+    });
+
+    expect(enqueueCreateShipment).toHaveBeenCalledWith(mockShipmentData, mockPhotos);
+    expect(shipmentService.createShipment).not.toHaveBeenCalled();
+  });
+
+  it('should queue shipment when network fails during request', async () => {
+    const networkError = new Error('Network down');
+    (shipmentService.createShipment as jest.Mock).mockRejectedValue(networkError);
+    (isLikelyOfflineError as jest.Mock).mockReturnValue(true);
+
+    const {result} = renderHook(() => useCreateShipment(), {wrapper: createWrapper()});
+
+    await expect(
+      act(async () => {
+        await result.current.create(mockShipmentData, []);
+      }),
+    ).rejects.toMatchObject({
+      code: OFFLINE_QUEUED_ERROR_CODE,
+    });
+
   });
 
   it('should clear error on new creation attempt', async () => {

@@ -6,6 +6,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {Camera, useCameraDevice, useCodeScanner} from 'react-native-vision-camera';
 
 import {useCheckInBooking, useTripManage, TripManagePassenger} from '@domain';
+import {isOfflineQueuedError} from '@infra';
 import {useToast} from '@hooks';
 import {AppStackParamList} from '@routes';
 
@@ -106,6 +107,12 @@ export function useScanBookingQRScreen() {
       toast.showSuccess('Check-in realizado com sucesso!');
       navigation.goBack();
     } catch (err: any) {
+      if (isOfflineQueuedError(err)) {
+        toast.showInfo(err.message);
+        navigation.goBack();
+        return;
+      }
+
       // Passageiro está no manifesto da viagem → provavelmente já embarcou (cache desatualizado)
       if (matchedPassenger) {
         setShowAlreadyCheckedIn(true);

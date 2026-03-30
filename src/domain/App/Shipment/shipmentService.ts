@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {api} from '@api';
 import {API_BASE_URL} from '../../../api/config';

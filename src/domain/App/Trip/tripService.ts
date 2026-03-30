@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {tripAPI} from './tripAPI';
 import {SearchTripsParams, Trip, TripManageData} from './tripTypes';

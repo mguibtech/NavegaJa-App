@@ -17,6 +17,7 @@ import {
   useShipmentDetails,
   useCancelShipment,
 } from '@domain';
+import {isOfflineQueuedError} from '@infra';
 import {useToast} from '@hooks';
 import {useAuthStore} from '@store';
 import {API_BASE_URL} from '@api/config';
@@ -191,7 +192,12 @@ export function useShipmentDetailsScreen() {
       toast.showSuccess(result.message);
       refetchShipment();
     } catch (error: any) {
-      setErrorMessage(error?.message || 'Não foi possível confirmar o pagamento');
+      if (isOfflineQueuedError(error)) {
+        toast.showInfo(error.message);
+        return;
+      }
+
+      setErrorMessage(error?.message || 'Nao foi possivel confirmar o pagamento');
       setShowPaymentErrorModal(true);
     }
   }

@@ -129,3 +129,11 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// RN 0.83 + New Architecture: `clean` may fail when CMake tries to clean
+// generated codegen paths that have already been removed by library clean tasks.
+tasks.configureEach { task ->
+    if (task.name.startsWith("externalNativeBuildClean")) {
+        task.enabled = false
+    }
+}

@@ -1,13 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {locationService} from '../../domain/App/Location/locationService';
 import {locationAPI} from '../../domain/App/Location/locationAPI';
 import {AM_CITIES_FALLBACK} from '../../domain/App/Location/locationTypes';
 
 jest.mock('../../domain/App/Location/locationAPI');
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
 
 const mockAPI = locationAPI as jest.Mocked<typeof locationAPI>;
 

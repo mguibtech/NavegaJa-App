@@ -1,7 +1,9 @@
 import React from 'react';
+import {Image} from 'react-native';
 import { Box, Icon, Text, TouchableOpacityBox } from '@components';
+import {apiImageSource} from '@api/config';
 
-import { Trip, TripStatus } from '@domain';
+import { Trip, TripStatus, getTripBoatImageUrl } from '@domain';
 import { STATUS_CONFIG, formatDeparture } from './useCaptainDashboard';
 
 type TripCardProps = {
@@ -38,6 +40,7 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
   const boatName = trip.boat?.name ?? 'Sem embarcação';
   const departureLabel = formatDeparture(trip);
   const departureRelative = getDepartureStatus(trip);
+  const boatImageUrl = getTripBoatImageUrl(trip);
   
   return (
     <TouchableOpacityBox
@@ -119,7 +122,23 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
         )}
       </Box>
 
-      <Icon name="chevron-right" size={30} color="textSecondary" />
+      {boatImageUrl ? (
+        <Box
+          width={44}
+          height={44}
+          borderRadius="s12"
+          overflow="hidden"
+          borderWidth={1}
+          borderColor="border">
+          <Image
+            source={apiImageSource(boatImageUrl)}
+            style={{width: '100%', height: '100%'}}
+            resizeMode="cover"
+          />
+        </Box>
+      ) : (
+        <Icon name="chevron-right" size={30} color="textSecondary" />
+      )}
     </TouchableOpacityBox>
   );
 }

@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 const STORAGE_KEY = '@navegaja:recent-searches';
 const MAX_SEARCHES = 5;

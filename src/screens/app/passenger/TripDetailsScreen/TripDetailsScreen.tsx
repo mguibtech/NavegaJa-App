@@ -1,8 +1,10 @@
 import React from 'react';
-import {ScrollView} from 'react-native';
+import {Image, ScrollView} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Button, ConfirmationModal, Icon, Text, TouchableOpacityBox, PromoBadge, TripDetailsSkeleton, TripWeatherWidget} from '@components';
+import {apiImageSource} from '@api/config';
+import {getTripBoatImageUrl} from '@domain';
 
 import {formatBRL} from '@utils';
 
@@ -130,6 +132,8 @@ export function TripDetailsScreen() {
     );
   }
 
+  const boatImageUrl = getTripBoatImageUrl(trip);
+
   return (
     <Box flex={1} backgroundColor="background">
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -213,8 +217,17 @@ export function TripDetailsScreen() {
                 backgroundColor="secondaryBg"
                 alignItems="center"
                 justifyContent="center"
+                overflow="hidden"
                 marginRight="s16">
-                <Icon name="directions-boat" size={32} color="secondary" />
+                {boatImageUrl ? (
+                  <Image
+                    source={apiImageSource(boatImageUrl)}
+                    style={{width: '100%', height: '100%'}}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Icon name="directions-boat" size={32} color="secondary" />
+                )}
               </Box>
 
               <Box flex={1} mr="s12">

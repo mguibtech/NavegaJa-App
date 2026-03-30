@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {bookingAPI} from './bookingAPI';
 import {Booking, CreateBookingData, PaymentStatusResponse} from './bookingTypes';

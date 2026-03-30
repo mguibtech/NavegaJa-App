@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import {StatusBar, useColorScheme, StyleSheet} from 'react-native';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {PersistQueryClientProvider} from '@tanstack/react-query-persist-client';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ThemeProvider} from '@shopify/restyle';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -9,19 +9,14 @@ import {theme, darkTheme} from '@theme';
 import {Router} from '@routes';
 import {ToastContainer, PermissionsRequest} from '@components';
 import {useThemeStore} from '@store';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000,
-      throwOnError: false,
-    },
-    mutations: {
-      throwOnError: false,
-    },
-  },
-});
+import {
+  persistQueryClientOptions,
+  queryClient,
+  replayOfflineQueue,
+  setupOnlineManager,
+  refreshOnlineState,
+  startOfflineQueueAutoSync,
+} from '@infra';
 
 function App() {
   const colorScheme = useColorScheme();
@@ -33,9 +28,14 @@ function App() {
   }, []);
 
   useEffect(() => {
+    setupOnlineManager();
+    refreshOnlineState().catch(() => {});
+
+    const stopOfflineSync = startOfflineQueueAutoSync();
+
     return () => {
+      stopOfflineSync();
       queryClient.cancelQueries();
-      queryClient.clear();
     };
   }, []);
 
@@ -45,7 +45,12 @@ function App() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={persistQueryClientOptions}
+        onSuccess={() => {
+          replayOfflineQueue().catch(() => {});
+        }}>
         <SafeAreaProvider>
           <ThemeProvider theme={activeTheme}>
             <StatusBar
@@ -57,7 +62,7 @@ function App() {
             <PermissionsRequest />
           </ThemeProvider>
         </SafeAreaProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
 }

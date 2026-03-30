@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Alert} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -8,6 +8,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQuery} from '@tanstack/react-query';
 
 import {
+  isOfflineQueuedError,
   useTripDetails,
   PaymentMethod,
   useCreateBooking,
@@ -436,6 +437,15 @@ export function useBookingScreen() {
         paymentMethod,
       });
     } catch (_error: any) {
+      if (isOfflineQueuedError(_error)) {
+        Alert.alert(
+          'Reserva salva offline',
+          _error.message,
+          [{text: 'OK', onPress: () => navigation.navigate('HomeTabs')}],
+        );
+        return;
+      }
+
       setBookingErrorMessage(
         _error.message ||
           'Não foi possível processar sua reserva. Tente novamente.',

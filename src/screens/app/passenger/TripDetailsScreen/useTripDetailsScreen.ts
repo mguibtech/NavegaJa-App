@@ -152,6 +152,10 @@ export function useTripDetailsScreen() {
 
   const handleNavigateToBoatDetail = () => {
     if (!trip) return;
+    if (!trip.boatId) {
+      toast.showWarning('Esta viagem nao possui embarcacao vinculada.');
+      return;
+    }
     navigation.navigate('BoatDetail', {
       boatId: trip.boatId,
       boat: trip.boat,
@@ -217,7 +221,7 @@ export function useTripDetailsScreen() {
 
   // Get boat and captain names
   const boatName =
-    trip?.boat?.name || (trip ? `Barco ${trip.boatId.slice(0, 8)}` : 'Barco');
+    trip?.boat?.name || (trip ? `Barco ${trip.boatId?.slice(0, 8) || 'N/A'}` : 'Barco');
   const captainName =
     trip?.captain?.name ||
     (trip ? `Capitão ${trip.captainId.slice(0, 8)}` : 'Capitão');

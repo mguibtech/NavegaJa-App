@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {favoriteAPI} from './favoriteAPI';
 import type {Favorite, CreateFavoriteDto, CheckFavoriteDto, FavoriteType} from './favoriteTypes';

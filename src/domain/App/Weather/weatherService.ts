@@ -3,7 +3,7 @@
  * Lógica de negócio e cache offline para sistema de clima
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {weatherAPI} from './weatherAPI';
 import {

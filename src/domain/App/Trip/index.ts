@@ -2,6 +2,7 @@
 export * from './tripTypes';
 export * from './popularRoutesTypes';
 export * from './tripCargo';
+export * from './tripImage';
 
 // API
 export {tripAPI} from './tripAPI';

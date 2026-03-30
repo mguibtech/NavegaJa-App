@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Dimensions, Pressable} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 import Carousel from 'react-native-reanimated-carousel';
 
 import {Box, Button, Icon, Text} from '@components';

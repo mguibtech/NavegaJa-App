@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 import * as Keychain from 'react-native-keychain';
 
 const USER_KEY = '@navegaja:user';

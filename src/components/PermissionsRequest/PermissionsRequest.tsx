@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Modal, Platform} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {Box, Button, Text, Icon} from '@components';
 import {useAppPermissions} from '@hooks';

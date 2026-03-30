@@ -7,6 +7,7 @@ export const tripBoatSchema = z.object({
   type: z.string(),
   capacity: z.number(),
   photoUrl: z.string().nullable().optional(),
+  photos: z.array(z.string()).optional().default([]),
   isVerified: z.boolean().default(false),
   rating: z.union([z.string(), z.number()]).optional(),
 });
@@ -31,6 +32,8 @@ export const tripSchema = z.object({
   totalSeats: z.number(),
   status: z.nativeEnum(TripStatus),
   acceptsShipments: z.boolean().optional().default(false),
+  boatImageUrl: z.string().nullable().optional(),
+  boatImages: z.array(z.string()).optional().default([]),
   discount: z.number().optional(),
   hasPromotion: z.boolean().optional().default(false),
   boat: tripBoatSchema.optional(),

@@ -15,7 +15,9 @@ import {
   PaymentMethod,
   canCancelBooking,
   getBookingLockedCancellationLabel,
+  useCancelBooking,
 } from '@domain';
+import {isOfflineQueuedError} from '@infra';
 import {usePdfDownload} from '@hooks';
 
 import {AppStackParamList} from '@routes';
@@ -38,7 +40,11 @@ export function TicketScreen({navigation, route}: Props) {
   const [showLoadErrorModal, setShowLoadErrorModal] = useState(false);
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
   const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
+  const [cancelSuccessMessage, setCancelSuccessMessage] = useState(
+    'Reserva cancelada com sucesso',
+  );
   const [showCancelErrorModal, setShowCancelErrorModal] = useState(false);
+  const {cancel} = useCancelBooking();
   const [cancelErrorMessage, setCancelErrorMessage] = useState('Não foi possível cancelar a reserva');
 
   useEffect(() => {
@@ -153,10 +159,17 @@ export function TicketScreen({navigation, route}: Props) {
   const handleConfirmCancel = async () => {
     setShowCancelConfirmModal(false);
     try {
-      await bookingAPI.cancel(booking.id);
+      await cancel(booking.id);
+      setCancelSuccessMessage('Reserva cancelada com sucesso');
       setShowCancelSuccessModal(true);
     } catch (error: any) {
-      setCancelErrorMessage(error?.message || 'Não foi possível cancelar a reserva');
+      if (isOfflineQueuedError(error)) {
+        setCancelSuccessMessage(error.message);
+        setShowCancelSuccessModal(true);
+        return;
+      }
+
+      setCancelErrorMessage(error?.message || 'Nao foi possivel cancelar a reserva');
       setShowCancelErrorModal(true);
     }
   };
@@ -721,7 +734,7 @@ export function TicketScreen({navigation, route}: Props) {
       <InfoModal
         visible={showCancelSuccessModal}
         title="Sucesso"
-        message="Reserva cancelada com sucesso"
+        message={cancelSuccessMessage}
         icon="check-circle"
         iconColor="success"
         buttonText="Entendi"

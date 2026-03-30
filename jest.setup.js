@@ -41,14 +41,6 @@ jest.mock('react-native-keychain', () => ({
   resetGenericPassword: jest.fn(() => Promise.resolve(true)),
 }));
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(() => Promise.resolve()),
-  getItem: jest.fn(() => Promise.resolve(null)),
-  removeItem: jest.fn(() => Promise.resolve()),
-  clear: jest.fn(() => Promise.resolve()),
-}));
-
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const View = require('react-native').View;
@@ -227,6 +219,56 @@ jest.mock('@react-native-community/geolocation', () => ({
   setRNConfiguration: jest.fn(),
   requestAuthorization: jest.fn(() => Promise.resolve('granted')),
 }));
+
+// Mock @react-native-community/netinfo
+jest.mock('@react-native-community/netinfo', () => {
+  const netInfo = {
+    addEventListener: jest.fn(() => jest.fn()),
+    fetch: jest.fn(() =>
+      Promise.resolve({
+        isConnected: true,
+        isInternetReachable: true,
+      }),
+    ),
+  };
+
+  return {
+    __esModule: true,
+    default: netInfo,
+    ...netInfo,
+  };
+});
+
+// Mock react-native-mmkv
+jest.mock('react-native-mmkv', () => {
+  const storage = new Map();
+
+  class MockMMKV {
+    set(key, value) {
+      storage.set(key, String(value));
+    }
+
+    getString(key) {
+      return storage.has(key) ? storage.get(key) : undefined;
+    }
+
+    delete(key) {
+      storage.delete(key);
+    }
+
+    getAllKeys() {
+      return Array.from(storage.keys());
+    }
+
+    clearAll() {
+      storage.clear();
+    }
+  }
+
+  return {
+    MMKV: MockMMKV,
+  };
+});
 
 // Mock react-native-blob-util (native module for PDF download)
 jest.mock('react-native-blob-util', () => ({

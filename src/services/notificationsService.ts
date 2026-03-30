@@ -1,6 +1,6 @@
 import messaging from '@react-native-firebase/messaging';
 import {Platform, PermissionsAndroid} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 import {api} from '@api';
 
 // ─── Notification History (local storage) ───────────────────────────────────

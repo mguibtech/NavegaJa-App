@@ -1,9 +1,10 @@
 import React from 'react';
-import { FlatList, RefreshControl, Modal, ScrollView, ImageBackground, Switch } from 'react-native';
+import { FlatList, RefreshControl, Modal, ScrollView, ImageBackground, Image, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PromoBadge, TripListSkeleton } from '@components';
-import { getTripShipmentPricePerKg, tripAcceptsShipments } from '@domain';
+import {apiImageSource} from '@api/config';
+import { getTripBoatImageUrl, getTripShipmentPricePerKg, tripAcceptsShipments } from '@domain';
 
 import { formatBRL } from '@utils';
 
@@ -309,10 +310,11 @@ export function SearchResultsScreen() {
               }
             }
 
-            const boatName = item.boat?.name || `Barco ${item.boatId.slice(0, 8)}`;
+            const boatName = item.boat?.name || (item.boatId ? `Barco ${item.boatId.slice(0, 8)}` : 'Sem embarcacao');
             const captainName = item.captain?.name || `Cap. ${item.captainId.slice(0, 8)}`;
             const captainRating = item.captain?.rating ? Number(item.captain.rating).toFixed(1) : '5.0';
             const captainTrips = item.captain?.totalTrips || 0;
+            const boatImageUrl = getTripBoatImageUrl(item);
 
             const isUrgent = item.availableSeats > 0 && item.availableSeats <= 5;
             const isFull = item.availableSeats === 0;
@@ -443,8 +445,17 @@ export function SearchResultsScreen() {
                       backgroundColor="secondaryBg"
                       alignItems="center"
                       justifyContent="center"
+                      overflow="hidden"
                       mr="s12">
-                      <Icon name="directions-boat" size={20} color="secondary" />
+                      {boatImageUrl ? (
+                        <Image
+                          source={apiImageSource(boatImageUrl)}
+                          style={{width: '100%', height: '100%'}}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Icon name="directions-boat" size={20} color="secondary" />
+                      )}
                     </Box>
                     <Box flex={1}>
                       <Text preset="paragraphMedium" color="text" bold numberOfLines={1}>

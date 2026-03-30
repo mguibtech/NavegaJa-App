@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@infra/storage';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
 import {PersonalContact, SosType, SosLocation, usePersonalContacts, useSosAlert, SosDuplicateError} from '@domain';
