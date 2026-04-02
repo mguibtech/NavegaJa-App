@@ -13,6 +13,20 @@ import {
   SHIPMENT_STATUS_LABELS,
 } from './useCaptainTripManage';
 
+function getPassengerCardStyle(checkedIn: boolean) {
+  return [
+    styles.passengerCard,
+    checkedIn ? styles.passengerCardCheckedIn : styles.passengerCardPending,
+  ];
+}
+
+function getShipmentActionBadgeStyle(canCollect: boolean) {
+  return [
+    styles.shipmentActionBadge,
+    canCollect ? styles.shipmentCollectBadge : styles.shipmentDeliverBadge,
+  ];
+}
+
 export function CaptainTripManageScreen() {
   const {top} = useSafeAreaInsets();
   const {download, isDownloading} = usePdfDownload();
@@ -245,10 +259,7 @@ export function CaptainTripManageScreen() {
                           mb="s8"
                           flexDirection="row"
                           alignItems="center"
-                          style={[
-                            styles.passengerCard,
-                            {borderLeftColor: checkedIn ? '#22C55E' : '#64748B'},
-                          ]}>
+                          style={getPassengerCardStyle(checkedIn)}>
                         <Box
                           width={40}
                           height={40}
@@ -393,10 +404,7 @@ export function CaptainTripManageScreen() {
                           </Box>
                           {isActionable ? (
                             <Box
-                              style={[
-                                styles.shipmentActionBadge,
-                                {backgroundColor: canCollect ? '#16a34a' : '#3b82f6'},
-                              ]}
+                              style={getShipmentActionBadgeStyle(canCollect)}
                               paddingHorizontal="s10"
                               paddingVertical="s6">
                               <Text preset="paragraphCaptionSmall" color="surface" bold>
@@ -500,10 +508,22 @@ const styles = StyleSheet.create({
   passengerCard: {
     borderLeftWidth: 3,
   },
+  passengerCardCheckedIn: {
+    borderLeftColor: '#22C55E',
+  },
+  passengerCardPending: {
+    borderLeftColor: '#64748B',
+  },
   statusBadge: {
     borderRadius: 6,
   },
   shipmentActionBadge: {
     borderRadius: 8,
+  },
+  shipmentCollectBadge: {
+    backgroundColor: '#16a34a',
+  },
+  shipmentDeliverBadge: {
+    backgroundColor: '#3b82f6',
   },
 });

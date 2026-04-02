@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, RefreshControl, TouchableOpacity} from 'react-native';
+import {FlatList, RefreshControl, TouchableOpacity, StyleSheet} from 'react-native';
 import {useTheme} from '@shopify/restyle';
 
 import {Box, Icon, Text, TouchableOpacityBox, ScreenHeader} from '@components';
@@ -7,6 +7,44 @@ import type {StoredNotification} from '@services';
 import {Theme} from '@theme';
 
 import {useNotificationsScreen} from './useNotificationsScreen';
+
+const styles = StyleSheet.create({
+  notificationTitle: {
+    flex: 1,
+    marginRight: 8,
+  },
+  unreadDot: {
+    marginLeft: 8,
+    marginTop: 6,
+    flexShrink: 0,
+  },
+  listContent: {
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
+  emptyState: {
+    paddingTop: 80,
+  },
+  emptyIconWrap: {
+    elevation: 2,
+  },
+  centeredText: {
+    textAlign: 'center',
+  },
+});
+
+function getNotificationRowStyle(
+  borderColor: string,
+  accentColor: string,
+  isRead: boolean,
+) {
+  return {
+    borderBottomWidth: 1,
+    borderBottomColor: borderColor,
+    borderLeftWidth: isRead ? 0 : 3,
+    borderLeftColor: accentColor,
+  };
+}
 
 type NotificationIconConfig = {
   icon: string;
@@ -86,12 +124,7 @@ export function NotificationsScreen() {
           alignItems="flex-start"
           paddingHorizontal="s16"
           paddingVertical="s16"
-          style={{
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-            borderLeftWidth: item.read ? 0 : 3,
-            borderLeftColor: colors.primary,
-          }}>
+          style={getNotificationRowStyle(colors.border, colors.primary, item.read)}>
           {/* Ícone */}
           <Box
             width={44}
@@ -101,7 +134,7 @@ export function NotificationsScreen() {
             alignItems="center"
             justifyContent="center"
             mr="s12"
-            style={{flexShrink: 0}}>
+            flexShrink={0}>
             <Icon name={config.icon} size={22} color={config.color} />
           </Box>
 
@@ -116,7 +149,7 @@ export function NotificationsScreen() {
                 preset="paragraphMedium"
                 color="text"
                 bold={!item.read}
-                style={{flex: 1, marginRight: 8}}
+                style={styles.notificationTitle}
                 numberOfLines={1}>
                 {item.title}
               </Text>
@@ -136,7 +169,7 @@ export function NotificationsScreen() {
               height={8}
               borderRadius="s8"
               backgroundColor="primary"
-              style={{marginLeft: 8, marginTop: 6, flexShrink: 0}}
+              style={styles.unreadDot}
             />
           )}
         </Box>
@@ -186,12 +219,12 @@ export function NotificationsScreen() {
         keyExtractor={item => item.id}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{paddingBottom: 24, flexGrow: 1}}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0E7AFE']} />
         }
         ListEmptyComponent={
-          <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40" style={{paddingTop: 80}}>
+          <Box flex={1} alignItems="center" justifyContent="center" paddingHorizontal="s40" style={styles.emptyState}>
             <Box
               width={80}
               height={80}
@@ -200,13 +233,13 @@ export function NotificationsScreen() {
               alignItems="center"
               justifyContent="center"
               mb="s24"
-              style={{elevation: 2}}>
+              style={styles.emptyIconWrap}>
               <Icon name="notifications-none" size={40} color="textSecondary" />
             </Box>
-            <Text preset="paragraphLarge" color="text" bold mb="s8" style={{textAlign: 'center'}}>
+            <Text preset="paragraphLarge" color="text" bold mb="s8" style={styles.centeredText}>
               Nenhuma notificação
             </Text>
-            <Text preset="paragraphSmall" color="textSecondary" style={{textAlign: 'center'}}>
+            <Text preset="paragraphSmall" color="textSecondary" style={styles.centeredText}>
               Quando você receber notificações, elas aparecerão aqui.
             </Text>
           </Box>

@@ -5,6 +5,7 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  StyleSheet,
 } from 'react-native';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader, PhotoViewerModal, usePhotoViewer} from '@components';
@@ -15,6 +16,46 @@ import {useCaptainEditBoat, BOAT_TYPES} from './useCaptainEditBoat';
 function isPdfUrl(url: string) {
   return url.toLowerCase().includes('.pdf');
 }
+
+const MEDIA_SIZE = 88;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  mediaCard: {
+    position: 'relative',
+    width: MEDIA_SIZE,
+    height: MEDIA_SIZE,
+  },
+  mediaImage: {
+    width: MEDIA_SIZE,
+    height: MEDIA_SIZE,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedDocCard: {
+    position: 'relative',
+    width: MEDIA_SIZE,
+    height: MEDIA_SIZE,
+  },
+  pdfPreview: {
+    gap: 4,
+  },
+});
 
 export function CaptainEditBoatScreen() {
   const {openViewer, viewerProps} = usePhotoViewer();
@@ -58,13 +99,13 @@ export function CaptainEditBoatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
         <ScreenHeader title="Editar Embarcação" onBack={goBack} />
 
         <ScrollView
-          contentContainerStyle={{padding: 20, paddingBottom: 120}}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
 
           {/* Banner de rejeição */}
@@ -199,11 +240,11 @@ export function CaptainEditBoatScreen() {
                 {savedPhotos.map((url, index) => (
                   <Box
                     key={`${url}-${index}`}
-                    width={88}
-                    height={88}
+                    width={MEDIA_SIZE}
+                    height={MEDIA_SIZE}
                     borderRadius="s8"
                     overflow="hidden"
-                    style={{position: 'relative'}}>
+                    style={styles.mediaCard}>
                     <TouchableOpacityBox
                       onPress={() =>
                         openViewer(
@@ -218,23 +259,13 @@ export function CaptainEditBoatScreen() {
                       }>
                       <Image
                         source={apiImageSource(url)}
-                        style={{width: 88, height: 88}}
+                        style={styles.mediaImage}
                         resizeMode="cover"
                       />
                     </TouchableOpacityBox>
                     {/* Botão remover */}
                     <TouchableOpacityBox
-                      style={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        borderRadius: 12,
-                        width: 24,
-                        height: 24,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      style={styles.removeButton}
                       onPress={() => handleRemoveSavedPhoto(index)}>
                       <Icon name="close" size={14} color={'#fff' as any} />
                     </TouchableOpacityBox>
@@ -292,20 +323,20 @@ export function CaptainEditBoatScreen() {
                 {savedDocPhotos.map((url, index) => (
                   <Box
                     key={`${url}-${index}`}
-                    width={88}
-                    height={88}
+                    width={MEDIA_SIZE}
+                    height={MEDIA_SIZE}
                     borderRadius="s8"
                     borderWidth={1}
                     borderColor="border"
                     overflow="hidden"
                     backgroundColor="surface"
-                    style={{position: 'relative'}}>
+                    style={styles.savedDocCard}>
                     {isPdfUrl(url) ? (
                       <Box
                         flex={1}
                         alignItems="center"
                         justifyContent="center"
-                        gap="s4">
+                        style={styles.pdfPreview}>
                         <Icon name="picture-as-pdf" size={32} color={'#DC2626' as any} />
                         <Text preset="paragraphCaptionSmall" color="textSecondary">
                           PDF
@@ -329,24 +360,14 @@ export function CaptainEditBoatScreen() {
                         }}>
                         <Image
                           source={apiImageSource(url)}
-                          style={{width: 88, height: 88}}
+                          style={styles.mediaImage}
                           resizeMode="cover"
                         />
                       </TouchableOpacityBox>
                     )}
                     {/* Botão remover */}
                     <TouchableOpacityBox
-                      style={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        borderRadius: 12,
-                        width: 24,
-                        height: 24,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      style={styles.removeButton}
                       onPress={() => handleRemoveSavedDocPhoto(index)}
                       disabled={!canEditBoatDocuments}
                       activeOpacity={canEditBoatDocuments ? 0.8 : 1}>

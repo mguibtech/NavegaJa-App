@@ -1,4 +1,5 @@
 import React from 'react';
+import {StyleSheet} from 'react-native';
 
 import {Box, Icon, Text} from '@components';
 import {CalculateShipmentPriceResponse} from '@domain';
@@ -8,6 +9,16 @@ interface ShipmentPriceBreakdownProps {
   data: CalculateShipmentPriceResponse;
 }
 
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+});
+
 export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
   const hasDiscount = data.totalDiscount > 0;
 
@@ -16,13 +27,7 @@ export function ShipmentPriceBreakdown({data}: ShipmentPriceBreakdownProps) {
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
+      style={styles.card}>
       <Text preset="paragraphMedium" color="text" bold mb="s16">
         Detalhes do Frete
       </Text>

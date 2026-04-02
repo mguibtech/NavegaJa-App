@@ -65,7 +65,7 @@ async function saveToCache<T>(key: string, data: T): Promise<void> {
       timestamp: Date.now(),
     };
     await AsyncStorage.setItem(key, JSON.stringify(cached));
-  } catch {
+  } catch (error) {
     console.error('Error saving to cache:', error);
   }
 }
@@ -114,7 +114,7 @@ async function getRegionWeather(region: Region): Promise<CurrentWeather> {
     await saveToCache(cacheKey, weather);
 
     return weather;
-  } catch {
+  } catch (error) {
     // Se falhar, tenta carregar do cache
     console.warn('Failed to fetch weather from API, loading from cache');
     const cached = await loadFromCache<CurrentWeather>(cacheKey);

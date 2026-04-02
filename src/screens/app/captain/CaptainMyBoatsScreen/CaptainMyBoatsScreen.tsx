@@ -1,11 +1,61 @@
 import React from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox, ConfirmationModal} from '@components';
 import {Boat} from '@domain';
 
 import {useCaptainMyBoats} from './useCaptainMyBoats';
+
+const styles = StyleSheet.create({
+  boatCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  rejectedChip: {
+    backgroundColor: '#FEE2E2',
+  },
+  pendingChip: {
+    backgroundColor: '#DBEAFE',
+  },
+  verifiedChip: {
+    backgroundColor: '#D1FAE5',
+  },
+  rejectedText: {
+    color: '#991B1B',
+  },
+  pendingText: {
+    color: '#1E40AF',
+  },
+  verifiedText: {
+    color: '#065F46',
+  },
+  listContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+});
+
+function getBoatStatusChipStyle(isRejected: boolean, isPending: boolean) {
+  if (isRejected) {return styles.rejectedChip;}
+  if (isPending) {return styles.pendingChip;}
+  return styles.verifiedChip;
+}
+
+function getBoatStatusTextStyle(isRejected: boolean, isPending: boolean) {
+  if (isRejected) {return styles.rejectedText;}
+  if (isPending) {return styles.pendingText;}
+  return styles.verifiedText;
+}
+
+function getHeaderStyle(top: number) {
+  return {
+    paddingTop: top + 12,
+  };
+}
 
 export function CaptainMyBoatsScreen() {
   const {top} = useSafeAreaInsets();
@@ -31,13 +81,7 @@ export function CaptainMyBoatsScreen() {
         borderRadius="s16"
         padding="s20"
         mb="s12"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.boatCard}>
         <Box flexDirection="row" alignItems="flex-start">
           <Box
             width={52}
@@ -63,19 +107,11 @@ export function CaptainMyBoatsScreen() {
               paddingVertical="s4"
               borderRadius="s8"
               mt="s6"
-              style={{
-                backgroundColor: isRejected
-                  ? '#FEE2E2'
-                  : isPending
-                  ? '#DBEAFE'
-                  : '#D1FAE5',
-              }}>
+              style={getBoatStatusChipStyle(isRejected, isPending)}>
               <Text
                 preset="paragraphCaptionSmall"
                 bold
-                style={{
-                  color: isRejected ? '#991B1B' : isPending ? '#1E40AF' : '#065F46',
-                }}>
+                style={getBoatStatusTextStyle(isRejected, isPending)}>
                 {isRejected ? 'Rejeitada' : isPending ? 'Em análise' : 'Verificada'}
               </Text>
             </Box>
@@ -192,7 +228,7 @@ export function CaptainMyBoatsScreen() {
           paddingBottom="s12"
           borderBottomWidth={1}
           borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
+          style={getHeaderStyle(top)}>
           <Box flexDirection="row" alignItems="center">
             <TouchableOpacityBox
               width={40}
@@ -228,7 +264,7 @@ export function CaptainMyBoatsScreen() {
           data={boats}
           keyExtractor={item => item.id}
           renderItem={renderBoat}
-          contentContainerStyle={{padding: 20, paddingBottom: 100}}
+          contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl refreshing={refreshing || isLoading} onRefresh={onRefresh} />
           }

@@ -10,7 +10,6 @@ export function useCities() {
 
   useEffect(() => {
     fetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetch(): Promise<City[]> {

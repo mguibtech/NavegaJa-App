@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {StyleSheet} from 'react-native';
 
 import {Box, Icon, Text} from '@components';
 import {
@@ -38,15 +39,7 @@ function StatusRow({status}: {status: FloodStatus}) {
       borderRadius="s12"
       padding="s16"
       mb="s12"
-      style={{
-        borderLeftWidth: 4,
-        borderLeftColor: sevCfg.color,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 1},
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
-      }}>
+      style={[styles.statusRow, {borderLeftColor: sevCfg.color}]}>
       {/* Rio + badge severity */}
       <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s8">
         <Box flex={1} mr="s8">
@@ -102,11 +95,11 @@ export function FloodForecastPanel({lat, lng, radiusKm = 50}: FloodForecastPanel
 
   if (isLoading) {
     return (
-      <Box
-        backgroundColor="surface"
-        borderRadius="s16"
-        padding="s20"
-        style={{elevation: 3}}>
+        <Box
+          backgroundColor="surface"
+          borderRadius="s16"
+          padding="s20"
+          style={styles.panelElevation}>
         <Box flexDirection="row" alignItems="center" mb="s16">
           <Icon name="flood" size={20} color="primary" />
           <Text preset="paragraphMedium" color="text" bold ml="s8">
@@ -120,7 +113,7 @@ export function FloodForecastPanel({lat, lng, radiusKm = 50}: FloodForecastPanel
             borderRadius="s12"
             height={80}
             mb="s12"
-            style={{opacity: 0.5}}
+            style={styles.loadingBlock}
           />
         ))}
       </Box>
@@ -139,13 +132,7 @@ export function FloodForecastPanel({lat, lng, radiusKm = 50}: FloodForecastPanel
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
+      style={styles.panelCard}>
       {/* Header */}
       <Box flexDirection="row" alignItems="center" mb="s4">
         <Icon name="flood" size={20} color="primary" />
@@ -156,8 +143,8 @@ export function FloodForecastPanel({lat, lng, radiusKm = 50}: FloodForecastPanel
           paddingHorizontal="s8"
           paddingVertical="s4"
           borderRadius="s8"
-          style={{backgroundColor: '#EFF6FF'}}>
-          <Text preset="paragraphCaptionSmall" bold style={{color: '#1D4ED8'}}>
+          style={styles.floodHubBadge}>
+          <Text preset="paragraphCaptionSmall" bold style={styles.floodHubBadgeText}>
             Flood Hub
           </Text>
         </Box>
@@ -214,3 +201,33 @@ export function FloodForecastPanel({lat, lng, radiusKm = 50}: FloodForecastPanel
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  floodHubBadge: {
+    backgroundColor: '#EFF6FF',
+  },
+  floodHubBadgeText: {
+    color: '#1D4ED8',
+  },
+  loadingBlock: {
+    opacity: 0.5,
+  },
+  panelCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  panelElevation: {
+    elevation: 3,
+  },
+  statusRow: {
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+});

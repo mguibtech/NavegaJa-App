@@ -91,7 +91,7 @@ export function SearchableLocationInput({
         paddingVertical="s16"
         flexDirection="row"
         alignItems="center"
-        style={{ elevation: 1 }}>
+        style={styles.trigger}>
         <Icon name={iconName} size={20} color={value ? 'secondary' : 'textSecondary'} />
         <Text
           preset="paragraphMedium"
@@ -117,7 +117,7 @@ export function SearchableLocationInput({
             paddingHorizontal="s16"
             paddingBottom="s12"
             backgroundColor="surface"
-            style={{ elevation: 2 }}>
+            style={styles.modalHeader}>
             {label && (
               <Text preset="headingSmall" color="textSecondary" mb="s8">
                 {label}
@@ -279,6 +279,12 @@ export function SearchableLocationInput({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
+  },
+  trigger: {
+    elevation: 1,
+  },
+  modalHeader: {
+    elevation: 2,
   },
   searchInput: {
     flex: 1,

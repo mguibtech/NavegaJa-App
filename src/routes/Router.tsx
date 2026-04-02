@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ActivityIndicator} from 'react-native';
 
 import {NavigationContainer} from '@react-navigation/native';
@@ -26,6 +26,12 @@ export function Router() {
   const {flushPendingNavigation} = useNotificationHandlers();
 
   useForegroundSessionSync(isLoggedIn);
+
+  useEffect(() => {
+    if (isLoggedIn && hasOnboarded && !showSplash && navigationRef.isReady()) {
+      flushPendingNavigation();
+    }
+  }, [flushPendingNavigation, hasOnboarded, isLoggedIn, showSplash]);
 
   function handleSplashFinish() {
     setShowSplash(false);

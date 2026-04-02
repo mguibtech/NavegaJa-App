@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {StyleSheet} from 'react-native';
 
 import {Box, Icon, Text, TouchableOpacityBox, WeatherIcon, WeatherWidgetSkeleton} from '@components';
 import {
@@ -11,6 +12,25 @@ import {
   getUvLevel,
   UV_LEVEL_CONFIGS,
 } from '@domain';
+
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  warningItem: {
+    marginTop: 2,
+  },
+});
+
+function getUvTextStyle(color: string) {
+  return {
+    color,
+  };
+}
 
 interface WeatherWidgetProps {
   region?: Region;
@@ -74,13 +94,7 @@ export function WeatherWidget({
       borderRadius="s16"
       padding="s20"
       onPress={onPress}
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
+      style={styles.card}>
       {/* Header */}
       <Box flexDirection="row" justifyContent="space-between" mb="s16">
         <Box>
@@ -253,7 +267,7 @@ export function WeatherWidget({
                 <Text preset="paragraphSmall" color="textSecondary" mr="s4">☀️</Text>
                 <Text
                   preset="paragraphSmall"
-                  style={{color: uvCfg.color}}>
+                  style={getUvTextStyle(uvCfg.color)}>
                   UV {weather.uvIndex} · {uvCfg.label}
                 </Text>
               </Box>
@@ -280,7 +294,7 @@ export function WeatherWidget({
               key={index}
               preset="paragraphCaptionSmall"
               color="warning"
-              style={{marginTop: 2}}>
+              style={styles.warningItem}>
               • {warning}
             </Text>
           ))}

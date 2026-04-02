@@ -63,8 +63,10 @@ export function useNotificationHandlers() {
   const pendingNavigationRef = useRef<NotificationData | null>(null);
 
   const queueNavigation = useEffectEvent((data: NotificationData) => {
+    const role = useAuthStore.getState().user?.role;
+
     if (navigationRef.isReady()) {
-      navigateFromNotificationData(data);
+      navigateFromNotificationData(data, role);
       return;
     }
 
@@ -262,11 +264,13 @@ export function useNotificationHandlers() {
 
   const flushPendingNavigation = useCallback(() => {
     const pendingData = pendingNavigationRef.current;
-    if (!pendingData) {
+    const {isLoggedIn, user} = useAuthStore.getState();
+
+    if (!pendingData || !isLoggedIn) {
       return;
     }
 
-    navigateFromNotificationData(pendingData);
+    navigateFromNotificationData(pendingData, user?.role);
     pendingNavigationRef.current = null;
   }, []);
 

@@ -35,10 +35,10 @@ export class ApiErrorHandler {
 
     // 2. Se a mensagem for "Erro ao se comunicar com o servidor", mapeia para erro de rede
     if (error.message === 'Erro ao se comunicar com o servidor') {
-      return API_ERROR_MAP['NETWORK_ERROR'];
+      return API_ERROR_MAP.NETWORK_ERROR;
     }
 
     // 3. Fallback para a mensagem que veio do backend ou mensagem padrão
-    return error.message || API_ERROR_MAP['INTERNAL_SERVER_ERROR'];
+    return error.message || API_ERROR_MAP.INTERNAL_SERVER_ERROR;
   }
 }

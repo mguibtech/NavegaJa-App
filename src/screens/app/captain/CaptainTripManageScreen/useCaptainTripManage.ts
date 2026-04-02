@@ -135,7 +135,15 @@ export function useCaptainTripManage() {
 
   const passengers = manageData?.passageiros ?? [];
   const shipments = manageData?.encomendas ?? [];
-  const shipmentPolicySource = trip ?? manageData ?? null;
+  const shipmentPolicySource = trip
+    ? trip
+    : manageData
+    ? {
+        acceptsShipments: manageData.acceptsShipments,
+        cargoPriceKg: manageData.cargoPriceKg ?? null,
+        shipmentPricePerKg: manageData.shipmentPricePerKg ?? null,
+      }
+    : null;
   const acceptsShipments = tripAcceptsShipments(shipmentPolicySource);
   const shipmentPricePerKg = getTripShipmentPricePerKg(shipmentPolicySource);
 

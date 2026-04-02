@@ -57,6 +57,30 @@ import type {CaptainStackParamList, CaptainTabsParamList} from './navigationType
 const Stack = createNativeStackNavigator<CaptainStackParamList>();
 const CaptainTab = createBottomTabNavigator<CaptainTabsParamList>();
 
+const renderCaptainTabBar = (
+  props: React.ComponentProps<typeof CaptainTabBar>,
+) => <CaptainTabBar {...props} />;
+
+const renderDashboardIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="dashboard" size={size} color={color} />
+);
+
+const renderOperationsIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="directions-boat" size={size} color={color} />;
+
+const renderFinancialIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="attach-money" size={size} color={color} />
+);
+
+const renderProfileIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="person" size={size} color={color} />
+);
+
 function CaptainTabs() {
   const {totalUnread} = useConversations();
   const {trips} = useCaptainTrips();
@@ -69,16 +93,14 @@ function CaptainTabs() {
 
   return (
     <CaptainTab.Navigator
-      tabBar={props => <CaptainTabBar {...props} />}
+      tabBar={renderCaptainTabBar}
       screenOptions={{headerShown: false}}>
       <CaptainTab.Screen
         name="Dashboard"
         component={CaptainDashboardScreen}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="dashboard" size={size} color={color} />
-          ),
+          tabBarIcon: renderDashboardIcon,
         }}
       />
       <CaptainTab.Screen
@@ -86,9 +108,7 @@ function CaptainTabs() {
         component={CaptainOperationsScreen}
         options={{
           tabBarLabel: 'Operações',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="directions-boat" size={size} color={color} />
-          ),
+          tabBarIcon: renderOperationsIcon,
           tabBarBadge:
             activeOperationsCount > 0 ? activeOperationsCount : undefined,
         }}
@@ -98,9 +118,7 @@ function CaptainTabs() {
         component={CaptainFinancialScreen}
         options={{
           tabBarLabel: 'Financeiro',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="attach-money" size={size} color={color} />
-          ),
+          tabBarIcon: renderFinancialIcon,
         }}
       />
       <CaptainTab.Screen
@@ -108,9 +126,7 @@ function CaptainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="person" size={size} color={color} />
-          ),
+          tabBarIcon: renderProfileIcon,
           tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
         }}
       />

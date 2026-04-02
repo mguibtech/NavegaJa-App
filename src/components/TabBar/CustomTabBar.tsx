@@ -14,17 +14,21 @@ import {Theme} from '@theme';
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const {bottom} = useSafeAreaInsets();
   const theme = useTheme<Theme>();
+  const containerStyle = React.useMemo(
+    () => ({
+      paddingBottom: bottom > 0 ? bottom : 10,
+      paddingTop: 8,
+      shadowColor: theme.colors.text,
+    }),
+    [bottom, theme.colors.text],
+  );
 
   return (
     <Box
       backgroundColor="surface"
       style={[
         styles.container,
-        {
-          paddingBottom: bottom > 0 ? bottom : 10,
-          paddingTop: 8,
-          shadowColor: theme.colors.text,
-        },
+        containerStyle,
       ]}>
       <Box flexDirection="row" alignItems="flex-start" justifyContent="space-around">
         {state.routes.map((route, index) => {

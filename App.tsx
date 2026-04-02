@@ -14,6 +14,7 @@ import {
   queryClient,
   replayOfflineQueue,
   setupOnlineManager,
+  teardownOnlineManager,
   refreshOnlineState,
   startOfflineQueueAutoSync,
 } from '@infra';
@@ -35,6 +36,7 @@ function App() {
 
     return () => {
       stopOfflineSync();
+      teardownOnlineManager();
       queryClient.cancelQueries();
     };
   }, []);

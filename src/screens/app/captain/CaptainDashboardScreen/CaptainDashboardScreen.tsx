@@ -453,7 +453,7 @@ export function CaptainDashboardScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 4 }}>
+              contentContainerStyle={styles.tripListContent}>
               {currentTrips.map((trip, index) => (
                 <TripCard
                   key={trip.id}
@@ -714,6 +714,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 100,
+  },
+  tripListContent: {
+    paddingBottom: 4,
   },
   currentTripCard: {
     elevation: 2,

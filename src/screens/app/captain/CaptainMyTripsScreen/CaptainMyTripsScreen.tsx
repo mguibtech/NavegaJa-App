@@ -1,11 +1,57 @@
 import React from 'react';
-import {FlatList, RefreshControl, ActivityIndicator} from 'react-native';
+import {FlatList, RefreshControl, ActivityIndicator, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TouchableOpacityBox, TripListSkeleton} from '@components';
 import {Trip, TripStatus} from '@domain';
 
 import {useCaptainMyTrips, FilterTab} from './useCaptainMyTrips';
+
+const styles = StyleSheet.create({
+  pipelineStep: {
+    minWidth: 60,
+  },
+  pipelineNode: {
+    borderColor: '#D1D5DB',
+  },
+  pipelineNodeDot: {
+    backgroundColor: 'white',
+  },
+  tripCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  activeFilter: {
+    borderRadius: 10,
+  },
+  listContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+});
+
+function getPipelineNodeStyle(isPast: boolean, isActive: boolean) {
+  return {
+    backgroundColor: isActive ? '#0B5D8A' : isPast ? '#22C55E' : '#E5E7EB',
+    borderWidth: isActive || isPast ? 0 : 1.5,
+  };
+}
+
+function getPipelineLineStyle(isPast: boolean) {
+  return {
+    backgroundColor: isPast ? '#22C55E' : '#E5E7EB',
+    marginTop: 9,
+  };
+}
+
+function getHeaderStyle(top: number) {
+  return {
+    paddingTop: top + 12,
+  };
+}
 
 const PIPELINE_STEPS: {key: TripStatus; label: string}[] = [
   {key: TripStatus.SCHEDULED,   label: 'Agendada'},
@@ -23,21 +69,20 @@ function TripStatusPipeline({status}: {status: TripStatus}) {
       {PIPELINE_STEPS.map((step, idx) => {
         const isPast   = idx < currentIndex;
         const isActive = idx === currentIndex;
-        const nodeBg   = isActive ? '#0B5D8A' : isPast ? '#22C55E' : '#E5E7EB';
 
         return (
           <React.Fragment key={step.key}>
-            <Box alignItems="center" style={{minWidth: 60}}>
+            <Box alignItems="center" style={styles.pipelineStep}>
               <Box
                 width={20}
                 height={20}
                 borderRadius="s12"
                 alignItems="center"
                 justifyContent="center"
-                style={{backgroundColor: nodeBg, borderWidth: isActive || isPast ? 0 : 1.5, borderColor: '#D1D5DB'}}>
+                style={[styles.pipelineNode, getPipelineNodeStyle(isPast, isActive)]}>
                 {isPast && <Icon name="check" size={12} color={'white' as any} />}
                 {isActive && (
-                  <Box width={8} height={8} borderRadius="s8" style={{backgroundColor: 'white'}} />
+                  <Box width={8} height={8} borderRadius="s8" style={styles.pipelineNodeDot} />
                 )}
               </Box>
               <Text
@@ -53,7 +98,7 @@ function TripStatusPipeline({status}: {status: TripStatus}) {
               <Box
                 flex={1}
                 height={2}
-                style={{backgroundColor: isPast ? '#22C55E' : '#E5E7EB', marginTop: 9}}
+                style={getPipelineLineStyle(isPast)}
               />
             )}
           </React.Fragment>
@@ -90,13 +135,7 @@ export function CaptainMyTripsScreen() {
         padding="s20"
         mb="s12"
         onPress={() => navigation.navigate('CaptainTripManage', {tripId: trip.id})}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.tripCard}>
         {/* Status + Route */}
         <Box
           flexDirection="row"
@@ -147,13 +186,13 @@ export function CaptainMyTripsScreen() {
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
-      <Box
-        backgroundColor="surface"
-        paddingHorizontal="s24"
-        paddingBottom="s12"
-        borderBottomWidth={1}
-        borderBottomColor="border"
-        style={{paddingTop: top + 12}}>
+        <Box
+          backgroundColor="surface"
+          paddingHorizontal="s24"
+          paddingBottom="s12"
+          borderBottomWidth={1}
+          borderBottomColor="border"
+          style={getHeaderStyle(top)}>
         <Box flexDirection="row" alignItems="center" mb="s12">
           <TouchableOpacityBox
             width={40}
@@ -197,7 +236,7 @@ export function CaptainMyTripsScreen() {
                 backgroundColor={isActive ? 'secondary' : 'background'}
                 alignItems="center"
                 onPress={() => setFilterTab(tab)}
-                style={{borderRadius: 10}}>
+                style={styles.activeFilter}>
                 <Text
                   preset="paragraphSmall"
                   color={isActive ? 'surface' : 'text'}
@@ -210,11 +249,11 @@ export function CaptainMyTripsScreen() {
         </Box>
       </Box>
 
-      <FlatList
+        <FlatList
         data={filteredTrips}
         keyExtractor={item => item.id}
         renderItem={renderTrip}
-        contentContainerStyle={{padding: 20, paddingBottom: 100}}
+        contentContainerStyle={styles.listContent}
         onEndReached={loadMoreTrips}
         onEndReachedThreshold={0.3}
         refreshControl={

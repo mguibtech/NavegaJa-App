@@ -4,11 +4,19 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import type {RouteProp} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import {PaymentMethod, PaymentStatus, useBookingDetails, usePaymentStatus} from '@domain';
+import {PaymentMethod, useBookingDetails, usePaymentStatus} from '@domain';
 import {useToast} from '@hooks';
 import {formatBRL} from '@utils';
 import type {AppStackParamList} from '@routes';
 import {logPurchase} from '@services';
+import {
+  createPixShareMessage,
+  formatCountdown,
+  getSecondsUntil,
+  shouldRedirectToTicket,
+  shouldShowExpiredModal,
+  shouldShowPaidModal,
+} from './paymentScreenUtils';
 
 export function usePaymentScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -36,31 +44,26 @@ export function usePaymentScreen() {
       toast.showError('Erro ao carregar dados de pagamento');
       navigation.goBack();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingError]);
 
   useEffect(() => {
-    if (!isLoading && booking && paymentMethod !== PaymentMethod.PIX && booking.status === 'confirmed') {
+    if (shouldRedirectToTicket(booking, paymentMethod, isLoading)) {
       navigation.replace('Ticket', {bookingId});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking, isLoading]);
 
-  // Countdown timer para PIX
   useEffect(() => {
     if (!booking?.pixExpiresAt) return;
+    const pixExpiresAt = booking.pixExpiresAt;
 
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const expiry = new Date(booking.pixExpiresAt!).getTime();
-      return Math.max(0, Math.floor((expiry - now) / 1000));
-    };
-
-    setTimeLeft(calculateTimeLeft());
+    setTimeLeft(getSecondsUntil(pixExpiresAt));
 
     const timer = setInterval(() => {
-      const left = calculateTimeLeft();
+      const left = getSecondsUntil(pixExpiresAt);
       setTimeLeft(left);
+
       if (left <= 0) {
         clearInterval(timer);
         setShowExpiredModal(true);
@@ -70,7 +73,6 @@ export function usePaymentScreen() {
     return () => clearInterval(timer);
   }, [booking?.pixExpiresAt]);
 
-  // Polling de status a cada 5s (apenas PIX)
   useEffect(() => {
     if (paymentMethod !== PaymentMethod.PIX || !booking) return;
 
@@ -79,48 +81,53 @@ export function usePaymentScreen() {
     }, 5000);
 
     return () => clearInterval(pollingInterval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking, paymentMethod]);
 
   async function checkPaymentStatus() {
     if (isCheckingPayment || !isMounted.current) return;
+
     try {
       setIsCheckingPayment(true);
       const status = await checkStatus(bookingId);
+
       if (!isMounted.current) return;
-      if (status.paymentStatus === PaymentStatus.PAID) {
+
+      if (shouldShowPaidModal(status)) {
         setShowSuccessModal(true);
-      } else if (status.isExpired) {
+      } else if (shouldShowExpiredModal(status)) {
         setShowExpiredModal(true);
       }
     } catch {
-      // silent — polling errors são esperados em transições de tela
+      // Polling can race with navigation and expire naturally.
     } finally {
-      if (isMounted.current) setIsCheckingPayment(false);
+      if (isMounted.current) {
+        setIsCheckingPayment(false);
+      }
     }
   }
 
   function handleCopyPixCode() {
     if (booking?.pixQrCode) {
       Clipboard.setString(booking.pixQrCode);
-      toast.showSuccess('Código PIX copiado!');
+      toast.showSuccess('Codigo PIX copiado!');
     }
   }
 
   async function handleSharePixCode() {
     if (!booking?.pixQrCode) return;
+
     try {
       await Share.share({
-        title: 'Pagamento NavegaJá',
-        message:
-          `🛥️ NavegaJá — Pagamento PIX\n\n` +
-          `Valor: ${formatBRL(amount)}\n` +
-          `Reserva: #${bookingId.slice(0, 8).toUpperCase()}\n\n` +
-          `Código PIX (Copia e Cola):\n${booking.pixQrCode}\n\n` +
-          `Abra seu banco e use o código acima para pagar.`,
+        title: 'Pagamento NavegaJa',
+        message: createPixShareMessage(
+          formatBRL(amount),
+          bookingId,
+          booking.pixQrCode,
+        ),
       });
     } catch {
-      // ignore share errors
+      // Ignore share errors triggered by user dismissal.
     }
   }
 
@@ -136,9 +143,7 @@ export function usePaymentScreen() {
   }
 
   function formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return formatCountdown(seconds);
   }
 
   return {

@@ -18,6 +18,8 @@ import {
 } from '@domain';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const CHART_BORDER_RADIUS = 12;
+const CHART_BG = '#FFFFFF';
 
 interface RiverDetailModalProps {
   visible: boolean;
@@ -60,16 +62,12 @@ function LevelBar({
       <Box
         height={10}
         backgroundColor="border"
-        style={{borderRadius: 6}}
+        style={styles.levelBarTrack}
         overflow="hidden"
         mb="s8">
         <Box
           height={10}
-          style={{
-            borderRadius: 6,
-            backgroundColor: color,
-            width: `${pct}%`,
-          }}
+          style={[styles.levelBarFill, {backgroundColor: color, width: `${pct}%`}]}
         />
       </Box>
       <Box flexDirection="row" justifyContent="space-between">
@@ -125,9 +123,9 @@ export function RiverDetailModal({
 
       // 2. Buscar previsão de nível (7 dias — FloodHub Fase 2)
       fetchFloodStatus(coords.lat, coords.lng, 30).then(floodData => {
-        if (floodData && floodData.gauges.length > 0) {
+        if (floodData?.gauges?.length) {
           // Busca o gauge que mais combina com o rio atual ou pega o primeiro
-          const matchingGauge = floodData.gauges.find(g => 
+          const matchingGauge = floodData.gauges.find(g =>
             g.river.toLowerCase().includes(current.river.toLowerCase())
           ) || floodData.gauges[0];
 
@@ -203,7 +201,7 @@ export function RiverDetailModal({
             width={40}
             height={4}
             backgroundColor="border"
-            style={{borderRadius: 2}}
+            style={styles.handle}
           />
         </Box>
 
@@ -249,13 +247,13 @@ export function RiverDetailModal({
               <Text
                 preset="headingLarge"
                 bold
-                style={{color: cfg.color, fontSize: 48, lineHeight: 52}}>
+                style={[styles.levelValue, {color: cfg.color}]}>
                 {current.levelCm != null ? current.levelCm : '—'}
               </Text>
               {current.levelCm != null && (
                 <Text
                   preset="paragraphMedium"
-                  style={{color: cfg.color, marginBottom: 6, marginLeft: 6}}>
+                  style={[styles.levelUnit, {color: cfg.color}]}>
                   cm
                 </Text>
               )}
@@ -271,7 +269,7 @@ export function RiverDetailModal({
               <Text
                 preset="paragraphSmall"
                 bold
-                style={{color: '#FFFFFF'}}>
+                style={styles.statusBadgeText}>
                 {cfg.label}
               </Text>
             </Box>
@@ -285,7 +283,7 @@ export function RiverDetailModal({
             padding="s16"
             borderRadius="s12"
             mb="s20"
-            style={{elevation: 1}}>
+            style={styles.lightElevation}>
             <Icon name="info" size={20} color="primary" />
             <Text
               preset="paragraphSmall"
@@ -331,14 +329,14 @@ export function RiverDetailModal({
                     height={120}
                     backgroundColor="border"
                     borderRadius="s12"
-                    style={{opacity: 0.5}}
+                    style={styles.loadingPlaceholder}
                   />
                 ) : hasChart ? (
                   <Box
                     backgroundColor="surface"
                     borderRadius="s12"
                     overflow="hidden"
-                    style={{elevation: 2}}>
+                    style={styles.chartContainer}>
                     <BarChart
                       data={{
                         labels: chartLabels,
@@ -349,16 +347,16 @@ export function RiverDetailModal({
                       yAxisLabel=""
                       yAxisSuffix=" mm"
                       chartConfig={{
-                        backgroundColor: '#FFFFFF',
-                        backgroundGradientFrom: '#FFFFFF',
-                        backgroundGradientTo: '#FFFFFF',
+                        backgroundColor: CHART_BG,
+                        backgroundGradientFrom: CHART_BG,
+                        backgroundGradientTo: CHART_BG,
                         decimalPlaces: 1,
                         color: () => '#0B5D8A',
                         labelColor: () => '#6B7280',
-                        style: {borderRadius: 12},
+                        style: styles.chartInner,
                         barPercentage: 0.6,
                       }}
-                      style={{borderRadius: 12}}
+                      style={styles.chartInner}
                       withInnerLines={false}
                       showValuesOnTopOfBars
                       fromZero
@@ -370,7 +368,7 @@ export function RiverDetailModal({
                     borderRadius="s12"
                     padding="s16"
                     alignItems="center"
-                    style={{elevation: 1}}>
+                    style={styles.lightElevation}>
                     <Icon name="wb-sunny" size={24} color="textSecondary" />
                     <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s8" textAlign="center">
                       Sem precipitação prevista nos próximos 5 dias
@@ -407,13 +405,13 @@ export function RiverDetailModal({
                   </Text>
                   <Box
                     paddingHorizontal="s6"
-                    paddingVertical="s2"
-                    borderRadius="s4"
+                    paddingVertical="s4"
+                    borderRadius="s8"
                     backgroundColor="primary">
                     <Text
                       preset="paragraphCaptionSmall"
                       bold
-                      style={{color: '#FFF', fontSize: 10}}>
+                      style={styles.floodHubTagText}>
                       FLOOD HUB
                     </Text>
                   </Box>
@@ -423,7 +421,7 @@ export function RiverDetailModal({
                   backgroundColor="surface"
                   borderRadius="s12"
                   overflow="hidden"
-                  style={{elevation: 2}}>
+                  style={styles.chartContainer}>
                   <LineChart
                     data={{
                       labels: chartLabels,
@@ -434,20 +432,20 @@ export function RiverDetailModal({
                     yAxisLabel=""
                     yAxisSuffix={` ${unitLabel}`}
                     chartConfig={{
-                      backgroundColor: '#FFFFFF',
-                      backgroundGradientFrom: '#FFFFFF',
-                      backgroundGradientTo: '#FFFFFF',
+                      backgroundColor: CHART_BG,
+                      backgroundGradientFrom: CHART_BG,
+                      backgroundGradientTo: CHART_BG,
                       decimalPlaces: 1,
                       color: () => '#0B5D8A',
                       labelColor: () => '#6B7280',
-                      style: {borderRadius: 12},
+                      style: styles.chartInner,
                       propsForDots: {
                         r: '4',
                         strokeWidth: '2',
                         stroke: '#0B5D8A',
                       },
                     }}
-                    style={{borderRadius: 12}}
+                    style={styles.chartInner}
                     bezier
                     withInnerLines={false}
                     fromZero={false}
@@ -466,7 +464,7 @@ export function RiverDetailModal({
             borderRadius="s12"
             padding="s16"
             mb="s24"
-            style={{elevation: 1}}>
+            style={styles.lightElevation}>
             <Box
               flexDirection="row"
               alignItems="center"
@@ -505,6 +503,42 @@ export function RiverDetailModal({
 }
 
 const styles = StyleSheet.create({
+  levelBarTrack: {
+    borderRadius: 6,
+  },
+  levelBarFill: {
+    borderRadius: 6,
+  },
+  handle: {
+    borderRadius: 2,
+  },
+  levelValue: {
+    fontSize: 48,
+    lineHeight: 52,
+  },
+  levelUnit: {
+    marginBottom: 6,
+    marginLeft: 6,
+  },
+  statusBadgeText: {
+    color: '#FFFFFF',
+  },
+  lightElevation: {
+    elevation: 1,
+  },
+  loadingPlaceholder: {
+    opacity: 0.5,
+  },
+  chartContainer: {
+    elevation: 2,
+  },
+  chartInner: {
+    borderRadius: CHART_BORDER_RADIUS,
+  },
+  floodHubTagText: {
+    color: '#FFF',
+    fontSize: 10,
+  },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',

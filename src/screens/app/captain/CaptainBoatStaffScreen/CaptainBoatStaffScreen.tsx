@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, Modal, Switch, ActivityIndicator} from 'react-native';
+import {FlatList, Modal, Switch, ActivityIndicator, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, Icon, Text, TextInput, TouchableOpacityBox, ConfirmationModal, UserAvatar} from '@components';
@@ -14,14 +14,101 @@ const PERMS = [
   {key: 'canManageShipments', label: 'Gerir envios'} as const,
 ];
 
+const styles = StyleSheet.create({
+  card: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  activeChip: {
+    backgroundColor: '#D1FAE5',
+  },
+  inactiveChip: {
+    backgroundColor: '#F3F4F6',
+  },
+  activeChipText: {
+    color: '#065F46',
+  },
+  inactiveChipText: {
+    color: '#9CA3AF',
+  },
+  statusActiveChip: {
+    backgroundColor: '#DBEAFE',
+  },
+  statusActiveText: {
+    color: '#1E40AF',
+  },
+  header: {
+    paddingTop: 12,
+  },
+  listContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  modalBackdrop: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  toggleGroupActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  toggleGroupIdle: {
+    backgroundColor: 'transparent',
+  },
+  toggleLabelActive: {
+    color: '#0B5D8A',
+  },
+  toggleLabelIdle: {
+    color: '#9CA3AF',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+});
+
+function getCapabilityChipStyle(active: boolean) {
+  return active ? styles.activeChip : styles.inactiveChip;
+}
+
+function getCapabilityChipTextStyle(active: boolean) {
+  return active ? styles.activeChipText : styles.inactiveChipText;
+}
+
+function getStatusChipStyle(isActive: boolean) {
+  return isActive ? styles.statusActiveChip : styles.inactiveChip;
+}
+
+function getStatusTextStyle(isActive: boolean) {
+  return isActive ? styles.statusActiveText : styles.inactiveChipText;
+}
+
+function getLookupModeChipStyle(active: boolean) {
+  return active ? styles.toggleGroupActive : styles.toggleGroupIdle;
+}
+
+function getLookupModeTextStyle(active: boolean) {
+  return active ? styles.toggleLabelActive : styles.toggleLabelIdle;
+}
+
+function getHeaderStyle(top: number) {
+  return {
+    paddingTop: top + 12,
+  };
+}
+
 function CapabilityChip({label, active}: {label: string; active: boolean}) {
   return (
     <Box
       paddingHorizontal="s8"
       paddingVertical="s4"
       borderRadius="s8"
-      style={{backgroundColor: active ? '#D1FAE5' : '#F3F4F6'}}>
-      <Text preset="paragraphCaptionSmall" bold style={{color: active ? '#065F46' : '#9CA3AF'}}>
+      style={getCapabilityChipStyle(active)}>
+      <Text preset="paragraphCaptionSmall" bold style={getCapabilityChipTextStyle(active)}>
         {label}
       </Text>
     </Box>
@@ -75,7 +162,7 @@ export function CaptainBoatStaffScreen() {
         borderRadius="s16"
         padding="s16"
         mb="s12"
-        style={{elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.06, shadowRadius: 6}}>
+        style={styles.card}>
         <Box flexDirection="row" alignItems="center">
           <UserAvatar userId={item.userId} avatarUrl={item.user.avatarUrl} name={item.user.name} size="sm" />
           <Box flex={1} ml="s12">
@@ -96,8 +183,8 @@ export function CaptainBoatStaffScreen() {
           <CapabilityChip label="Envios" active={item.canManageShipments} />
           <Box
             paddingHorizontal="s8" paddingVertical="s4" borderRadius="s8"
-            style={{backgroundColor: item.isActive ? '#DBEAFE' : '#F3F4F6'}}>
-            <Text preset="paragraphCaptionSmall" bold style={{color: item.isActive ? '#1E40AF' : '#9CA3AF'}}>
+            style={getStatusChipStyle(item.isActive)}>
+            <Text preset="paragraphCaptionSmall" bold style={getStatusTextStyle(item.isActive)}>
               {item.isActive ? '● Activo' : '○ Inactivo'}
             </Text>
           </Box>
@@ -114,7 +201,7 @@ export function CaptainBoatStaffScreen() {
           backgroundColor="surface"
           paddingHorizontal="s24" paddingBottom="s12"
           borderBottomWidth={1} borderBottomColor="border"
-          style={{paddingTop: top + 12}}>
+          style={getHeaderStyle(top)}>
           <Box flexDirection="row" alignItems="center">
             <TouchableOpacityBox
               width={40} height={40} alignItems="center" justifyContent="center" mr="s8"
@@ -140,7 +227,7 @@ export function CaptainBoatStaffScreen() {
           data={staff}
           keyExtractor={item => item.id}
           renderItem={renderStaff}
-          contentContainerStyle={{padding: 20, paddingBottom: 100}}
+          contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             isLoading ? (
               <Box flex={1} alignItems="center" justifyContent="center" padding="s32">
@@ -177,8 +264,8 @@ export function CaptainBoatStaffScreen() {
 
       {/* ── Adicionar — dois passos ──────────────────────────────────────── */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={handleCloseAddModal}>
-        <Box flex={1} justifyContent="flex-end" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <Box backgroundColor="surface" padding="s24" style={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}>
+        <Box flex={1} justifyContent="flex-end" style={styles.modalBackdrop}>
+          <Box backgroundColor="surface" padding="s24" style={styles.modalSheet}>
 
             {/* Cabeçalho */}
             <Box flexDirection="row" alignItems="center" mb="s20">
@@ -214,12 +301,12 @@ export function CaptainBoatStaffScreen() {
                     paddingVertical="s8"
                     borderRadius="s8"
                     alignItems="center"
-                    style={{backgroundColor: lookupMode === 'phone' ? '#FFFFFF' : 'transparent'}}
+                    style={getLookupModeChipStyle(lookupMode === 'phone')}
                     onPress={() => handleSetLookupMode('phone')}>
                     <Text
                       preset="paragraphSmall"
                       bold
-                      style={{color: lookupMode === 'phone' ? '#0B5D8A' : '#9CA3AF'}}>
+                      style={getLookupModeTextStyle(lookupMode === 'phone')}>
                       Telefone
                     </Text>
                   </TouchableOpacityBox>
@@ -228,12 +315,12 @@ export function CaptainBoatStaffScreen() {
                     paddingVertical="s8"
                     borderRadius="s8"
                     alignItems="center"
-                    style={{backgroundColor: lookupMode === 'cpf' ? '#FFFFFF' : 'transparent'}}
+                    style={getLookupModeChipStyle(lookupMode === 'cpf')}
                     onPress={() => handleSetLookupMode('cpf')}>
                     <Text
                       preset="paragraphSmall"
                       bold
-                      style={{color: lookupMode === 'cpf' ? '#0B5D8A' : '#9CA3AF'}}>
+                      style={getLookupModeTextStyle(lookupMode === 'cpf')}>
                       CPF
                     </Text>
                   </TouchableOpacityBox>
@@ -275,7 +362,7 @@ export function CaptainBoatStaffScreen() {
                   flexDirection="row" alignItems="center" justifyContent="center" gap="s8"
                   onPress={handleLookup}
                   disabled={lookupLoading || !canLookup}
-                  style={{opacity: lookupLoading || !canLookup ? 0.5 : 1}}>
+                  style={lookupLoading || !canLookup ? styles.disabledButton : undefined}>
                   {lookupLoading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
@@ -331,7 +418,7 @@ export function CaptainBoatStaffScreen() {
                   mt="s8"
                   onPress={handleAdd}
                   disabled={addLoading}
-                  style={{opacity: addLoading ? 0.5 : 1}}>
+                  style={addLoading ? styles.disabledButton : undefined}>
                   {addLoading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
@@ -349,8 +436,8 @@ export function CaptainBoatStaffScreen() {
 
       {/* ── Editar ───────────────────────────────────────────────────────── */}
       <Modal visible={!!editingStaff} transparent animationType="slide" onRequestClose={() => setEditingStaff(null)}>
-        <Box flex={1} justifyContent="flex-end" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <Box backgroundColor="surface" padding="s24" style={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}>
+        <Box flex={1} justifyContent="flex-end" style={styles.modalBackdrop}>
+          <Box backgroundColor="surface" padding="s24" style={styles.modalSheet}>
 
             {/* Header com avatar */}
             <Box flexDirection="row" alignItems="center" mb="s20">
@@ -401,7 +488,7 @@ export function CaptainBoatStaffScreen() {
               paddingVertical="s16" borderRadius="s12" alignItems="center"
               onPress={handleUpdate}
               disabled={editLoading}
-              style={{opacity: editLoading ? 0.5 : 1}}>
+              style={editLoading ? styles.disabledButton : undefined}>
               {editLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (

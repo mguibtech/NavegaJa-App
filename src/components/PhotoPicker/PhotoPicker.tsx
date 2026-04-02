@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Image, Alert, Modal} from 'react-native';
+import {Image, Alert, Modal, StyleSheet} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {Box, Icon, Text, TouchableOpacityBox, PhotoViewerModal, usePhotoViewer} from '@components';
 import {pickDocument, isDocumentPickerCancelled} from '../../native/documentPicker';
@@ -13,6 +13,55 @@ interface PhotoPickerProps {
   allowPdf?: boolean;
   readOnly?: boolean;
   readOnlyMessage?: string;
+}
+
+const styles = StyleSheet.create({
+  photoCard: {
+    position: 'relative',
+  },
+  pdfCard: {
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  pdfText: {
+    maxWidth: 80,
+    textAlign: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DC3545',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+  },
+  pickerBackdrop: {
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  pickerSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  pdfOptionIcon: {
+    backgroundColor: '#FEE2E2',
+  },
+});
+
+function getAddButtonStyle(readOnly: boolean) {
+  return {
+    opacity: readOnly ? 0.45 : 1,
+  };
 }
 
 export function PhotoPicker({
@@ -165,7 +214,7 @@ export function PhotoPicker({
             height={100}
             borderRadius="s12"
             backgroundColor="background"
-            style={{position: 'relative'}}>
+            style={styles.photoCard}>
             {isPdf(photo) ? (
               <Box
                 width={100}
@@ -174,14 +223,14 @@ export function PhotoPicker({
                 backgroundColor="primaryBg"
                 alignItems="center"
                 justifyContent="center"
-                style={{borderWidth: 1, borderColor: '#BFDBFE'}}>
+                style={styles.pdfCard}>
                 <Icon name="picture-as-pdf" size={32} color={'#DC2626' as any} />
                 <Text
                   preset="paragraphCaptionSmall"
                   color="primary"
                   mt="s4"
                   numberOfLines={1}
-                  style={{maxWidth: 80, textAlign: 'center'}}>
+                  style={styles.pdfText}>
                   PDF
                 </Text>
               </Box>
@@ -195,25 +244,14 @@ export function PhotoPicker({
                 }}>
                 <Image
                   source={{uri: photo.uri}}
-                  style={{width: '100%', height: '100%', borderRadius: 12}}
+                  style={styles.previewImage}
                   resizeMode="cover"
                 />
               </TouchableOpacityBox>
             )}
             <TouchableOpacityBox
               onPress={() => removePhoto(index)}
-              style={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                width: 24,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: '#DC3545',
-                alignItems: 'center',
-                justifyContent: 'center',
-                elevation: 4,
-              }}>
+              style={styles.removeButton}>
               <Icon name="close" size={16} color="white" />
             </TouchableOpacityBox>
           </Box>
@@ -233,7 +271,7 @@ export function PhotoPicker({
             alignItems="center"
             justifyContent="center"
             backgroundColor="background"
-            style={{opacity: readOnly ? 0.45 : 1}}>
+            style={getAddButtonStyle(readOnly)}>
             <Icon name={allowPdf ? 'upload-file' : 'add-a-photo'} size={32} color="textSecondary" />
             <Text preset="paragraphSmall" color="textSecondary" mt="s4">
               Adicionar
@@ -261,7 +299,7 @@ export function PhotoPicker({
         onRequestClose={() => setShowPicker(false)}>
         <TouchableOpacityBox
           flex={1}
-          style={{backgroundColor: 'rgba(0,0,0,0.45)'}}
+          style={styles.pickerBackdrop}
           onPress={() => setShowPicker(false)}
           activeOpacity={1}
         />
@@ -272,7 +310,7 @@ export function PhotoPicker({
           paddingHorizontal="s20"
           paddingTop="s20"
           paddingBottom="s24"
-          style={{position: 'absolute', bottom: 0, left: 0, right: 0}}>
+          style={styles.pickerSheet}>
           {/* Handle */}
           <Box
             alignSelf="center"
@@ -362,7 +400,7 @@ export function PhotoPicker({
                 alignItems="center"
                 justifyContent="center"
                 mr="s16"
-                style={{backgroundColor: '#FEE2E2'}}>
+                style={styles.pdfOptionIcon}>
                 <Icon name="picture-as-pdf" size={22} color={'#DC2626' as any} />
               </Box>
               <Box flex={1}>

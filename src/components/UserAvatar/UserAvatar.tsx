@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Image} from 'react-native';
+import {Image, StyleSheet} from 'react-native';
 import {apiImageSource} from '../../api/config';
 
 import {createAvatar} from '@dicebear/core';
@@ -54,8 +54,7 @@ const ICON_SIZE: Record<AvatarSize, number> = {
 };
 
 // Maps DiceBearStyle (URL kebab-case) → @dicebear/collection export
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const STYLE_MAP: Record<DiceBearStyle, any> = {
+const STYLE_MAP: Record<DiceBearStyle, unknown> = {
   avataaars,
   lorelei,
   bottts,
@@ -87,6 +86,13 @@ const NUMERIC_KEYS = new Set(['fontWeight', 'fontSize']);
 
 // Options that expect a plain string (not array)
 const STRING_KEYS = new Set(['fontFamily']);
+
+const styles = StyleSheet.create({
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+});
 
 /**
  * Converts URL query params (string) to DiceBear createAvatar options.
@@ -126,8 +132,7 @@ export function generateDiceBearSvg(
 ): string {
   const collection = STYLE_MAP[style] ?? avataaars;
   const dicebearOpts = urlParamsToDiceBearOptions(urlParams);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return createAvatar(collection as any, {seed, ...dicebearOpts}).toString();
+  return createAvatar(collection as Parameters<typeof createAvatar>[0], {seed, ...dicebearOpts}).toString();
 }
 
 /**
@@ -280,7 +285,7 @@ export function UserAvatar({
       {hasRealPhoto ? (
         <Image
           source={apiImageSource(avatarUrl)}
-          style={{width: dim, height: dim}}
+          style={styles.avatarImage}
           onError={() => setImgError(true)}
         />
       ) : (

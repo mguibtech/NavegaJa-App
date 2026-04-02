@@ -186,7 +186,8 @@ export function NavigationSafetyAlert({
       <Box
         mt="s16"
         paddingTop="s16"
-        style={{borderTopWidth: 1, borderTopColor: config.color}}
+        borderTopWidth={1}
+        style={{borderTopColor: config.color}}
         flexDirection="row"
         alignItems="center"
         justifyContent="center">

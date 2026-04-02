@@ -1,9 +1,15 @@
 import React from 'react';
-import {ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
+import {ScrollView, KeyboardAvoidingView, Platform, StyleSheet} from 'react-native';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, InfoModal} from '@components';
 
 import {useShipmentReviewScreen} from './useShipmentReviewScreen';
+
+const styles = StyleSheet.create({
+  keyboard: {
+    flex: 1,
+  },
+});
 
 function StarRating({
   value,
@@ -56,7 +62,7 @@ export function ShipmentReviewScreen() {
   return (
     <>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Box flex={1} backgroundColor="background">
           <ScrollView

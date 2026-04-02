@@ -49,7 +49,7 @@ describe('normalizeFileUrl', () => {
   it('remove barra extra no final de URL de arquivo', () => {
     const url = 'http://192.168.190.120:3000/uploads/foto.jpg/';
     const result = normalizeFileUrl(url);
-    expect(result).toBe('http://192.168.190.120:3000/uploads/foto.jpg');
+    expect(result).toBe(`${API_BASE_URL}/uploads/foto.jpg`);
   });
 
   it('preserva file uri local sem prefixar API_BASE_URL', () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, RefreshControl, ActivityIndicator} from 'react-native';
+import {ScrollView, RefreshControl, ActivityIndicator, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -8,6 +8,31 @@ import {Box, Button, Icon, Text} from '@components';
 import {AppStackParamList} from '@routes';
 
 import {useCaptainFinancial} from './useCaptainFinancial';
+
+const styles = StyleSheet.create({
+  headerTitle: {
+    color: '#fff',
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  summaryCard: {
+    elevation: 3,
+  },
+  tripCard: {
+    elevation: 2,
+  },
+});
+
+function getHeaderStyle(top: number) {
+  return {
+    paddingTop: top + 16,
+  };
+}
 
 export function CaptainFinancialScreen() {
   const {top} = useSafeAreaInsets();
@@ -36,11 +61,11 @@ export function CaptainFinancialScreen() {
         backgroundColor="secondary"
         paddingHorizontal="s20"
         paddingBottom="s20"
-        style={{paddingTop: top + 16}}>
-        <Text preset="headingMedium" bold style={{color: '#fff'}}>
+        style={getHeaderStyle(top)}>
+        <Text preset="headingMedium" bold style={styles.headerTitle}>
           Financeiro
         </Text>
-        <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.8)'}}>
+        <Text preset="paragraphSmall" style={styles.headerSubtitle}>
           {user?.name} · {formatMonthYear(now)}
         </Text>
       </Box>
@@ -51,7 +76,7 @@ export function CaptainFinancialScreen() {
         </Box>
       ) : (
         <ScrollView
-          contentContainerStyle={{padding: 20, paddingBottom: 120}}
+          contentContainerStyle={styles.scrollContent}
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
@@ -74,7 +99,7 @@ export function CaptainFinancialScreen() {
               backgroundColor="surface"
               borderRadius="s16"
               padding="s16"
-              style={{elevation: 3}}>
+              style={styles.summaryCard}>
               <Icon name="attach-money" size={24} color="secondary" />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s8">
                 Este mês
@@ -88,7 +113,7 @@ export function CaptainFinancialScreen() {
               backgroundColor="surface"
               borderRadius="s16"
               padding="s16"
-              style={{elevation: 3}}>
+              style={styles.summaryCard}>
               <Icon name="savings" size={24} color="success" />
               <Text preset="paragraphCaptionSmall" color="textSecondary" mt="s8">
                 Total acumulado
@@ -105,7 +130,7 @@ export function CaptainFinancialScreen() {
             borderRadius="s16"
             padding="s20"
             mb="s20"
-            style={{elevation: 3}}>
+            style={styles.summaryCard}>
             <Text preset="paragraphMedium" color="text" bold mb="s16">
               Resumo geral
             </Text>
@@ -181,7 +206,7 @@ export function CaptainFinancialScreen() {
                   mb="s8"
                   flexDirection="row"
                   alignItems="center"
-                  style={{elevation: 2}}>
+                  style={styles.tripCard}>
                   <Box
                     width={40}
                     height={40}

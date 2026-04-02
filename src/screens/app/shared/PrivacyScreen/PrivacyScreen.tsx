@@ -1,50 +1,57 @@
 import React from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 
 import {Box, Text, ScreenHeader} from '@components';
 
 import {usePrivacyScreen} from './usePrivacyScreen';
+
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  content: {
+    padding: 16,
+  },
+});
 
 export function PrivacyScreen() {
   const {navigation} = usePrivacyScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
-      <ScreenHeader title="Política de Privacidade" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Politica de Privacidade" onBack={() => navigation.goBack()} />
 
-      {/* Content */}
       <ScrollView
-        contentContainerStyle={{padding: 16}}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <Box
           backgroundColor="surface"
           borderRadius="s16"
           padding="s8"
           mb="s24"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}>
+          style={styles.card}>
           <Text preset="paragraphSmall" color="textSecondary" mb="s16">
-            Última atualização: 13 de Fevereiro de 2026
+            Ultima atualizacao: 13 de Fevereiro de 2026
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
             1. Compromisso com sua Privacidade
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s20">
-            O NavegaJá respeita sua privacidade e está comprometido em proteger seus dados
-            pessoais, em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+            O NavegaJa respeita sua privacidade e esta comprometido em proteger
+            seus dados pessoais, em conformidade com a Lei Geral de Protecao de
+            Dados (LGPD).
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
             2. Dados que Coletamos
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s8">
-            Coletamos as seguintes informações:
+            Coletamos as seguintes informacoes:
           </Text>
           <Text preset="paragraphMedium" color="text" bold mb="s4">
             Dados de Cadastro:
@@ -60,13 +67,13 @@ export function PrivacyScreen() {
             Dados de Uso:
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Histórico de viagens e encomendas
+            • Historico de viagens e encomendas
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Avaliações e comentários
+            • Avaliacoes e comentarios
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s12">
-            • Preferências e configurações
+            • Preferencias e configuracoes
           </Text>
 
           <Text preset="paragraphMedium" color="text" bold mb="s4">
@@ -83,26 +90,26 @@ export function PrivacyScreen() {
             • Processar suas reservas e encomendas
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Comunicar sobre suas viagens e promoções
+            • Comunicar sobre suas viagens e promocoes
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Melhorar nossos serviços
+            • Melhorar nossos servicos
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Prevenir fraudes e garantir segurança
+            • Prevenir fraudes e garantir seguranca
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s20">
-            • Cumprir obrigações legais
+            • Cumprir obrigacoes legais
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
             4. Compartilhamento de Dados
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s8">
-            Compartilhamos dados apenas quando necessário:
+            Compartilhamos dados apenas quando necessario:
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Com barqueiros parceiros (para executar o serviço)
+            • Com barqueiros parceiros (para executar o servico)
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
             • Com processadores de pagamento (de forma segura)
@@ -118,7 +125,7 @@ export function PrivacyScreen() {
             5. Seus Direitos (LGPD)
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            Você tem direito a:
+            Voce tem direito a:
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
             • Acessar seus dados pessoais
@@ -127,7 +134,7 @@ export function PrivacyScreen() {
             • Corrigir dados incompletos ou desatualizados
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            • Solicitar anonimização ou exclusão de dados
+            • Solicitar anonimizacao ou exclusao de dados
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
             • Revogar consentimento
@@ -137,26 +144,28 @@ export function PrivacyScreen() {
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
-            6. Segurança dos Dados
+            6. Seguranca dos Dados
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s20">
-            Utilizamos criptografia e medidas de segurança técnicas e organizacionais para
-            proteger seus dados contra acessos não autorizados, perda ou destruição.
+            Utilizamos criptografia e medidas de seguranca tecnicas e
+            organizacionais para proteger seus dados contra acessos nao
+            autorizados, perda ou destruicao.
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
-            7. Retenção de Dados
+            7. Retencao de Dados
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s20">
-            Mantemos seus dados pelo tempo necessário para prestar os serviços e cumprir
-            obrigações legais. Após esse período, os dados são anonimizados ou excluídos.
+            Mantemos seus dados pelo tempo necessario para prestar os servicos e
+            cumprir obrigacoes legais. Apos esse periodo, os dados sao
+            anonimizados ou excluidos.
           </Text>
 
           <Text preset="headingSmall" color="text" bold mb="s12">
             8. Contato do Encarregado (DPO)
           </Text>
           <Text preset="paragraphMedium" color="text" mb="s4">
-            Para exercer seus direitos ou esclarecer dúvidas sobre privacidade:
+            Para exercer seus direitos ou esclarecer duvidas sobre privacidade:
           </Text>
           <Text preset="paragraphMedium" color="primary" bold mb="s4">
             Email: privacidade@navegaja.com.br

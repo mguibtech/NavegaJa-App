@@ -58,3 +58,6 @@ export * from './StopReview';
 
 // BoatStaff
 export * from './BoatStaff';
+
+// Infra-related app errors used by screens/hooks
+export * from '../../infra/offlineErrors';

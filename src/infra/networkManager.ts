@@ -3,6 +3,7 @@ import {onlineManager} from '@tanstack/react-query';
 
 let currentOnlineState = true;
 let managerInitialized = false;
+let netInfoUnsubscribe: (() => void) | null = null;
 
 function resolveOnlineState(state: NetInfoState): boolean {
   return Boolean(state.isConnected && state.isInternetReachable !== false);
@@ -14,23 +15,25 @@ export function setupOnlineManager() {
   }
 
   managerInitialized = true;
-  onlineManager.setEventListener(setOnline => {
-    const unsubscribe = NetInfo.addEventListener(state => {
+  netInfoUnsubscribe = NetInfo.addEventListener(state => {
+    const isOnline = resolveOnlineState(state);
+    currentOnlineState = isOnline;
+    onlineManager.setOnline(isOnline);
+  });
+
+  NetInfo.fetch()
+    .then(state => {
       const isOnline = resolveOnlineState(state);
       currentOnlineState = isOnline;
-      setOnline(isOnline);
-    });
+      onlineManager.setOnline(isOnline);
+    })
+    .catch(() => {});
+}
 
-    NetInfo.fetch()
-      .then(state => {
-        const isOnline = resolveOnlineState(state);
-        currentOnlineState = isOnline;
-        setOnline(isOnline);
-      })
-      .catch(() => {});
-
-    return unsubscribe;
-  });
+export function teardownOnlineManager() {
+  netInfoUnsubscribe?.();
+  netInfoUnsubscribe = null;
+  managerInitialized = false;
 }
 
 export async function refreshOnlineState(): Promise<boolean> {

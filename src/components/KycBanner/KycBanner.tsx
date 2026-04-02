@@ -91,7 +91,7 @@ export function KycBanner({onlyWhenBlocked = false}: KycBannerProps) {
         alignItems="center"
         justifyContent="center"
         mr="s12"
-        style={{flexShrink: 0}}>
+        flexShrink={0}>
         <Icon name={config.icon as any} size={20} color={'#FFFFFF' as any} />
       </Box>
       <Box flex={1}>

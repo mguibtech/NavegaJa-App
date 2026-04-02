@@ -1,7 +1,24 @@
 import React, {useEffect, useState} from 'react';
+import {StyleSheet} from 'react-native';
 
 import {Box, Icon, Text, RiverLevelsSkeleton, TouchableOpacityBox, RiverDetailModal} from '@components';
 import {useRiverLevels, RIVER_LEVEL_STATUS_CONFIGS, RiverLevelStatus, RiverLevel} from '@domain';
+
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  levelBarTrack: {
+    borderRadius: 4,
+  },
+  levelBarFill: {
+    borderRadius: 4,
+  },
+});
 
 export function RiverLevelsPanel() {
   const {riverLevels, fetch, isLoading} = useRiverLevels();
@@ -31,13 +48,7 @@ export function RiverLevelsPanel() {
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
+      style={styles.card}>
       {/* Header */}
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Icon name="water" size={20} color="primary" />
@@ -103,11 +114,16 @@ export function RiverLevelsPanel() {
 
             {/* Barra de nível */}
             {item.levelCm != null && (
-              <Box mt="s8" height={4} backgroundColor="border" style={{borderRadius: 4}} overflow="hidden">
+              <Box
+                mt="s8"
+                height={4}
+                backgroundColor="border"
+                style={styles.levelBarTrack}
+                overflow="hidden">
                 <Box
                   height={4}
                   style={{
-                    borderRadius: 4,
+                    ...styles.levelBarFill,
                     backgroundColor: cfg.color,
                     width: `${Math.min(100, (item.levelCm / 3000) * 100)}%`,
                   }}

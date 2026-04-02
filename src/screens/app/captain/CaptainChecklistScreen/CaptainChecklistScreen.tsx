@@ -1,9 +1,22 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
+import {ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet} from 'react-native';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, ScreenHeader} from '@components';
 
 import {useCaptainChecklist, CHECKLIST_LABELS} from './useCaptainChecklist';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  checkbox: {
+    borderRadius: 4,
+  },
+});
 
 export function CaptainChecklistScreen() {
   const {
@@ -25,7 +38,7 @@ export function CaptainChecklistScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
         <ScreenHeader title="Checklist de Segurança" subtitle="Passo 1 de 2 — Confirme os itens antes de iniciar" onBack={goBack} />
@@ -39,7 +52,7 @@ export function CaptainChecklistScreen() {
           </Box>
         ) : (
           <ScrollView
-            contentContainerStyle={{padding: 20, paddingBottom: 120}}
+            contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled">
 
             {/* API indisponível */}
@@ -107,7 +120,7 @@ export function CaptainChecklistScreen() {
                   alignItems="center"
                   justifyContent="center"
                   mr="s12"
-                  style={{borderRadius: 4}}>
+                  style={styles.checkbox}>
                   {checks[key] && <Icon name="check" size={14} color="surface" />}
                 </Box>
                 <Text preset="paragraphSmall" color="text" flex={1}>

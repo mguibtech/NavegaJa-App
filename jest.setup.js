@@ -252,7 +252,7 @@ jest.mock('react-native-mmkv', () => {
       return storage.has(key) ? storage.get(key) : undefined;
     }
 
-    delete(key) {
+    remove(key) {
       storage.delete(key);
     }
 
@@ -267,6 +267,7 @@ jest.mock('react-native-mmkv', () => {
 
   return {
     MMKV: MockMMKV,
+    createMMKV: jest.fn(() => new MockMMKV()),
   };
 });
 

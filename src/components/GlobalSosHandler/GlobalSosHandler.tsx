@@ -7,12 +7,20 @@ import {
   Modal,
   NativeModules,
   Platform,
+  StyleSheet,
 } from 'react-native';
 
 import AsyncStorage from '@infra/storage';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
-import {PersonalContact, SosType, SosLocation, usePersonalContacts, useSosAlert, SosDuplicateError} from '@domain';
+import {
+  PersonalContact,
+  SosDuplicateError,
+  SosLocation,
+  SosType,
+  usePersonalContacts,
+  useSosAlert,
+} from '@domain';
 import {useToast, useVolumeButtonSos} from '@hooks';
 import {useAuthStore} from '@store';
 import {authStorage} from '@services';
@@ -23,20 +31,9 @@ const SOS_BG_FLAG_KEY = '@navegaja:sos_bg_triggered';
 const {SosVolumeModule} = NativeModules;
 const isAndroid = Platform.OS === 'android';
 
-// SOS por botão de volume desativado para evitar disparos acidentais
+// SOS por botao de volume desativado para evitar disparos acidentais
 const VOLUME_SOS_ENABLED = false;
 
-/**
- * Componente global montado na raiz do AppStack.
- *
- * Estratégia por estado do app:
- *  - Foreground (active)   → useVolumeButtonSos (JS) detecta volume ↓ 3×
- *  - Background / fechado  → SosVolumeService (Kotlin) detecta volume ↓ 3×
- *
- * Transição:
- *  - active → background : para JS listener, inicia Foreground Service
- *  - background → active : para Foreground Service, retoma JS listener
- */
 export function GlobalSosHandler() {
   const toast = useToast();
   const {createAlert} = useSosAlert();
@@ -51,9 +48,11 @@ export function GlobalSosHandler() {
 
   const isActive = appState === 'active';
 
-  // ── Credenciais → SharedPreferences nativas ─────────────────────────────────
   useEffect(() => {
-    if (!isAndroid || !SosVolumeModule || !isLoggedIn || !VOLUME_SOS_ENABLED) {return;}
+    if (!isAndroid || !SosVolumeModule || !isLoggedIn || !VOLUME_SOS_ENABLED) {
+      return;
+    }
+
     authStorage.getToken().then(token => {
       if (token) {
         SosVolumeModule.saveCredentials(token, API_BASE_URL);
@@ -61,47 +60,51 @@ export function GlobalSosHandler() {
     });
   }, [isLoggedIn]);
 
-  // Garante que o serviço nativo está parado enquanto VOLUME_SOS_ENABLED = false
   useEffect(() => {
-    if (!isAndroid || !SosVolumeModule || VOLUME_SOS_ENABLED) {return;}
+    if (!isAndroid || !SosVolumeModule || VOLUME_SOS_ENABLED) {
+      return;
+    }
+
     SosVolumeModule.stopService?.();
     SosVolumeModule.clearCredentials?.();
   }, []);
 
-  // Limpa credenciais e para serviço no logout
   useEffect(() => {
-    if (!isAndroid || !SosVolumeModule) {return;}
+    if (!isAndroid || !SosVolumeModule) {
+      return;
+    }
+
     if (!isLoggedIn) {
       SosVolumeModule.clearCredentials?.();
       SosVolumeModule.stopService();
     }
   }, [isLoggedIn]);
 
-  // ── Verifica flag de SOS em background ao montar e ao voltar ao foreground ────
   useEffect(() => {
     async function checkBgSosFlag() {
       try {
         const flag = await AsyncStorage.getItem(SOS_BG_FLAG_KEY);
         if (flag === 'true') {
           await AsyncStorage.removeItem(SOS_BG_FLAG_KEY);
-          const unlinked = contacts.filter(c => !c.linkedUserId);
-          setUnlinkedContacts(unlinked);
+          setUnlinkedContacts(contacts.filter(contact => !contact.linkedUserId));
           setShowResultModal(true);
         }
       } catch {
-        // silencioso
+        // Silencioso.
       }
     }
+
     checkBgSosFlag();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contacts]);
 
-  // ── AppState — troca entre JS listener e Foreground Service ─────────────────
   useEffect(() => {
-    if (!isAndroid || !SosVolumeModule || !isLoggedIn || !VOLUME_SOS_ENABLED) {return;}
+    if (!isAndroid || !SosVolumeModule || !isLoggedIn || !VOLUME_SOS_ENABLED) {
+      return;
+    }
 
-    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+    const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
       setAppState(next);
+
       if (next === 'background') {
         SosVolumeModule.startService();
       } else if (next === 'active') {
@@ -109,51 +112,64 @@ export function GlobalSosHandler() {
       }
     });
 
-    return () => sub.remove();
+    return () => subscription.remove();
   }, [isLoggedIn]);
 
-  // ── Evento do Foreground Service (JS ainda vivo em background) ───────────────
   useEffect(() => {
-    if (!isAndroid) {return;}
-    const sub = DeviceEventEmitter.addListener('SosTriggerFromBackground', async () => {
-      // SOS já enviado pelo serviço nativo — grava flag para mostrar modal no foreground
-      try {
-        await AsyncStorage.setItem(SOS_BG_FLAG_KEY, 'true');
-      } catch {
-        // silencioso
-      }
-      // Se o JS já está ativo (app em background mas não morto), mostra modal imediatamente
-      const unlinked = contacts.filter(c => !c.linkedUserId);
-      setUnlinkedContacts(unlinked);
-      setShowResultModal(true);
-    });
-    return () => sub.remove();
+    if (!isAndroid) {
+      return;
+    }
+
+    const subscription = DeviceEventEmitter.addListener(
+      'SosTriggerFromBackground',
+      async () => {
+        try {
+          await AsyncStorage.setItem(SOS_BG_FLAG_KEY, 'true');
+        } catch {
+          // Silencioso.
+        }
+
+        setUnlinkedContacts(contacts.filter(contact => !contact.linkedUserId));
+        setShowResultModal(true);
+      },
+    );
+
+    return () => subscription.remove();
   }, [contacts]);
 
-  // ── SOS trigger (Volume ↓ em foreground ou SosHoldButton virtual) ────────────
   async function handleSosTrigger() {
-    if (sosTriggering) {return;}
+    if (sosTriggering) {
+      return;
+    }
+
     setSosTriggering(true);
+
     try {
-      const alert = await createAlert(SosType.GENERAL, {description: 'SOS acionado pelo passageiro'});
+      const alert = await createAlert(SosType.GENERAL, {
+        description: 'SOS acionado pelo passageiro',
+      });
+
       if (alert?.location) {
         setSosLocation(alert.location);
       }
-      const unlinked = contacts.filter(c => !c.linkedUserId);
-      setUnlinkedContacts(unlinked);
+
+      setUnlinkedContacts(contacts.filter(contact => !contact.linkedUserId));
       setShowResultModal(true);
-    } catch (err: any) {
-      if (err instanceof SosDuplicateError) {
-        // 409 — already have an active SOS, show the result modal with existing info
-        if (err.existingAlert?.location) {
-          setSosLocation(err.existingAlert.location);
+    } catch (error) {
+      if (error instanceof SosDuplicateError) {
+        if (error.existingAlert?.location) {
+          setSosLocation(error.existingAlert.location);
         }
-        const unlinked = contacts.filter(c => !c.linkedUserId);
-        setUnlinkedContacts(unlinked);
+
+        setUnlinkedContacts(contacts.filter(contact => !contact.linkedUserId));
         setShowResultModal(true);
-        toast.showWarning('Alerta SOS já está ativo.');
+        toast.showWarning('Alerta SOS ja esta ativo.');
       } else {
-        toast.showError(err?.message ?? 'Erro ao enviar SOS. Verifique sua conexão.');
+        toast.showError(
+          error instanceof Error
+            ? error.message
+            : 'Erro ao enviar SOS. Verifique sua conexao.',
+        );
       }
     } finally {
       setSosTriggering(false);
@@ -161,26 +177,27 @@ export function GlobalSosHandler() {
   }
 
   function handleWhatsApp(contact: PersonalContact) {
-    let msg = '🆘 EMERGÊNCIA! Preciso de ajuda urgente!';
+    let message = 'EMERGENCIA! Preciso de ajuda urgente!';
+
     if (sosLocation?.latitude != null && sosLocation?.longitude != null) {
       const lat = sosLocation.latitude.toFixed(6);
       const lng = sosLocation.longitude.toFixed(6);
       const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
-      msg += ` Minha localização: ${mapsUrl}`;
+      message += ` Minha localizacao: ${mapsUrl}`;
     }
+
     Linking.openURL(
-      `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(msg)}`,
+      `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(message)}`,
     ).catch(() => {
-      Linking.openURL(`sms:${contact.phone}?body=${encodeURIComponent(msg)}`);
+      Linking.openURL(`sms:${contact.phone}?body=${encodeURIComponent(message)}`);
     });
   }
 
-  // Volume ↓ 3× — ativo apenas em foreground (background usa o serviço nativo)
   useVolumeButtonSos({
     onTrigger: handleSosTrigger,
     onHint: remaining =>
       toast.showInfo(
-        `SOS: pressione mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume ↓`,
+        `SOS: pressione mais ${remaining} vez${remaining === 1 ? '' : 'es'} o volume para baixo`,
       ),
     enabled: VOLUME_SOS_ENABLED && isActive && !sosTriggering,
   });
@@ -191,16 +208,12 @@ export function GlobalSosHandler() {
       transparent
       animationType="slide"
       onRequestClose={() => setShowResultModal(false)}>
-      <Box
-        flex={1}
-        style={{backgroundColor: 'rgba(0,0,0,0.6)'}}
-        justifyContent="flex-end">
+      <Box flex={1} style={styles.backdrop} justifyContent="flex-end">
         <Box
           backgroundColor="surface"
           padding="s24"
           paddingBottom="s32"
-          style={{borderTopLeftRadius: 20, borderTopRightRadius: 20}}>
-          {/* Header */}
+          style={styles.sheet}>
           <Box alignItems="center" mb="s20">
             <Box
               width={64}
@@ -219,14 +232,13 @@ export function GlobalSosHandler() {
               preset="paragraphSmall"
               color="textSecondary"
               mt="s8"
-              style={{textAlign: 'center'}}>
+              style={styles.centerText}>
               {unlinkedContacts.length > 0
-                ? 'A equipe NavegaJá foi notificada. Notifique os demais contatos via WhatsApp:'
-                : 'A equipe NavegaJá e seus contatos foram notificados.'}
+                ? 'A equipe NavegaJa foi notificada. Notifique os demais contatos via WhatsApp:'
+                : 'A equipe NavegaJa e seus contatos foram notificados.'}
             </Text>
           </Box>
 
-          {/* WhatsApp buttons for unlinked contacts */}
           {unlinkedContacts.length > 0 && (
             <Box mb="s20">
               {unlinkedContacts.map(contact => (
@@ -260,3 +272,16 @@ export function GlobalSosHandler() {
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  centerText: {
+    textAlign: 'center',
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+});

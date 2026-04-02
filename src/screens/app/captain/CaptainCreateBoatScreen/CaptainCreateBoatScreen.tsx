@@ -4,11 +4,28 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 
 import {Box, Button, Icon, Text, TextInput, TouchableOpacityBox, PhotoPicker, ScreenHeader} from '@components';
 
 import {useCaptainCreateBoat, BOAT_TYPES} from './useCaptainCreateBoat';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  centeredText: {
+    textAlign: 'center',
+  },
+  blockedButton: {
+    marginTop: 32,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+});
 
 export function CaptainCreateBoatScreen() {
   const {
@@ -52,10 +69,10 @@ export function CaptainCreateBoatScreen() {
             mb="s24">
             <Icon name={isPending ? 'hourglass-top' : 'lock'} size={40} color={isPending ? 'info' : 'warning'} />
           </Box>
-          <Text preset="headingSmall" color="text" bold mb="s12" style={{textAlign: 'center'}}>
+          <Text preset="headingSmall" color="text" bold mb="s12" style={styles.centeredText}>
             {isPending ? 'Conta em análise' : 'Conta pendente de verificação'}
           </Text>
-          <Text preset="paragraphMedium" color="textSecondary" style={{textAlign: 'center'}}>
+          <Text preset="paragraphMedium" color="textSecondary" style={styles.centeredText}>
             {isPending
               ? 'Seus documentos estão sendo analisados. Em breve você poderá cadastrar embarcações.'
               : 'Envie sua habilitação náutica para começar a cadastrar embarcações.'}
@@ -64,7 +81,7 @@ export function CaptainCreateBoatScreen() {
             <Button
               title="Enviar documentos"
               onPress={navigateToEditProfile}
-              style={{marginTop: 32}}
+              style={styles.blockedButton}
             />
           )}
         </Box>
@@ -74,13 +91,13 @@ export function CaptainCreateBoatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
         <ScreenHeader title="Nova Embarcação" onBack={goBack} />
 
         <ScrollView
-          contentContainerStyle={{padding: 20, paddingBottom: 120}}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           {/* Informações básicas */}
           <Text preset="paragraphMedium" color="text" bold mb="s12">

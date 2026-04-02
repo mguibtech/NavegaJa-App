@@ -11,6 +11,19 @@ interface SosMarkerProps {
   onCalloutPress?: () => void;
 }
 
+function getPulseRingStyle(backgroundColor: string) {
+  return {
+    backgroundColor,
+    opacity: 0.3,
+  };
+}
+
+function getMarkerBackgroundStyle(backgroundColor: string) {
+  return {
+    backgroundColor,
+  };
+}
+
 export function SosMarker({alert, onPress, onCalloutPress}: SosMarkerProps) {
   const config = SOS_TYPE_CONFIGS[alert.type];
 
@@ -28,13 +41,13 @@ export function SosMarker({alert, onPress, onCalloutPress}: SosMarkerProps) {
         <View
           style={[
             styles.pulseRing,
-            {backgroundColor: config.color, opacity: 0.3},
+            getPulseRingStyle(config.color),
           ]}
         />
 
         {/* SOS Icon Container */}
         <View
-          style={[styles.iconContainer, {backgroundColor: config.color}]}>
+          style={[styles.iconContainer, getMarkerBackgroundStyle(config.color)]}>
           <Icon name={config.icon as any} size={24} color="surface" />
 
           {/* Priority badge */}
@@ -54,7 +67,7 @@ export function SosMarker({alert, onPress, onCalloutPress}: SosMarkerProps) {
             <View
               style={[
                 styles.calloutIcon,
-                {backgroundColor: config.bgColor as any},
+                getMarkerBackgroundStyle(config.bgColor as any),
               ]}>
               <Icon name={config.icon as any} size={20} color={config.color as any} />
             </View>

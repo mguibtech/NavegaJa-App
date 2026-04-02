@@ -1,81 +1,67 @@
-import { useEffect, useRef, useState } from 'react';
-import { Linking } from 'react-native';
+import {useEffect, useRef, useState} from 'react';
+import {Linking} from 'react-native';
 import MapView from 'react-native-maps';
 
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
-import { SosAlert, SosStatus, SosType, useTrackBooking, TrackingStatus, useSosAlert, usePersonalContacts, PersonalContact, useLocationLabel, useFloodInundation, RISK_FILL, RISK_STROKE } from '@domain';
-import { AppStackParamList } from '@routes';
-import { useToast } from '@hooks';
-import { api } from '@api';
-import { API_ENDPOINTS } from '@api/config';
-
-const FALLBACK_COORDS = { latitude: -3.119, longitude: -60.0217 }; // Manaus
-
-// Chaves sem acentos para comparação robusta (evita problemas de Unicode NFC vs NFD)
-// Usado apenas para os marcadores de origem/destino e linha do percurso no mapa
-const CITY_COORDS: Record<string, { latitude: number; longitude: number }> = {
-  manaus: { latitude: -3.119, longitude: -60.0217 },
-  parintins: { latitude: -2.6277, longitude: -56.736 },
-  itacoatiara: { latitude: -3.1439, longitude: -58.4442 },
-  tefe: { latitude: -3.3684, longitude: -64.7124 },
-  barreirinha: { latitude: -2.7869, longitude: -57.0501 },
-  coari: { latitude: -4.0856, longitude: -63.1416 },
-  maues: { latitude: -3.3714, longitude: -57.7189 },
-  tabatinga: { latitude: -4.255, longitude: -69.9327 },
-  labrea: { latitude: -7.2592, longitude: -64.7986 },
-  humaita: { latitude: -7.5057, longitude: -63.0173 },
-  'benjamin constant': { latitude: -4.3759, longitude: -70.0339 },
-  'sao gabriel da cachoeira': { latitude: -0.1303, longitude: -67.0892 },
-  borba: { latitude: -4.384, longitude: -59.5875 },
-  autazes: { latitude: -3.5777, longitude: -59.1301 },
-  'nova olinda do norte': { latitude: -3.8847, longitude: -59.0906 },
-  'presidente figueiredo': { latitude: -2.0227, longitude: -60.0249 },
-  iranduba: { latitude: -3.2819, longitude: -60.1879 },
-  manacapuru: { latitude: -3.2998, longitude: -60.6217 },
-  careiro: { latitude: -3.3521, longitude: -59.7445 },
-  anori: { latitude: -3.7697, longitude: -61.6447 },
-  'fonte boa': { latitude: -2.5233, longitude: -66.0928 },
-  manicore: { latitude: -5.8105, longitude: -61.3024 },
-  alvaraes: { latitude: -3.2136, longitude: -64.8067 },
-  beruri: { latitude: -3.9005, longitude: -61.3527 },
-};
-
-function getCityCoords(city?: string | null): { latitude: number; longitude: number } {
-  if (!city) { return FALLBACK_COORDS; }
-  const key = city
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s*[-–]\s*(am|pa)\.?\s*$/i, '')
-    .trim();
-  return CITY_COORDS[key] ?? FALLBACK_COORDS;
-}
+import {
+  PersonalContact,
+  RISK_FILL,
+  RISK_STROKE,
+  SosAlert,
+  SosStatus,
+  SosType,
+  TrackingStatus,
+  useFloodInundation,
+  useLocationLabel,
+  usePersonalContacts,
+  useSosAlert,
+  useTrackBooking,
+} from '@domain';
+import {AppStackParamList} from '@routes';
+import {useToast} from '@hooks';
+import {api} from '@api';
+import {API_ENDPOINTS} from '@api/config';
+import {
+  FALLBACK_COORDS,
+  TRACKING_POLL_INTERVAL_MS,
+  getCityCoords,
+  getErrorMessage,
+  getTrackingStatusBgColor,
+  getTrackingStatusColor,
+  getTrackingStatusLabel,
+  normalizeCoords,
+} from './trackingScreenUtils';
 
 export function useTrackingScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<RouteProp<AppStackParamList, 'Tracking'>>();
-  const { bookingId } = route.params;
+  const {bookingId} = route.params;
 
   const mapRef = useRef<MapView>(null);
-
-  const { trackingInfo, isLoading, error, refetch } = useTrackBooking(bookingId);
   const toast = useToast();
-  const { alerts, createAlert } = useSosAlert();
-  const { contacts } = usePersonalContacts();
-  const { label: locationLabel, fetchLabel } = useLocationLabel();
-  const mySosAlerts = alerts.filter(a => a.status === SosStatus.ACTIVE);
+
+  const {trackingInfo, isLoading, error, refetch} = useTrackBooking(bookingId);
+  const {alerts, createAlert} = useSosAlert();
+  const {contacts} = usePersonalContacts();
+  const {label: locationLabel, fetchLabel} = useLocationLabel();
+
+  const mySosAlerts = alerts.filter(alert => alert.status === SosStatus.ACTIVE);
 
   const [showSosAlerts, setShowSosAlerts] = useState(true);
   const [showDangerZones, setShowDangerZones] = useState(true);
-  const [livePosition, setLivePosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [livePosition, setLivePosition] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [sosTriggering, setSosTriggering] = useState(false);
   const [showSosResultModal, setShowSosResultModal] = useState(false);
-  const [unlinkedSosContacts, setUnlinkedSosContacts] = useState<PersonalContact[]>([]);
+  const [unlinkedSosContacts, setUnlinkedSosContacts] = useState<
+    PersonalContact[]
+  >([]);
 
-  // Modal state
   const [showCallCaptainModal, setShowCallCaptainModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showSosDetailModal, setShowSosDetailModal] = useState(false);
@@ -86,6 +72,7 @@ export function useTrackingScreen() {
   useEffect(() => {
     const lat = trackingInfo?.currentLat;
     const lng = trackingInfo?.currentLng;
+
     if (lat != null && lng != null) {
       fetchLabel(lat, lng);
     }
@@ -98,45 +85,50 @@ export function useTrackingScreen() {
     }
   }, [error]);
 
-  // GPS polling — corre para todos os estados excepto cancelado
-  // O backend devolve coords da origem (scheduled), GPS real (in_transit), destino (arrived)
   useEffect(() => {
     const tripId = trackingInfo?.booking.tripId;
     const status = trackingInfo?.trackingStatus;
+
     if (!tripId || status === 'cancelled') {
       return;
     }
+    const activeTripId = tripId;
+
     async function pollLocation() {
       try {
-        const res = await api.get<{ lat: number | string; lng: number | string }>(
-          API_ENDPOINTS.TRIP_LOCATION(tripId!),
+        const response = await api.get<{lat: number | string; lng: number | string}>(
+          API_ENDPOINTS.TRIP_LOCATION(activeTripId),
         );
 
-        if (res?.lat != null && res?.lng != null) {
-          setLivePosition(normalizeCoords(res.lat, res.lng, FALLBACK_COORDS));
+        if (response?.lat != null && response?.lng != null) {
+          setLivePosition(
+            normalizeCoords(response.lat, response.lng, FALLBACK_COORDS),
+          );
         }
       } catch {
-        // falha silenciosa
+        // Polling de localizacao pode falhar momentaneamente sem quebrar a tela.
       }
     }
+
     pollLocation();
-    const interval = setInterval(pollLocation, 15_000);
+    const interval = setInterval(pollLocation, TRACKING_POLL_INTERVAL_MS);
+
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackingInfo?.booking.tripId, trackingInfo?.trackingStatus]);
 
-  // Flood inundation polygons — usa posição da embarcação como centro
-  const inundLat = livePosition?.latitude ?? trackingInfo?.currentLat ?? FALLBACK_COORDS.latitude;
-  const inundLng = livePosition?.longitude ?? trackingInfo?.currentLng ?? FALLBACK_COORDS.longitude;
-  const { inundation } = useFloodInundation(inundLat, inundLng);
+  const inundLat =
+    livePosition?.latitude ?? trackingInfo?.currentLat ?? FALLBACK_COORDS.latitude;
+  const inundLng =
+    livePosition?.longitude ??
+    trackingInfo?.currentLng ??
+    FALLBACK_COORDS.longitude;
+  const {inundation} = useFloodInundation(inundLat, inundLng);
 
   const trip = trackingInfo?.booking.trip;
   const booking = trackingInfo?.booking;
   const trackingStatus = trackingInfo?.trackingStatus ?? 'scheduled';
   const progress = trackingInfo?.progressPercent ?? 0;
 
-  // Marcadores fixos de origem/destino (linha do percurso no mapa)
-  // Prefer real geocoding coordinates stored in the trip; fall back to city-name lookup
   const originFallback = getCityCoords(trip?.origin);
   const destinationFallback = getCityCoords(trip?.destination);
 
@@ -156,11 +148,11 @@ export function useTrackingScreen() {
       ? normalizeCoords(trackingInfo.currentLat, trackingInfo.currentLng, originCoords)
       : originCoords);
 
-  const routeCoordinates = [
-    originCoords,
-    currentPosition,
-    destinationCoords,
-  ];
+  const routeCoordinates = [originCoords, currentPosition, destinationCoords];
+
+  const captainName = trip?.captain?.name ?? 'Capitao';
+  const captainPhone = trip?.captain?.phone ?? '';
+  const boatName = trip?.boat?.name ?? '';
 
   const handleRefresh = () => {
     refetch();
@@ -175,62 +167,46 @@ export function useTrackingScreen() {
   };
 
   const handleSosPress = () => {
-    navigation.navigate('SosAlert', { tripId: bookingId });
+    navigation.navigate('SosAlert', {tripId: bookingId});
   };
 
   async function handleSosTrigger() {
-    if (sosTriggering) { return; }
+    if (sosTriggering) {
+      return;
+    }
+
     setSosTriggering(true);
+
     try {
       await createAlert(SosType.GENERAL, {
         tripId: trip?.id,
         description: 'SOS acionado pelo passageiro',
       });
-      const unlinked = contacts.filter(c => !c.linkedUserId);
-      setUnlinkedSosContacts(unlinked);
+
+      setUnlinkedSosContacts(contacts.filter(contact => !contact.linkedUserId));
       setShowSosResultModal(true);
-    } catch (err: any) {
-      toast.showError(err?.message ?? 'Erro ao enviar SOS. Verifique a sua ligação e tente novamente.');
+    } catch (triggerError) {
+      toast.showError(
+        getErrorMessage(
+          triggerError,
+          'Erro ao enviar SOS. Verifique a sua ligacao e tente novamente.',
+        ),
+      );
     } finally {
       setSosTriggering(false);
     }
-  }
-
-  function parseCoord(value: unknown, fallback: number): number {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const parsed = Number(value.replace(',', '.').trim());
-      if (Number.isFinite(parsed)) {
-        return parsed;
-      }
-    }
-
-    return fallback;
-  }
-
-  function normalizeCoords(
-    lat: unknown,
-    lng: unknown,
-    fallback: { latitude: number; longitude: number },
-  ) {
-    return {
-      latitude: parseCoord(lat, fallback.latitude),
-      longitude: parseCoord(lng, fallback.longitude),
-    };
   }
 
   function handleWhatsApp(contact: PersonalContact) {
     const lat = currentPosition.latitude.toFixed(6);
     const lng = currentPosition.longitude.toFixed(6);
     const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
-    const msg = `🆘 EMERGÊNCIA! Preciso de ajuda urgente! A minha localização: ${mapsUrl}`;
+    const message = `EMERGENCIA! Preciso de ajuda urgente! A minha localizacao: ${mapsUrl}`;
+
     Linking.openURL(
-      `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(msg)}`,
+      `whatsapp://send?phone=55${contact.phone}&text=${encodeURIComponent(message)}`,
     ).catch(() => {
-      Linking.openURL(`sms:${contact.phone}?body=${encodeURIComponent(msg)}`);
+      Linking.openURL(`sms:${contact.phone}?body=${encodeURIComponent(message)}`);
     });
   }
 
@@ -249,61 +225,6 @@ export function useTrackingScreen() {
 
   const calculateNearbyAlerts = () => {
     return mySosAlerts.length;
-  };
-
-  const getStatusLabel = (status: TrackingStatus): string => {
-    switch (status) {
-      case 'scheduled':
-        return 'Aguardando Partida';
-      case 'boarding':
-        return 'Embarque em Andamento';
-      case 'in_transit':
-        return 'Em Trânsito';
-      case 'approaching':
-        return 'Chegando ao Destino';
-      case 'arrived':
-        return 'Chegou ao Destino';
-      case 'cancelled':
-        return 'Viagem Cancelada';
-    }
-  };
-
-  const getStatusColor = (
-    status: TrackingStatus,
-  ): 'success' | 'warning' | 'danger' | 'primary' => {
-    switch (status) {
-      case 'scheduled':
-        return 'primary';
-      case 'boarding':
-        return 'warning';
-      case 'in_transit':
-        return 'success';
-      case 'approaching':
-        return 'success';
-      case 'arrived':
-        return 'success';
-      case 'cancelled':
-        return 'danger';
-    }
-  };
-
-  const getStatusBgColor = (
-    status: TrackingStatus,
-  ): 'primaryBg' | 'warningBg' | 'dangerBg' | 'successBg' => {
-    switch (status) {
-      case 'scheduled':
-        return 'primaryBg';
-      case 'boarding':
-        return 'warningBg';
-      case 'in_transit':
-        return 'successBg';
-      case 'approaching':
-        return 'successBg';
-      case 'arrived':
-        return 'successBg';
-      case 'cancelled':
-        return 'dangerBg';
-    }
   };
 
   const handleGoBack = () => navigation.goBack();
@@ -330,10 +251,6 @@ export function useTrackingScreen() {
     setShowSosDetailModal(false);
     setSelectedSosAlert(null);
   };
-
-  const captainName = trip?.captain?.name ?? 'Capitão';
-  const captainPhone = trip?.captain?.phone ?? '';
-  const boatName = trip?.boat?.name ?? '';
 
   return {
     mapRef,
@@ -373,9 +290,9 @@ export function useTrackingScreen() {
     handleSosMarkerPress,
     handleSafetyOverlayPress,
     calculateNearbyAlerts,
-    getStatusLabel,
-    getStatusColor,
-    getStatusBgColor,
+    getStatusLabel: getTrackingStatusLabel as (status: TrackingStatus) => string,
+    getStatusColor: getTrackingStatusColor,
+    getStatusBgColor: getTrackingStatusBgColor,
     handleGoBack,
     handleConfirmCallCaptain,
     handleCancelCallCaptain,

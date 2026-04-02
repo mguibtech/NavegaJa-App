@@ -213,7 +213,7 @@ export function PaymentScreen() {
             borderRadius="s16"
             padding="s32"
             alignItems="center"
-            style={{elevation: 2}}>
+            style={styles.surfaceElevation}>
             <Icon name="credit-card" size={64} color="primary" />
             <Text preset="headingMedium" color="text" bold mt="s16" mb="s8" textAlign="center">
               Pagamento com Cartão

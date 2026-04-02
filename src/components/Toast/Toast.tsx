@@ -94,10 +94,10 @@ export function Toast({id, type, message, action, onHide}: ToastProps) {
         padding="s16"
         flexDirection="row"
         alignItems="center"
+        borderLeftWidth={4}
         style={[
           styles.toast,
           {
-            borderLeftWidth: 4,
             borderLeftColor: colors[config.borderColor],
           },
         ]}>

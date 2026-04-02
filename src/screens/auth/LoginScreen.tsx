@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   TouchableWithoutFeedback,
 } from 'react-native';
 
@@ -18,6 +19,16 @@ import {logLogin} from '@services';
 import {AuthStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+});
 
 export function LoginScreen({navigation}: Props) {
   const {login, isLoading} = useAuthStore();
@@ -52,9 +63,9 @@ export function LoginScreen({navigation}: Props) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
       logLogin('phone');
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       const msg =
-        _error?.message ||
+        _error instanceof Error ? _error.message :
         'Erro ao fazer login. Tente novamente.';
 
       toast.showWarning(msg);
@@ -68,11 +79,11 @@ export function LoginScreen({navigation}: Props) {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={{flexGrow: 1, justifyContent: 'center'}}
+          contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <Box flex={1} backgroundColor="background" justifyContent="center" paddingHorizontal="s24" paddingVertical="s32">

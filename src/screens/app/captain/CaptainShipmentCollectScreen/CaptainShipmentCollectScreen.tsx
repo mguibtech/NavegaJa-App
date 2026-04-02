@@ -1,10 +1,26 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator} from 'react-native';
+import {ScrollView, ActivityIndicator, StyleSheet} from 'react-native';
 
 import {Box, Button, Icon, Text, TextInput, ScreenHeader} from '@components';
 import {ShipmentStatus} from '@domain';
 
 import {useCaptainShipmentCollect, STATUS_LABELS} from './useCaptainShipmentCollect';
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  summaryCard: {
+    elevation: 3,
+  },
+  actionCard: {
+    elevation: 2,
+  },
+  statusCard: {
+    elevation: 2,
+  },
+});
 
 export function CaptainShipmentCollectScreen() {
   const {
@@ -33,14 +49,14 @@ export function CaptainShipmentCollectScreen() {
           </Text>
         </Box>
       ) : !shipment ? null : (
-        <ScrollView contentContainerStyle={{padding: 20, paddingBottom: 120}}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Shipment Info Card */}
           <Box
             backgroundColor="surface"
             borderRadius="s16"
             padding="s20"
             mb="s16"
-            style={{elevation: 3}}>
+            style={styles.summaryCard}>
             <Box flexDirection="row" alignItems="center" mb="s16">
               <Box
                 width={48}
@@ -134,7 +150,7 @@ export function CaptainShipmentCollectScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{elevation: 2}}>
+              style={styles.actionCard}>
               <Box flexDirection="row" alignItems="center" mb="s16">
                 <Icon name="qr-code-scanner" size={22} color="secondary" />
                 <Text preset="paragraphMedium" color="text" bold ml="s12">
@@ -186,7 +202,7 @@ export function CaptainShipmentCollectScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{elevation: 2}}>
+              style={styles.actionCard}>
               <Box flexDirection="row" alignItems="center" mb="s16">
                 <Icon name="local-shipping" size={22} color="secondary" />
                 <Text preset="paragraphMedium" color="text" bold ml="s12">
@@ -227,7 +243,7 @@ export function CaptainShipmentCollectScreen() {
                 borderRadius="s16"
                 padding="s24"
                 alignItems="center"
-                style={{elevation: 2}}>
+                style={styles.statusCard}>
                 <Icon
                   name={
                     shipment.status === ShipmentStatus.DELIVERED

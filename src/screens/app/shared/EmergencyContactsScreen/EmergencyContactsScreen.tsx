@@ -1,10 +1,26 @@
 import React from 'react';
-import {FlatList} from 'react-native';
+import {FlatList, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Box, ConfirmationModal, Icon, InfoModal, Text, TouchableOpacityBox} from '@components';
 
 import {useEmergencyContactsScreen} from './useEmergencyContactsScreen';
+
+const styles = StyleSheet.create({
+  header: {
+    paddingTop: 0,
+  },
+  listContent: {
+    padding: 20,
+  },
+  contactCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+});
 
 export function EmergencyContactsScreen() {
   const {top} = useSafeAreaInsets();
@@ -36,7 +52,7 @@ export function EmergencyContactsScreen() {
   return (
     <Box flex={1} backgroundColor="background">
       {/* Header */}
-      <Box paddingHorizontal="s20" paddingBottom="s20" backgroundColor="danger" style={{paddingTop: top + 16}}>
+      <Box paddingHorizontal="s20" paddingBottom="s20" backgroundColor="danger" style={[styles.header, {paddingTop: top + 16}]}>
         <Text preset="headingMedium" color="surface" bold mb="s8">
           Contatos de Emergência
         </Text>
@@ -48,7 +64,7 @@ export function EmergencyContactsScreen() {
       <FlatList
         data={contacts.sort((a, b) => a.priority - b.priority)}
         keyExtractor={item => item.id}
-        contentContainerStyle={{padding: 20}}
+        contentContainerStyle={styles.listContent}
         renderItem={({item}) => (
           <TouchableOpacityBox
             mb="s16"
@@ -56,13 +72,7 @@ export function EmergencyContactsScreen() {
             borderRadius="s16"
             padding="s20"
             onPress={() => handleCallContact(item.name, item.number)}
-            style={{
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}>
+            style={styles.contactCard}>
             <Box flexDirection="row" alignItems="center" mb="s12">
               <Box
                 width={48}

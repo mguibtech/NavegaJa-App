@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image} from 'react-native';
+import {Image, StyleSheet} from 'react-native';
 import { Box, Icon, Text, TouchableOpacityBox } from '@components';
 import {apiImageSource} from '@api/config';
 
@@ -12,6 +12,25 @@ type TripCardProps = {
   isMultiple: boolean;
   onPress: () => void;
 };
+
+const styles = StyleSheet.create({
+  card: {
+    elevation: 3,
+    minWidth: 280,
+    marginRight: 12,
+    borderWidth: 1,
+  },
+  boatImage: {
+    width: '100%',
+    height: '100%',
+  },
+});
+
+function getCardStyle(borderColor: string) {
+  return {
+    borderColor,
+  };
+}
 
 function getDepartureStatus(trip: Trip): string {
   if (trip.status === TripStatus.IN_PROGRESS) {
@@ -50,13 +69,7 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
       padding="s20"
       flexDirection="row"
       alignItems="center"
-      style={{
-        elevation: 3,
-        minWidth: 280,
-        marginRight: 12,
-        borderWidth: 1,
-        borderColor: status.bg,
-      }}>
+      style={[styles.card, getCardStyle(status.bg)]}>
       <Box flex={1} mr="s12">
         <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
           <Box
@@ -132,7 +145,7 @@ export function TripCard({ trip, index, isMultiple, onPress }: TripCardProps) {
           borderColor="border">
           <Image
             source={apiImageSource(boatImageUrl)}
-            style={{width: '100%', height: '100%'}}
+            style={styles.boatImage}
             resizeMode="cover"
           />
         </Box>

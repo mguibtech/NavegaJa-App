@@ -9,6 +9,12 @@ interface SosHoldButtonProps {
   holdSeconds?: number;
 }
 
+function getSosButtonStyle(disabled: boolean, isHolding: boolean) {
+  return {
+    backgroundColor: disabled ? '#9CA3AF' : isHolding ? '#B91C1C' : '#DC2626',
+  };
+}
+
 export function SosHoldButton({
   onTrigger,
   disabled = false,
@@ -84,7 +90,7 @@ export function SosHoldButton({
         disabled={disabled}
         style={[
           styles.button,
-          {backgroundColor: disabled ? '#9CA3AF' : isHolding ? '#B91C1C' : '#DC2626'},
+          getSosButtonStyle(disabled, isHolding),
         ]}>
         <Box alignItems="center" justifyContent="center">
           {isHolding ? (
@@ -92,12 +98,12 @@ export function SosHoldButton({
               <Text
                 preset="headingMedium"
                 bold
-                style={{color: '#FFFFFF', fontSize: 34, lineHeight: 38}}>
+                style={styles.countdownText}>
                 {countdown}
               </Text>
               <Text
                 preset="paragraphCaptionSmall"
-                style={{color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 1}}>
+                style={styles.cancelText}>
                 solte p/ cancelar
               </Text>
             </>
@@ -106,12 +112,12 @@ export function SosHoldButton({
               <Text
                 preset="headingSmall"
                 bold
-                style={{color: '#FFFFFF', fontSize: 20, letterSpacing: 5}}>
+                style={styles.sosLabel}>
                 SOS
               </Text>
               <Text
                 preset="paragraphCaptionSmall"
-                style={{color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 2}}>
+                style={styles.holdText}>
                 segurar
               </Text>
             </>
@@ -168,5 +174,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.55,
     shadowRadius: 14,
     elevation: 10,
+  },
+  countdownText: {
+    color: '#FFFFFF',
+    fontSize: 34,
+    lineHeight: 38,
+  },
+  cancelText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 10,
+    marginTop: 1,
+  },
+  sosLabel: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    letterSpacing: 5,
+  },
+  holdText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 10,
+    marginTop: 2,
   },
 });

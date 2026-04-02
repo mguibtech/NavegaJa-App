@@ -57,6 +57,34 @@ import type {PassengerStackParamList, TabsParamList} from './navigationTypes';
 const Stack = createNativeStackNavigator<PassengerStackParamList>();
 const Tab = createBottomTabNavigator<TabsParamList>();
 
+const renderPassengerTabBar = (
+  props: React.ComponentProps<typeof CustomTabBar>,
+) => <CustomTabBar {...props} />;
+
+const renderHomeIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="home" size={size} color={color} />
+);
+
+const renderSearchIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="search" size={size} color={color} />
+);
+
+const renderBookingsIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="receipt-long" size={size} color={color} />
+);
+
+const renderShipmentsIcon = ({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) => <Icon name="inventory" size={size} color={color} />;
+
+const renderProfileIcon = ({color, size}: {color: string; size: number}) => (
+  <Icon name="person" size={size} color={color} />
+);
+
 function PassengerTabs() {
   const {totalUnread} = useConversations();
   const {bookings} = useMyBookings();
@@ -81,16 +109,14 @@ function PassengerTabs() {
 
   return (
     <Tab.Navigator
-      tabBar={props => <CustomTabBar {...props} />}
+      tabBar={renderPassengerTabBar}
       screenOptions={{headerShown: false}}>
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Início',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="home" size={size} color={color} />
-          ),
+          tabBarIcon: renderHomeIcon,
         }}
       />
       <Tab.Screen
@@ -98,9 +124,7 @@ function PassengerTabs() {
         component={SearchScreen}
         options={{
           tabBarLabel: 'Buscar',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="search" size={size} color={color} />
-          ),
+          tabBarIcon: renderSearchIcon,
         }}
       />
       <Tab.Screen
@@ -108,9 +132,7 @@ function PassengerTabs() {
         component={BookingsScreen}
         options={{
           tabBarLabel: 'Reservas',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="receipt-long" size={size} color={color} />
-          ),
+          tabBarIcon: renderBookingsIcon,
           tabBarBadge: activeBookingsCount > 0 ? activeBookingsCount : undefined,
         }}
       />
@@ -119,9 +141,7 @@ function PassengerTabs() {
         component={ShipmentsScreen}
         options={{
           tabBarLabel: 'Entregas',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="inventory" size={size} color={color} />
-          ),
+          tabBarIcon: renderShipmentsIcon,
           tabBarBadge: activeShipmentsCount > 0 ? activeShipmentsCount : undefined,
         }}
       />
@@ -130,9 +150,7 @@ function PassengerTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="person" size={size} color={color} />
-          ),
+          tabBarIcon: renderProfileIcon,
           tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
         }}
       />

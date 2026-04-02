@@ -12,7 +12,7 @@ const storage = {
   },
 
   async removeItem(key: string): Promise<void> {
-    mmkvStorage.delete(key);
+    mmkvStorage.remove(key);
   },
 
   async getAllKeys(): Promise<string[]> {
@@ -21,7 +21,7 @@ const storage = {
 
   async multiRemove(keys: string[]): Promise<void> {
     keys.forEach(key => {
-      mmkvStorage.delete(key);
+      mmkvStorage.remove(key);
     });
   },
 

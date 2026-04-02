@@ -75,6 +75,18 @@ const MAX_ZOOM_SCALE = 4.5;
 const DOUBLE_TAP_ZOOM_SCALE = 3;
 const PAN_LIMIT_FACTOR = 0.94;
 
+function getViewerHeaderButtonStyle() {
+  return {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  };
+}
+
+function getViewerDotStyle(isActive: boolean, colors: Theme['colors']) {
+  return {
+    backgroundColor: isActive ? colors.primaryLight : 'rgba(255,255,255,0.28)',
+  };
+}
+
 function PhotoSlide({
   item,
   width,
@@ -339,7 +351,7 @@ export function PhotoViewerModal({
               borderRadius="s20"
               alignItems="center"
               justifyContent="center"
-              style={{backgroundColor: 'rgba(255,255,255,0.14)'}}>
+              style={getViewerHeaderButtonStyle()}>
               <Icon name="close" size={22} color={'#FFFFFF' as any} />
             </TouchableOpacityBox>
           </View>
@@ -416,10 +428,7 @@ export function PhotoViewerModal({
                 width={index === activeIndex ? 18 : 8}
                 height={8}
                 borderRadius="s8"
-                style={{
-                  backgroundColor:
-                    index === activeIndex ? colors.primaryLight : 'rgba(255,255,255,0.28)',
-                }}
+                style={getViewerDotStyle(index === activeIndex, colors)}
               />
             ))}
           </Box>

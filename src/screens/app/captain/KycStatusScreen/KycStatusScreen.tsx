@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Image, Linking, ScrollView} from 'react-native';
+import {Alert, Image, Linking, ScrollView, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -99,6 +99,22 @@ function isPdfUrl(url: string | null | undefined): boolean {
   return /\.pdf(?:$|[?#])/i.test(url);
 }
 
+function getStatusCardStyle(backgroundColor: string) {
+  return [styles.statusCard, {backgroundColor}];
+}
+
+function getStatusIconWrapStyle(backgroundColor: string) {
+  return [styles.statusIconWrap, {backgroundColor}];
+}
+
+function getBadgeBackgroundStyle(backgroundColor: string) {
+  return [styles.requestBadge, {backgroundColor}];
+}
+
+function getTextColorStyle(color: string) {
+  return [styles.coloredText, {color}];
+}
+
 export function KycStatusScreen() {
   const {openViewer, viewerProps} = usePhotoViewer();
   const {top} = useSafeAreaInsets();
@@ -182,16 +198,16 @@ export function KycStatusScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
-        style={{paddingTop: top + 16}}>
+        style={[styles.header, {paddingTop: top + 16}]}>
         <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
-          <Icon name="arrow-back" size={24} color={'#FFFFFF' as any} />
+          <Icon name="arrow-back" size={24} color="surface" />
         </TouchableOpacityBox>
-        <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+        <Text preset="headingMedium" bold color="surface">
           Status da Verificação
         </Text>
       </Box>
 
-      <ScrollView contentContainerStyle={{padding: 20, paddingBottom: 40}}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {isLoading ? (
           <Box alignItems="center" mt="s40">
             <Icon name="hourglass-top" size={48} color="textSecondary" />
@@ -206,7 +222,7 @@ export function KycStatusScreen() {
               padding="s24"
               mb="s24"
               alignItems="center"
-              style={{backgroundColor: config.bg, elevation: 2}}>
+              style={getStatusCardStyle(config.bg)}>
               <Box
                 width={80}
                 height={80}
@@ -214,10 +230,10 @@ export function KycStatusScreen() {
                 alignItems="center"
                 justifyContent="center"
                 mb="s16"
-                style={{backgroundColor: config.color + '20'}}>
-                <Icon name={config.icon} size={40} color={config.color as any} />
+                style={getStatusIconWrapStyle(`${config.color}20`)}>
+                <Icon name={config.icon} size={40} color={config.color} />
               </Box>
-              <Text preset="headingMedium" bold style={{color: config.color}}>
+              <Text preset="headingMedium" bold style={getTextColorStyle(config.color)}>
                 {config.label}
               </Text>
               <Text
@@ -289,7 +305,7 @@ export function KycStatusScreen() {
                         padding="s12"
                         flexDirection="row"
                         alignItems="center"
-                        style={{elevation: 1}}>
+                        style={styles.documentCard}>
                         <Box
                           width={72}
                           height={72}
@@ -297,13 +313,13 @@ export function KycStatusScreen() {
                           overflow="hidden"
                           alignItems="center"
                           justifyContent="center"
-                          style={{backgroundColor: '#F3F4F6'}}>
+                          style={styles.documentPreview}>
                           {isPdf ? (
                             <>
                               <Icon
                                 name="picture-as-pdf"
                                 size={30}
-                                color={'#DC2626' as any}
+                                color="danger"
                               />
                               <Text
                                 preset="paragraphCaptionSmall"
@@ -315,7 +331,7 @@ export function KycStatusScreen() {
                           ) : (
                             <Image
                               source={apiImageSource(card.previewUrl!)}
-                              style={{width: '100%', height: '100%'}}
+                              style={styles.documentImage}
                               resizeMode="cover"
                             />
                           )}
@@ -335,11 +351,11 @@ export function KycStatusScreen() {
                                 borderRadius="s12"
                                 paddingHorizontal="s8"
                                 paddingVertical="s4"
-                                style={{backgroundColor: requestConfig.bg}}>
+                                style={getBadgeBackgroundStyle(requestConfig.bg)}>
                                 <Text
                                   preset="paragraphCaptionSmall"
                                   bold
-                                  style={{color: requestConfig.color}}>
+                                  style={getTextColorStyle(requestConfig.color)}>
                                   {requestConfig.label}
                                 </Text>
                               </Box>
@@ -412,3 +428,29 @@ export function KycStatusScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingTop: 0,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  statusCard: {
+    elevation: 2,
+  },
+  statusIconWrap: {},
+  documentCard: {
+    elevation: 1,
+  },
+  documentPreview: {
+    backgroundColor: '#F3F4F6',
+  },
+  documentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  requestBadge: {},
+  coloredText: {},
+});

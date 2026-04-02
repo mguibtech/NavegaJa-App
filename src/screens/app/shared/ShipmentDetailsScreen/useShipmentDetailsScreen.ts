@@ -138,7 +138,7 @@ export function useShipmentDetailsScreen() {
     }
 
     try {
-      const uri = await captureRef(shareCardRef, {
+      const uri = await captureRef(shareCardRef.current, {
         format: 'png',
         quality: 1,
         result: 'tmpfile',

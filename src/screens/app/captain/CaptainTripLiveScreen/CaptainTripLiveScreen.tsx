@@ -29,6 +29,18 @@ import {
   ALERT_SEVERITY_COLORS,
 } from './useCaptainTripLive';
 
+function getMarkerCircleStyle(color: string) {
+  return [styles.markerCircle, {backgroundColor: color}];
+}
+
+function getHeaderStyle(top: number) {
+  return [styles.headerBar, {paddingTop: top + 8}];
+}
+
+function getHeaderDotStyle(color: string) {
+  return [styles.headerDot, {backgroundColor: color}];
+}
+
 export function CaptainTripLiveScreen() {
   const {top, bottom} = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
@@ -188,7 +200,7 @@ export function CaptainTripLiveScreen() {
               height={40}
               alignItems="center"
               justifyContent="center"
-              style={[styles.markerCircle, {backgroundColor: '#16a34a'}]}>
+              style={getMarkerCircleStyle('#16a34a')}>
                 <Icon name="place" size={22} color="surface" />
               </Box>
             </Marker>
@@ -205,7 +217,7 @@ export function CaptainTripLiveScreen() {
               height={40}
               alignItems="center"
               justifyContent="center"
-              style={[styles.markerCircle, {backgroundColor: '#dc2626'}]}>
+              style={getMarkerCircleStyle('#dc2626')}>
                 <Icon name="flag" size={22} color="surface" />
               </Box>
             </Marker>
@@ -253,7 +265,7 @@ export function CaptainTripLiveScreen() {
       {/* ── Floating header ────────────────────────────────────────────── */}
       <Box
         backgroundColor="surface"
-        style={[styles.headerBar, {paddingTop: top + 8}]}>
+        style={getHeaderStyle(top)}>
         <TouchableOpacityBox
           width={40}
           height={40}
@@ -274,7 +286,7 @@ export function CaptainTripLiveScreen() {
             <Box
               width={8}
               height={8}
-              style={[styles.headerDot, {backgroundColor: '#3b82f6'}]}
+              style={getHeaderDotStyle('#3b82f6')}
             />
             <Text preset="paragraphCaptionSmall" color="textSecondary">
               Em andamento

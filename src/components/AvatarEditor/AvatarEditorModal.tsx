@@ -1,5 +1,5 @@
 import React, {useState, useCallback, useMemo} from 'react';
-import {Modal, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Modal, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {SvgXml} from 'react-native-svg';
 
 import {Box, Icon, Text, TouchableOpacityBox} from '@components';
@@ -71,6 +71,191 @@ function randomSeed() {
   return RANDOM_SEEDS[Math.floor(Math.random() * RANDOM_SEEDS.length)];
 }
 const THUMB_SEED = 'Sam';
+const THUMB_SIZE = 64;
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  colorPickerContent: {
+    paddingBottom: 4,
+  },
+  handle: {
+    borderRadius: 2,
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '92%',
+  },
+  previewFrame: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#0B5D8A',
+    backgroundColor: '#EFF6FF',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  sectionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  styleGrid: {
+    gap: 8,
+  },
+  styleGridItem: {
+    width: '30%',
+  },
+  styleThumbFrame: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    overflow: 'hidden',
+    backgroundColor: '#D8E9F5',
+  },
+  styleThumbOverlay: {
+    top: 5,
+    right: 5,
+    backgroundColor: '#0B5D8A',
+    borderRadius: 9,
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  styleThumbSize: {
+    width: 52,
+    height: 52,
+  },
+  styleThumbText: {
+    textAlign: 'center',
+    fontSize: 11,
+  },
+  swatch: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: 10,
+  },
+  swatchSelected: {
+    borderWidth: 3,
+    borderColor: '#0B5D8A',
+  },
+  swatchIdle: {
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+  },
+  thumbNoneCard: {
+    width: THUMB_SIZE + 8,
+    height: THUMB_SIZE + 26,
+  },
+  thumbOverlay: {
+    top: 4,
+    right: 4,
+    backgroundColor: '#0B5D8A',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbPreview: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbRowContent: {
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  thumbText: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  thumbTextSelected: {
+    color: '#0B5D8A',
+  },
+  thumbTextIdle: {
+    color: '#9CA3AF',
+  },
+  thumbOptionCard: {
+    borderRadius: 12,
+    padding: 4,
+    marginRight: 8,
+    alignItems: 'center',
+  },
+  thumbOptionCardSelected: {
+    borderWidth: 2,
+    borderColor: '#0B5D8A',
+    backgroundColor: '#EFF6FF',
+  },
+  thumbOptionCardIdle: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F0F4F8',
+  },
+  thumbOptionValueCard: {
+    overflow: 'hidden',
+  },
+  chipRowContent: {
+    paddingBottom: 4,
+  },
+  chip: {
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    marginRight: 8,
+  },
+  chipSelected: {
+    borderWidth: 2,
+    borderColor: '#0B5D8A',
+    backgroundColor: '#EFF6FF',
+  },
+  chipIdle: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  chipTextSelected: {
+    color: '#0B5D8A',
+    fontWeight: '600',
+  },
+  chipTextIdle: {
+    color: '#6B7280',
+    fontWeight: '400',
+  },
+  styleCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  styleCardSelected: {
+    borderWidth: 2,
+    borderColor: '#0B5D8A',
+    backgroundColor: '#EFF6FF',
+  },
+  styleCardIdle: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  styleThumbTextSelected: {
+    color: '#0B5D8A',
+  },
+  styleThumbTextIdle: {
+    color: '#6B7280',
+  },
+});
 
 // ─── Color palettes ───────────────────────────────────────────────────────────
 
@@ -392,7 +577,7 @@ function SectionLabel({children}: {children: string}) {
       color="textSecondary"
       bold
       mb="s8"
-      style={{textTransform: 'uppercase', letterSpacing: 0.5}}>
+      style={styles.sectionLabel}>
       {children}
     </Text>
   );
@@ -403,25 +588,29 @@ interface ColorSwatchPickerProps {
   selected?: string;
   onSelect: (value: string) => void;
 }
+
+function buildSwatchStyle(bg: string, isSelected: boolean) {
+  return [
+    styles.swatch,
+    isSelected ? styles.swatchSelected : styles.swatchIdle,
+    {backgroundColor: bg},
+  ];
+}
+
 function ColorSwatchPicker({colors, selected, onSelect}: ColorSwatchPickerProps) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4}}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.colorPickerContent}>
       {colors.map(({value, bg}) => (
         <TouchableOpacity key={value} onPress={() => onSelect(value)} activeOpacity={0.7}>
-          <Box style={{
-            width: 34, height: 34, borderRadius: 17,
-            backgroundColor: bg,
-            borderWidth: selected === value ? 3 : 1.5,
-            borderColor: selected === value ? '#0B5D8A' : '#D1D5DB',
-            marginRight: 10,
-          }} />
+          <Box style={buildSwatchStyle(bg, selected === value)} />
         </TouchableOpacity>
       ))}
     </ScrollView>
   );
 }
-
-const THUMB_SIZE = 64;
 
 interface AvatarThumbRowProps {
   values: string[];
@@ -436,23 +625,24 @@ interface AvatarThumbRowProps {
 function AvatarThumbRow({values, optionKey: _optionKey, style: _style, selected, onSelect, svgMap, toggleable, noneLabel}: AvatarThumbRowProps) {
   const noneSelected = toggleable && (selected === 'none' || selected === undefined);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4, flexDirection: 'row', alignItems: 'center'}}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.thumbRowContent}>
       {/* None option for toggleable */}
       {toggleable && (
         <TouchableOpacity key="none" onPress={() => onSelect('none')} activeOpacity={0.7}>
-          <Box style={{
-            borderWidth: noneSelected ? 2 : 1,
-            borderColor: noneSelected ? '#0B5D8A' : '#E5E7EB',
-            borderRadius: 12,
-            backgroundColor: noneSelected ? '#EFF6FF' : '#F0F4F8',
-            padding: 4, marginRight: 8,
-            width: THUMB_SIZE + 8, height: THUMB_SIZE + 8 + 18,
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <View style={{width: THUMB_SIZE, height: THUMB_SIZE, alignItems: 'center', justifyContent: 'center'}}>
+          <Box
+            style={[
+              styles.thumbOptionCard,
+              noneSelected ? styles.thumbOptionCardSelected : styles.thumbOptionCardIdle,
+              styles.thumbNoneCard,
+            ]}>
+            <View style={styles.thumbPreview}>
               <Icon name="close" size={28} color={noneSelected ? 'primary' : 'textSecondary'} />
             </View>
-            <Text style={{fontSize: 10, color: noneSelected ? '#0B5D8A' : '#9CA3AF', textAlign: 'center', marginTop: 2}}>
+            <Text
+              style={[styles.thumbText, noneSelected ? styles.thumbTextSelected : styles.thumbTextIdle]}>
               {noneLabel ?? 'Nenhum'}
             </Text>
           </Box>
@@ -463,24 +653,18 @@ function AvatarThumbRow({values, optionKey: _optionKey, style: _style, selected,
         const isSelected = selected === value;
         return (
           <TouchableOpacity key={value} onPress={() => onSelect(value)} activeOpacity={0.7}>
-            <Box style={{
-              borderWidth: isSelected ? 2 : 1,
-              borderColor: isSelected ? '#0B5D8A' : '#E5E7EB',
-              borderRadius: 12,
-              backgroundColor: isSelected ? '#EFF6FF' : '#F0F4F8',
-              padding: 4, marginRight: 8, alignItems: 'center',
-              overflow: 'hidden',
-            }}>
+            <Box
+              style={[
+                styles.thumbOptionCard,
+                styles.thumbOptionValueCard,
+                isSelected ? styles.thumbOptionCardSelected : styles.thumbOptionCardIdle,
+              ]}>
               {/* View explícito necessário para SvgXml renderizar dentro de ScrollView horizontal no Android */}
-              <View style={{width: THUMB_SIZE, height: THUMB_SIZE}}>
+              <View style={styles.thumbPreview}>
                 <SvgXml xml={svgMap[value] ?? ''} width={THUMB_SIZE} height={THUMB_SIZE} />
               </View>
               {isSelected && (
-                <Box position="absolute" style={{
-                  top: 4, right: 4, backgroundColor: '#0B5D8A',
-                  borderRadius: 8, width: 16, height: 16,
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
+                <Box position="absolute" style={styles.thumbOverlay}>
                   <Icon name="check" size={10} color="surface" />
                 </Box>
               )}
@@ -499,24 +683,16 @@ interface ChipRowProps {
 }
 function ChipRow({options, selected, onSelect}: ChipRowProps) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: 4}}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chipRowContent}>
       {options.map(({value, label}) => {
         const isSelected = value === 'none' ? selected === undefined : selected === value;
         return (
           <TouchableOpacity key={value} onPress={() => onSelect(value)} activeOpacity={0.7}>
-            <Box style={{
-              borderWidth: isSelected ? 2 : 1,
-              borderColor: isSelected ? '#0B5D8A' : '#E5E7EB',
-              borderRadius: 20,
-              backgroundColor: isSelected ? '#EFF6FF' : '#F9FAFB',
-              paddingHorizontal: 14, paddingVertical: 7,
-              marginRight: 8,
-            }}>
-              <Text style={{
-                fontSize: 12,
-                color: isSelected ? '#0B5D8A' : '#6B7280',
-                fontWeight: isSelected ? '600' : '400',
-              }}>
+            <Box style={[styles.chip, isSelected ? styles.chipSelected : styles.chipIdle]}>
+              <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : styles.chipTextIdle]}>
                 {label}
               </Text>
             </Box>
@@ -618,12 +794,12 @@ export function AvatarEditorModal({visible, currentAvatarUrl, userName, onConfir
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity activeOpacity={1} onPress={onClose} style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}} />
+      <TouchableOpacity activeOpacity={1} onPress={onClose} style={styles.backdrop} />
 
-      <Box backgroundColor="background" style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%'}}>
+      <Box backgroundColor="background" style={styles.modalSheet}>
         {/* Handle */}
         <Box alignItems="center" paddingTop="s12" paddingBottom="s4">
-          <Box width={40} height={4} backgroundColor="border" style={{borderRadius: 2}} />
+          <Box width={40} height={4} backgroundColor="border" style={styles.handle} />
         </Box>
 
         {/* Header */}
@@ -635,11 +811,11 @@ export function AvatarEditorModal({visible, currentAvatarUrl, userName, onConfir
           </TouchableOpacityBox>
         </Box>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
           {/* ── Preview ── */}
           <Box alignItems="center" paddingVertical="s20">
-            <Box style={{width: 120, height: 120, borderRadius: 60, overflow: 'hidden', borderWidth: 3, borderColor: '#0B5D8A', backgroundColor: '#EFF6FF'}}>
+            <Box style={styles.previewFrame}>
               <SvgXml xml={previewSvg} width={120} height={120} />
             </Box>
             <TouchableOpacityBox mt="s16" flexDirection="row" alignItems="center"
@@ -653,24 +829,39 @@ export function AvatarEditorModal({visible, currentAvatarUrl, userName, onConfir
           {/* ── Style grid ── */}
           <Box paddingHorizontal="s20" mb="s16">
             <SectionLabel>Estilo</SectionLabel>
-            <Box flexDirection="row" flexWrap="wrap" style={{gap: 8}}>
+            <Box flexDirection="row" flexWrap="wrap" style={styles.styleGrid}>
               {STYLES.map(({key, label}) => {
                 const isSelected = selectedStyle === key;
                 return (
-                  <TouchableOpacity key={key} activeOpacity={0.7} onPress={() => handleStyleChange(key)} style={{width: '30%'}}>
-                    <Box borderRadius="s12" overflow="hidden" alignItems="center" paddingVertical="s8"
-                      style={{borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? '#0B5D8A' : '#E5E7EB', backgroundColor: isSelected ? '#EFF6FF' : '#fff'}}>
-                      <Box style={{width: 52, height: 52, borderRadius: 26, overflow: 'hidden', backgroundColor: '#D8E9F5'}}>
-                        <View style={{width: 52, height: 52}}>
+                  <TouchableOpacity
+                    key={key}
+                    activeOpacity={0.7}
+                    onPress={() => handleStyleChange(key)}
+                    style={styles.styleGridItem}>
+                    <Box
+                      alignItems="center"
+                      paddingVertical="s8"
+                      style={[
+                        styles.styleCard,
+                        isSelected ? styles.styleCardSelected : styles.styleCardIdle,
+                      ]}>
+                      <Box style={styles.styleThumbFrame}>
+                        <View style={styles.styleThumbSize}>
                           <SvgXml xml={styleThumbs[key] ?? ''} width={52} height={52} />
                         </View>
                       </Box>
-                      <Text preset="paragraphSmall" bold={isSelected} mt="s4"
-                        style={{color: isSelected ? '#0B5D8A' : '#6B7280', textAlign: 'center', fontSize: 11}}>
+                      <Text
+                        preset="paragraphSmall"
+                        bold={isSelected}
+                        mt="s4"
+                        style={[
+                          styles.styleThumbText,
+                          isSelected ? styles.styleThumbTextSelected : styles.styleThumbTextIdle,
+                        ]}>
                         {label}
                       </Text>
                       {isSelected && (
-                        <Box position="absolute" style={{top: 5, right: 5, backgroundColor: '#0B5D8A', borderRadius: 9, width: 18, height: 18, alignItems: 'center', justifyContent: 'center'}}>
+                        <Box position="absolute" style={styles.styleThumbOverlay}>
                           <Icon name="check" size={11} color="surface" />
                         </Box>
                       )}

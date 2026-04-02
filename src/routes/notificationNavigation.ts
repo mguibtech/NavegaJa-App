@@ -4,6 +4,7 @@ import {navigationRef} from './navigationRef';
 import type {AppStackParamList} from './navigationTypes';
 
 export type NotificationData = Record<string, string>;
+type UserRoleLike = 'passenger' | 'captain' | 'boat_manager' | 'admin' | string | undefined;
 
 type NavigationTarget<RouteName extends keyof AppStackParamList> = {
   name: RouteName;
@@ -14,8 +15,64 @@ type NotificationNavigationTarget = {
   [RouteName in keyof AppStackParamList]: NavigationTarget<RouteName>;
 }[keyof AppStackParamList];
 
+const CAPTAIN_ONLY_ROUTES = new Set<keyof AppStackParamList>([
+  'CaptainMyTrips',
+  'CaptainCreateTrip',
+  'CaptainTripManage',
+  'CaptainMyBoats',
+  'CaptainCreateBoat',
+  'CaptainEditBoat',
+  'CaptainChecklist',
+  'CaptainStartTrip',
+  'CaptainShipmentCollect',
+  'CaptainTripLive',
+  'KycSubmit',
+  'KycStatus',
+  'CaptainAnalytics',
+  'ScanBookingQR',
+  'CaptainBoatStaff',
+]);
+
+const PASSENGER_ONLY_ROUTES = new Set<keyof AppStackParamList>([
+  'WeatherScreen',
+  'SearchResults',
+  'PopularRoutes',
+  'TripDetails',
+  'Favorites',
+  'Booking',
+  'Payment',
+  'Ticket',
+  'Tracking',
+  'CreateShipment',
+  'Shipments',
+  'TripReview',
+  'ValidateDelivery',
+  'ScanShipmentQR',
+  'PersonalContacts',
+]);
+
+function isManagerRole(role: UserRoleLike) {
+  return role === 'captain' || role === 'boat_manager';
+}
+
+function canAccessNotificationRoute(
+  routeName: keyof AppStackParamList,
+  role: UserRoleLike,
+): boolean {
+  if (CAPTAIN_ONLY_ROUTES.has(routeName)) {
+    return isManagerRole(role);
+  }
+
+  if (PASSENGER_ONLY_ROUTES.has(routeName)) {
+    return !isManagerRole(role);
+  }
+
+  return true;
+}
+
 export function resolveNotificationNavigation(
   data: NotificationData,
+  _role?: UserRoleLike,
 ): NotificationNavigationTarget | null {
   const {type, bookingId, tripId, shipmentId, boatId} = data;
 
@@ -97,10 +154,10 @@ export function resolveNotificationNavigation(
       return {name: 'Referrals', params: undefined};
 
     case 'sos_personal_contact':
-      if (data.lat && data.lng) {
+      if (data.lat && data.lng && data.bookingId) {
         return {
           name: 'Tracking',
-          params: {bookingId: data.bookingId ?? ''},
+          params: {bookingId: data.bookingId},
         };
       }
 
@@ -111,13 +168,26 @@ export function resolveNotificationNavigation(
   }
 }
 
-export function navigateFromNotificationData(data: NotificationData) {
+export function navigateFromNotificationData(
+  data: NotificationData,
+  role?: UserRoleLike,
+) {
   if (!navigationRef.isReady()) {
     return;
   }
 
-  const target = resolveNotificationNavigation(data);
+  const target = resolveNotificationNavigation(data, role);
   if (!target) {
+    return;
+  }
+
+  if (!canAccessNotificationRoute(target.name, role)) {
+    navigationRef.dispatch(
+      CommonActions.navigate({
+        name: 'HomeTabs',
+        params: undefined,
+      }),
+    );
     return;
   }
 

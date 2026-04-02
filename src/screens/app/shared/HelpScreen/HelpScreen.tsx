@@ -1,22 +1,38 @@
 import React from 'react';
-import {ScrollView} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 
 import {Box, Text, Icon, TouchableOpacityBox, ScreenHeader} from '@components';
 
 import {useHelpScreen} from './useHelpScreen';
 
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  content: {
+    padding: 24,
+  },
+  tipCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+});
+
 export function HelpScreen() {
-  const {navigation, expandedIndex, toggleFAQ, faqItems, contactOptions} = useHelpScreen();
+  const {navigation, expandedIndex, toggleFAQ, faqItems, contactOptions} =
+    useHelpScreen();
 
   return (
     <Box flex={1} backgroundColor="background">
       <ScreenHeader title="Ajuda e Suporte" onBack={() => navigation.goBack()} />
 
-      {/* Content */}
       <ScrollView
-        contentContainerStyle={{padding: 24}}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        {/* FAQ Section */}
         <Box mb="s24">
           <Text preset="headingMedium" color="text" bold mb="s16">
             Perguntas Frequentes
@@ -30,13 +46,7 @@ export function HelpScreen() {
               padding="s16"
               mb="s12"
               onPress={() => toggleFAQ(index)}
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 1},
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-              }}>
+              style={styles.card}>
               <Box flexDirection="row" alignItems="center" justifyContent="space-between">
                 <Box flex={1} mr="s8">
                   <Text preset="paragraphMedium" color="text" bold>
@@ -61,7 +71,6 @@ export function HelpScreen() {
           ))}
         </Box>
 
-        {/* Contact Section */}
         <Box mb="s24">
           <Text preset="headingMedium" color="text" bold mb="s16">
             Entre em Contato
@@ -77,18 +86,18 @@ export function HelpScreen() {
               padding="s16"
               mb="s12"
               onPress={option.action}
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 1},
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-              }}>
+              style={styles.card}>
               <Box
                 width={48}
                 height={48}
                 borderRadius="s24"
-                backgroundColor={option.color === 'primary' ? 'primaryBg' : option.color === 'success' ? 'successBg' : 'secondaryBg'}
+                backgroundColor={
+                  option.color === 'primary'
+                    ? 'primaryBg'
+                    : option.color === 'success'
+                    ? 'successBg'
+                    : 'secondaryBg'
+                }
                 alignItems="center"
                 justifyContent="center"
                 marginRight="s16">
@@ -109,25 +118,21 @@ export function HelpScreen() {
           ))}
         </Box>
 
-        {/* Quick Tips */}
         <Box
           backgroundColor="infoBg"
           borderRadius="s12"
           padding="s16"
           mb="s24"
-          style={{
-            borderLeftWidth: 4,
-            borderLeftColor: '#2196F3',
-          }}>
+          style={styles.tipCard}>
           <Box flexDirection="row" alignItems="center" mb="s8">
             <Icon name="lightbulb" size={20} color="info" />
             <Text preset="paragraphMedium" color="info" bold ml="s8">
-              Dica Rápida
+              Dica Rapida
             </Text>
           </Box>
           <Text preset="paragraphMedium" color="info">
-            Mantenha suas notificações ativadas para receber atualizações importantes sobre suas
-            viagens e encomendas em tempo real!
+            Mantenha suas notificacoes ativadas para receber atualizacoes
+            importantes sobre suas viagens e encomendas em tempo real!
           </Text>
         </Box>
       </ScrollView>

@@ -1,11 +1,28 @@
 import React, {useEffect, useState} from 'react';
-import {Modal, Platform} from 'react-native';
+import {Modal, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@infra/storage';
 
 import {Box, Button, Text, Icon} from '@components';
 import {useAppPermissions} from '@hooks';
 
 const PERMISSIONS_REQUESTED_KEY = '@navegaja:permissions_requested';
+
+const styles = StyleSheet.create({
+  backdrop: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  warningBox: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFC107',
+  },
+});
 
 export function PermissionsRequest() {
   const [isVisible, setIsVisible] = useState(false);
@@ -76,7 +93,7 @@ export function PermissionsRequest() {
       statusBarTranslucent>
       <Box
         flex={1}
-        style={{backgroundColor: 'rgba(0,0,0,0.8)'}}
+        style={styles.backdrop}
         alignItems="center"
         justifyContent="center"
         padding="s20">
@@ -85,13 +102,7 @@ export function PermissionsRequest() {
           borderRadius="s16"
           padding="s24"
           maxWidth={400}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 8,
-          }}>
+          style={styles.card}>
           {/* Header */}
           <Box alignItems="center" mb="s24">
             <Box
@@ -169,10 +180,7 @@ export function PermissionsRequest() {
             borderRadius="s12"
             padding="s12"
             mb="s24"
-            style={{
-              borderLeftWidth: 4,
-              borderLeftColor: '#FFC107',
-            }}>
+            style={styles.warningBox}>
             <Text preset="paragraphSmall" color="warning" bold mb="s4">
               💡 Você pode alterar depois
             </Text>

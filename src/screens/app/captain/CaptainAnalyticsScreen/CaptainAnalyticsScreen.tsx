@@ -17,6 +17,12 @@ const PERIOD_OPTIONS: {label: string; value: AnalyticsPeriod}[] = [
 ];
 
 const styles = StyleSheet.create({
+  header: {
+    paddingTop: 16,
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+  },
   chartConfig: {
     borderRadius: 12,
   },
@@ -32,6 +38,9 @@ const styles = StyleSheet.create({
   },
   lightElevation: {
     elevation: 1,
+  },
+  sectionCard: {
+    elevation: 2,
   },
 });
 
@@ -70,6 +79,7 @@ export function CaptainAnalyticsScreen() {
   const navigation = useNavigation();
   const {summary, revenue, routes, passengers, isLoading, period, setPeriod} =
     useCaptainAnalytics();
+  const headerStyle = [styles.header, {paddingTop: top + 16}];
 
   const chartLabels = revenue.map(d => {
     const date = new Date(d.date);
@@ -86,17 +96,20 @@ export function CaptainAnalyticsScreen() {
         backgroundColor="secondary"
         flexDirection="row"
         gap="s12"
-        paddingTop={top + 16}>
+        style={headerStyle}>
         <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
-          <Icon name="arrow-back" size={24} color={'#FFFFFF' as any} />
+          <Icon name="arrow-back" size={24} color="surface" />
         </TouchableOpacityBox>
         <Box>
-        <Text preset="headingMedium" bold color="#FFFFFF">
+          <Text preset="headingMedium" bold color="surface">
           Analytics
-        </Text>
-        <Text preset="paragraphSmall" color="rgba(255,255,255,0.8)" mt="s4">
+          </Text>
+          <Text
+            preset="paragraphSmall"
+            mt="s4"
+            style={styles.headerSubtitle}>
           Desempenho das suas operações
-        </Text>
+          </Text>
         </Box>
       </Box>
 
@@ -141,7 +154,13 @@ export function CaptainAnalyticsScreen() {
           )}
 
           {/* Period selector */}
-          <Box flexDirection="row" backgroundColor="surface" borderRadius="s12" padding="s4" mb="s16" style={styles.lightElevation}>
+          <Box
+            flexDirection="row"
+            backgroundColor="surface"
+            borderRadius="s12"
+            padding="s4"
+            mb="s16"
+            style={styles.lightElevation}>
             {PERIOD_OPTIONS.map(opt => (
               <TouchableOpacityBox
                 key={opt.value}
@@ -171,7 +190,7 @@ export function CaptainAnalyticsScreen() {
                 backgroundColor="surface"
                 borderRadius="s12"
                 overflow="hidden"
-                style={styles.elevated}>
+                style={styles.sectionCard}>
                 <LineChart
                   data={{
                     labels: chartLabels.length > 7 ? chartLabels.filter((_, i) => i % Math.ceil(chartLabels.length / 7) === 0) : chartLabels,
@@ -204,7 +223,11 @@ export function CaptainAnalyticsScreen() {
               <Text preset="paragraphMedium" color="text" bold mb="s12">
                 Rotas mais lucrativas
               </Text>
-              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={styles.elevated}>
+              <Box
+                backgroundColor="surface"
+                borderRadius="s12"
+                overflow="hidden"
+                style={styles.sectionCard}>
                 {routes.slice(0, 5).map((route, idx) => (
                   <Box
                     key={idx}
@@ -248,7 +271,11 @@ export function CaptainAnalyticsScreen() {
               <Text preset="paragraphMedium" color="text" bold mb="s12">
                 Passageiros fiéis
               </Text>
-              <Box backgroundColor="surface" borderRadius="s12" overflow="hidden" style={styles.elevated}>
+              <Box
+                backgroundColor="surface"
+                borderRadius="s12"
+                overflow="hidden"
+                style={styles.sectionCard}>
                 {passengers.slice(0, 5).map((p, idx) => (
                   <Box
                     key={p.userId}

@@ -34,8 +34,7 @@ export function useScanBookingQRScreen() {
   const device = useCameraDevice('back');
 
   useEffect(() => {
-    checkCameraPermission();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    checkCameraPermission().catch(() => undefined);
   }, []);
 
   async function checkCameraPermission() {
@@ -106,7 +105,7 @@ export function useScanBookingQRScreen() {
       await checkIn(scannedBookingId);
       toast.showSuccess('Check-in realizado com sucesso!');
       navigation.goBack();
-    } catch (err: any) {
+    } catch (err) {
       if (isOfflineQueuedError(err)) {
         toast.showInfo(err.message);
         navigation.goBack();
@@ -117,7 +116,11 @@ export function useScanBookingQRScreen() {
       if (matchedPassenger) {
         setShowAlreadyCheckedIn(true);
       } else {
-        setErrorMessage(err?.message || 'Não foi possível realizar o check-in');
+        setErrorMessage(
+          err instanceof Error
+            ? err.message
+            : 'Não foi possível realizar o check-in',
+        );
         setShowErrorModal(true);
       }
       setIsScanning(true);

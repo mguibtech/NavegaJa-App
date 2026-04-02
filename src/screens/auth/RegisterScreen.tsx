@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidingView, Platform, Modal, FlatList, ActivityIndicator} from 'react-native';
+import {Keyboard, ScrollView, TouchableWithoutFeedback, Linking, KeyboardAvoidingView, Platform, Modal, FlatList, ActivityIndicator, StyleSheet} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -15,6 +15,51 @@ import {logSignUp} from '@services';
 import {AuthStackParamList} from '@routes';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+
+const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  backButtonShadow: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cityPickerTrigger: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  modalBackdrop: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    maxHeight: '60%',
+  },
+});
+
+function getGenderOptionStyle(
+  selected: boolean,
+  colors: Theme['colors'],
+) {
+  return {
+    backgroundColor: selected ? colors.primaryBg : colors.surface,
+    borderColor: selected ? colors.primary : colors.border,
+  };
+}
+
+function getGenderLabelStyle(selected: boolean, colors: Theme['colors']) {
+  return {
+    color: selected ? colors.primary : colors.textSecondary,
+  };
+}
 
 function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -111,9 +156,9 @@ export function RegisterScreen({navigation}: Props) {
         toast.showSuccess(`Bem-vindo, ${currentUser.name}!`);
       }
       logSignUp('phone');
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       const msg =
-        _error?.message ||
+        _error instanceof Error ? _error.message :
         'Erro ao criar conta. Tente novamente.';
       toast.showError(msg);
     }
@@ -132,11 +177,11 @@ export function RegisterScreen({navigation}: Props) {
   return (
     <>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
-          contentContainerStyle={{flexGrow: 1}}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <Box
@@ -157,13 +202,7 @@ export function RegisterScreen({navigation}: Props) {
               mb="s24"
               accessibilityLabel="Voltar"
               accessibilityRole="button"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-              }}>
+              style={styles.backButtonShadow}>
               <Icon name="arrow-back" size={24} color="text" />
             </TouchableOpacityBox>
 
@@ -264,13 +303,7 @@ export function RegisterScreen({navigation}: Props) {
                   alignItems="center"
                   accessibilityLabel={city ? `Cidade selecionada: ${city}. Toque para alterar` : 'Selecione sua cidade'}
                   accessibilityRole="combobox"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 1},
-                    shadowOpacity: 0.04,
-                    shadowRadius: 2,
-                    elevation: 1,
-                  }}>
+                  style={styles.cityPickerTrigger}>
                   <Icon name="location-city" size={20} color="textSecondary" />
                   <Text
                     preset="paragraphMedium"
@@ -304,15 +337,12 @@ export function RegisterScreen({navigation}: Props) {
                         borderWidth={1}
                         alignItems="center"
                         onPress={() => setGender(selected ? null : opt.value)}
-                        style={{
-                          backgroundColor: selected ? colors.primaryBg : colors.surface,
-                          borderColor: selected ? colors.primary : colors.border,
-                        }}>
+                        style={getGenderOptionStyle(selected, colors)}>
                         <Icon name={opt.icon} size={20} color={selected ? 'primary' : 'textSecondary'} />
                         <Text
                           preset="paragraphCaptionSmall"
                           mt="s4"
-                          style={{color: selected ? colors.primary : colors.textSecondary}}>
+                          style={getGenderLabelStyle(selected, colors)}>
                           {opt.label}
                         </Text>
                       </TouchableOpacityBox>
@@ -417,7 +447,7 @@ export function RegisterScreen({navigation}: Props) {
         onRequestClose={() => setShowCityPicker(false)}>
         <TouchableOpacityBox
           flex={1}
-          style={{backgroundColor: 'rgba(0,0,0,0.4)'}}
+          style={styles.modalBackdrop}
           onPress={() => setShowCityPicker(false)}
         />
         <Box
@@ -425,7 +455,7 @@ export function RegisterScreen({navigation}: Props) {
           borderTopLeftRadius="s20"
           borderTopRightRadius="s20"
           paddingTop="s16"
-          style={{maxHeight: '60%'}}>
+          style={styles.modalSheet}>
           <Box
             flexDirection="row"
             alignItems="center"

@@ -1,11 +1,16 @@
 import React from 'react';
-import {FlatList, RefreshControl, ListRenderItem, FlatListProps} from 'react-native';
+import {
+  FlatList,
+  RefreshControl,
+  ListRenderItem,
+  FlatListProps,
+  StyleSheet,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {Box} from '../Box/Box';
+import {Box, TouchableOpacityBox} from '../Box/Box';
 import {Text} from '../Text/Text';
 import {Icon} from '../Icon/Icon';
-import {TouchableOpacityBox} from '../Box/Box';
 
 interface Tab {
   id: string;
@@ -17,7 +22,7 @@ interface ScreenListProps<T> extends Partial<FlatListProps<T>> {
   data: T[];
   renderItem: ListRenderItem<T>;
   isLoading?: boolean;
-  error?: any;
+  error?: unknown;
   onRefresh?: () => void;
   refreshing?: boolean;
   emptyIcon?: string;
@@ -41,7 +46,7 @@ export function ScreenList<T>({
   refreshing = false,
   emptyIcon = 'search_off',
   emptyTitle = 'Nenhum item encontrado',
-  emptyDescription = 'Tente ajustar seus filtros ou recarregar a página.',
+  emptyDescription = 'Tente ajustar seus filtros ou recarregar a pagina.',
   SkeletonComponent,
   tabs,
   selectedTab,
@@ -51,23 +56,24 @@ export function ScreenList<T>({
   ...flatListProps
 }: ScreenListProps<T>) {
   const {top} = useSafeAreaInsets();
+  const headerStyle = [styles.header, {paddingTop: top + 16}];
+  const errorMessage =
+    typeof error === 'string'
+      ? error
+      : 'Erro de conexao. Exibindo dados em cache.';
 
   return (
     <Box flex={1} backgroundColor="background">
-      {/* Header */}
       <Box
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="surface"
-        style={{
-          paddingTop: top + 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
-        <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb={tabs ? "s16" : "s0"}>
+        style={headerStyle}>
+        <Box
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="space-between"
+          mb={tabs ? 's16' : undefined}>
           <Text preset="headingMedium" color="text" bold>
             {title}
           </Text>
@@ -76,7 +82,7 @@ export function ScreenList<T>({
 
         {tabs && (
           <Box flexDirection="row" gap="s12">
-            {tabs.map((tab) => (
+            {tabs.map(tab => (
               <TouchableOpacityBox
                 key={tab.id}
                 flex={1}
@@ -97,20 +103,22 @@ export function ScreenList<T>({
         )}
       </Box>
 
-      {error && (
+      {Boolean(error) && (
         <Box
           flexDirection="row"
           alignItems="center"
           paddingHorizontal="s16"
           paddingVertical="s12"
-          style={{backgroundColor: '#FEF3C7', borderBottomWidth: 1, borderBottomColor: '#FDE68A'}}>
+          style={styles.errorBanner}>
           <Icon name="wifi-off" size={16} color="warning" />
           <Text preset="paragraphSmall" color="text" ml="s8" flex={1}>
-            {typeof error === 'string' ? error : 'Erro de conexão. Exibindo dados em cache.'}
+            {errorMessage}
           </Text>
           {onRefresh && (
             <TouchableOpacityBox onPress={onRefresh} pl="s12">
-              <Text preset="paragraphSmall" color="primary" bold>Tentar</Text>
+              <Text preset="paragraphSmall" color="primary" bold>
+                Tentar
+              </Text>
             </TouchableOpacityBox>
           )}
         </Box>
@@ -120,7 +128,10 @@ export function ScreenList<T>({
         data={isLoading && data.length === 0 ? [] : data}
         renderItem={renderItem}
         keyExtractor={flatListProps.keyExtractor || ((item: any) => item.id)}
-        contentContainerStyle={[{padding: 24, paddingBottom: 100}, flatListProps.contentContainerStyle]}
+        contentContainerStyle={[
+          styles.listContent,
+          flatListProps.contentContainerStyle,
+        ]}
         refreshControl={
           onRefresh ? (
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -136,16 +147,26 @@ export function ScreenList<T>({
                   <SkeletonComponent />
                 </>
               ) : (
-                <Text textAlign="center" mt="s24">Carregando...</Text>
+                <Text textAlign="center" mt="s24">
+                  Carregando...
+                </Text>
               )}
             </Box>
           ) : (
             <Box alignItems="center" paddingVertical="s48">
               <Icon name={emptyIcon} size={64} color="border" />
-              <Text preset="headingSmall" color="textSecondary" mt="s16" textAlign="center">
+              <Text
+                preset="headingSmall"
+                color="textSecondary"
+                mt="s16"
+                textAlign="center">
                 {emptyTitle}
               </Text>
-              <Text preset="paragraphMedium" color="textSecondary" mt="s8" textAlign="center">
+              <Text
+                preset="paragraphMedium"
+                color="textSecondary"
+                mt="s8"
+                textAlign="center">
                 {emptyDescription}
               </Text>
             </Box>
@@ -157,3 +178,22 @@ export function ScreenList<T>({
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  errorBanner: {
+    backgroundColor: '#FEF3C7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
+  },
+  listContent: {
+    padding: 24,
+    paddingBottom: 100,
+  },
+});

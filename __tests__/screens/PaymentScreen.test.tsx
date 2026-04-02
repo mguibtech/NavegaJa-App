@@ -48,7 +48,6 @@ jest.mock('../../src/hooks', () => ({
 }));
 
 jest.mock('@components/InfoModal/InfoModal', () => {
-  const React = require('react');
   const {View, Text} = require('react-native');
 
   const InfoModal = ({visible, title, message, buttonText, onClose}: any) => {

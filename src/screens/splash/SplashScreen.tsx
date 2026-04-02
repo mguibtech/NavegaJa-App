@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Dimensions} from 'react-native';
+import {Dimensions, StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -16,6 +16,12 @@ interface SplashScreenProps {
 
 const {width} = Dimensions.get('window');
 const logoSize = Math.min(width * 0.8, 300);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export function SplashScreen({onFinish}: SplashScreenProps) {
   const opacity = useSharedValue(1);
@@ -43,7 +49,7 @@ export function SplashScreen({onFinish}: SplashScreenProps) {
   }));
 
   return (
-    <Animated.View style={[{flex: 1}, animatedStyle]}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <Box
         flex={1}
         backgroundColor="primary"

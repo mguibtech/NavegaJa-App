@@ -1,5 +1,6 @@
 import {Box, Icon, Text} from '@components';
 import React from 'react';
+import {StyleSheet} from 'react-native';
 import {PriceBreakdown as PriceBreakdownType} from '@domain';
 import {formatBRL} from '@utils';
 
@@ -7,19 +8,23 @@ export interface PriceBreakdownProps {
   data: PriceBreakdownType;
 }
 
+const styles = StyleSheet.create({
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+});
+
 export function PriceBreakdown({data}: PriceBreakdownProps) {
   return (
     <Box
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
+      style={styles.card}>
       <Text preset="paragraphMedium" color="text" bold mb="s16">
         {'Detalhes do Pagamento'}
       </Text>

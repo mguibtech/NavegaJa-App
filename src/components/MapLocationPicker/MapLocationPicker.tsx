@@ -1,5 +1,5 @@
 import React, {useState, useRef} from 'react';
-import {Modal, ActivityIndicator, Platform} from 'react-native';
+import {Modal, ActivityIndicator, Platform, StyleSheet} from 'react-native';
 import MapView, {Marker, MapPressEvent, Region} from 'react-native-maps';
 
 import {Box, Button, Icon, Text, TouchableOpacityBox} from '@components';
@@ -20,6 +20,22 @@ const MANAUS_REGION: Region = {
   latitudeDelta: 8,
   longitudeDelta: 8,
 };
+
+const styles = StyleSheet.create({
+  header: {
+    elevation: 3,
+  },
+  map: {
+    flex: 1,
+  },
+  hintOverlay: {
+    top: 16,
+    elevation: 4,
+  },
+  bottomPanel: {
+    elevation: 8,
+  },
+});
 
 export function MapLocationPicker({
   visible,
@@ -78,7 +94,7 @@ export function MapLocationPicker({
           backgroundColor="surface"
           flexDirection="row"
           alignItems="center"
-          style={{elevation: 3}}>
+          style={styles.header}>
           <TouchableOpacityBox onPress={onClose} mr="s12">
             <Icon name="close" size={24} color="text" />
           </TouchableOpacityBox>
@@ -91,7 +107,7 @@ export function MapLocationPicker({
         <Box flex={1}>
           <MapView
             ref={mapRef}
-            style={{flex: 1}}
+            style={styles.map}
             initialRegion={initialRegion}
             onPress={handleMapPress}
             showsUserLocation
@@ -116,7 +132,7 @@ export function MapLocationPicker({
             borderRadius="s12"
             paddingHorizontal="s16"
             paddingVertical="s8"
-            style={{top: 16, elevation: 4}}
+            style={styles.hintOverlay}
             flexDirection="row"
             alignItems="center">
             <Icon name="touch-app" size={16} color="textSecondary" />
@@ -130,7 +146,7 @@ export function MapLocationPicker({
         <Box
           backgroundColor="surface"
           padding="s16"
-          style={{elevation: 8}}>
+          style={styles.bottomPanel}>
           {pin ? (
             <>
               <Box flexDirection="row" alignItems="flex-start" mb="s12">

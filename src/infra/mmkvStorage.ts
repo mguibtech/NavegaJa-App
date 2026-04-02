@@ -1,8 +1,8 @@
-import {MMKV} from 'react-native-mmkv';
+import {createMMKV} from 'react-native-mmkv';
 
 const STORAGE_ID = 'navegaja-storage';
 
-export const mmkvStorage = new MMKV({
+export const mmkvStorage = createMMKV({
   id: STORAGE_ID,
 });
 
@@ -12,7 +12,7 @@ export const mmkvSyncStorage = {
     mmkvStorage.set(key, value);
   },
   removeItem: (key: string): void => {
-    mmkvStorage.delete(key);
+    mmkvStorage.remove(key);
   },
 };
 
@@ -23,12 +23,12 @@ export const mmkvAsyncStorage = {
     mmkvStorage.set(key, value);
   },
   removeItem: async (key: string): Promise<void> => {
-    mmkvStorage.delete(key);
+    mmkvStorage.remove(key);
   },
   getAllKeys: async (): Promise<string[]> => mmkvStorage.getAllKeys(),
   multiRemove: async (keys: string[]): Promise<void> => {
     keys.forEach(key => {
-      mmkvStorage.delete(key);
+      mmkvStorage.remove(key);
     });
   },
 };

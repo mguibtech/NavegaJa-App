@@ -8,6 +8,10 @@ import {Box, Text, Icon, TouchableOpacityBox, ConfirmationModal, InfoModal} from
 
 import {useScanBookingQRScreen} from './useScanBookingQRScreen';
 
+function getHeaderStyle(top: number) {
+  return [styles.header, {paddingTop: top + 12}];
+}
+
 export function ScanBookingQRScreen() {
   const {top} = useSafeAreaInsets();
   const {
@@ -34,16 +38,6 @@ export function ScanBookingQRScreen() {
     showAlreadyCheckedIn,
   } = useScanBookingQRScreen();
 
-  const headerStyle = {
-    paddingTop: top + 12,
-    paddingBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  };
-
   if (!device || !hasPermission) {
     return (
       <>
@@ -53,7 +47,7 @@ export function ScanBookingQRScreen() {
             paddingHorizontal="s20"
             flexDirection="row"
             alignItems="center"
-            style={headerStyle}>
+            style={getHeaderStyle(top)}>
             <TouchableOpacityBox onPress={handleGoBack} padding="s8" mr="s4">
               <Icon name="arrow-back" size={24} color="text" />
             </TouchableOpacityBox>
@@ -94,14 +88,7 @@ export function ScanBookingQRScreen() {
           paddingHorizontal="s20"
           flexDirection="row"
           alignItems="center"
-          style={{
-            ...headerStyle,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-          }}>
+          style={[getHeaderStyle(top), styles.floatingHeader]}>
           <TouchableOpacityBox onPress={handleGoBack} padding="s8" mr="s4">
             <Icon name="arrow-back" size={24} color="text" />
           </TouchableOpacityBox>
@@ -121,9 +108,9 @@ export function ScanBookingQRScreen() {
         {/* Overlay com moldura */}
         {isScanning && (
           <Box style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Box flex={1} style={{backgroundColor: 'rgba(0,0,0,0.5)'}} />
+            <Box flex={1} style={styles.overlayShade} />
             <Box flexDirection="row">
-              <Box flex={1} style={{backgroundColor: 'rgba(0,0,0,0.5)'}} />
+              <Box flex={1} style={styles.overlayShade} />
               <Box
                 width={250}
                 height={250}
@@ -131,17 +118,17 @@ export function ScanBookingQRScreen() {
                 borderColor="primary"
                 borderRadius="s16"
               />
-              <Box flex={1} style={{backgroundColor: 'rgba(0,0,0,0.5)'}} />
+              <Box flex={1} style={styles.overlayShade} />
             </Box>
             <Box
               flex={1}
-              style={{backgroundColor: 'rgba(0,0,0,0.5)'}}
+              style={styles.overlayShade}
               alignItems="center"
               pt="s24">
-              <Text preset="paragraphMedium" bold style={{color: '#FFFFFF'}}>
+              <Text preset="paragraphMedium" bold color="surface">
                 Aponte para o QR Code do passageiro
               </Text>
-              <Text preset="paragraphCaptionSmall" style={{color: 'rgba(255,255,255,0.7)'}} mt="s8">
+              <Text preset="paragraphCaptionSmall" style={styles.overlaySubtitle} mt="s8">
                 Ticket de embarque do app NavegaJá
               </Text>
             </Box>
@@ -151,7 +138,7 @@ export function ScanBookingQRScreen() {
         {/* Loading overlay */}
         {isLoading && (
           <Box
-            style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(0,0,0,0.7)'}]}
+            style={[StyleSheet.absoluteFill, styles.loadingOverlay]}
             alignItems="center"
             justifyContent="center">
             <Box alignItems="center">
@@ -165,7 +152,7 @@ export function ScanBookingQRScreen() {
                 mb="s16">
                 <Icon name="how-to-reg" size={32} color="primary" />
               </Box>
-              <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+              <Text preset="headingMedium" bold color="surface">
                 Realizando check-in...
               </Text>
             </Box>
@@ -183,15 +170,7 @@ export function ScanBookingQRScreen() {
           backgroundColor="surface"
           borderRadius="s24"
           padding="s20"
-          style={{
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: -4},
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
-            elevation: 10,
-          }}>
+          style={styles.confirmPanel}>
           {/* Drag handle */}
           <Box
             width={40}
@@ -293,3 +272,39 @@ export function ScanBookingQRScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  overlayShade: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  overlaySubtitle: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  loadingOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  confirmPanel: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+});

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {FlatList, RefreshControl, StyleSheet} from 'react-native';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
@@ -8,6 +8,19 @@ import {usePopularRoutes, PopularRoute} from '@domain';
 
 import {AppStackParamList} from '@routes';
 import {formatBRL} from '@utils';
+
+const styles = StyleSheet.create({
+  routeCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  listContent: {
+    padding: 24,
+  },
+});
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PopularRoutes'>;
 
@@ -46,13 +59,7 @@ export function PopularRoutesScreen({navigation}: Props) {
         borderRadius="s16"
         padding="s20"
         onPress={() => handleRoutePress(item)}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.routeCard}>
         {/* Header with Route */}
         <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s16">
           <Box flex={1} flexDirection="row" alignItems="center">
@@ -142,7 +149,7 @@ export function PopularRoutesScreen({navigation}: Props) {
         data={data?.routes || []}
         keyExtractor={(item, index) => `${item.origin}-${item.destination}-${index}`}
         renderItem={renderRoute}
-        contentContainerStyle={{padding: 24}}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
         }

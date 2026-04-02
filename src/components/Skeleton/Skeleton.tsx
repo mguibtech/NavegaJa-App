@@ -1,34 +1,44 @@
 import React, {useEffect, useRef} from 'react';
-import {Animated} from 'react-native';
+import {Animated, StyleSheet} from 'react-native';
 
 import {Box} from '../Box/Box';
 
 export interface SkeletonProps {
-  /**
-   * Largura do skeleton
-   */
   width?: number | `${number}%`;
-
-  /**
-   * Altura do skeleton
-   */
   height?: number;
-
-  /**
-   * Raio da borda
-   */
   borderRadius?: number;
-
-  /**
-   * Se deve animar (padrão: true)
-   */
   animate?: boolean;
-
-  /**
-   * Margin bottom
-   */
   mb?: string;
 }
+
+const styles = StyleSheet.create({
+  badgeCircle: {
+    backgroundColor: '#E5E7EB',
+  },
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  forecastCard: {
+    width: 110,
+    elevation: 2,
+  },
+  line: {
+    backgroundColor: '#E5E7EB',
+  },
+  loadingBlock: {
+    opacity: 0.5,
+  },
+  riverBar: {
+    borderRadius: 4,
+  },
+  smallCard: {
+    elevation: 2,
+  },
+});
 
 export function Skeleton({
   width = '100%',
@@ -58,24 +68,20 @@ export function Skeleton({
     }
   }, [animate, opacity]);
 
+  const skeletonStyle = {
+    opacity,
+    width,
+    height,
+    borderRadius,
+  };
+
   return (
     <Box mb={mb as any}>
-      <Animated.View
-        style={{
-          opacity,
-          width,
-          height,
-          borderRadius,
-          backgroundColor: '#E5E7EB',
-        }}
-      />
+      <Animated.View style={[styles.line, skeletonStyle]} />
     </Box>
   );
 }
 
-/**
- * Skeleton para card de viagem
- */
 export function TripCardSkeleton() {
   return (
     <Box
@@ -83,17 +89,9 @@ export function TripCardSkeleton() {
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
-      {/* Date Badge */}
+      style={styles.card}>
       <Skeleton width={80} height={28} borderRadius={8} mb="s12" />
 
-      {/* Time & Duration */}
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Box flex={1}>
           <Skeleton width={60} height={14} borderRadius={6} mb="s4" />
@@ -111,13 +109,12 @@ export function TripCardSkeleton() {
         </Box>
       </Box>
 
-      {/* Boat & Captain */}
       <Box
         flexDirection="row"
         alignItems="center"
         mb="s12"
-        paddingVertical="s12"
-        paddingHorizontal="s16"
+        py="s12"
+        px="s16"
         backgroundColor="background"
         borderRadius="s12">
         <Skeleton width={20} height={20} borderRadius={10} />
@@ -128,11 +125,7 @@ export function TripCardSkeleton() {
         <Skeleton width={100} height={14} borderRadius={6} />
       </Box>
 
-      {/* Price & Seats */}
-      <Box
-        flexDirection="row"
-        alignItems="center"
-        justifyContent="space-between">
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between">
         <Box flex={1}>
           <Skeleton width={120} height={28} borderRadius={8} />
         </Box>
@@ -142,9 +135,6 @@ export function TripCardSkeleton() {
   );
 }
 
-/**
- * Skeleton para card de reserva
- */
 export function BookingCardSkeleton() {
   return (
     <Box
@@ -152,39 +142,36 @@ export function BookingCardSkeleton() {
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
-      {/* ID + Badge */}
+      style={styles.card}>
       <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s16">
         <Skeleton width={80} height={14} borderRadius={6} />
         <Skeleton width={90} height={24} borderRadius={8} />
       </Box>
 
-      {/* Origem → Destino */}
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Box flex={1}>
           <Skeleton width={48} height={12} borderRadius={4} mb="s4" />
           <Skeleton width="80%" height={18} borderRadius={6} />
         </Box>
-        <Box width={40} height={40} borderRadius="s20" style={{backgroundColor: '#E5E7EB'}} mx="s12" />
+        <Box
+          width={40}
+          height={40}
+          borderRadius="s20"
+          mx="s12"
+          style={styles.badgeCircle}
+        />
         <Box flex={1}>
           <Skeleton width={48} height={12} borderRadius={4} mb="s4" />
           <Skeleton width="80%" height={18} borderRadius={6} />
         </Box>
       </Box>
 
-      {/* Data */}
       <Box
         flexDirection="row"
         alignItems="center"
         mb="s12"
-        paddingVertical="s12"
-        paddingHorizontal="s16"
+        py="s12"
+        px="s16"
         backgroundColor="background"
         borderRadius="s12">
         <Skeleton width={20} height={20} borderRadius={10} />
@@ -193,14 +180,12 @@ export function BookingCardSkeleton() {
         </Box>
       </Box>
 
-      {/* Barco */}
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Skeleton width={18} height={18} borderRadius={9} />
         <Skeleton width="50%" height={14} borderRadius={6} />
       </Box>
 
-      {/* Preço + Passagens */}
-      <Box flexDirection="row" alignItems="center" justifyContent="space-between" paddingTop="s16">
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" pt="s16">
         <Box>
           <Skeleton width={60} height={12} borderRadius={4} mb="s4" />
           <Skeleton width={100} height={22} borderRadius={6} />
@@ -211,9 +196,6 @@ export function BookingCardSkeleton() {
   );
 }
 
-/**
- * Skeleton para card de encomenda
- */
 export function ShipmentCardSkeleton() {
   return (
     <Box
@@ -222,20 +204,12 @@ export function ShipmentCardSkeleton() {
       borderRadius="s16"
       padding="s16"
       mx="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
-      {/* Código + Status */}
+      style={styles.card}>
       <Box flexDirection="row" alignItems="center" justifyContent="space-between" mb="s12">
         <Skeleton width={120} height={16} borderRadius={6} />
         <Skeleton width={80} height={24} borderRadius={8} />
       </Box>
 
-      {/* Remetente / Destinatário */}
       <Box flexDirection="row" mb="s12">
         <Box flex={1}>
           <Skeleton width={56} height={12} borderRadius={4} mb="s4" />
@@ -250,7 +224,6 @@ export function ShipmentCardSkeleton() {
         </Box>
       </Box>
 
-      {/* Info extra */}
       <Box flexDirection="row" gap="s16">
         <Skeleton width={90} height={14} borderRadius={6} />
         <Skeleton width={80} height={14} borderRadius={6} />
@@ -259,65 +232,40 @@ export function ShipmentCardSkeleton() {
   );
 }
 
-/**
- * Skeleton para detalhes da encomenda
- */
 export function ShipmentDetailsSkeleton() {
   return (
     <Box padding="s20">
-      {/* Status badge */}
       <Skeleton width={140} height={40} borderRadius={12} mb="s20" />
 
-      {/* QR card */}
       <Box
         backgroundColor="surface"
         borderRadius="s16"
         padding="s24"
         mb="s16"
         alignItems="center"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.card}>
         <Skeleton width={180} height={180} borderRadius={16} mb="s16" />
         <Skeleton width={160} height={14} borderRadius={6} mb="s6" />
         <Skeleton width={120} height={20} borderRadius={8} />
       </Box>
 
-      {/* Recipient card */}
       <Box
         backgroundColor="surface"
         borderRadius="s16"
         padding="s20"
         mb="s16"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.card}>
         <Skeleton width={130} height={18} borderRadius={6} mb="s16" />
         <Skeleton width="100%" height={16} borderRadius={6} mb="s10" />
         <Skeleton width="70%" height={16} borderRadius={6} mb="s10" />
         <Skeleton width="90%" height={16} borderRadius={6} />
       </Box>
 
-      {/* Details card */}
       <Box
         backgroundColor="surface"
         borderRadius="s16"
         padding="s20"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.card}>
         <Skeleton width={90} height={18} borderRadius={6} mb="s16" />
         <Skeleton width="100%" height={14} borderRadius={6} mb="s8" />
         <Skeleton width="85%" height={14} borderRadius={6} mb="s8" />
@@ -329,23 +277,13 @@ export function ShipmentDetailsSkeleton() {
   );
 }
 
-/**
- * Skeleton para o WeatherWidget (clima atual)
- */
 export function WeatherWidgetSkeleton() {
   return (
     <Box
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}>
-      {/* Header: label + badge */}
+      style={styles.card}>
       <Box flexDirection="row" justifyContent="space-between" mb="s16">
         <Box>
           <Skeleton width={70} height={12} borderRadius={4} mb="s6" />
@@ -354,7 +292,6 @@ export function WeatherWidgetSkeleton() {
         <Skeleton width={64} height={28} borderRadius={8} />
       </Box>
 
-      {/* Main info: ícone + temp + condição */}
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Skeleton width={56} height={56} borderRadius={12} />
         <Box ml="s16" flex={1}>
@@ -364,11 +301,10 @@ export function WeatherWidgetSkeleton() {
         </Box>
       </Box>
 
-      {/* Details grid: umidade / vento / nuvens */}
       <Box
         flexDirection="row"
         justifyContent="space-between"
-        paddingTop="s12"
+        pt="s12"
         borderTopWidth={1}
         borderTopColor="border">
         <Skeleton width={52} height={16} borderRadius={6} />
@@ -376,13 +312,7 @@ export function WeatherWidgetSkeleton() {
         <Skeleton width={40} height={16} borderRadius={6} />
       </Box>
 
-      {/* Pressão + visibilidade + descrição */}
-      <Box
-        flexDirection="row"
-        paddingTop="s12"
-        mt="s8"
-        borderTopWidth={1}
-        borderTopColor="border">
+      <Box flexDirection="row" pt="s12" mt="s8" borderTopWidth={1} borderTopColor="border">
         <Box flex={1}>
           <Skeleton width={64} height={13} borderRadius={4} />
         </Box>
@@ -394,11 +324,10 @@ export function WeatherWidgetSkeleton() {
         </Box>
       </Box>
 
-      {/* Sunrise / Sunset / UV */}
       <Box
         flexDirection="row"
         justifyContent="space-around"
-        paddingTop="s12"
+        pt="s12"
         mt="s8"
         borderTopWidth={1}
         borderTopColor="border">
@@ -410,9 +339,6 @@ export function WeatherWidgetSkeleton() {
   );
 }
 
-/**
- * Skeleton para um card de previsão do tempo (horizontal scroll)
- */
 export function ForecastCardSkeleton() {
   return (
     <Box
@@ -420,7 +346,7 @@ export function ForecastCardSkeleton() {
       borderRadius="s16"
       padding="s16"
       mr="s12"
-      style={{width: 110, elevation: 2}}>
+      style={styles.forecastCard}>
       <Skeleton width={56} height={12} borderRadius={4} mb="s8" />
       <Skeleton width={40} height={40} borderRadius={8} mb="s8" />
       <Skeleton width={48} height={18} borderRadius={6} mb="s4" />
@@ -431,17 +357,13 @@ export function ForecastCardSkeleton() {
   );
 }
 
-/**
- * Skeleton para a listagem de nível dos rios
- */
 export function RiverLevelsSkeleton({count = 3}: {count?: number}) {
   return (
     <Box
       backgroundColor="surface"
       borderRadius="s16"
       padding="s20"
-      style={{elevation: 3}}>
-      {/* Header */}
+      style={styles.card}>
       <Box flexDirection="row" alignItems="center" mb="s16">
         <Skeleton width={20} height={20} borderRadius={10} />
         <Box flex={1} ml="s8">
@@ -450,23 +372,31 @@ export function RiverLevelsSkeleton({count = 3}: {count?: number}) {
         <Skeleton width={60} height={12} borderRadius={4} />
       </Box>
 
-      {Array.from({length: count}).map((_, i) => (
-        <Box key={i}>
-          {i > 0 && <Box height={1} backgroundColor="border" my="s12" />}
-          <Box
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="space-between">
+      {Array.from({length: count}).map((_, index) => (
+        <Box key={index}>
+          {index > 0 && <Box height={1} backgroundColor="border" my="s12" />}
+          <Box flexDirection="row" alignItems="center" justifyContent="space-between">
             <Box flex={1} mr="s12">
               <Skeleton width="70%" height={16} borderRadius={6} mb="s6" />
               <Skeleton width="50%" height={13} borderRadius={4} />
             </Box>
-            <Box mr="s8"><Skeleton width={40} height={13} borderRadius={4} /></Box>
+            <Box mr="s8">
+              <Skeleton width={40} height={13} borderRadius={4} />
+            </Box>
             <Skeleton width={64} height={24} borderRadius={8} />
           </Box>
-          {/* Progress bar */}
-          <Box mt="s8" height={4} backgroundColor="border" style={{borderRadius: 4}} overflow="hidden">
-            <Skeleton width={`${30 + i * 20}%`} height={4} borderRadius={4} animate={false} />
+          <Box
+            mt="s8"
+            height={4}
+            backgroundColor="border"
+            style={styles.riverBar}
+            overflow="hidden">
+            <Skeleton
+              width={`${30 + index * 20}%`}
+              height={4}
+              borderRadius={4}
+              animate={false}
+            />
           </Box>
         </Box>
       ))}
@@ -474,9 +404,6 @@ export function RiverLevelsSkeleton({count = 3}: {count?: number}) {
   );
 }
 
-/**
- * Skeleton para o WeatherAlertCard (variant full)
- */
 export function WeatherAlertCardSkeleton() {
   return (
     <Box
@@ -484,24 +411,18 @@ export function WeatherAlertCardSkeleton() {
       borderRadius="s12"
       padding="s16"
       mb="s12"
-      style={{elevation: 2}}>
-      {/* Evento + badge */}
+      style={styles.smallCard}>
       <Box flexDirection="row" justifyContent="space-between" alignItems="center" mb="s8">
         <Skeleton width="55%" height={16} borderRadius={6} />
         <Skeleton width={64} height={22} borderRadius={8} />
       </Box>
-      {/* Headline */}
       <Skeleton width="100%" height={14} borderRadius={4} mb="s4" />
       <Skeleton width="80%" height={14} borderRadius={4} mb="s8" />
-      {/* Período */}
       <Skeleton width={140} height={12} borderRadius={4} />
     </Box>
   );
 }
 
-/**
- * Skeleton para lista de viagens
- */
 export function TripListSkeleton({count = 3}: {count?: number}) {
   return (
     <>
@@ -512,25 +433,15 @@ export function TripListSkeleton({count = 3}: {count?: number}) {
   );
 }
 
-/**
- * Skeleton para detalhes da viagem
- */
 export function TripDetailsSkeleton() {
   return (
     <Box padding="s24">
-      {/* Trip Info Card */}
       <Box
         backgroundColor="surface"
         borderRadius="s16"
         padding="s20"
         mb="s16"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.card}>
         <Box flexDirection="row" alignItems="center" mb="s16">
           <Skeleton width={56} height={56} borderRadius={12} />
           <Box flex={1} ml="s16">
@@ -539,11 +450,7 @@ export function TripDetailsSkeleton() {
           </Box>
         </Box>
 
-        <Box
-          backgroundColor="background"
-          padding="s16"
-          borderRadius="s12"
-          mb="s12">
+        <Box backgroundColor="background" padding="s16" borderRadius="s12" mb="s12">
           <Skeleton width="100%" height={18} borderRadius={6} mb="s8" />
           <Skeleton width="80%" height={16} borderRadius={6} />
         </Box>
@@ -551,19 +458,12 @@ export function TripDetailsSkeleton() {
         <Skeleton width={120} height={36} borderRadius={12} />
       </Box>
 
-      {/* Captain Info Card */}
       <Box
         backgroundColor="surface"
         borderRadius="s16"
         padding="s20"
         mb="s16"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}>
+        style={styles.card}>
         <Skeleton width={80} height={18} borderRadius={6} mb="s16" />
 
         <Box flexDirection="row" alignItems="center">

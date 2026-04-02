@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ScrollView, Alert} from 'react-native';
+import {ScrollView, Alert, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -29,6 +29,10 @@ async function uploadSelfie(photo: Photo): Promise<string> {
 
 async function uploadCaptainDocument(photo: Photo): Promise<string> {
   return uploadService.uploadDocument(buildFormData(photo), 'documents');
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Erro ao enviar documentos';
 }
 
 export function KycSubmitScreen() {
@@ -85,9 +89,9 @@ export function KycSubmitScreen() {
 
       toast.showSuccess('Sua solicitação será enviada para análise do administrador.');
       navigation.navigate('KycStatus');
-    } catch (err: any) {
+    } catch (err) {
       setIsUploading(false);
-      toast.showError(err?.message || 'Erro ao enviar documentos');
+      toast.showError(getErrorMessage(err));
     }
   }
 
@@ -98,19 +102,19 @@ export function KycSubmitScreen() {
         paddingHorizontal="s20"
         paddingBottom="s16"
         backgroundColor="secondary"
-        style={{paddingTop: top + 16}}>
+        style={[styles.header, {paddingTop: top + 16}]}>
         <TouchableOpacityBox onPress={() => navigation.goBack()} mb="s12">
-          <Icon name="arrow-back" size={24} color={'#FFFFFF' as any} />
+          <Icon name="arrow-back" size={24} color="surface" />
         </TouchableOpacityBox>
-        <Text preset="headingMedium" bold style={{color: '#FFFFFF'}}>
+        <Text preset="headingMedium" bold color="surface">
           {isRejected ? 'Reenviar Documentos' : 'Verificação de Capitão'}
         </Text>
-        <Text preset="paragraphSmall" style={{color: 'rgba(255,255,255,0.8)'}} mt="s4">
+        <Text preset="paragraphSmall" style={styles.headerSubtitle} mt="s4">
           Verificação obrigatória para criar viagens
         </Text>
       </Box>
 
-      <ScrollView contentContainerStyle={{padding: 20, paddingBottom: 40}}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Rejection reason */}
         {isRejected && rejectionReason && (
           <Box
@@ -257,3 +261,16 @@ export function KycSubmitScreen() {
     </Box>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    paddingTop: 0,
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+});

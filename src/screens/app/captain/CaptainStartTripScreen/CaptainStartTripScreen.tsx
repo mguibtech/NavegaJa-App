@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, ActivityIndicator} from 'react-native';
+import {ScrollView, ActivityIndicator, StyleSheet} from 'react-native';
 
 import {Box, Button, Icon, Text, ScreenHeader} from '@components';
 
@@ -8,6 +8,42 @@ import {
   getScoreLabel,
   getScoreIcon,
 } from './useCaptainStartTrip';
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  card: {
+    elevation: 3,
+  },
+  scoreBarTrack: {
+    borderRadius: 4,
+  },
+  scoreBarFill: {
+    borderRadius: 4,
+  },
+});
+
+function getScoreBackgroundStyle(backgroundColor: string) {
+  return {
+    backgroundColor,
+  };
+}
+
+function getScoreTextStyle(color: string) {
+  return {
+    color,
+  };
+}
+
+function getScoreBarStyle(width: string, backgroundColor: string) {
+  return {
+    borderRadius: 4,
+    width: width as `${number}%`,
+    backgroundColor,
+  };
+}
 
 export function CaptainStartTripScreen() {
   const {
@@ -26,7 +62,7 @@ export function CaptainStartTripScreen() {
     <Box flex={1} backgroundColor="background">
       <ScreenHeader title="Condições Climáticas" subtitle="Passo 2 de 2 — Verificação antes do início" onBack={goBack} />
 
-      <ScrollView contentContainerStyle={{padding: 20, paddingBottom: 120}}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {isLoading ? (
           <Box alignItems="center" justifyContent="center" py="s40">
             <ActivityIndicator size="large" color="#0a6fbd" />
@@ -80,7 +116,7 @@ export function CaptainStartTripScreen() {
               borderRadius="s16"
               padding="s20"
               mb="s16"
-              style={{elevation: 3}}>
+              style={styles.card}>
               {/* Level Badge */}
               <Box
                 borderRadius="s12"
@@ -88,17 +124,17 @@ export function CaptainStartTripScreen() {
                 mb="s16"
                 flexDirection="row"
                 alignItems="center"
-                style={{backgroundColor: scoreBg}}>
+                style={getScoreBackgroundStyle(scoreBg)}>
                 <Icon name={getScoreIcon(score)} size={28} color="text" />
                 <Box flex={1} ml="s12">
-                  <Text preset="paragraphMedium" bold style={{color: scoreColor}}>
+                  <Text preset="paragraphMedium" bold style={getScoreTextStyle(scoreColor)}>
                     {getScoreLabel(score)}
                   </Text>
-                  <Text preset="paragraphCaptionSmall" style={{color: scoreColor}}>
+                  <Text preset="paragraphCaptionSmall" style={getScoreTextStyle(scoreColor)}>
                     {weather.recommendation}
                   </Text>
                 </Box>
-                <Text preset="headingSmall" bold style={{color: scoreColor}}>
+                <Text preset="headingSmall" bold style={getScoreTextStyle(scoreColor)}>
                   {score}
                 </Text>
               </Box>
@@ -117,14 +153,10 @@ export function CaptainStartTripScreen() {
                   backgroundColor="border"
                   height={8}
                   overflow="hidden"
-                  style={{borderRadius: 4}}>
+                  style={styles.scoreBarTrack}>
                   <Box
                     height={8}
-                    style={{
-                      borderRadius: 4,
-                      width: `${score}%`,
-                      backgroundColor: scoreColor,
-                    }}
+                    style={getScoreBarStyle(`${score}%`, scoreColor)}
                   />
                 </Box>
               </Box>

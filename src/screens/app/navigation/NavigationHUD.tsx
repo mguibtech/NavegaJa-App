@@ -26,6 +26,10 @@ interface Props {
   onCompleteTrip: () => void;
 }
 
+function getAlertBannerStyle(bottom: number, backgroundColor: string) {
+  return [styles.alertBanner, {bottom: bottom + 220, backgroundColor}];
+}
+
 export function NavigationHUD({
   distanceRemaining,
   eta,
@@ -97,7 +101,7 @@ export function NavigationHUD({
       {/* ── Off-route banner ──────────────────────────────────────────── */}
       {isOffRoute && (
         <Box
-          style={[styles.alertBanner, {bottom: bottom + 220, backgroundColor: '#EF4444'}]}>
+          style={getAlertBannerStyle(bottom, '#EF4444')}>
           <Icon name="navigation" size={20} color="surface" />
           <Text
             preset="paragraphSmall"

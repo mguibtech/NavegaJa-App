@@ -83,22 +83,12 @@ export function ConfirmationModal({
           justifyContent="center"
           padding="s20">
           <Animated.View
-            style={{
-              transform: [{scale: scaleAnim}],
-              width: '100%',
-              maxWidth: 400,
-            }}>
+            style={[styles.container, {transform: [{scale: scaleAnim}]}]}>
             <Box
               backgroundColor="surface"
               borderRadius="s24"
               padding="s32"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 8},
-                shadowOpacity: 0.3,
-                shadowRadius: 16,
-                elevation: 12,
-              }}>
+              style={styles.card}>
               {/* Icon */}
               <Box alignItems="center" mb="s24">
                 <Box
@@ -159,5 +149,16 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  card: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  container: {
+    width: '100%',
+    maxWidth: 400,
   },
 });

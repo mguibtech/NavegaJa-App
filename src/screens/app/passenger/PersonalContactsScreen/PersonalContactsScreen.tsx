@@ -5,6 +5,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from 'react-native';
 
 import {Box, Button, Icon, ScreenHeader, Text, TextInput, TouchableOpacityBox} from '@components';
@@ -12,6 +13,22 @@ import {usePersonalContacts} from '@domain';
 import {useToast} from '@hooks';
 import {formatPhone} from '@utils';
 import {useNavigation} from '@react-navigation/native';
+
+const styles = StyleSheet.create({
+  keyboard: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 60,
+  },
+  centeredText: {
+    textAlign: 'center',
+  },
+  contactCard: {
+    elevation: 1,
+  },
+});
 
 export function PersonalContactsScreen() {
   const navigation = useNavigation();
@@ -68,7 +85,7 @@ export function PersonalContactsScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{flex: 1}}
+      style={styles.keyboard}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Box flex={1} backgroundColor="background">
         <ScreenHeader
@@ -77,7 +94,7 @@ export function PersonalContactsScreen() {
         />
 
         <ScrollView
-          contentContainerStyle={{padding: 20, paddingBottom: 60}}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
 
           {/* Info */}
@@ -158,7 +175,7 @@ export function PersonalContactsScreen() {
               padding="s20"
               alignItems="center">
               <Icon name="group-off" size={36} color="textSecondary" />
-              <Text preset="paragraphMedium" color="textSecondary" mt="s12" style={{textAlign: 'center'}}>
+              <Text preset="paragraphMedium" color="textSecondary" mt="s12" style={styles.centeredText}>
                 Ainda não tem contactos de emergência.{'\n'}Adicione pessoas de
                 confiança acima.
               </Text>
@@ -174,7 +191,7 @@ export function PersonalContactsScreen() {
                   mb="s12"
                   flexDirection="row"
                   alignItems="center"
-                  style={{elevation: 1}}>
+                  style={styles.contactCard}>
                   <Box
                     width={44}
                     height={44}

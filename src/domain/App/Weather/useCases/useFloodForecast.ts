@@ -14,8 +14,10 @@ export function useFloodForecast() {
       const result = await floodHubAPI.getFloodStatus(lat, lng, radiusKm);
       setData(result);
       setError(null);
+      return result;
     } catch (e) {
       setError(e as Error);
+      return null;
     } finally {
       setIsLoading(false);
     }

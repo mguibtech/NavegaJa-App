@@ -1,9 +1,28 @@
 import React from 'react';
+import {StyleSheet} from 'react-native';
 import {Box, BookingCardSkeleton, ConfirmationModal, Icon, Text, TouchableOpacityBox, ScreenList} from '@components';
 import {Booking} from '@domain';
 import {formatBRL} from '@utils';
 
 import {useBookingsScreen} from './useBookingsScreen';
+
+const styles = StyleSheet.create({
+  bookingCard: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+});
+
+function getBadgeBackgroundStyle(backgroundColor: string) {
+  return {backgroundColor};
+}
+
+function getBadgeTextStyle(color: string) {
+  return {color};
+}
 
 export function BookingsScreen() {
   const {
@@ -40,7 +59,7 @@ export function BookingsScreen() {
         onRefresh={onRefresh}
         tabs={tabs}
         selectedTab={selectedTab}
-        onTabChange={setSelectedTab}
+        onTabChange={tabId => setSelectedTab(tabId as 'active' | 'completed')}
         SkeletonComponent={BookingCardSkeleton}
         emptyIcon={selectedTab === 'active' ? 'receipt-long' : 'check-circle'}
         emptyTitle={`Nenhuma reserva ${selectedTab === 'active' ? 'ativa' : 'concluída'}`}
@@ -92,13 +111,7 @@ export function BookingsScreen() {
               borderRadius="s16"
               padding="s20"
               onPress={() => navigateToTicket(item.id)}
-              style={{
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}>
+              style={styles.bookingCard}>
               {/* Card Header */}
               <Box
                 flexDirection="row"
@@ -112,11 +125,11 @@ export function BookingsScreen() {
                   paddingHorizontal="s10"
                   paddingVertical="s4"
                   borderRadius="s8"
-                  style={{backgroundColor: badge.bg}}>
+                  style={getBadgeBackgroundStyle(badge.bg)}>
                   <Text
                     preset="paragraphCaptionSmall"
                     bold
-                    style={{color: badge.textColor}}>
+                    style={getBadgeTextStyle(badge.textColor)}>
                     {badge.label}
                   </Text>
                 </Box>
